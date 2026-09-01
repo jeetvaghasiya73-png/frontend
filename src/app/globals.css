@@ -1,26 +1,260 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-border-custom: var(--border-custom);
+  --color-secondary-custom: var(--secondary-custom);
+  --color-accent-custom: var(--accent-custom);
+  --color-accent-glow: var(--accent-glow);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --background: #FAFAFA;
+  --foreground: #111111;
+  --surface: #FFFFFF;
+  --border-custom: #E6E6E6;
+  --secondary-custom: #666666;
+  --accent-custom: #2962FF;
+  --accent-glow: rgba(41, 98, 255, 0.08);
+  --grid-color: rgba(0, 0, 0, 0.03);
+  --selection-bg: #2962FF;
+  --selection-color: #FFFFFF;
+}
+
+.dark {
+  --background: #050505;
+  --foreground: #FFFFFF;
+  --surface: #111111;
+  --border-custom: rgba(255, 255, 255, 0.08);
+  --secondary-custom: #B0B0B0;
+  --accent-custom: #4F7CFF;
+  --accent-glow: rgba(79, 124, 255, 0.08);
+  --grid-color: rgba(255, 255, 255, 0.02);
+  --selection-bg: #4F7CFF;
+  --selection-color: #000000;
+}
+
+/* Base resets & theme animation transition */
+* {
+  box-sizing: border-box;
+}
+
+/* Accessibility: respect reduced motion — make everything visible */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
+/* Skeleton shimmer animation */
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-pulse {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--border-custom) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* Apply theme transitions only to body and layout containers, not everything */
 body {
-  background: var(--background);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+::selection {
+  background-color: var(--selection-bg);
+  color: var(--selection-color);
+}
+
+html, body {
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  scroll-behavior: auto; /* Handled by Lenis */
+}
+
+/* Lenis Scroll Smoothness settings */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+/* Premium Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-custom);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-custom);
+}
+
+/* Noise & Grid Layer Layouts */
+.noise-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  content: "";
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+.dark .noise-overlay {
+  opacity: 0.055;
+}
+
+.grid-bg {
+  background-size: 60px 60px;
+  background-image: 
+    linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+}
+
+/* Floating mesh gradient circles */
+.mesh-gradient-1 {
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+}
+
+.mesh-gradient-2 {
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.06) 0%, transparent 70%);
+}
+
+/* Custom premium elements */
+.glass-panel {
+  background: rgba(var(--background), 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-custom);
+}
+
+/* Custom custom split reveal effects */
+.char-reveal-parent {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* Infinite Marquee */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Cursor Glow follow utility */
+.cursor-glow {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+  position: fixed;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: screen;
+}
+
+/* DataFlowShowcase — Floating Blob Animations */
+@keyframes float-blob-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -40px) scale(1.05); }
+  50% { transform: translate(-20px, 20px) scale(0.95); }
+  75% { transform: translate(15px, 35px) scale(1.02); }
+}
+
+@keyframes float-blob-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-25px, 30px) scale(1.08); }
+  66% { transform: translate(20px, -20px) scale(0.96); }
+}
+
+@keyframes float-blob-3 {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-45%, -55%) scale(1.1); }
+}
+
+.animate-float-blob-1 { animation: float-blob-1 18s ease-in-out infinite; }
+.animate-float-blob-2 { animation: float-blob-2 22s ease-in-out infinite; }
+.animate-float-blob-3 { animation: float-blob-3 15s ease-in-out infinite; }
+
+/* DataFlowShowcase — Progress Bar Fill */
+@keyframes progress-fill {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+/* DataFlowShowcase — Floating smooth (shared) */
+@keyframes float-smooth {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float-smooth { animation: float-smooth 5s ease-in-out infinite; }
+
+/* Spin slow utility */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow { animation: spin-slow 25s linear infinite; }
+
+/* GPU hardware acceleration for lag-free rendering */
+.glass-panel,
+.cursor-glow,
+.noise-overlay,
+.animate-float-blob-1,
+.animate-float-blob-2,
+.animate-float-blob-3,
+.animate-float-smooth,
+.animate-spin-slow,
+.animate-marquee {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform, opacity;
 }
