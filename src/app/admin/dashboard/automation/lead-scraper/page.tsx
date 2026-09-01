@@ -42,7 +42,7 @@ export default function LeadScraperUploadPage() {
         const data = await response.json();
         setMessage({ text: data.detail || "Failed to upload leads.", type: "error" });
       }
-    } catch (error) {
+    } catch {
       setMessage({ text: "Network error occurred while uploading.", type: "error" });
     } finally {
       setUploading(false);
