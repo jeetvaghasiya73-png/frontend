@@ -77,8 +77,15 @@ export default function LeadsManager() {
       const inquiryData: any[] = inquiryRes.ok ? await inquiryRes.json() : [];
 
       const scrapedRes = await authFetch(`${API}/api/v1/scraped-leads/?page=1&limit=1000`);
-      const scrapedJson = scrapedRes.ok ? await scrapedRes.json() : { leads: [], total: 0 };
-      const scrapedData: any[] = scrapedJson.leads || [];
+      let scrapedData: any[] = [];
+      if (scrapedRes.ok) {
+        const scrapedJson = await scrapedRes.json();
+        if (Array.isArray(scrapedJson)) {
+          scrapedData = scrapedJson;
+        } else if (scrapedJson && Array.isArray(scrapedJson.leads)) {
+          scrapedData = scrapedJson.leads;
+        }
+      }
 
       const normalizedInquiries: NormalizedLead[] = inquiryData.map((lead: any) => ({
         id: lead.id,
@@ -233,7 +240,7 @@ export default function LeadsManager() {
     <div className="space-y-6 text-left pb-20 relative animate-fadeIn font-sans antialiased text-slate-800 dark:text-slate-200">
       
       {/* Top Bar Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0a0a0a] p-5 rounded-2xl border border-slate-200/80 dark:border-neutral-800 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
             <Users className="w-5 h-5" />
@@ -245,7 +252,7 @@ export default function LeadsManager() {
                 {allLeads.length} Total
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Manage, qualify, and inspect inbound &amp; outbound prospect records</p>
+            <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">Manage, qualify, and inspect inbound &amp; outbound prospect records</p>
           </div>
         </div>
 
@@ -253,14 +260,14 @@ export default function LeadsManager() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs font-semibold text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 transition shadow-sm cursor-pointer"
           >
             <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>Export CSV</span>
           </button>
           <button
             type="button"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs font-semibold text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 transition shadow-sm cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-slate-500" />
             <span>Import Sheet</span>
@@ -277,16 +284,16 @@ export default function LeadsManager() {
 
       {/* KPI Overview Grid */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">TOTAL PROSPECTS</span>
+        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
+          <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">TOTAL PROSPECTS</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 dark:text-white">{allLeads.length}</span>
             <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded">+14.2%</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">OUTBOUND SCRAPED</span>
+        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
+          <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">OUTBOUND SCRAPED</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 dark:text-white">
               {allLeads.filter(l => l.source === "scraped").length}
@@ -295,8 +302,8 @@ export default function LeadsManager() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">INBOUND INQUIRIES</span>
+        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
+          <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">INBOUND INQUIRIES</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 dark:text-white">
               {allLeads.filter(l => l.source === "inquiry").length}
@@ -305,8 +312,8 @@ export default function LeadsManager() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">EMAIL CAPTURE EFFICIENCY</span>
+        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
+          <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">EMAIL CAPTURE EFFICIENCY</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 dark:text-white">
               {Math.round((allLeads.filter(l => l.email).length / (allLeads.length || 1)) * 100)}%
@@ -317,10 +324,10 @@ export default function LeadsManager() {
       </section>
 
       {/* Segmented Filter Bar & Lead Table Container */}
-      <section className="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col">
+      <section className="bg-white dark:bg-[#0a0a0a] rounded-2xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col">
         
         {/* Controls Deck */}
-        <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="p-4 border-b border-slate-200/80 dark:border-neutral-800 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           
           {/* Segmented View Tabs */}
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200/80 dark:border-slate-800">

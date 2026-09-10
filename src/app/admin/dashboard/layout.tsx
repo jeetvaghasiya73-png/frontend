@@ -286,10 +286,10 @@ export default function DashboardLayout({
       </aside>
 
       {/* ── Main Workspace Panel ── */}
-      <main className="flex-1 flex flex-col overflow-hidden relative z-10 bg-slate-50 dark:bg-[#080d1a]">
+      <main className="flex-1 flex flex-col overflow-hidden relative z-10 bg-slate-50 dark:bg-[#000000]">
         
         {/* Top Navigation Bar */}
-        <header className="hidden lg:flex h-16 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800/80 px-8 items-center justify-between shrink-0 shadow-xs z-20">
+        <header className="hidden lg:flex h-16 bg-white dark:bg-[#0a0a0a] border-b border-slate-200/80 dark:border-neutral-800 px-8 items-center justify-between shrink-0 shadow-xs z-20">
           
           {/* Quick Search */}
           <div className="flex-1 max-w-md flex items-center">
