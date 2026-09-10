@@ -68,8 +68,8 @@ export default function LeadsManager() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Selection & Bulk Delete state
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<number>>(new Set());
+  const [showDeleteMenu, setShowDeleteMenu] = useState(false);
 
   // Drawer state
   const [selectedLead, setSelectedLead] = useState<NormalizedLead | null>(null);
@@ -217,25 +217,89 @@ export default function LeadsManager() {
     }
   };
 
-  const handleBulkDelete = async () => {
+  // 1. Delete Selected Leads
+  const handleDeleteSelected = async () => {
     if (selectedLeadIds.size === 0) return;
     if (!confirm(`Are you sure you want to permanently delete ${selectedLeadIds.size} selected lead(s)?`)) return;
 
     try {
-      const leadIdsList = Array.from(selectedLeadIds);
-      const res = await authFetch(`${API}/api/v1/scraped-leads/bulk-delete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lead_ids: leadIdsList }),
-      });
+      const scrapedRawIds = allLeads.filter(l => selectedLeadIds.has(l.rawId) && l.source === "scraped").map(l => l.rawId);
+      const inquiryRawIds = allLeads.filter(l => selectedLeadIds.has(l.rawId) && l.source === "inquiry").map(l => l.rawId);
 
-      if (res.ok) {
-        setAllLeads(prev => prev.filter(l => !selectedLeadIds.has(l.rawId)));
-        setSelectedLeadIds(new Set());
-        triggerToast("Selected leads deleted permanently");
+      if (scrapedRawIds.length > 0) {
+        await authFetch(`${API}/api/v1/scraped-leads/bulk-delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lead_ids: scrapedRawIds }),
+        });
       }
+
+      if (inquiryRawIds.length > 0) {
+        await authFetch(`${API}/api/v1/leads/bulk-delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lead_ids: inquiryRawIds }),
+        });
+      }
+
+      setAllLeads(prev => prev.filter(l => !selectedLeadIds.has(l.rawId)));
+      setSelectedLeadIds(new Set());
+      triggerToast(`Successfully deleted selected lead(s)`);
     } catch (err) {
-      console.error("Failed bulk delete:", err);
+      console.error("Failed selected delete:", err);
+    }
+  };
+
+  // 2. Delete Current Page Leads
+  const handleDeleteCurrentPage = async () => {
+    if (paginatedLeads.length === 0) return;
+    if (!confirm(`Are you sure you want to delete all ${paginatedLeads.length} lead(s) visible on Page ${currentPage}?`)) return;
+
+    try {
+      const scrapedRawIds = paginatedLeads.filter(l => l.source === "scraped").map(l => l.rawId);
+      const inquiryRawIds = paginatedLeads.filter(l => l.source === "inquiry").map(l => l.rawId);
+      const pageIdsToRemove = new Set(paginatedLeads.map(l => l.id));
+
+      if (scrapedRawIds.length > 0) {
+        await authFetch(`${API}/api/v1/scraped-leads/bulk-delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lead_ids: scrapedRawIds }),
+        });
+      }
+
+      if (inquiryRawIds.length > 0) {
+        await authFetch(`${API}/api/v1/leads/bulk-delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lead_ids: inquiryRawIds }),
+        });
+      }
+
+      setAllLeads(prev => prev.filter(l => !pageIdsToRemove.has(l.id)));
+      setSelectedLeadIds(new Set());
+      triggerToast(`Deleted ${paginatedLeads.length} lead(s) from Page ${currentPage}`);
+    } catch (err) {
+      console.error("Failed page delete:", err);
+    }
+  };
+
+  // 3. Delete ALL Database Leads
+  const handleDeleteAllLeads = async () => {
+    if (allLeads.length === 0) return;
+    if (!confirm(`🚨 CRITICAL ACTION:\nAre you sure you want to PERMANENTLY DELETE ALL ${allLeads.length} leads from the database?\nThis action cannot be undone!`)) return;
+
+    try {
+      await Promise.allSettled([
+        authFetch(`${API}/api/v1/scraped-leads/bulk`, { method: "DELETE" }),
+        authFetch(`${API}/api/v1/leads/bulk`, { method: "DELETE" }),
+      ]);
+
+      setAllLeads([]);
+      setSelectedLeadIds(new Set());
+      triggerToast("Entire leads database cleared successfully");
+    } catch (err) {
+      console.error("Failed to delete all leads:", err);
     }
   };
 
@@ -562,16 +626,86 @@ export default function LeadsManager() {
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
-            {selectedLeadIds.size > 0 && (
+            {/* Multi-Option Deletion Menu */}
+            <div className="relative w-full sm:w-auto">
               <button
                 type="button"
-                onClick={handleBulkDelete}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer animate-fadeIn w-full sm:w-auto justify-center"
+                onClick={() => setShowDeleteMenu(!showDeleteMenu)}
+                className="inline-flex items-center justify-between gap-1.5 px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer w-full sm:w-auto"
               >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Selected ({selectedLeadIds.size})</span>
+                <div className="flex items-center gap-1.5">
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Options</span>
+                  {selectedLeadIds.size > 0 && (
+                    <span className="bg-white/20 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-full">
+                      {selectedLeadIds.size}
+                    </span>
+                  )}
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 opacity-80" />
               </button>
-            )}
+
+              {showDeleteMenu && (
+                <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-neutral-900 rounded-xl border border-slate-200 dark:border-neutral-800 shadow-2xl z-50 overflow-hidden py-1 text-xs animate-fadeIn">
+                  {/* Remove Selected */}
+                  <button
+                    type="button"
+                    disabled={selectedLeadIds.size === 0}
+                    onClick={() => {
+                      setShowDeleteMenu(false);
+                      handleDeleteSelected();
+                    }}
+                    className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-slate-800 dark:text-neutral-200"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                      <span>Remove Selected</span>
+                    </span>
+                    <span className="font-bold font-mono text-[10px] bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-800">
+                      {selectedLeadIds.size}
+                    </span>
+                  </button>
+
+                  {/* Remove Current Page */}
+                  <button
+                    type="button"
+                    disabled={paginatedLeads.length === 0}
+                    onClick={() => {
+                      setShowDeleteMenu(false);
+                      handleDeleteCurrentPage();
+                    }}
+                    className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-slate-800 dark:text-neutral-200 border-t border-slate-100 dark:border-neutral-800"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Trash2 className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Remove Current Page</span>
+                    </span>
+                    <span className="font-bold font-mono text-[10px] bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+                      Page {currentPage} ({paginatedLeads.length})
+                    </span>
+                  </button>
+
+                  {/* Delete ALL Leads */}
+                  <button
+                    type="button"
+                    disabled={allLeads.length === 0}
+                    onClick={() => {
+                      setShowDeleteMenu(false);
+                      handleDeleteAllLeads();
+                    }}
+                    className="w-full text-left px-3.5 py-2.5 font-bold flex items-center justify-between bg-rose-50/60 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/70 text-rose-600 dark:text-rose-400 cursor-pointer border-t border-rose-200/80 dark:border-rose-900/50"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Delete ALL Leads</span>
+                    </span>
+                    <span className="font-bold font-mono text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded shadow-xs">
+                      ALL ({allLeads.length})
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
