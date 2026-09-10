@@ -241,7 +241,7 @@ export default function DashboardLayout({
     {
       title: "AUTOMATION & TOOLS",
       links: [
-        { name: "Email Outreach", href: "/admin/dashboard/automation/outreach", icon: TerminalSquare, badge: "LIVE" },
+        { name: "Email Outreach", href: "/admin/dashboard/email-outreach", icon: TerminalSquare, badge: "LIVE" },
         { name: "Portfolio Works", href: "/admin/dashboard/portfolio", icon: Briefcase },
         { name: "Blog Articles", href: "/admin/dashboard/blogs", icon: FileText },
         { name: "Testimonials", href: "/admin/dashboard/testimonials", icon: Star },
