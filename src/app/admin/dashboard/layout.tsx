@@ -166,20 +166,18 @@ export default function DashboardLayout({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch live notifications & badge counts from backend
+  // Fetch live notifications & badge counts from backend DB
   const loadCountsAndNotifications = useCallback(async (isBackgroundPoll = false) => {
     if (!isAuthenticated) return;
     try {
-      const [scrapedRes, leadsRes, contactsRes] = await Promise.allSettled([
+      const [scrapedRes, leadsRes, contactsRes, notifRes] = await Promise.allSettled([
         authFetch(`${API_URL}/api/v1/scraped-leads/stats`),
         authFetch(`${API_URL}/api/v1/leads/`),
-        authFetch(`${API_URL}/api/v1/contacts/`)
+        authFetch(`${API_URL}/api/v1/contacts/`),
+        authFetch(`${API_URL}/api/v1/notifications/`)
       ]);
 
-      const readSet = getReadIds();
-      const notifList: AppNotification[] = [];
       let totalLeadsCount = 0;
-
       if (scrapedRes.status === "fulfilled" && scrapedRes.value.ok) {
         const stats = await scrapedRes.value.json();
         totalLeadsCount += stats.total || 0;
@@ -189,78 +187,37 @@ export default function DashboardLayout({
         const inq = await leadsRes.value.json();
         if (Array.isArray(inq)) {
           totalLeadsCount += inq.length;
-          inq.slice(0, 5).forEach((l: any) => {
-            const id = `inq-${l.id}`;
-            notifList.push({
-              id,
-              title: "New Inbound Lead",
-              message: `${l.name || "Prospect"} requested services for ${l.company || "Direct Inbound"}.`,
-              time: l.created_at ? formatRelativeTime(l.created_at) : "Recently",
-              timestamp: l.created_at ? new Date(l.created_at).getTime() : Date.now(),
-              type: "lead",
-              read: readSet.has(id),
-              link: "/admin/dashboard/leads"
-            });
-          });
         }
       }
       setLeadsBadge(String(totalLeadsCount));
 
       if (contactsRes.status === "fulfilled" && contactsRes.value.ok) {
         const msgs = await contactsRes.value.json();
-        const msgArr = Array.isArray(msgs) ? msgs : [];
-        setContactsBadge(String(msgArr.length));
-        msgArr.slice(0, 5).forEach((msg: any) => {
-          const id = `contact-${msg.id}`;
-          notifList.push({
-            id,
-            title: "New Contact Inquiry",
-            message: `${msg.name || "Visitor"}: "${msg.message ? msg.message.slice(0, 50) + "..." : "New message"}"`,
-            time: msg.created_at ? formatRelativeTime(msg.created_at) : "Recently",
-            timestamp: msg.created_at ? new Date(msg.created_at).getTime() : Date.now(),
-            type: "inquiry",
-            read: readSet.has(id),
-            link: "/admin/dashboard/contacts"
-          });
-        });
+        setContactsBadge(String(Array.isArray(msgs) ? msgs.length : 0));
       }
 
-      // Add System Status Notifications
-      const sysId1 = "sys-db-status";
-      notifList.push({
-        id: sysId1,
-        title: "CRM Engine Online",
-        message: `Connected with ${totalLeadsCount} pipeline prospects in database.`,
-        time: "Just now",
-        timestamp: Date.now(),
-        type: "system",
-        read: readSet.has(sysId1),
-        link: "/admin/dashboard"
-      });
+      if (notifRes.status === "fulfilled" && notifRes.value.ok) {
+        const notifData: any[] = await notifRes.value.json();
+        const mappedList: AppNotification[] = notifData.map(n => ({
+          id: String(n.id),
+          title: n.title,
+          message: n.message,
+          time: n.created_at ? formatRelativeTime(n.created_at) : "Recently",
+          timestamp: n.created_at ? new Date(n.created_at).getTime() : Date.now(),
+          type: (n.type as any) || "system",
+          read: Boolean(n.read),
+          link: n.link || "/admin/dashboard"
+        }));
 
-      const sysId2 = "sys-email-worker";
-      notifList.push({
-        id: sysId2,
-        title: "Autonomous Email Worker",
-        message: "Email automation standby mode • Ready for outreach campaigns.",
-        time: "10m ago",
-        timestamp: Date.now() - 10 * 60 * 1000,
-        type: "email",
-        read: readSet.has(sysId2),
-        link: "/admin/dashboard/email-outreach"
-      });
-
-      notifList.sort((a, b) => b.timestamp - a.timestamp);
-
-      // Check if new unread items arrived during background polling
-      if (isBackgroundPoll) {
-        const hasNewUnread = notifList.some(n => !n.read && !notifications.some(existing => existing.id === n.id));
-        if (hasNewUnread) {
-          playNotificationSound();
+        if (isBackgroundPoll) {
+          const hasNewUnread = mappedList.some(n => !n.read && !notifications.some(existing => existing.id === n.id));
+          if (hasNewUnread) {
+            playNotificationSound();
+          }
         }
-      }
 
-      setNotifications(notifList);
+        setNotifications(mappedList);
+      }
     } catch (e) {
       console.error("Failed to load badge counts & notifications:", e);
     }
@@ -286,49 +243,64 @@ export default function DashboardLayout({
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markAllAsRead = () => {
-    const readSet = getReadIds();
-    notifications.forEach(n => readSet.add(n.id));
-    saveReadIds(readSet);
+  const markAllAsRead = async () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    try {
+      await authFetch(`${API_URL}/api/v1/notifications/read-all`, { method: "PUT" });
+    } catch (e) {
+      console.error("Failed to mark all as read in DB:", e);
+    }
   };
 
-  const handleNotificationClick = (item: AppNotification) => {
-    const readSet = getReadIds();
-    readSet.add(item.id);
-    saveReadIds(readSet);
+  const handleNotificationClick = async (item: AppNotification) => {
     setNotifications(prev => prev.map(n => n.id === item.id ? { ...n, read: true } : n));
     setNotificationsOpen(false);
+    try {
+      await authFetch(`${API_URL}/api/v1/notifications/${item.id}/read`, { method: "PUT" });
+    } catch (e) {
+      console.error("Failed to mark notification read in DB:", e);
+    }
     if (item.link) {
       router.push(item.link);
     }
   };
 
+  const handleClearNotifications = async () => {
+    setNotifications([]);
+    try {
+      await authFetch(`${API_URL}/api/v1/notifications/clear`, { method: "DELETE" });
+    } catch (e) {
+      console.error("Failed to clear notifications in DB:", e);
+    }
+  };
+
   // Interactive Test Notification Trigger
-  const triggerTestNotification = () => {
-    const testId = `test-${Date.now()}`;
-    const sampleCompanies = ["Acme Corp", "Apex Innovations", "Starlight Media", "Vanguard Tech"];
-    const comp = sampleCompanies[Math.floor(Math.random() * sampleCompanies.length)];
-    
-    const newNotif: AppNotification = {
-      id: testId,
-      title: `⚡ Live Test: Inquiry from ${comp}`,
-      message: `Direct inbound inquiry received! Client requested custom AI & web development services.`,
-      time: "Just now",
-      timestamp: Date.now(),
-      type: "inquiry",
-      read: false,
-      link: "/admin/dashboard/leads"
-    };
-
+  const triggerTestNotification = async () => {
     playNotificationSound();
-    setActiveToastNotif(newNotif);
-    setNotifications(prev => [newNotif, ...prev]);
+    try {
+      const res = await authFetch(`${API_URL}/api/v1/notifications/test`, { method: "POST" });
+      if (res.ok) {
+        const notifData = await res.json();
+        const newNotif: AppNotification = {
+          id: String(notifData.id),
+          title: notifData.title,
+          message: notifData.message,
+          time: "Just now",
+          timestamp: Date.now(),
+          type: notifData.type || "inquiry",
+          read: false,
+          link: notifData.link || "/admin/dashboard/leads"
+        };
+        setActiveToastNotif(newNotif);
+        setNotifications(prev => [newNotif, ...prev]);
 
-    // Auto-dismiss toast after 5 seconds
-    setTimeout(() => {
-      setActiveToastNotif(null);
-    }, 5000);
+        setTimeout(() => {
+          setActiveToastNotif(null);
+        }, 5000);
+      }
+    } catch (e) {
+      console.error("Failed to trigger backend test notification:", e);
+    }
   };
 
   const filteredNotifications = notifications.filter(n => {
@@ -652,12 +624,7 @@ export default function DashboardLayout({
                         </button>
                       )}
                       <button
-                        onClick={() => {
-                          setNotifications([]);
-                          const readSet = getReadIds();
-                          notifications.forEach(n => readSet.add(n.id));
-                          saveReadIds(readSet);
-                        }}
+                        onClick={handleClearNotifications}
                         className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded hover:bg-slate-100 dark:hover:bg-neutral-800"
                         title="Clear all"
                       >
