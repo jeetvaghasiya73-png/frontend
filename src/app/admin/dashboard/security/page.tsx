@@ -237,8 +237,9 @@ function AdminUsersTab() {
           <span className="text-xs font-mono">Loading users list…</span>
         </div>
       ) : (
-        <div className="bg-white dark:bg-[#0f172a] border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="bg-white dark:bg-[#0f172a] border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm w-full">
+          <div className="w-full overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse min-w-[650px]">
             <thead>
               <tr className="bg-slate-50/75 dark:bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold">
                 <th className="py-3.5 px-5 uppercase tracking-wider text-[10px]">User</th>
@@ -299,7 +300,8 @@ function AdminUsersTab() {
             </tbody>
           </table>
         </div>
-      )}
+      </div>
+    )}
 
       {/* Create Modal */}
       {showCreate && (

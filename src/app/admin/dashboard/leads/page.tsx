@@ -261,10 +261,10 @@ export default function LeadsManager() {
   }
 
   return (
-    <div className="space-y-6 text-left pb-20 relative animate-fadeIn font-sans antialiased text-slate-800 dark:text-slate-200">
+    <div className="space-y-6 text-left pb-20 relative animate-fadeIn font-sans antialiased text-slate-800 dark:text-slate-200 w-full max-w-full overflow-x-hidden">
       
       {/* Top Bar Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0a0a0a] p-5 rounded-2xl border border-slate-200/80 dark:border-neutral-800 shadow-sm">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0a0a0a] p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-neutral-800 shadow-sm w-full max-w-full">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
             <Users className="w-5 h-5" />
@@ -348,18 +348,18 @@ export default function LeadsManager() {
       </section>
 
       {/* Segmented Filter Bar & Lead Table Container */}
-      <section className="bg-white dark:bg-[#0a0a0a] rounded-2xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col">
+      <section className="bg-white dark:bg-[#0a0a0a] rounded-2xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col w-full max-w-full overflow-hidden">
         
         {/* Controls Deck */}
-        <div className="p-4 border-b border-slate-200/80 dark:border-neutral-800 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="p-3.5 sm:p-4 border-b border-slate-200/80 dark:border-neutral-800 flex flex-col xl:flex-row xl:items-center justify-between gap-3 w-full max-w-full">
           
           {/* Segmented View Tabs */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200/80 dark:border-slate-800">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-1 bg-slate-100 dark:bg-neutral-900 p-1 rounded-xl border border-slate-200/80 dark:border-neutral-800 max-w-full overflow-x-auto">
             <button
               onClick={() => setSourceFilter("all")}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "all"
-                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-slate-700 shadow-xs"
+                  ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700 shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -367,9 +367,9 @@ export default function LeadsManager() {
             </button>
             <button
               onClick={() => setSourceFilter("scraped")}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "scraped"
-                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-slate-700 shadow-xs"
+                  ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700 shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -377,9 +377,9 @@ export default function LeadsManager() {
             </button>
             <button
               onClick={() => setSourceFilter("inquiry")}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "inquiry"
-                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-slate-700 shadow-xs"
+                  ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700 shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -388,8 +388,8 @@ export default function LeadsManager() {
           </div>
 
           {/* Search & Status Controls */}
-          <div className="flex items-center gap-2">
-            <div className="relative w-full md:w-64">
+          <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+            <div className="relative w-full sm:w-64">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -399,18 +399,18 @@ export default function LeadsManager() {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition"
+                className="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition"
               />
             </div>
 
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <select
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="pl-8 pr-8 py-1.5 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer appearance-none"
+                className="w-full sm:w-auto pl-8 pr-8 py-1.5 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer appearance-none"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -426,7 +426,7 @@ export default function LeadsManager() {
               <button
                 type="button"
                 onClick={handleBulkDelete}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer animate-fadeIn"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer animate-fadeIn w-full sm:w-auto justify-center"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete Selected ({selectedLeadIds.size})</span>
@@ -436,8 +436,8 @@ export default function LeadsManager() {
         </div>
 
         {/* Lead Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse min-w-[700px]">
             <thead>
               <tr className="bg-slate-50/75 dark:bg-neutral-900/60 border-b border-slate-200/80 dark:border-neutral-800 text-slate-500 dark:text-neutral-400 font-semibold">
                 <th className="py-3 px-4 w-8">
@@ -568,24 +568,37 @@ export default function LeadsManager() {
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="p-4 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="p-4 border-t border-slate-200/80 dark:border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
+            <span className="text-xs text-slate-500 dark:text-neutral-400">
               Page <span className="font-semibold text-slate-900 dark:text-white">{currentPage}</span> of{" "}
               <span className="font-semibold text-slate-900 dark:text-white">{totalPages}</span>
             </span>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 disabled:opacity-40 cursor-pointer"
+                className="px-3.5 py-1.5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-neutral-200 disabled:opacity-40 cursor-pointer hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
               >
                 Previous
               </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map(p => (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm cursor-pointer ${
+                    currentPage === p
+                      ? "bg-indigo-600 text-white font-bold"
+                      : "hidden sm:inline-flex bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-neutral-800"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
               <button
                 disabled={currentPage >= totalPages}
                 onClick={() => setCurrentPage(p => p + 1)}
-                className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 disabled:opacity-40 cursor-pointer"
+                className="px-3.5 py-1.5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-neutral-200 disabled:opacity-40 cursor-pointer hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
               >
                 Next
               </button>

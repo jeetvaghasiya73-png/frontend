@@ -186,7 +186,7 @@ export default function ContactMessagesManager() {
       </header>
 
       {/* Split Inbox View Container */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[720px]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto lg:h-[720px] w-full max-w-full">
         
         {/* Left List Pane (5 Cols) */}
         <div className="lg:col-span-5 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">

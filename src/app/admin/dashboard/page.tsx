@@ -682,7 +682,7 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className="space-y-6 text-left pb-20 relative animate-fadeIn font-sans antialiased text-slate-800 dark:text-slate-200">
+    <div className="space-y-6 text-left pb-20 relative animate-fadeIn font-sans antialiased text-slate-800 dark:text-slate-200 w-full max-w-full overflow-x-hidden">
 
       {/* Action Success Toast Notification */}
       {actionSuccessMsg && (
@@ -975,61 +975,61 @@ export default function SuperAdminDashboard() {
       </section>
 
       {/* ── Dynamic Database Explorer Data Table ── */}
-      <section className="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col">
+      <section className="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col w-full max-w-full overflow-hidden">
         
         {/* Toolbar & Segmented Tabs */}
-        <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="p-4 border-b border-slate-200/80 dark:border-neutral-800 flex flex-col xl:flex-row xl:items-center justify-between gap-3 max-w-full">
           
           {/* Segmented View Tabs */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200/80 dark:border-slate-800">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-1 bg-slate-100 dark:bg-neutral-900 p-1 rounded-xl border border-slate-200/80 dark:border-neutral-800 max-w-full overflow-x-auto">
             <button
               onClick={() => { setActiveTableTab("scraped"); setTablePage(1); }}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition shadow-sm cursor-pointer flex items-center gap-2 ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition shadow-sm cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 activeTableTab === "scraped"
-                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-slate-700"
+                  ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <Database className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+              <Database className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
               <span>All Scraped Leads</span>
-              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-bold">
+              <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-bold">
                 {filteredData.currentScraped.length}
               </span>
             </button>
 
             <button
               onClick={() => { setActiveTableTab("inbound"); setTablePage(1); }}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition shadow-sm cursor-pointer flex items-center gap-2 ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition shadow-sm cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 activeTableTab === "inbound"
-                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-slate-700"
+                  ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>Inbound Inquiries</span>
-              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold">
+              <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold">
                 {filteredData.currentInquiries.length}
               </span>
             </button>
 
             <button
               onClick={() => { setActiveTableTab("portfolio"); setTablePage(1); }}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition shadow-sm cursor-pointer flex items-center gap-2 ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition shadow-sm cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 activeTableTab === "portfolio"
-                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-slate-700"
+                  ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <Briefcase className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <Briefcase className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
               <span>Studio Showcase</span>
-              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-bold">
+              <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-bold">
                 {portfolios.length}
               </span>
             </button>
           </div>
 
           {/* Search & Action Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
             <div className="relative w-full md:w-64">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -1077,8 +1077,8 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Lead Table Content */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse min-w-[800px]">
             <thead>
               <tr className="bg-slate-50/75 dark:bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold">
                 <th className="py-3 px-4 w-8">
@@ -1192,18 +1192,18 @@ export default function SuperAdminDashboard() {
 
         {/* Table Footer & Pagination */}
         {tableDataset.length > 0 && (
-          <div className="p-4 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+          <div className="p-4 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
             <span className="text-xs text-slate-500 dark:text-slate-400">
               Showing <span className="font-semibold text-slate-900 dark:text-white">{(tablePage - 1) * tableLimit + 1}</span> to{" "}
               <span className="font-semibold text-slate-900 dark:text-white">{Math.min(tablePage * tableLimit, tableDataset.length)}</span> of{" "}
               <span className="font-semibold text-slate-900 dark:text-white">{tableDataset.length}</span> leads
             </span>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
               <button
                 disabled={tablePage === 1}
                 onClick={() => setTablePage(prev => Math.max(1, prev - 1))}
-                className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer disabled:opacity-40 shadow-sm"
+                className="px-3.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer disabled:opacity-40 shadow-sm transition"
               >
                 Previous
               </button>
@@ -1213,8 +1213,8 @@ export default function SuperAdminDashboard() {
                   onClick={() => setTablePage(p)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm cursor-pointer ${
                     tablePage === p
-                      ? "bg-indigo-600 text-white"
-                      : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                      ? "bg-indigo-600 text-white font-bold"
+                      : "hidden sm:inline-flex bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                   }`}
                 >
                   {p}
@@ -1223,7 +1223,7 @@ export default function SuperAdminDashboard() {
               <button
                 disabled={tablePage >= totalTablePages}
                 onClick={() => setTablePage(prev => prev + 1)}
-                className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer disabled:opacity-40 shadow-sm"
+                className="px-3.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer disabled:opacity-40 shadow-sm transition"
               >
                 Next
               </button>
