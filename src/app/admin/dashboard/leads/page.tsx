@@ -29,7 +29,8 @@ import {
   CheckCircle2,
   User,
   Users,
-  FileSpreadsheet
+  FileSpreadsheet,
+  MessageSquare
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
 
@@ -645,6 +646,86 @@ export default function LeadsManager() {
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{selectedLead.name}</h3>
                   <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">{selectedLead.company || selectedLead.city || "Client Prospect"}</p>
                 </div>
+              </div>
+
+              {/* ── SLEEK & WELL-POSITIONED ACTION BUTTONS TOOLBAR ── */}
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 pt-2">
+                {/* Call */}
+                {selectedLead.phone ? (
+                  <a
+                    href={`tel:${selectedLead.phone.replace(/[^0-9+]/g, "")}`}
+                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-indigo-500/50 hover:bg-indigo-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0"
+                  >
+                    <Phone className="w-4 h-4 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform shrink-0" />
+                    <span>Call</span>
+                  </a>
+                ) : (
+                  <button
+                    disabled
+                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/40 dark:bg-neutral-900/40 border border-slate-200/40 dark:border-neutral-800/40 opacity-50 text-slate-400 text-xs font-semibold cursor-not-allowed shrink-0"
+                  >
+                    <Phone className="w-4 h-4 shrink-0" />
+                    <span>Call</span>
+                  </button>
+                )}
+
+                {/* Email */}
+                {selectedLead.email ? (
+                  <a
+                    href={`mailto:${selectedLead.email}`}
+                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-indigo-500/50 hover:bg-indigo-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0"
+                  >
+                    <Mail className="w-4 h-4 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform shrink-0" />
+                    <span>Email</span>
+                  </a>
+                ) : (
+                  <button
+                    disabled
+                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/40 dark:bg-neutral-900/40 border border-slate-200/40 dark:border-neutral-800/40 opacity-50 text-slate-400 text-xs font-semibold cursor-not-allowed shrink-0"
+                  >
+                    <Mail className="w-4 h-4 shrink-0" />
+                    <span>Email</span>
+                  </button>
+                )}
+
+                {/* WhatsApp */}
+                {selectedLead.phone ? (
+                  <a
+                    href={`https://wa.me/${selectedLead.phone.replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-emerald-500/50 hover:bg-emerald-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0"
+                  >
+                    <MessageSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
+                    <span className="truncate">Chat</span>
+                  </a>
+                ) : (
+                  <button
+                    disabled
+                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/40 dark:bg-neutral-900/40 border border-slate-200/40 dark:border-neutral-800/40 opacity-50 text-slate-400 text-xs font-semibold cursor-not-allowed shrink-0"
+                  >
+                    <MessageSquare className="w-4 h-4 shrink-0" />
+                    <span>Chat</span>
+                  </button>
+                )}
+
+                {/* Status Update / Action */}
+                <button
+                  onClick={() => handleStatusUpdate(selectedLead.id, selectedLead.status === "qualified" ? "pending" : "qualified")}
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-amber-500/50 hover:bg-amber-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
+                  <span>Qualify</span>
+                </button>
+
+                {/* Delete */}
+                <button
+                  onClick={() => handleDeleteLead(selectedLead)}
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-rose-500/50 hover:bg-rose-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0 col-span-2 sm:col-span-1"
+                >
+                  <Trash2 className="w-4 h-4 text-rose-600 dark:text-rose-400 group-hover:scale-110 transition-transform shrink-0" />
+                  <span>Delete</span>
+                </button>
               </div>
 
               <div className="space-y-3 pt-4 text-xs">
