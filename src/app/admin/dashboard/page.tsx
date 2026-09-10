@@ -621,6 +621,34 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  // 7. Bulk Delete Leads API Action
+  const handleBulkDelete = async () => {
+    if (selectedRows.size === 0) return;
+    if (!confirm(`Are you sure you want to permanently delete ${selectedRows.size} selected lead(s)?`)) return;
+
+    try {
+      const selectedIds = Array.from(selectedRows);
+      const numericIds = selectedIds
+        .map(id => (typeof id === "number" ? id : parseInt(String(id).replace(/[^0-9]/g, ""), 10)))
+        .filter(id => !isNaN(id));
+
+      const res = await authFetch(`${API}/api/v1/scraped-leads/bulk-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lead_ids: numericIds }),
+      });
+
+      if (res.ok) {
+        setScrapedLeads(prev => prev.filter(l => !numericIds.includes(l.id)));
+        setInquiryLeads(prev => prev.filter(l => !numericIds.includes(l.id)));
+        setSelectedRows(new Set());
+        triggerToast(`Bulk deleted ${numericIds.length} lead(s) successfully`);
+      }
+    } catch (err) {
+      console.error("Failed bulk delete:", err);
+    }
+  };
+
   // 6. Direct Email Outreach Sender
   const handleSendDirectEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1034,6 +1062,17 @@ export default function SuperAdminDashboard() {
               <Download className="w-3.5 h-3.5 text-slate-500" />
               <span>Export</span>
             </button>
+
+            {selectedRows.size > 0 && (
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer animate-fadeIn"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Selected ({selectedRows.size})</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -1195,8 +1234,14 @@ export default function SuperAdminDashboard() {
 
       {/* ── 100% Dynamic Slide-Over Lead Detail Inspection Drawer (Right Panel) ── */}
       {isDrawerOpen && selectedLead && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/60 backdrop-blur-md flex justify-end animate-fadeIn">
-          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] h-full shadow-2xl flex flex-col justify-between border-l border-slate-200 dark:border-slate-800 overflow-y-auto">
+        <div
+          onClick={() => setIsDrawerOpen(false)}
+          className="fixed inset-0 z-50 overflow-hidden bg-black/80 flex justify-end animate-fadeIn cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full sm:max-w-md bg-white dark:bg-[#0a0a0a] h-full shadow-2xl flex flex-col justify-between border-l border-slate-200 dark:border-neutral-800 overflow-y-auto cursor-default"
+          >
             
             {/* Drawer Content */}
             <div>

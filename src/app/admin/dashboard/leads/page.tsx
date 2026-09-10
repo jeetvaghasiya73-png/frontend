@@ -67,6 +67,9 @@ export default function LeadsManager() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Selection & Bulk Delete state
+  const [selectedLeadIds, setSelectedLeadIds] = useState<Set<number>>(new Set());
+
   // Drawer state
   const [selectedLead, setSelectedLead] = useState<NormalizedLead | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -186,6 +189,27 @@ export default function LeadsManager() {
       }
     } catch (err) {
       console.error("Failed to delete lead:", err);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedLeadIds.size === 0) return;
+    if (!confirm(`Are you sure you want to permanently delete ${selectedLeadIds.size} selected lead(s)?`)) return;
+
+    try {
+      const leadIdsList = Array.from(selectedLeadIds);
+      const res = await authFetch(`${API}/api/v1/scraped-leads/bulk-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lead_ids: leadIdsList }),
+      });
+
+      if (res.ok) {
+        setAllLeads(prev => prev.filter(l => !selectedLeadIds.has(l.rawId)));
+        setSelectedLeadIds(new Set());
+      }
+    } catch (err) {
+      console.error("Failed bulk delete:", err);
     }
   };
 
@@ -386,7 +410,7 @@ export default function LeadsManager() {
                   setStatusFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="pl-8 pr-8 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer appearance-none"
+                className="pl-8 pr-8 py-1.5 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer appearance-none"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -397,6 +421,17 @@ export default function LeadsManager() {
               <Filter className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
+
+            {selectedLeadIds.size > 0 && (
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer animate-fadeIn"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Selected ({selectedLeadIds.size})</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -404,7 +439,25 @@ export default function LeadsManager() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-50/75 dark:bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold">
+              <tr className="bg-slate-50/75 dark:bg-neutral-900/60 border-b border-slate-200/80 dark:border-neutral-800 text-slate-500 dark:text-neutral-400 font-semibold">
+                <th className="py-3 px-4 w-8">
+                  <input
+                    type="checkbox"
+                    checked={paginatedLeads.length > 0 && paginatedLeads.every(l => selectedLeadIds.has(l.rawId))}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        const newSet = new Set(selectedLeadIds);
+                        paginatedLeads.forEach(l => newSet.add(l.rawId));
+                        setSelectedLeadIds(newSet);
+                      } else {
+                        const newSet = new Set(selectedLeadIds);
+                        paginatedLeads.forEach(l => newSet.delete(l.rawId));
+                        setSelectedLeadIds(newSet);
+                      }
+                    }}
+                    className="rounded border-slate-300 dark:border-neutral-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  />
+                </th>
                 <th className="py-3 px-4 uppercase tracking-wider text-[10px]">Lead Name</th>
                 <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Company / City</th>
                 <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Industry / Service</th>
@@ -415,16 +468,35 @@ export default function LeadsManager() {
                 <th className="py-3 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200/80 dark:divide-slate-800">
-              {paginatedLeads.map((lead) => (
-                <tr
-                  key={lead.id}
-                  onClick={() => {
-                    setSelectedLead(lead);
-                    setIsDrawerOpen(true);
-                  }}
-                  className="hover:bg-slate-50/80 dark:hover:bg-slate-900/40 transition cursor-pointer"
-                >
+            <tbody className="divide-y divide-slate-200/80 dark:divide-neutral-800">
+              {paginatedLeads.map((lead) => {
+                const isSelected = selectedLeadIds.has(lead.rawId);
+                return (
+                  <tr
+                    key={lead.id}
+                    onClick={() => {
+                      setSelectedLead(lead);
+                      setIsDrawerOpen(true);
+                    }}
+                    className={`transition cursor-pointer ${
+                      isSelected
+                        ? "bg-indigo-50/50 dark:bg-indigo-950/30"
+                        : "hover:bg-slate-50/80 dark:hover:bg-neutral-900/50"
+                    }`}
+                  >
+                    <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          const next = new Set(selectedLeadIds);
+                          if (next.has(lead.rawId)) next.delete(lead.rawId);
+                          else next.add(lead.rawId);
+                          setSelectedLeadIds(next);
+                        }}
+                        className="rounded border-slate-300 dark:border-neutral-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      />
+                    </td>
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-xs shadow-sm shrink-0">
@@ -484,7 +556,8 @@ export default function LeadsManager() {
                     </button>
                   </td>
                 </tr>
-              ))}
+              );
+            })}
             </tbody>
           </table>
         </div>
