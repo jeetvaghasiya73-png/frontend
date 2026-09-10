@@ -75,6 +75,30 @@ export default function LeadsManager() {
   const [selectedLead, setSelectedLead] = useState<NormalizedLead | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
+  // Modal states for Import & Add Lead
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<string | null>(null);
+
+  const [showAddLeadModal, setShowAddLeadModal] = useState(false);
+  const [newLeadForm, setNewLeadForm] = useState({
+    bussiness_name: "",
+    bussiness_email: "",
+    bussiness_number: "",
+    scraped_city: "",
+    scraped_service: "",
+    category: "",
+    bussiness_website: "",
+  });
+  const [submittingNewLead, setSubmittingNewLead] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 4000);
+  };
+
   const fetchLeads = async () => {
     try {
       const inquiryRes = await authFetch(`${API}/api/v1/leads/`);
@@ -208,10 +232,114 @@ export default function LeadsManager() {
       if (res.ok) {
         setAllLeads(prev => prev.filter(l => !selectedLeadIds.has(l.rawId)));
         setSelectedLeadIds(new Set());
+        triggerToast("Selected leads deleted permanently");
       }
     } catch (err) {
       console.error("Failed bulk delete:", err);
     }
+  };
+
+  const handleFileUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!importFile) return;
+    setUploading(true);
+    setUploadResult(null);
+
+    const formData = new FormData();
+    formData.append("file", importFile);
+
+    try {
+      const res = await authFetch(`${API}/api/v1/scraped-leads/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const msg = data.message || `Successfully imported ${data.inserted} leads into database!`;
+        setUploadResult(msg);
+        triggerToast(msg);
+        await fetchLeads();
+        setTimeout(() => {
+          setShowImportModal(false);
+          setImportFile(null);
+          setUploadResult(null);
+        }, 1500);
+      } else {
+        const err = await res.json();
+        setUploadResult(`Error: ${err.detail || "Failed to process spreadsheet."}`);
+      }
+    } catch (err: any) {
+      setUploadResult(`Error: ${err.message || "Failed to upload file."}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleCreateSingleLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newLeadForm.bussiness_name.trim()) {
+      triggerToast("Lead Name is required");
+      return;
+    }
+    setSubmittingNewLead(true);
+    try {
+      const res = await authFetch(`${API}/api/v1/scraped-leads/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newLeadForm),
+      });
+
+      if (res.ok) {
+        triggerToast(`Lead "${newLeadForm.bussiness_name}" added to database!`);
+        setNewLeadForm({
+          bussiness_name: "",
+          bussiness_email: "",
+          bussiness_number: "",
+          scraped_city: "",
+          scraped_service: "",
+          category: "",
+          bussiness_website: "",
+        });
+        setShowAddLeadModal(false);
+        await fetchLeads();
+      } else {
+        const err = await res.json();
+        triggerToast(err.detail || "Failed to create lead");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error creating lead");
+    } finally {
+      setSubmittingNewLead(false);
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (allLeads.length === 0) return;
+    const headers = ["ID", "Name", "Email", "Phone", "Company/City", "Service", "Source", "Status", "Score", "Created At"];
+    const rows = allLeads.map(l => [
+      l.id,
+      `"${l.name.replace(/"/g, '""')}"`,
+      `"${l.email}"`,
+      `"${l.phone || ""}"`,
+      `"${l.company || l.city || ""}"`,
+      `"${l.services.join(", ") || l.category || ""}"`,
+      l.source,
+      l.status,
+      l.score,
+      l.created_at
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `leadflow_leads_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    triggerToast(`Exported ${allLeads.length} leads to CSV file`);
   };
 
   const filteredLeads = useMemo(() => {
@@ -264,6 +392,14 @@ export default function LeadsManager() {
   return (
     <div className="space-y-6 text-left pb-20 relative animate-fadeIn font-sans antialiased text-slate-800 dark:text-slate-200 w-full max-w-full overflow-x-hidden">
       
+      {/* Action Toast Notification */}
+      {toastMsg && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl border border-indigo-500/40 shadow-2xl flex items-center gap-3 animate-fadeIn">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          <span className="text-xs font-semibold">{toastMsg}</span>
+        </div>
+      )}
+
       {/* Top Bar Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0a0a0a] p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-neutral-800 shadow-sm w-full max-w-full">
         <div className="flex items-center gap-3">
@@ -285,6 +421,7 @@ export default function LeadsManager() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
+            onClick={handleExportCSV}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs font-semibold text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 transition shadow-sm cursor-pointer"
           >
             <Download className="w-3.5 h-3.5 text-slate-500" />
@@ -292,13 +429,15 @@ export default function LeadsManager() {
           </button>
           <button
             type="button"
+            onClick={() => setShowImportModal(true)}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs font-semibold text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 transition shadow-sm cursor-pointer"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-slate-500" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-500" />
             <span>Import Sheet</span>
           </button>
           <button
             type="button"
+            onClick={() => setShowAddLeadModal(true)}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white shadow-sm shadow-indigo-600/30 transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -794,6 +933,227 @@ export default function LeadsManager() {
                 Send Email
               </a>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 1. Import Excel / CSV Spreadsheet Modal ── */}
+      {showImportModal && (
+        <div
+          onClick={() => setShowImportModal(false)}
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg bg-white dark:bg-[#0a0a0a] rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl p-6 space-y-5 cursor-default relative"
+          >
+            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-neutral-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Import Leads Spreadsheet</h3>
+                  <p className="text-xs text-slate-500 dark:text-neutral-400">Inject batch prospect records directly into database</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleFileUpload} className="space-y-4">
+              {/* File Dropzone */}
+              <div className="border-2 border-dashed border-slate-300 dark:border-neutral-800 rounded-xl p-6 text-center hover:border-indigo-500 transition cursor-pointer bg-slate-50/50 dark:bg-neutral-900/40 relative">
+                <input
+                  type="file"
+                  accept=".xlsx, .xls, .csv"
+                  onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
+                <FileSpreadsheet className="w-10 h-10 text-indigo-600 dark:text-indigo-400 mx-auto mb-2" />
+                {importFile ? (
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate max-w-xs mx-auto">{importFile.name}</p>
+                    <p className="text-[10px] text-slate-400 font-mono">{(importFile.size / 1024).toFixed(1)} KB — Ready to Inject</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-slate-700 dark:text-neutral-200">Click or drag `.xlsx`, `.xls` or `.csv` spreadsheet</p>
+                    <p className="text-[10px] text-slate-400">Auto-resolves Name, Email, Phone, City, Website &amp; Category columns</p>
+                  </div>
+                )}
+              </div>
+
+              {uploadResult && (
+                <div className={`p-3 rounded-xl text-xs font-mono border ${
+                  uploadResult.startsWith("Error")
+                    ? "bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400"
+                    : "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
+                }`}>
+                  {uploadResult}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowImportModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!importFile || uploading}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2"
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Injecting Leads...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      <span>Inject to Database</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── 2. Add Lead Manual Form Modal ── */}
+      {showAddLeadModal && (
+        <div
+          onClick={() => setShowAddLeadModal(false)}
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-white dark:bg-[#0a0a0a] rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl p-6 space-y-4 cursor-default relative"
+          >
+            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-neutral-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center shadow-md">
+                  <User className="w-4.5 h-4.5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Add New Lead Record</h3>
+                  <p className="text-xs text-slate-500 dark:text-neutral-400">Manually insert a prospect into database</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddLeadModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSingleLead} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Business / Lead Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Nexus Tech Studios"
+                  value={newLeadForm.bussiness_name}
+                  onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_name: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Business Email</label>
+                  <input
+                    type="email"
+                    placeholder="contact@nexus.com"
+                    value={newLeadForm.bussiness_email}
+                    onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_email: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Phone Number</label>
+                  <input
+                    type="text"
+                    placeholder="+1 555-0192"
+                    value={newLeadForm.bussiness_number}
+                    onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_number: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">City / Location</label>
+                  <input
+                    type="text"
+                    placeholder="New York"
+                    value={newLeadForm.scraped_city}
+                    onChange={(e) => setNewLeadForm({ ...newLeadForm, scraped_city: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Service / Keyword</label>
+                  <input
+                    type="text"
+                    placeholder="Web Development"
+                    value={newLeadForm.scraped_service}
+                    onChange={(e) => setNewLeadForm({ ...newLeadForm, scraped_service: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Website URL</label>
+                <input
+                  type="text"
+                  placeholder="https://nexus.com"
+                  value={newLeadForm.bussiness_website}
+                  onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_website: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddLeadModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingNewLead}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2"
+                >
+                  {submittingNewLead ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      <span>Save Lead to DB</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
