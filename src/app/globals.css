@@ -25,16 +25,16 @@
 }
 
 .dark {
-  --background: #050505;
-  --foreground: #FFFFFF;
-  --surface: #111111;
-  --border-custom: rgba(255, 255, 255, 0.08);
-  --secondary-custom: #B0B0B0;
-  --accent-custom: #4F7CFF;
-  --accent-glow: rgba(79, 124, 255, 0.08);
-  --grid-color: rgba(255, 255, 255, 0.02);
-  --selection-bg: #4F7CFF;
-  --selection-color: #000000;
+  --background: #000000;
+  --foreground: #EDEDED;
+  --surface: #0A0A0A;
+  --border-custom: #222222;
+  --secondary-custom: #A1A1AA;
+  --accent-custom: #6366F1;
+  --accent-glow: rgba(99, 102, 241, 0.1);
+  --grid-color: rgba(255, 255, 255, 0.03);
+  --selection-bg: #6366F1;
+  --selection-color: #FFFFFF;
 }
 
 /* Base resets & theme animation transition */

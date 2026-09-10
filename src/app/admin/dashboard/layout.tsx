@@ -30,6 +30,9 @@ import {
   Sparkles
 } from "lucide-react";
 
+import { authFetch } from "@/lib/authFetch";
+import { API_URL } from "@/lib/config";
+
 export default function DashboardLayout({
   children
 }: {
@@ -41,6 +44,8 @@ export default function DashboardLayout({
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [leadsBadge, setLeadsBadge] = useState<string>("...");
+  const [contactsBadge, setContactsBadge] = useState<string>("...");
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
@@ -55,6 +60,39 @@ export default function DashboardLayout({
       router.push("/admin/login");
     }
   }, [isAuthenticated, router]);
+
+  // Fetch dynamic badge counts
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    async function loadCounts() {
+      try {
+        const [scrapedRes, leadsRes, contactsRes] = await Promise.allSettled([
+          authFetch(`${API_URL}/api/v1/scraped-leads/stats`),
+          authFetch(`${API_URL}/api/v1/leads/`),
+          authFetch(`${API_URL}/api/v1/contacts/`)
+        ]);
+
+        let totalLeadsCount = 0;
+        if (scrapedRes.status === "fulfilled" && scrapedRes.value.ok) {
+          const stats = await scrapedRes.value.json();
+          totalLeadsCount += stats.total || 0;
+        }
+        if (leadsRes.status === "fulfilled" && leadsRes.value.ok) {
+          const inq = await leadsRes.value.json();
+          totalLeadsCount += Array.isArray(inq) ? inq.length : 0;
+        }
+        setLeadsBadge(String(totalLeadsCount));
+
+        if (contactsRes.status === "fulfilled" && contactsRes.value.ok) {
+          const msgs = await contactsRes.value.json();
+          setContactsBadge(String(Array.isArray(msgs) ? msgs.length : 0));
+        }
+      } catch (e) {
+        console.error("Failed to load sidebar badge counts:", e);
+      }
+    }
+    loadCounts();
+  }, [isAuthenticated]);
 
   // Synchronous check if already in browser
   if (typeof window !== "undefined" && !isAuthenticated) {
@@ -71,8 +109,8 @@ export default function DashboardLayout({
       title: "CORE CRM",
       links: [
         { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-        { name: "Leads Database", href: "/admin/dashboard/leads", icon: Users, badge: "34" },
-        { name: "Messages Inbox", href: "/admin/dashboard/contacts", icon: MessageSquare, badge: "8" },
+        { name: "Leads Database", href: "/admin/dashboard/leads", icon: Users, badge: leadsBadge },
+        { name: "Messages Inbox", href: "/admin/dashboard/contacts", icon: MessageSquare, badge: contactsBadge },
       ]
     },
     {
@@ -95,10 +133,10 @@ export default function DashboardLayout({
   ];
 
   return (
-    <div className="h-screen bg-slate-50 dark:bg-[#090d16] text-slate-800 dark:text-slate-200 flex flex-col lg:flex-row overflow-hidden relative font-sans antialiased">
+    <div className="h-screen bg-slate-50 dark:bg-[#000000] text-slate-800 dark:text-neutral-200 flex flex-col lg:flex-row overflow-hidden relative font-sans antialiased">
       
       {/* Mobile Top Bar */}
-      <div className="lg:hidden w-full bg-slate-900 border-b border-slate-800 px-5 py-3.5 flex items-center justify-between z-30 shrink-0 text-white">
+      <div className="lg:hidden w-full bg-slate-900 dark:bg-[#09090b] border-b border-slate-800 dark:border-neutral-800 px-5 py-3.5 flex items-center justify-between z-30 shrink-0 text-white">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
@@ -107,7 +145,7 @@ export default function DashboardLayout({
           >
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white font-bold shadow-md shadow-indigo-500/30">
+          <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center shadow-md shadow-indigo-500/30">
             <Zap className="w-4.5 h-4.5" />
           </div>
           <div className="flex flex-col">
@@ -133,9 +171,9 @@ export default function DashboardLayout({
         </div>
       </div>
 
-      {/* ── Left Sidebar Panel (Slate 900 Theme) ── */}
+      {/* ── Left Sidebar Panel (Vercel Deep Black Theme) ── */}
       <aside
-        className={`fixed inset-y-0 left-0 bg-slate-900 border-r border-slate-800/80 flex flex-col justify-between z-40 transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-full text-slate-300 select-none ${
+        className={`fixed inset-y-0 left-0 bg-slate-900 dark:bg-[#000000] border-r border-slate-800/80 dark:border-neutral-800 flex flex-col justify-between z-40 transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-full text-slate-300 select-none ${
           isCollapsed ? "w-[76px]" : "w-[260px]"
         } ${mobileOpen ? "translate-x-0 shadow-2xl w-[260px]" : "-translate-x-full"}`}
       >

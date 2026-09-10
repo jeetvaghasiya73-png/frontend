@@ -76,7 +76,7 @@ export default function LeadsManager() {
       const inquiryRes = await authFetch(`${API}/api/v1/leads/`);
       const inquiryData: any[] = inquiryRes.ok ? await inquiryRes.json() : [];
 
-      const scrapedRes = await authFetch(`${API}/api/v1/scraped-leads/?page=1&limit=100`);
+      const scrapedRes = await authFetch(`${API}/api/v1/scraped-leads/?page=1&limit=1000`);
       const scrapedJson = scrapedRes.ok ? await scrapedRes.json() : { leads: [], total: 0 };
       const scrapedData: any[] = scrapedJson.leads || [];
 
@@ -514,55 +514,93 @@ export default function LeadsManager() {
         )}
       </section>
 
-      {/* Slide-Over Drawer */}
+      {/* Slide-Over Drawer with Backdrop Click-Outside Close */}
       {isDrawerOpen && selectedLead && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs flex justify-end animate-fadeIn">
-          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] h-full shadow-2xl flex flex-col justify-between border-l border-slate-200 dark:border-slate-800 overflow-y-auto">
-            <div className="p-6 border-b border-slate-200/80 dark:border-slate-800 space-y-4">
+        <div
+          onClick={() => setIsDrawerOpen(false)}
+          className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end animate-fadeIn cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-white dark:bg-[#0a0a0a] h-full shadow-2xl flex flex-col justify-between border-l border-slate-200 dark:border-neutral-800 overflow-y-auto cursor-default"
+          >
+            <div className="p-6 border-b border-slate-200/80 dark:border-neutral-800 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
                   {selectedLead.source === "scraped" ? "Outbound Prospect" : "Inbound Lead"}
                 </span>
                 <button
                   onClick={() => setIsDrawerOpen(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer transition"
+                  title="Close panel"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="flex items-center gap-4 pt-2">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white font-extrabold text-xl flex items-center justify-center shadow-lg">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white font-extrabold text-xl flex items-center justify-center shadow-lg shrink-0">
                   {selectedLead.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{selectedLead.name}</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{selectedLead.company || selectedLead.city || "Client Prospect"}</p>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{selectedLead.name}</h3>
+                  <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">{selectedLead.company || selectedLead.city || "Client Prospect"}</p>
                 </div>
               </div>
 
               <div className="space-y-3 pt-4 text-xs">
-                <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
-                  <Mail className="w-4 h-4 text-slate-400" />
-                  <span className="font-semibold text-indigo-600 dark:text-indigo-400">{selectedLead.email || "No Email Listed"}</span>
+                <div className="flex items-center gap-3 text-slate-700 dark:text-neutral-300">
+                  <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span className="font-semibold text-indigo-600 dark:text-indigo-400 truncate">{selectedLead.email || "No Email Listed"}</span>
                 </div>
-                <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
-                  <Phone className="w-4 h-4 text-slate-400" />
+                <div className="flex items-center gap-3 text-slate-700 dark:text-neutral-300">
+                  <Phone className="w-4 h-4 text-slate-400 shrink-0" />
                   <span>{selectedLead.phone || "No Phone Listed"}</span>
                 </div>
                 {selectedLead.city && (
-                  <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
-                    <MapPin className="w-4 h-4 text-slate-400" />
+                  <div className="flex items-center gap-3 text-slate-700 dark:text-neutral-300">
+                    <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
                     <span>{selectedLead.city}</span>
+                  </div>
+                )}
+                {selectedLead.website && (
+                  <div className="flex items-center gap-3 text-slate-700 dark:text-neutral-300">
+                    <Globe className="w-4 h-4 text-slate-400 shrink-0" />
+                    <a
+                      href={selectedLead.website.startsWith("http") ? selectedLead.website : `https://${selectedLead.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-indigo-600 dark:text-indigo-400 hover:underline truncate"
+                    >
+                      {selectedLead.website}
+                    </a>
+                  </div>
+                )}
+                {selectedLead.rating && (
+                  <div className="flex items-center gap-3 text-slate-700 dark:text-neutral-300">
+                    <Star className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span>Rating: <strong>{selectedLead.rating} / 5.0</strong></span>
+                  </div>
+                )}
+                {selectedLead.services && selectedLead.services.length > 0 && (
+                  <div className="flex items-start gap-3 text-slate-700 dark:text-neutral-300 pt-1">
+                    <Tag className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                    <div className="flex flex-wrap gap-1">
+                      {selectedLead.services.map((svc, i) => (
+                        <span key={i} className="px-2 py-0.5 rounded bg-slate-100 dark:bg-neutral-800 text-[10px] font-mono text-slate-700 dark:text-neutral-300">
+                          {svc}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/40">
+            <div className="p-6 border-t border-slate-200/80 dark:border-neutral-800 flex items-center justify-between bg-slate-50/50 dark:bg-neutral-900/40">
               <button
                 onClick={() => handleDeleteLead(selectedLead)}
-                className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 flex items-center gap-1 cursor-pointer"
+                className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 flex items-center gap-1.5 cursor-pointer"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete Prospect
