@@ -663,24 +663,12 @@ function OutreachManager() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={handleCheckReplies}
-            disabled={checkingReplies}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-custom/10 hover:bg-accent-custom/20 text-accent-custom border border-accent-custom/20 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer disabled:opacity-50"
-            title="Check for incoming email replies (IMAP in Production Mode, Simulation in Test Mode)"
-          >
-            {checkingReplies ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <MessageSquare className="w-3.5 h-3.5" />
-            )}
-            <span>{checkingReplies ? "Checking..." : "Check Replies"}</span>
-          </button>
-          <button
             onClick={() => fetchData()}
-            className="p-1.5 hover:bg-gray-150 dark:hover:bg-white/5 border border-gray-250 dark:border-white/10 rounded-lg text-gray-450 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
+            className="p-1.5 hover:bg-gray-150 dark:hover:bg-white/5 border border-gray-250 dark:border-white/10 rounded-lg text-gray-450 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer flex items-center gap-1 text-xs font-mono"
             title="Refresh Data"
           >
             <RefreshCw className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Sync Data</span>
           </button>
         </div>
       </div>
@@ -1363,23 +1351,6 @@ function OutreachManager() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             {/* Conversation list */}
             <div className="lg:col-span-1 space-y-4">
-              <div className="flex items-center justify-between gap-2 pb-1 border-b border-gray-150 dark:border-white/5">
-                <span className="text-[11px] font-mono font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Prospect Threads</span>
-                <button
-                  onClick={handleCheckReplies}
-                  disabled={checkingReplies}
-                  className="flex items-center gap-1.5 px-2.5 py-1 bg-accent-custom hover:bg-accent-custom/90 text-white rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer disabled:opacity-50 shadow-sm"
-                  title="Poll IMAP Inbox in Production, or simulate prospect test reply in Test Mode"
-                >
-                  {checkingReplies ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <MessageSquare className="w-3 h-3" />
-                  )}
-                  <span>{checkingReplies ? "Checking..." : "Fetch Replies"}</span>
-                </button>
-              </div>
-
               <div className="relative">
                 <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
