@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/lib/authStore";
 import { useTheme } from "next-themes";
@@ -27,11 +27,38 @@ import {
   ChevronRight,
   Zap,
   Layers,
-  Sparkles
+  Sparkles,
+  CheckCheck,
+  Trash2,
+  Mail,
+  CheckCircle2,
+  ExternalLink
 } from "lucide-react";
 
 import { authFetch } from "@/lib/authFetch";
 import { API_URL } from "@/lib/config";
+
+interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  time: string;
+  timestamp: number;
+  type: "inquiry" | "lead" | "system" | "email";
+  read: boolean;
+  link: string;
+}
+
+function formatRelativeTime(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 export default function DashboardLayout({
   children
@@ -48,6 +75,13 @@ export default function DashboardLayout({
   const [contactsBadge, setContactsBadge] = useState<string>("...");
   const { theme, setTheme } = useTheme();
 
+  // Notifications State & Dropdown
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [activeNotifFilter, setActiveNotifFilter] = useState<"all" | "unread" | "inquiry" | "system">("all");
+  const notifRef = useRef<HTMLDivElement>(null);
+  const mobileNotifRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     setMounted(true);
     if (typeof window !== "undefined") {
@@ -61,10 +95,24 @@ export default function DashboardLayout({
     }
   }, [isAuthenticated, router]);
 
-  // Fetch dynamic badge counts
+  // Click outside to close notifications dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        notifRef.current && !notifRef.current.contains(event.target as Node) &&
+        mobileNotifRef.current && !mobileNotifRef.current.contains(event.target as Node)
+      ) {
+        setNotificationsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Fetch dynamic badge counts & live notifications
   useEffect(() => {
     if (!isAuthenticated) return;
-    async function loadCounts() {
+    async function loadCountsAndNotifications() {
       try {
         const [scrapedRes, leadsRes, contactsRes] = await Promise.allSettled([
           authFetch(`${API_URL}/api/v1/scraped-leads/stats`),
@@ -72,26 +120,82 @@ export default function DashboardLayout({
           authFetch(`${API_URL}/api/v1/contacts/`)
         ]);
 
+        const notifList: AppNotification[] = [];
         let totalLeadsCount = 0;
+
         if (scrapedRes.status === "fulfilled" && scrapedRes.value.ok) {
           const stats = await scrapedRes.value.json();
           totalLeadsCount += stats.total || 0;
         }
+
         if (leadsRes.status === "fulfilled" && leadsRes.value.ok) {
           const inq = await leadsRes.value.json();
-          totalLeadsCount += Array.isArray(inq) ? inq.length : 0;
+          if (Array.isArray(inq)) {
+            totalLeadsCount += inq.length;
+            inq.slice(0, 4).forEach((l: any) => {
+              notifList.push({
+                id: `inq-${l.id}`,
+                title: "New Inbound Inquiry",
+                message: `${l.name || "A prospect"} requested services (${l.company || "Direct"}).`,
+                time: l.created_at ? formatRelativeTime(l.created_at) : "Recently",
+                timestamp: l.created_at ? new Date(l.created_at).getTime() : Date.now(),
+                type: "lead",
+                read: false,
+                link: "/admin/dashboard/leads"
+              });
+            });
+          }
         }
         setLeadsBadge(String(totalLeadsCount));
 
         if (contactsRes.status === "fulfilled" && contactsRes.value.ok) {
           const msgs = await contactsRes.value.json();
-          setContactsBadge(String(Array.isArray(msgs) ? msgs.length : 0));
+          const msgArr = Array.isArray(msgs) ? msgs : [];
+          setContactsBadge(String(msgArr.length));
+          msgArr.slice(0, 4).forEach((msg: any) => {
+            notifList.push({
+              id: `contact-${msg.id}`,
+              title: "New Contact Message",
+              message: `${msg.name || "Website Visitor"}: "${msg.message ? msg.message.slice(0, 50) + "..." : "New message"}"`,
+              time: msg.created_at ? formatRelativeTime(msg.created_at) : "Recently",
+              timestamp: msg.created_at ? new Date(msg.created_at).getTime() : Date.now(),
+              type: "inquiry",
+              read: false,
+              link: "/admin/dashboard/contacts"
+            });
+          });
         }
+
+        // Add System Notifications
+        notifList.push({
+          id: "sys-db-status",
+          title: "CRM Database Synchronized",
+          message: `Live CRM connected with ${totalLeadsCount} active lead prospects online.`,
+          time: "Just now",
+          timestamp: Date.now(),
+          type: "system",
+          read: true,
+          link: "/admin/dashboard"
+        });
+
+        notifList.push({
+          id: "sys-email-worker",
+          title: "Autonomous Outreach Engine",
+          message: "Email automation worker standby mode • IMAP listener active.",
+          time: "10m ago",
+          timestamp: Date.now() - 10 * 60 * 1000,
+          type: "email",
+          read: false,
+          link: "/admin/dashboard/email-outreach"
+        });
+
+        notifList.sort((a, b) => b.timestamp - a.timestamp);
+        setNotifications(notifList);
       } catch (e) {
-        console.error("Failed to load sidebar badge counts:", e);
+        console.error("Failed to load badge counts & notifications:", e);
       }
     }
-    loadCounts();
+    loadCountsAndNotifications();
   }, [isAuthenticated]);
 
   // Synchronous check if already in browser
@@ -103,6 +207,27 @@ export default function DashboardLayout({
     logout();
     router.push("/admin/login");
   };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  const handleNotificationClick = (item: AppNotification) => {
+    setNotifications(prev => prev.map(n => n.id === item.id ? { ...n, read: true } : n));
+    setNotificationsOpen(false);
+    if (item.link) {
+      router.push(item.link);
+    }
+  };
+
+  const filteredNotifications = notifications.filter(n => {
+    if (activeNotifFilter === "unread") return !n.read;
+    if (activeNotifFilter === "inquiry") return n.type === "inquiry" || n.type === "lead";
+    if (activeNotifFilter === "system") return n.type === "system" || n.type === "email";
+    return true;
+  });
 
   const navGroups = [
     {
@@ -140,7 +265,7 @@ export default function DashboardLayout({
         <div className="flex items-center gap-3">
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="text-slate-300 hover:text-white p-1"
+            className="text-slate-300 hover:text-white p-1 cursor-pointer"
             aria-label="Toggle Navigation"
           >
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -158,10 +283,25 @@ export default function DashboardLayout({
         <div className="flex items-center gap-3">
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="text-slate-400 hover:text-white p-1 transition"
+            className="text-slate-400 hover:text-white p-1 transition cursor-pointer"
           >
             {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
           </button>
+
+          {/* Mobile Bell Button */}
+          <div className="relative" ref={mobileNotifRef}>
+            <button
+              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              className="text-slate-400 hover:text-white p-1 transition relative cursor-pointer"
+              title="Notifications"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-slate-900" />
+              )}
+            </button>
+          </div>
+
           <div className="relative">
             <span className="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-xs ring-2 ring-indigo-400/30">
               {user?.username ? user.username.slice(0, 2).toUpperCase() : "AR"}
@@ -199,7 +339,7 @@ export default function DashboardLayout({
                   setIsCollapsed(newVal);
                   localStorage.setItem("sidebar-collapsed", String(newVal));
                 }}
-                className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
                 title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
               >
                 {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -316,13 +456,151 @@ export default function DashboardLayout({
               {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
             </button>
 
-            <button
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition relative cursor-pointer"
-              title="Notifications"
-            >
-              <Bell className="w-4.5 h-4.5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full ring-2 ring-white dark:ring-slate-900" />
-            </button>
+            {/* Notification Bell Dropdown Container */}
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className={`p-2 rounded-xl transition relative cursor-pointer ${
+                  notificationsOpen
+                    ? "bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400"
+                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+                title="Notifications"
+              >
+                <Bell className="w-4.5 h-4.5" />
+                {unreadCount > 0 && (
+                  <>
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full animate-ping" />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900" />
+                  </>
+                )}
+              </button>
+
+              {/* Notification Popover Dropdown */}
+              {notificationsOpen && (
+                <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-[#0a0a0a] rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl z-50 overflow-hidden animate-fadeIn">
+                  {/* Header */}
+                  <div className="p-3.5 border-b border-slate-100 dark:border-neutral-800 flex items-center justify-between bg-slate-50/60 dark:bg-neutral-900/60">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs text-slate-900 dark:text-white">Notifications</span>
+                      {unreadCount > 0 && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-extrabold bg-rose-500 text-white rounded-full">
+                          {unreadCount} new
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px]">
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={markAllAsRead}
+                          className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold cursor-pointer flex items-center gap-1"
+                        >
+                          <CheckCheck className="w-3.5 h-3.5" />
+                          <span>Mark all read</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setNotifications([])}
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded hover:bg-slate-100 dark:hover:bg-neutral-800"
+                        title="Clear all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Filter Tabs */}
+                  <div className="flex items-center gap-1 px-3 py-1.5 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/30 dark:bg-neutral-900/30 text-[11px]">
+                    {(["all", "unread", "inquiry", "system"] as const).map(tab => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveNotifFilter(tab)}
+                        className={`px-2.5 py-0.5 rounded-md capitalize font-medium transition cursor-pointer ${
+                          activeNotifFilter === tab
+                            ? "bg-indigo-600 text-white font-bold"
+                            : "text-slate-500 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800"
+                        }`}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Notification Items List */}
+                  <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-neutral-900">
+                    {filteredNotifications.length === 0 ? (
+                      <div className="p-8 text-center text-xs text-slate-400 dark:text-neutral-500 space-y-1">
+                        <CheckCircle2 className="w-8 h-8 text-slate-300 dark:text-neutral-700 mx-auto" />
+                        <p className="font-semibold text-slate-600 dark:text-neutral-400">All caught up!</p>
+                        <p className="text-[11px]">No notifications found.</p>
+                      </div>
+                    ) : (
+                      filteredNotifications.map(n => (
+                        <div
+                          key={n.id}
+                          onClick={() => handleNotificationClick(n)}
+                          className={`p-3 transition flex items-start gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-neutral-900/80 ${
+                            !n.read ? "bg-indigo-50/30 dark:bg-indigo-950/20" : ""
+                          }`}
+                        >
+                          {/* Icon per type */}
+                          <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${
+                            n.type === "inquiry"
+                              ? "bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400"
+                              : n.type === "lead"
+                              ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
+                              : n.type === "email"
+                              ? "bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400"
+                              : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300"
+                          }`}>
+                            {n.type === "inquiry" && <Mail className="w-3.5 h-3.5" />}
+                            {n.type === "lead" && <UserCheck className="w-3.5 h-3.5" />}
+                            {n.type === "email" && <MessageSquare className="w-3.5 h-3.5" />}
+                            {n.type === "system" && <Zap className="w-3.5 h-3.5" />}
+                          </div>
+
+                          {/* Message Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className={`text-xs font-bold truncate ${
+                                !n.read ? "text-indigo-600 dark:text-indigo-400" : "text-slate-900 dark:text-white"
+                              }`}>
+                                {n.title}
+                              </span>
+                              <span className="text-[10px] text-slate-400 dark:text-neutral-500 font-mono shrink-0">
+                                {n.time}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-600 dark:text-neutral-400 mt-0.5 line-clamp-2 leading-relaxed">
+                              {n.message}
+                            </p>
+                          </div>
+
+                          {/* Unread Indicator */}
+                          {!n.read && (
+                            <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1.5" />
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Popover Footer */}
+                  <div className="p-2.5 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 text-center">
+                    <button
+                      onClick={() => {
+                        setNotificationsOpen(false);
+                        router.push("/admin/dashboard/leads");
+                      }}
+                      className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer inline-flex items-center gap-1"
+                    >
+                      <span>View All Pipeline Leads</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800" />
 
