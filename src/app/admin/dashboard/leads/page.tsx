@@ -607,31 +607,37 @@ export default function LeadsManager() {
         )}
       </section>
 
-      {/* Slide-Over Drawer with Backdrop Click-Outside Close */}
+      {/* Slide-Over Drawer / Responsive Popup Modal with Backdrop Click-Outside Close */}
       {isDrawerOpen && selectedLead && (
         <div
           onClick={() => setIsDrawerOpen(false)}
-          className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end animate-fadeIn cursor-pointer"
+          className="fixed inset-0 z-50 overflow-hidden bg-black/80 backdrop-blur-xs flex items-end sm:items-stretch justify-center sm:justify-end animate-fadeIn cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md bg-white dark:bg-[#0a0a0a] h-full shadow-2xl flex flex-col justify-between border-l border-slate-200 dark:border-neutral-800 overflow-y-auto cursor-default"
+            className="w-full sm:max-w-md bg-white dark:bg-[#0a0a0a] h-[88vh] sm:h-full rounded-t-2xl sm:rounded-none shadow-2xl flex flex-col justify-between border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-neutral-800 overflow-y-auto cursor-default relative"
           >
-            <div className="p-6 border-b border-slate-200/80 dark:border-neutral-800 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
-                  {selectedLead.source === "scraped" ? "Outbound Prospect" : "Inbound Lead"}
-                </span>
-                <button
-                  onClick={() => setIsDrawerOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer transition"
-                  title="Close panel"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+            {/* Sticky Navigation Header with Prominent Close Icon Button */}
+            <div className="sticky top-0 z-40 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md px-5 py-3.5 border-b border-slate-200/80 dark:border-neutral-800 flex items-center justify-between shadow-xs">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                {selectedLead.source === "scraped" ? "Outbound Prospect" : "Inbound Lead"}
+              </span>
+              
+              {/* Responsive Close Button Icon */}
+              <button
+                onClick={() => setIsDrawerOpen(false)}
+                className="p-1.5 px-3 rounded-xl bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition border border-slate-200/80 dark:border-neutral-700"
+                aria-label="Close lead popup"
+                title="Close popup"
+              >
+                <span>Close</span>
+                <X className="w-4 h-4 text-slate-700 dark:text-slate-200" />
+              </button>
+            </div>
 
-              <div className="flex items-center gap-4 pt-2">
+            {/* Scrollable Popup Content */}
+            <div className="p-6 space-y-4 flex-1">
+              <div className="flex items-center gap-4 pt-1">
                 <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white font-extrabold text-xl flex items-center justify-center shadow-lg shrink-0">
                   {selectedLead.name.charAt(0).toUpperCase()}
                 </div>
@@ -690,7 +696,8 @@ export default function LeadsManager() {
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-200/80 dark:border-neutral-800 flex items-center justify-between bg-slate-50/50 dark:bg-neutral-900/40">
+            {/* Bottom Actions Footer */}
+            <div className="p-5 border-t border-slate-200/80 dark:border-neutral-800 flex items-center justify-between bg-slate-50/50 dark:bg-neutral-900/40 shrink-0">
               <button
                 onClick={() => handleDeleteLead(selectedLead)}
                 className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 flex items-center gap-1.5 cursor-pointer"

@@ -1232,38 +1232,44 @@ export default function SuperAdminDashboard() {
         )}
       </section>
 
-      {/* ── 100% Dynamic Slide-Over Lead Detail Inspection Drawer (Right Panel) ── */}
+      {/* ── 100% Dynamic Slide-Over Lead Detail Inspection Drawer / Responsive Popup Modal ── */}
       {isDrawerOpen && selectedLead && (
         <div
           onClick={() => setIsDrawerOpen(false)}
-          className="fixed inset-0 z-50 overflow-hidden bg-black/80 flex justify-end animate-fadeIn cursor-pointer"
+          className="fixed inset-0 z-50 overflow-hidden bg-black/80 backdrop-blur-xs flex items-end sm:items-stretch justify-center sm:justify-end animate-fadeIn cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-md bg-white dark:bg-[#0a0a0a] h-full shadow-2xl flex flex-col justify-between border-l border-slate-200 dark:border-neutral-800 overflow-y-auto cursor-default"
+            className="w-full sm:max-w-md bg-white dark:bg-[#0a0a0a] h-[88vh] sm:h-full rounded-t-2xl sm:rounded-none shadow-2xl flex flex-col justify-between border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-neutral-800 overflow-y-auto cursor-default relative"
           >
+            {/* Sticky Navigation Header with Prominent Close Icon Button */}
+            <div className="sticky top-0 z-40 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md px-5 py-3.5 border-b border-slate-200/80 dark:border-neutral-800 flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  {selectedLead.status}
+                </span>
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold text-xs border border-emerald-200 dark:border-emerald-800">
+                  Score: {selectedLead.score}
+                </span>
+              </div>
+
+              {/* Responsive Close Button Icon */}
+              <button
+                onClick={() => setIsDrawerOpen(false)}
+                className="p-1.5 px-3 rounded-xl bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition border border-slate-200/80 dark:border-neutral-700"
+                aria-label="Close lead popup"
+                title="Close popup"
+              >
+                <span>Close</span>
+                <X className="w-4 h-4 text-slate-700 dark:text-slate-200" />
+              </button>
+            </div>
             
             {/* Drawer Content */}
             <div>
-              {/* Drawer Header */}
+              {/* Profile Subheader */}
               <div className="p-6 border-b border-slate-200/80 dark:border-slate-800 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
-                    <span className="w-2 h-2 rounded-full bg-amber-500" />
-                    {selectedLead.status}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold text-xs border border-emerald-200 dark:border-emerald-800">
-                      Score: {selectedLead.score}
-                    </span>
-                    <button
-                      onClick={() => setIsDrawerOpen(false)}
-                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
 
                 {/* Profile Header */}
                 <div className="flex items-center gap-4 pt-2">
