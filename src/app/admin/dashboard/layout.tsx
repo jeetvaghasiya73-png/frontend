@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/lib/authStore";
 import { useTheme } from "next-themes";
@@ -32,7 +32,8 @@ import {
   Trash2,
   Mail,
   CheckCircle2,
-  ExternalLink
+  ExternalLink,
+  Volume2
 } from "lucide-react";
 
 import { authFetch } from "@/lib/authFetch";
@@ -60,6 +61,60 @@ function formatRelativeTime(dateStr: string) {
   return `${days}d ago`;
 }
 
+// Web Audio API Sound Chime Synthesizer
+const playNotificationSound = () => {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    
+    // First tone (D5 - 587.33 Hz)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(587.33, ctx.currentTime);
+    gain1.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start();
+    osc1.stop(ctx.currentTime + 0.15);
+
+    // Second tone (A5 - 880 Hz)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+    gain2.gain.setValueAtTime(0.12, ctx.currentTime + 0.1);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(ctx.currentTime + 0.1);
+    osc2.stop(ctx.currentTime + 0.35);
+  } catch (e) {
+    // Autoplay restrictions may require initial user click
+  }
+};
+
+// LocalStorage Persistence Helpers for Read Status
+const getReadIds = (): Set<string> => {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const saved = localStorage.getItem("crm_read_notification_ids");
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  } catch (e) {
+    return new Set();
+  }
+};
+
+const saveReadIds = (readIds: Set<string>) => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem("crm_read_notification_ids", JSON.stringify(Array.from(readIds)));
+  } catch (e) {}
+};
+
 export default function DashboardLayout({
   children
 }: {
@@ -75,10 +130,12 @@ export default function DashboardLayout({
   const [contactsBadge, setContactsBadge] = useState<string>("...");
   const { theme, setTheme } = useTheme();
 
-  // Notifications State & Dropdown
+  // Notifications State
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [activeNotifFilter, setActiveNotifFilter] = useState<"all" | "unread" | "inquiry" | "system">("all");
+  const [activeToastNotif, setActiveToastNotif] = useState<AppNotification | null>(null);
+
   const notifRef = useRef<HTMLDivElement>(null);
   const mobileNotifRef = useRef<HTMLDivElement>(null);
 
@@ -95,7 +152,7 @@ export default function DashboardLayout({
     }
   }, [isAuthenticated, router]);
 
-  // Click outside to close notifications dropdown
+  // Dismiss notification popover when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -109,96 +166,115 @@ export default function DashboardLayout({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch dynamic badge counts & live notifications
-  useEffect(() => {
+  // Fetch live notifications & badge counts from backend
+  const loadCountsAndNotifications = useCallback(async (isBackgroundPoll = false) => {
     if (!isAuthenticated) return;
-    async function loadCountsAndNotifications() {
-      try {
-        const [scrapedRes, leadsRes, contactsRes] = await Promise.allSettled([
-          authFetch(`${API_URL}/api/v1/scraped-leads/stats`),
-          authFetch(`${API_URL}/api/v1/leads/`),
-          authFetch(`${API_URL}/api/v1/contacts/`)
-        ]);
+    try {
+      const [scrapedRes, leadsRes, contactsRes] = await Promise.allSettled([
+        authFetch(`${API_URL}/api/v1/scraped-leads/stats`),
+        authFetch(`${API_URL}/api/v1/leads/`),
+        authFetch(`${API_URL}/api/v1/contacts/`)
+      ]);
 
-        const notifList: AppNotification[] = [];
-        let totalLeadsCount = 0;
+      const readSet = getReadIds();
+      const notifList: AppNotification[] = [];
+      let totalLeadsCount = 0;
 
-        if (scrapedRes.status === "fulfilled" && scrapedRes.value.ok) {
-          const stats = await scrapedRes.value.json();
-          totalLeadsCount += stats.total || 0;
-        }
+      if (scrapedRes.status === "fulfilled" && scrapedRes.value.ok) {
+        const stats = await scrapedRes.value.json();
+        totalLeadsCount += stats.total || 0;
+      }
 
-        if (leadsRes.status === "fulfilled" && leadsRes.value.ok) {
-          const inq = await leadsRes.value.json();
-          if (Array.isArray(inq)) {
-            totalLeadsCount += inq.length;
-            inq.slice(0, 4).forEach((l: any) => {
-              notifList.push({
-                id: `inq-${l.id}`,
-                title: "New Inbound Inquiry",
-                message: `${l.name || "A prospect"} requested services (${l.company || "Direct"}).`,
-                time: l.created_at ? formatRelativeTime(l.created_at) : "Recently",
-                timestamp: l.created_at ? new Date(l.created_at).getTime() : Date.now(),
-                type: "lead",
-                read: false,
-                link: "/admin/dashboard/leads"
-              });
-            });
-          }
-        }
-        setLeadsBadge(String(totalLeadsCount));
-
-        if (contactsRes.status === "fulfilled" && contactsRes.value.ok) {
-          const msgs = await contactsRes.value.json();
-          const msgArr = Array.isArray(msgs) ? msgs : [];
-          setContactsBadge(String(msgArr.length));
-          msgArr.slice(0, 4).forEach((msg: any) => {
+      if (leadsRes.status === "fulfilled" && leadsRes.value.ok) {
+        const inq = await leadsRes.value.json();
+        if (Array.isArray(inq)) {
+          totalLeadsCount += inq.length;
+          inq.slice(0, 5).forEach((l: any) => {
+            const id = `inq-${l.id}`;
             notifList.push({
-              id: `contact-${msg.id}`,
-              title: "New Contact Message",
-              message: `${msg.name || "Website Visitor"}: "${msg.message ? msg.message.slice(0, 50) + "..." : "New message"}"`,
-              time: msg.created_at ? formatRelativeTime(msg.created_at) : "Recently",
-              timestamp: msg.created_at ? new Date(msg.created_at).getTime() : Date.now(),
-              type: "inquiry",
-              read: false,
-              link: "/admin/dashboard/contacts"
+              id,
+              title: "New Inbound Lead",
+              message: `${l.name || "Prospect"} requested services for ${l.company || "Direct Inbound"}.`,
+              time: l.created_at ? formatRelativeTime(l.created_at) : "Recently",
+              timestamp: l.created_at ? new Date(l.created_at).getTime() : Date.now(),
+              type: "lead",
+              read: readSet.has(id),
+              link: "/admin/dashboard/leads"
             });
           });
         }
-
-        // Add System Notifications
-        notifList.push({
-          id: "sys-db-status",
-          title: "CRM Database Synchronized",
-          message: `Live CRM connected with ${totalLeadsCount} active lead prospects online.`,
-          time: "Just now",
-          timestamp: Date.now(),
-          type: "system",
-          read: true,
-          link: "/admin/dashboard"
-        });
-
-        notifList.push({
-          id: "sys-email-worker",
-          title: "Autonomous Outreach Engine",
-          message: "Email automation worker standby mode • IMAP listener active.",
-          time: "10m ago",
-          timestamp: Date.now() - 10 * 60 * 1000,
-          type: "email",
-          read: false,
-          link: "/admin/dashboard/email-outreach"
-        });
-
-        notifList.sort((a, b) => b.timestamp - a.timestamp);
-        setNotifications(notifList);
-      } catch (e) {
-        console.error("Failed to load badge counts & notifications:", e);
       }
-    }
-    loadCountsAndNotifications();
-  }, [isAuthenticated]);
+      setLeadsBadge(String(totalLeadsCount));
 
-  // Synchronous check if already in browser
+      if (contactsRes.status === "fulfilled" && contactsRes.value.ok) {
+        const msgs = await contactsRes.value.json();
+        const msgArr = Array.isArray(msgs) ? msgs : [];
+        setContactsBadge(String(msgArr.length));
+        msgArr.slice(0, 5).forEach((msg: any) => {
+          const id = `contact-${msg.id}`;
+          notifList.push({
+            id,
+            title: "New Contact Inquiry",
+            message: `${msg.name || "Visitor"}: "${msg.message ? msg.message.slice(0, 50) + "..." : "New message"}"`,
+            time: msg.created_at ? formatRelativeTime(msg.created_at) : "Recently",
+            timestamp: msg.created_at ? new Date(msg.created_at).getTime() : Date.now(),
+            type: "inquiry",
+            read: readSet.has(id),
+            link: "/admin/dashboard/contacts"
+          });
+        });
+      }
+
+      // Add System Status Notifications
+      const sysId1 = "sys-db-status";
+      notifList.push({
+        id: sysId1,
+        title: "CRM Engine Online",
+        message: `Connected with ${totalLeadsCount} pipeline prospects in database.`,
+        time: "Just now",
+        timestamp: Date.now(),
+        type: "system",
+        read: readSet.has(sysId1),
+        link: "/admin/dashboard"
+      });
+
+      const sysId2 = "sys-email-worker";
+      notifList.push({
+        id: sysId2,
+        title: "Autonomous Email Worker",
+        message: "Email automation standby mode • Ready for outreach campaigns.",
+        time: "10m ago",
+        timestamp: Date.now() - 10 * 60 * 1000,
+        type: "email",
+        read: readSet.has(sysId2),
+        link: "/admin/dashboard/email-outreach"
+      });
+
+      notifList.sort((a, b) => b.timestamp - a.timestamp);
+
+      // Check if new unread items arrived during background polling
+      if (isBackgroundPoll) {
+        const hasNewUnread = notifList.some(n => !n.read && !notifications.some(existing => existing.id === n.id));
+        if (hasNewUnread) {
+          playNotificationSound();
+        }
+      }
+
+      setNotifications(notifList);
+    } catch (e) {
+      console.error("Failed to load badge counts & notifications:", e);
+    }
+  }, [isAuthenticated, notifications]);
+
+  // Initial load & 15-second background polling
+  useEffect(() => {
+    loadCountsAndNotifications(false);
+    const interval = setInterval(() => {
+      loadCountsAndNotifications(true);
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [loadCountsAndNotifications]);
+
   if (typeof window !== "undefined" && !isAuthenticated) {
     return null;
   }
@@ -211,15 +287,48 @@ export default function DashboardLayout({
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAllAsRead = () => {
+    const readSet = getReadIds();
+    notifications.forEach(n => readSet.add(n.id));
+    saveReadIds(readSet);
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
   const handleNotificationClick = (item: AppNotification) => {
+    const readSet = getReadIds();
+    readSet.add(item.id);
+    saveReadIds(readSet);
     setNotifications(prev => prev.map(n => n.id === item.id ? { ...n, read: true } : n));
     setNotificationsOpen(false);
     if (item.link) {
       router.push(item.link);
     }
+  };
+
+  // Interactive Test Notification Trigger
+  const triggerTestNotification = () => {
+    const testId = `test-${Date.now()}`;
+    const sampleCompanies = ["Acme Corp", "Apex Innovations", "Starlight Media", "Vanguard Tech"];
+    const comp = sampleCompanies[Math.floor(Math.random() * sampleCompanies.length)];
+    
+    const newNotif: AppNotification = {
+      id: testId,
+      title: `⚡ Live Test: Inquiry from ${comp}`,
+      message: `Direct inbound inquiry received! Client requested custom AI & web development services.`,
+      time: "Just now",
+      timestamp: Date.now(),
+      type: "inquiry",
+      read: false,
+      link: "/admin/dashboard/leads"
+    };
+
+    playNotificationSound();
+    setActiveToastNotif(newNotif);
+    setNotifications(prev => [newNotif, ...prev]);
+
+    // Auto-dismiss toast after 5 seconds
+    setTimeout(() => {
+      setActiveToastNotif(null);
+    }, 5000);
   };
 
   const filteredNotifications = notifications.filter(n => {
@@ -260,6 +369,39 @@ export default function DashboardLayout({
   return (
     <div className="h-screen bg-slate-50 dark:bg-[#000000] text-slate-800 dark:text-neutral-200 flex flex-col lg:flex-row overflow-hidden relative font-sans antialiased">
       
+      {/* ── Floating Live Notification Toast Banner ── */}
+      {activeToastNotif && (
+        <div className="fixed top-5 right-5 z-50 max-w-sm w-full bg-slate-900/95 dark:bg-[#111111]/95 text-white p-4 rounded-2xl border border-indigo-500/30 shadow-2xl backdrop-blur-md animate-fadeIn flex items-start gap-3">
+          <div className="p-2 rounded-xl bg-indigo-600/30 text-indigo-400 shrink-0">
+            <Bell className="w-5 h-5 animate-pulse text-indigo-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-white truncate">{activeToastNotif.title}</h4>
+              <span className="text-[10px] text-indigo-400 font-mono">NEW</span>
+            </div>
+            <p className="text-[11px] text-slate-300 dark:text-neutral-300 mt-1 line-clamp-2 leading-relaxed">
+              {activeToastNotif.message}
+            </p>
+            <button
+              onClick={() => {
+                handleNotificationClick(activeToastNotif);
+                setActiveToastNotif(null);
+              }}
+              className="mt-2 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 underline cursor-pointer inline-flex items-center gap-1"
+            >
+              <span>View Record &rarr;</span>
+            </button>
+          </div>
+          <button
+            onClick={() => setActiveToastNotif(null)}
+            className="text-slate-400 hover:text-white p-1 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Mobile Top Bar */}
       <div className="lg:hidden w-full bg-slate-900 dark:bg-[#09090b] border-b border-slate-800 dark:border-neutral-800 px-5 py-3.5 flex items-center justify-between z-30 shrink-0 text-white">
         <div className="flex items-center gap-3">
@@ -297,7 +439,7 @@ export default function DashboardLayout({
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
-                <span className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-slate-900" />
+                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-slate-900 animate-pulse" />
               )}
             </button>
           </div>
@@ -490,17 +632,32 @@ export default function DashboardLayout({
                       )}
                     </div>
                     <div className="flex items-center gap-2 text-[11px]">
+                      {/* Test Trigger Button */}
+                      <button
+                        onClick={triggerTestNotification}
+                        className="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900 transition cursor-pointer flex items-center gap-1"
+                        title="Simulate a real-time incoming notification"
+                      >
+                        <Zap className="w-3 h-3 text-indigo-500" />
+                        <span>Test</span>
+                      </button>
+
                       {unreadCount > 0 && (
                         <button
                           onClick={markAllAsRead}
                           className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold cursor-pointer flex items-center gap-1"
                         >
                           <CheckCheck className="w-3.5 h-3.5" />
-                          <span>Mark all read</span>
+                          <span>Read all</span>
                         </button>
                       )}
                       <button
-                        onClick={() => setNotifications([])}
+                        onClick={() => {
+                          setNotifications([]);
+                          const readSet = getReadIds();
+                          notifications.forEach(n => readSet.add(n.id));
+                          saveReadIds(readSet);
+                        }}
                         className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded hover:bg-slate-100 dark:hover:bg-neutral-800"
                         title="Clear all"
                       >
