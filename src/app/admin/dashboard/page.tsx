@@ -42,6 +42,7 @@ import {
   Zap,
   ChevronRight,
   UserPlus,
+  User,
   FileSpreadsheet,
   Check,
   Edit3,
@@ -102,6 +103,24 @@ export default function SuperAdminDashboard() {
     end: new Date().toISOString().split("T")[0],
   });
 
+  // Modal states for Import & Add Lead
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<string | null>(null);
+
+  const [showAddLeadModal, setShowAddLeadModal] = useState(false);
+  const [newLeadForm, setNewLeadForm] = useState({
+    bussiness_name: "",
+    bussiness_email: "",
+    bussiness_number: "",
+    scraped_city: "",
+    scraped_service: "",
+    category: "",
+    bussiness_website: "",
+  });
+  const [submittingNewLead, setSubmittingNewLead] = useState(false);
+
   // Table Controls
   const [tableSearch, setTableSearch] = useState("");
   const [tablePage, setTablePage] = useState(1);
@@ -128,7 +147,7 @@ export default function SuperAdminDashboard() {
     try {
       const [statsRes, scrapedRes, leadsRes, portfolioRes, blogsRes, msgRes] = await Promise.allSettled([
         authFetch(`${API}/api/v1/scraped-leads/stats`),
-        authFetch(`${API}/api/v1/scraped-leads/?page=1&limit=100`),
+        authFetch(`${API}/api/v1/scraped-leads/?page=1&limit=1000`),
         authFetch(`${API}/api/v1/leads/`),
         authFetch(`${API}/api/v1/portfolio/`),
         authFetch(`${API}/api/v1/blogs/`),
@@ -187,7 +206,9 @@ export default function SuperAdminDashboard() {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    if (dateFilter === "Today") {
+    if (dateFilter === "All Time") {
+      return { start: new Date(0), end: now };
+    } else if (dateFilter === "Today") {
       return { start: today, end: now };
     } else if (dateFilter === "Yesterday") {
       const start = new Date(today);
@@ -233,8 +254,23 @@ export default function SuperAdminDashboard() {
 
     if (statusFilter !== "All Status") {
       const s = statusFilter.toLowerCase();
-      currentScraped = currentScraped.filter(l => l.email_status?.toLowerCase() === s);
-      currentInquiries = currentInquiries.filter(l => l.status?.toLowerCase() === s);
+      currentScraped = currentScraped.filter(l => {
+        const st = (l.email_status || l.status || "pending").toLowerCase();
+        if (s === "pending") return st === "pending" || st === "scraped" || st === "new";
+        if (s === "contacted") return st === "contacted" || st === "sent" || st === "contacting";
+        if (s === "qualified") return st === "qualified" || (l.rating && parseFloat(l.rating) >= 4.0);
+        if (s === "converted" || s === "closed") return st === "converted" || st === "closed" || st === "published";
+        return st === s;
+      });
+
+      currentInquiries = currentInquiries.filter(l => {
+        const st = (l.status || "pending").toLowerCase();
+        if (s === "pending") return st === "pending" || st === "new";
+        if (s === "contacted") return st === "contacted" || st === "sent";
+        if (s === "qualified") return st === "qualified";
+        if (s === "converted" || s === "closed") return st === "converted" || st === "closed";
+        return st === s;
+      });
     }
 
     return { currentScraped, currentInquiries };
@@ -272,7 +308,7 @@ export default function SuperAdminDashboard() {
     });
 
     return {
-      new: { count: newCount, pct: Math.round((newCount / totalCount) * 100) || 100 },
+      new: { count: newCount, pct: Math.round((newCount / totalCount) * 100) || 0 },
       contacted: { count: contactedCount, pct: Math.round((contactedCount / totalCount) * 100) || 0 },
       interested: { count: interestedCount, pct: Math.round((interestedCount / totalCount) * 100) || 0 },
       qualified: { count: qualifiedCount, pct: Math.round((qualifiedCount / totalCount) * 100) || 0 },
@@ -283,15 +319,15 @@ export default function SuperAdminDashboard() {
 
   // 100% Dynamic Metrics calculation
   const metrics = useMemo(() => {
-    const totalScraped = scrapedStats?.total || filteredData.currentScraped.length;
+    const totalScraped = filteredData.currentScraped.length;
     const inquiriesCount = filteredData.currentInquiries.length;
     const scrapedGrowth = scrapedStats?.growth || 12.5;
 
-    const uniqueCities = scrapedStats?.cities || new Set(scrapedLeads.map(l => l.scraped_city).filter(Boolean)).size;
-    const uniqueCategories = scrapedStats?.services || new Set(scrapedLeads.map(l => l.scraped_service).filter(Boolean)).size;
+    const uniqueCities = new Set(filteredData.currentScraped.map(l => l.scraped_city).filter(Boolean)).size;
+    const uniqueCategories = new Set(filteredData.currentScraped.map(l => l.scraped_service).filter(Boolean)).size;
 
-    const verifiedEmailsCount = scrapedStats?.verified_count || scrapedLeads.filter(l => l.bussiness_email).length;
-    const capturePct = totalScraped > 0 ? Math.round((verifiedEmailsCount / totalScraped) * 100) : 24.8;
+    const verifiedEmailsCount = filteredData.currentScraped.filter(l => l.bussiness_email).length;
+    const capturePct = totalScraped > 0 ? Math.round((verifiedEmailsCount / totalScraped) * 100) : 0;
 
     return {
       totalScraped,
@@ -300,11 +336,11 @@ export default function SuperAdminDashboard() {
       uniqueCategories,
       scrapedGrowth,
       inquiriesGrowth: 15.2,
-      qualifiedCount: pipelineFunnel.qualified.count || Math.round(totalScraped * 0.27),
-      contactedCount: pipelineFunnel.contacted.count || Math.round(totalScraped * 0.22),
+      qualifiedCount: pipelineFunnel.qualified.count,
+      contactedCount: pipelineFunnel.contacted.count,
       conversionRate: `${capturePct}%`
     };
-  }, [scrapedStats, filteredData, scrapedLeads, pipelineFunnel]);
+  }, [scrapedStats, filteredData, pipelineFunnel]);
 
   // Analytics Chart Data
   const sectionsData = useMemo(() => {
@@ -669,6 +705,112 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  // 8. Excel / CSV File Upload Handler
+  const handleFileUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!importFile) return;
+    setUploading(true);
+    setUploadResult(null);
+
+    const formData = new FormData();
+    formData.append("file", importFile);
+
+    try {
+      const res = await authFetch(`${API}/api/v1/scraped-leads/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const msg = data.message || `Successfully imported ${data.inserted} leads into database!`;
+        setUploadResult(msg);
+        triggerToast(msg);
+        await fetchData();
+        setTimeout(() => {
+          setShowImportModal(false);
+          setImportFile(null);
+          setUploadResult(null);
+        }, 1500);
+      } else {
+        const err = await res.json();
+        setUploadResult(`Error: ${err.detail || "Failed to process spreadsheet."}`);
+      }
+    } catch (err: any) {
+      setUploadResult(`Error: ${err.message || "Failed to upload file."}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // 9. Manual Single Lead Creation Handler
+  const handleCreateSingleLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newLeadForm.bussiness_name.trim()) {
+      triggerToast("Lead Name is required");
+      return;
+    }
+    setSubmittingNewLead(true);
+    try {
+      const res = await authFetch(`${API}/api/v1/scraped-leads/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newLeadForm),
+      });
+
+      if (res.ok) {
+        triggerToast(`Lead "${newLeadForm.bussiness_name}" added to database!`);
+        setNewLeadForm({
+          bussiness_name: "",
+          bussiness_email: "",
+          bussiness_number: "",
+          scraped_city: "",
+          scraped_service: "",
+          category: "",
+          bussiness_website: "",
+        });
+        setShowAddLeadModal(false);
+        await fetchData();
+      } else {
+        const err = await res.json();
+        triggerToast(err.detail || "Failed to create lead");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error creating lead");
+    } finally {
+      setSubmittingNewLead(false);
+    }
+  };
+
+  // 10. Dynamic CSV Export Handler
+  const handleExportCSV = () => {
+    const allLeads = [...scrapedLeads, ...inquiryLeads];
+    if (allLeads.length === 0) return;
+    const headers = ["ID", "Name", "Email", "Phone", "Location", "Category", "Status", "Score", "Created At"];
+    const rows = allLeads.map(l => [
+      l.id,
+      `"${(l.bussiness_name || l.name || l.title || "").replace(/"/g, '""')}"`,
+      `"${l.bussiness_email || l.email || ""}"`,
+      `"${l.bussiness_number || l.phone || ""}"`,
+      `"${l.scraped_city || l.location || l.company || ""}"`,
+      `"${l.category || l.scraped_service || l.industry || ""}"`,
+      l.email_status || l.status || "pending",
+      l.rating || l.score || 85,
+      l.created_at || l.date || new Date().toISOString()
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `leadflow_leads_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    triggerToast(`Exported ${allLeads.length} leads to CSV file`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center flex-col gap-4">
@@ -718,7 +860,7 @@ export default function SuperAdminDashboard() {
               }}
               className="pl-8 pr-8 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer appearance-none shadow-sm transition"
             >
-              {["Today", "Yesterday", "Last 7 days", "Last 30 days", "This month", "Previous month", "Custom"].map(f => (
+              {["All Time", "Today", "Yesterday", "Last 7 days", "Last 30 days", "This month", "Previous month", "Custom"].map(f => (
                 <option key={f} value={f}>{f}</option>
               ))}
             </select>
@@ -758,15 +900,17 @@ export default function SuperAdminDashboard() {
           {/* Secondary Action: Import Leads */}
           <button
             type="button"
+            onClick={() => setShowImportModal(true)}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm cursor-pointer"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-slate-500" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-500" />
             <span>Import Leads</span>
           </button>
 
           {/* Primary Action: Add Lead */}
           <button
             type="button"
+            onClick={() => setShowAddLeadModal(true)}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white shadow-sm shadow-indigo-600/30 transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -1057,6 +1201,7 @@ export default function SuperAdminDashboard() {
 
             <button
               type="button"
+              onClick={handleExportCSV}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 text-slate-500" />
@@ -1536,6 +1681,227 @@ export default function SuperAdminDashboard() {
                 >
                   <Send className="w-3.5 h-3.5" />
                   {sendingEmail ? "Sending..." : "Dispatch Email"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── 1. Import Excel / CSV Spreadsheet Modal ── */}
+      {showImportModal && (
+        <div
+          onClick={() => setShowImportModal(false)}
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg bg-white dark:bg-[#0a0a0a] rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl p-6 space-y-5 cursor-default relative"
+          >
+            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-neutral-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Import Leads Spreadsheet</h3>
+                  <p className="text-xs text-slate-500 dark:text-neutral-400">Inject batch prospect records directly into database</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleFileUpload} className="space-y-4">
+              {/* File Dropzone */}
+              <div className="border-2 border-dashed border-slate-300 dark:border-neutral-800 rounded-xl p-6 text-center hover:border-indigo-500 transition cursor-pointer bg-slate-50/50 dark:bg-neutral-900/40 relative">
+                <input
+                  type="file"
+                  accept=".xlsx, .xls, .csv"
+                  onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
+                <FileSpreadsheet className="w-10 h-10 text-indigo-600 dark:text-indigo-400 mx-auto mb-2" />
+                {importFile ? (
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate max-w-xs mx-auto">{importFile.name}</p>
+                    <p className="text-[10px] text-slate-400 font-mono">{(importFile.size / 1024).toFixed(1)} KB — Ready to Inject</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-slate-700 dark:text-neutral-200">Click or drag `.xlsx`, `.xls` or `.csv` spreadsheet</p>
+                    <p className="text-[10px] text-slate-400">Auto-resolves Name, Email, Phone, City, Website &amp; Category columns</p>
+                  </div>
+                )}
+              </div>
+
+              {uploadResult && (
+                <div className={`p-3 rounded-xl text-xs font-mono border ${
+                  uploadResult.startsWith("Error")
+                    ? "bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400"
+                    : "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
+                }`}>
+                  {uploadResult}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowImportModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!importFile || uploading}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2"
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Injecting Leads...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      <span>Inject to Database</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── 2. Add Lead Manual Form Modal ── */}
+      {showAddLeadModal && (
+        <div
+          onClick={() => setShowAddLeadModal(false)}
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-white dark:bg-[#0a0a0a] rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl p-6 space-y-4 cursor-default relative"
+          >
+            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-neutral-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center shadow-md">
+                  <User className="w-4.5 h-4.5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Add New Lead Record</h3>
+                  <p className="text-xs text-slate-500 dark:text-neutral-400">Manually insert a prospect into database</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddLeadModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSingleLead} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Business / Lead Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Nexus Tech Studios"
+                  value={newLeadForm.bussiness_name}
+                  onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_name: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Business Email</label>
+                  <input
+                    type="email"
+                    placeholder="contact@nexus.com"
+                    value={newLeadForm.bussiness_email}
+                    onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_email: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Phone Number</label>
+                  <input
+                    type="text"
+                    placeholder="+1 555-0192"
+                    value={newLeadForm.bussiness_number}
+                    onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_number: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">City / Location</label>
+                  <input
+                    type="text"
+                    placeholder="New York"
+                    value={newLeadForm.scraped_city}
+                    onChange={(e) => setNewLeadForm({ ...newLeadForm, scraped_city: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Service / Keyword</label>
+                  <input
+                    type="text"
+                    placeholder="Web Development"
+                    value={newLeadForm.scraped_service}
+                    onChange={(e) => setNewLeadForm({ ...newLeadForm, scraped_service: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Website URL</label>
+                <input
+                  type="text"
+                  placeholder="https://nexus.com"
+                  value={newLeadForm.bussiness_website}
+                  onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_website: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddLeadModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingNewLead}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2"
+                >
+                  {submittingNewLead ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      <span>Save Lead to DB</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
