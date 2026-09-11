@@ -11,7 +11,7 @@ const LOCKOUT_DURATION_S = 60;
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { login, isAuthenticated } = useAuthStore();
+  const { login, logout, isAuthenticated, user } = useAuthStore();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -23,12 +23,19 @@ export default function AdminLoginPage() {
   const [countdown, setCountdown] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Redirect if already authenticated
+  // Handle auto-redirect or forced logout via URL search params
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("logout") === "true" || params.get("switch") === "true") {
+        logout();
+        return;
+      }
+    }
     if (isAuthenticated) {
       router.push("/admin/dashboard");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, logout]);
 
   // Lockout countdown timer
   useEffect(() => {
@@ -213,8 +220,17 @@ export default function AdminLoginPage() {
         </form>
 
         {/* Footer info */}
-        <div className="pt-2 text-center text-[11px] text-slate-500 font-mono">
-          Protected by LeadFlow Security &amp; Rate-Limiter Engine
+        <div className="pt-2 text-center text-[11px] text-slate-500 font-mono space-y-2">
+          {isAuthenticated && (
+            <button
+              type="button"
+              onClick={() => logout()}
+              className="text-xs text-rose-400 hover:text-rose-300 underline font-mono cursor-pointer block mx-auto"
+            >
+              Sign out active session ({user?.username || "Admin"})
+            </button>
+          )}
+          <div>Protected by LeadFlow Security &amp; Rate-Limiter Engine</div>
         </div>
 
       </div>

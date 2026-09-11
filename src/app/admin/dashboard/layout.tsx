@@ -218,6 +218,23 @@ export default function DashboardLayout({
 
         setNotifications(mappedList);
       }
+
+      // Fetch active user profile from backend
+      try {
+        const meRes = await authFetch(`${API_URL}/api/v1/auth/me`);
+        if (meRes.ok) {
+          const userData = await meRes.json();
+          useAuthStore.setState({
+            user: {
+              id: userData.id,
+              username: userData.username,
+              is_superadmin: Boolean(userData.is_superadmin)
+            }
+          });
+        }
+      } catch (meErr) {
+        console.error("Failed to load user profile:", meErr);
+      }
     } catch (e) {
       console.error("Failed to load badge counts & notifications:", e);
     }
@@ -236,7 +253,15 @@ export default function DashboardLayout({
     return null;
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_URL}/api/v1/auth/logout`, {
+        method: "POST",
+        credentials: "include"
+      });
+    } catch (e) {
+      console.error("Failed to call logout endpoint:", e);
+    }
     logout();
     router.push("/admin/login");
   };
@@ -418,7 +443,7 @@ export default function DashboardLayout({
 
           <div className="relative">
             <span className="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-xs ring-2 ring-indigo-400/30">
-              {user?.username ? user.username.slice(0, 2).toUpperCase() : "AR"}
+              {(user?.username || "Admin").slice(0, 2).toUpperCase()}
             </span>
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-slate-900" />
           </div>
@@ -522,15 +547,15 @@ export default function DashboardLayout({
               <div className="flex items-center gap-3 min-w-0">
                 <div className="relative shrink-0">
                   <span className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-xs text-indigo-300 ring-2 ring-indigo-500/30">
-                    {user?.username ? user.username.slice(0, 2).toUpperCase() : "AR"}
+                    {(user?.username || "Admin").slice(0, 2).toUpperCase()}
                   </span>
                   <span className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-slate-900" />
                 </div>
                 {!isCollapsed && (
                   <div className="flex flex-col text-left min-w-0 animate-fadeIn">
-                    <span className="text-xs font-semibold text-slate-200 truncate">{user?.username || "Alex Rivera"}</span>
+                    <span className="text-xs font-semibold text-slate-200 truncate">{user?.username || "Admin User"}</span>
                     <span className="text-[10px] text-slate-400 font-mono">
-                      {user?.is_superadmin ? "Main Superadmin" : "Sales Admin"}
+                      {user?.is_superadmin ? "Super Admin" : "System Admin"}
                     </span>
                   </div>
                 )}
@@ -740,14 +765,14 @@ export default function DashboardLayout({
             <div className="flex items-center gap-3">
               <div className="flex flex-col text-right">
                 <span className="text-xs font-bold text-slate-900 dark:text-white">
-                  {user?.username || "Alex Rivera"}
+                  {user?.username || "Admin User"}
                 </span>
                 <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400">
-                  {user?.is_superadmin ? "Main Admin" : "Sales Lead"}
+                  {user?.is_superadmin ? "Super Admin" : "System Admin"}
                 </span>
               </div>
               <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center text-xs shadow-md shadow-indigo-600/30">
-                {user?.username ? user.username.slice(0, 2).toUpperCase() : "AR"}
+                {(user?.username || "Admin").slice(0, 2).toUpperCase()}
               </div>
             </div>
           </div>

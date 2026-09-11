@@ -166,7 +166,10 @@ function cleanEmailBody(body: string): { cleanText: string; quotedText: string }
       /^(from:)/i.test(trimmed) ||
       trimmed.startsWith("---") ||
       trimmed.startsWith(">") ||
-      (trimmed.startsWith("On ") && trimmed.includes("wrote:"))
+      (trimmed.startsWith("On ") && trimmed.includes("wrote:")) ||
+      trimmed.includes("Partnership Opportunity —") ||
+      trimmed.includes("NEXORA.AI OFFICIAL PARTNERSHIP INVITATION") ||
+      trimmed.includes("PREPARED EXCLUSIVELY FOR")
     ) {
       inQuoted = true;
     }
@@ -279,6 +282,84 @@ function OutreachManager() {
   const [replyText, setReplyText] = useState("");
   const [replyLoading, setReplyLoading] = useState(false);
   const [checkingReplies, setCheckingReplies] = useState(false);
+
+  // AI Reply Draft Modal State
+  const [aiDraftModalOpen, setAiDraftModalOpen] = useState(false);
+  const [generatingDraft, setGeneratingDraft] = useState(false);
+  const [sendingCustomReply, setSendingCustomReply] = useState(false);
+  const [aiDraftData, setAiDraftData] = useState<{
+    lead_id: number;
+    business_name: string;
+    recipient_email: string;
+    intent: string;
+    scraped_city: string;
+    scraped_service: string;
+    subject: string;
+    body: string;
+  } | null>(null);
+
+  const handleGenerateAIDraft = async () => {
+    if (!selectedConversation) return;
+    setGeneratingDraft(true);
+    try {
+      const res = await authFetch(`${API}/api/v1/email/conversations/${selectedConversation.lead_id}/generate-draft`, {
+        method: "POST"
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAiDraftData(data);
+        setAiDraftModalOpen(true);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Failed to generate draft: ${formatErrorDetail(err.detail)}`, "error");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("Error generating AI reply draft.", "error");
+    } finally {
+      setGeneratingDraft(false);
+    }
+  };
+
+  const handleSendCustomReply = async () => {
+    if (!aiDraftData) return;
+    if (!aiDraftData.subject.trim() || !aiDraftData.body.trim()) {
+      showToast("Subject line and email body cannot be empty.", "error");
+      return;
+    }
+    setSendingCustomReply(true);
+    try {
+      const res = await authFetch(`${API}/api/v1/email/conversations/${aiDraftData.lead_id}/send-custom`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: aiDraftData.subject,
+          body: aiDraftData.body
+        })
+      });
+      if (res.ok) {
+        showToast(`Email approved & sent to ${aiDraftData.business_name} (${aiDraftData.recipient_email})!`, "success");
+        setAiDraftModalOpen(false);
+        setAiDraftData(null);
+        // Refresh conversations thread list
+        const convRes = await authFetch(`${API}/api/v1/email/conversations`);
+        if (convRes.ok) {
+          const freshConvs = await convRes.json();
+          setConversations(freshConvs);
+          const updated = freshConvs.find((c: any) => c.lead_id === selectedConversation.lead_id);
+          setSelectedConversation(updated || null);
+        }
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Failed to send email: ${formatErrorDetail(err.detail)}`, "error");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("Error sending email.", "error");
+    } finally {
+      setSendingCustomReply(false);
+    }
+  };
 
   const handleCheckReplies = async () => {
     setCheckingReplies(true);
@@ -1407,56 +1488,81 @@ function OutreachManager() {
             </div>
 
             {/* Conversation Thread viewer */}
-            <div className="lg:col-span-2 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-[#0a0a0a] min-h-[500px] flex flex-col justify-between overflow-hidden shadow-sm">
+            <div className="lg:col-span-2 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-[#0a0a0a] min-h-[650px] flex flex-col justify-between overflow-hidden shadow-sm">
               {selectedConversation ? (
                 <>
                   {/* Active Header */}
-                  <div className="p-4 border-b border-gray-150 dark:border-white/5 bg-gray-50 dark:bg-black/20 flex justify-between items-center">
+                  <div className="p-4 border-b border-gray-150 dark:border-white/5 bg-gray-50 dark:bg-black/20 flex flex-wrap gap-3 justify-between items-center">
                     <div>
-                      <h3 className="text-sm font-bold text-gray-900 dark:text-white">{selectedConversation.business_name}</h3>
+                      <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        {selectedConversation.business_name}
+                      </h3>
                       <p className="text-[10px] text-gray-400 font-mono">{selectedConversation.email}</p>
                     </div>
-                    <span className="text-[9px] uppercase font-mono bg-accent-custom/10 text-accent-custom border border-accent-custom/25 px-2 py-0.5 rounded">
-                      Intent: {selectedConversation.intent}
-                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] uppercase font-mono bg-accent-custom/10 text-accent-custom border border-accent-custom/25 px-2 py-0.5 rounded font-bold">
+                        INTENT: {selectedConversation.intent}
+                      </span>
+                      
+                      {/* Step 1: Trigger AI Reply Workflow */}
+                      <button
+                        onClick={handleGenerateAIDraft}
+                        disabled={generatingDraft}
+                        className="px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-accent-custom hover:opacity-95 text-white font-mono font-bold text-[11px] rounded-lg shadow-md transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        {generatingDraft ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>GENERATING DRAFT...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                            <span>✨ Generate AI Reply Draft</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Message bubble thread area */}
-                  <div className="p-6 flex-1 overflow-y-auto space-y-4 max-h-[360px]">
+                  <div className="p-6 flex-1 overflow-y-auto space-y-5 min-h-[480px] max-h-[580px]">
                     {selectedConversation.thread?.map((m: any) => {
                       const isReply = m.type === "REPLY";
                       return (
                         <div key={m.id} className={`flex flex-col ${isReply ? "items-start" : "items-end"}`}>
-                          <div className={`max-w-[80%] rounded-2xl p-4 text-xs shadow-sm leading-relaxed ${
+                          <div className={`max-w-[90%] sm:max-w-[85%] rounded-2xl p-5 text-xs shadow-md leading-relaxed ${
                             isReply
-                              ? "bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white rounded-tl-none"
+                              ? "bg-gray-100 dark:bg-[#151515] text-gray-900 dark:text-white rounded-tl-none border border-gray-200 dark:border-white/10"
                               : "bg-accent-custom text-white rounded-tr-none"
                           }`}>
-                            <p className="font-mono text-[9px] opacity-60 mb-1">
-                              {isReply ? "Lead Reply" : "AI Assistant Outreach"} &middot; {new Date(m.timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                            </p>
+                            <div className="flex items-center justify-between gap-4 font-mono text-[9px] opacity-70 mb-2 border-b border-gray-200/20 dark:border-white/10 pb-1.5">
+                              <span className="font-bold uppercase tracking-wider">{isReply ? "Lead Response" : "AI Assistant Outreach"}</span>
+                              <span>{new Date(m.timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} &bull; {new Date(m.timestamp).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</span>
+                            </div>
                             {(() => {
                               const { cleanText, quotedText } = cleanEmailBody(m.body);
                               const isQuoteExpanded = !!expandedQuotes[m.id];
                               return (
                                 <>
-                                    <div className="space-y-2.5 font-sans leading-relaxed">{renderCleanText(cleanText)}</div>
+                                  <div className="space-y-3 font-sans text-xs sm:text-sm leading-relaxed">{renderCleanText(cleanText)}</div>
                                   {quotedText && (
-                                    <div className="mt-2 pt-2 border-t border-gray-200/20 dark:border-white/5">
+                                    <div className="mt-3 pt-3 border-t border-gray-200/20 dark:border-white/10">
                                       <button
                                         type="button"
                                         onClick={(e) => {
                                           e.preventDefault();
                                           setExpandedQuotes(prev => ({ ...prev, [m.id]: !prev[m.id] }));
                                         }}
-                                        className="text-[9px] text-gray-400 dark:text-gray-500 hover:text-accent-custom flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0 font-mono focus:outline-none"
+                                        className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-accent-custom flex items-center gap-1.5 cursor-pointer bg-transparent border-0 p-0 font-mono focus:outline-none font-bold"
                                       >
-                                        <span>{isQuoteExpanded ? "Hide quoted history" : "••• Show quoted history"}</span>
+                                        <span>{isQuoteExpanded ? "▲ Hide original cold outreach message" : "▼ View original cold outreach message"}</span>
                                       </button>
                                       {isQuoteExpanded && (
-                                        <p className="mt-2 whitespace-pre-line text-[9px] text-gray-400 dark:text-gray-500 font-mono bg-black/10 dark:bg-black/30 p-2.5 rounded-lg border border-gray-200/10 max-h-[150px] overflow-y-auto leading-normal">
+                                        <div className="mt-2.5 whitespace-pre-line text-[10px] text-gray-600 dark:text-gray-300 font-mono bg-black/10 dark:bg-black/40 p-3.5 rounded-xl border border-gray-200/10 dark:border-white/5 max-h-[220px] overflow-y-auto leading-relaxed shadow-inner">
                                           {quotedText}
-                                        </p>
+                                        </div>
                                       )}
                                     </div>
                                   )}
@@ -1475,7 +1581,7 @@ function OutreachManager() {
                       placeholder="Type a manual reply message to the prospect..."
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
-                      className="flex-1 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-lg p-2 text-xs text-gray-900 dark:text-white focus:outline-none min-h-[60px] max-h-[120px]"
+                      className="flex-1 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-lg p-2.5 text-xs text-gray-900 dark:text-white focus:outline-none min-h-[60px] max-h-[120px]"
                     />
                     <button
                       type="submit"
@@ -1559,6 +1665,115 @@ function OutreachManager() {
             >
               ✕
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* AI Draft Review & Approval Modal */}
+      {aiDraftModalOpen && aiDraftData && (
+        <div className="fixed inset-0 z-[999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-[#0f0f11] border border-gray-200 dark:border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl space-y-0 text-left">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-gray-150 dark:border-white/10 bg-gray-50 dark:bg-black/40 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-accent-custom/10 text-accent-custom flex items-center justify-center">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white font-mono">AI Tailored Reply Proposal</h3>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">Step 4: Review &amp; approve before sending directly to the prospect</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAiDraftModalOpen(false)}
+                className="text-gray-400 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-white/5"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+              {/* Lead Context Badge */}
+              <div className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-3.5 space-y-1.5 font-mono text-[11px]">
+                <div className="flex items-center justify-between text-gray-400">
+                  <span className="text-[9px] uppercase tracking-wider font-bold text-accent-custom">Lead Target Context</span>
+                  <span className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded text-[9px] font-bold">
+                    INTENT: {aiDraftData.intent}
+                  </span>
+                </div>
+                <div className="text-gray-900 dark:text-white font-bold text-xs">{aiDraftData.business_name}</div>
+                <div className="text-gray-500 dark:text-gray-400 text-[10px] flex flex-wrap gap-x-3 gap-y-1">
+                  <span>✉️ {aiDraftData.recipient_email}</span>
+                  {aiDraftData.scraped_city && <span>📍 {aiDraftData.scraped_city}</span>}
+                  {aiDraftData.scraped_service && <span>🏷️ {aiDraftData.scraped_service}</span>}
+                </div>
+              </div>
+
+              {/* Subject Line Input */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-gray-400 font-mono uppercase tracking-wider block">
+                  Subject Line
+                </label>
+                <input
+                  type="text"
+                  value={aiDraftData.subject}
+                  onChange={(e) => setAiDraftData({ ...aiDraftData, subject: e.target.value })}
+                  className="w-full bg-white dark:bg-[#151517] border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 dark:text-white font-sans focus:outline-none focus:border-accent-custom"
+                />
+              </div>
+
+              {/* Email Body Textarea */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-gray-400 font-mono uppercase tracking-wider block">
+                  Email Response Body (Admin Editable)
+                </label>
+                <textarea
+                  rows={8}
+                  value={aiDraftData.body}
+                  onChange={(e) => setAiDraftData({ ...aiDraftData, body: e.target.value })}
+                  className="w-full bg-white dark:bg-[#151517] border border-gray-200 dark:border-white/10 rounded-xl p-3.5 text-xs text-gray-900 dark:text-white font-sans leading-relaxed focus:outline-none focus:border-accent-custom"
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-gray-150 dark:border-white/10 bg-gray-50 dark:bg-black/40 flex items-center justify-between gap-3">
+              <button
+                onClick={() => handleGenerateAIDraft()}
+                disabled={generatingDraft}
+                className="px-3.5 py-2 border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 font-mono font-bold text-[10px] rounded-xl transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {generatingDraft ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                REGENERATE
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setAiDraftModalOpen(false)}
+                  disabled={sendingCustomReply}
+                  className="px-4 py-2 border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 font-mono font-bold text-[10px] rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                >
+                  CANCEL
+                </button>
+                <button
+                  onClick={handleSendCustomReply}
+                  disabled={sendingCustomReply}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold text-[10px] rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {sendingCustomReply ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      SENDING...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      APPROVE &amp; SEND TO PROSPECT
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
