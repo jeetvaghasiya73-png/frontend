@@ -675,7 +675,7 @@ function OutreachManager() {
 
       {/* KPI Cards deck */}
       {analytics && (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
           {/* Card 1: Sender Engine */}
           <div className={`p-4 rounded-xl border flex items-center justify-between transition-all duration-300 bg-white dark:bg-[#0c0c0c] hover:shadow-md ${
             senderActive 

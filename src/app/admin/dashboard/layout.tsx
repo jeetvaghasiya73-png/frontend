@@ -425,6 +425,15 @@ export default function DashboardLayout({
         </div>
       </div>
 
+      {/* Mobile Drawer Dark Backdrop Overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-30 lg:hidden transition-opacity animate-fadeIn"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* ── Left Sidebar Panel (Vercel Deep Black Theme) ── */}
       <aside
         className={`fixed inset-y-0 left-0 bg-slate-900 dark:bg-[#000000] border-r border-slate-800/80 dark:border-neutral-800 flex flex-col justify-between z-40 transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-full text-slate-300 select-none ${
