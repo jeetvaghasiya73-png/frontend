@@ -449,8 +449,8 @@ export default function SuperAdminDashboard() {
           status: l.email_status ? l.email_status.charAt(0).toUpperCase() + l.email_status.slice(1) : "Contacted",
           score: computedScore,
           date: l.created_at || new Date().toISOString(),
-          assignedTo: "Alex Rivera",
-          assignedAvatar: "AR",
+          assignedTo: l.assigned_to || user?.username || "Main Admin",
+          assignedAvatar: (l.assigned_to || user?.username || "Main Admin").slice(0, 2).toUpperCase(),
           avatarColor: "bg-indigo-600",
           notes: l.custom_notes || []
         };
@@ -464,25 +464,29 @@ export default function SuperAdminDashboard() {
           l.company?.toLowerCase().includes(q)
         );
       }
-      return data.map((l, idx) => ({
-        raw: l,
-        rawId: l.id,
-        id: l.id || `inbound-${idx}`,
-        title: l.name || "Anonymous Lead",
-        email: l.email || "",
-        company: l.company || "Individual",
-        industry: l.services?.join(", ") || "Web Inquiry",
-        location: l.location || "Online",
-        source: "inquiry",
-        phone: l.phone || "",
-        status: l.status ? l.status.charAt(0).toUpperCase() + l.status.slice(1) : "Qualified",
-        score: 92,
-        date: l.created_at || new Date().toISOString(),
-        assignedTo: "Daniel Park",
-        assignedAvatar: "DP",
-        avatarColor: "bg-emerald-600",
-        notes: []
-      }));
+      return data.map((l, idx) => {
+        const computedScore = 75 + (l.phone ? 15 : 0) + (l.email ? 10 : 0);
+        const assignedName = l.assigned_to || user?.username || "Main Admin";
+        return {
+          raw: l,
+          rawId: l.id,
+          id: l.id || `inbound-${idx}`,
+          title: l.name || "Anonymous Lead",
+          email: l.email || "",
+          company: l.company || "Individual",
+          industry: l.services?.join(", ") || "Web Inquiry",
+          location: l.location || "Online",
+          source: "inquiry",
+          phone: l.phone || "",
+          status: l.status ? l.status.charAt(0).toUpperCase() + l.status.slice(1) : "Qualified",
+          score: Math.min(99, computedScore),
+          date: l.created_at || new Date().toISOString(),
+          assignedTo: assignedName,
+          assignedAvatar: assignedName.slice(0, 2).toUpperCase(),
+          avatarColor: "bg-emerald-600",
+          notes: []
+        };
+      });
     } else {
       let data = portfolios;
       if (q) {
@@ -491,27 +495,31 @@ export default function SuperAdminDashboard() {
           p.client?.toLowerCase().includes(q)
         );
       }
-      return data.map((p, idx) => ({
-        raw: p,
-        rawId: p.id,
-        id: p.id || `portfolio-${idx}`,
-        title: p.title || "Untitled Project",
-        email: p.url || "",
-        company: p.client || "Studio Client",
-        industry: p.services_used?.join(", ") || "Showcase",
-        location: "Global",
-        source: "portfolio",
-        phone: p.year?.toString() || "",
-        status: p.featured ? "Featured" : "Published",
-        score: 88,
-        date: p.created_at || new Date().toISOString(),
-        assignedTo: "Sarah Jenkins",
-        assignedAvatar: "SJ",
-        avatarColor: "bg-amber-600",
-        notes: []
-      }));
+      return data.map((p, idx) => {
+        const computedScore = p.featured ? 95 : 82;
+        const assignedName = p.assigned_to || user?.username || "Main Admin";
+        return {
+          raw: p,
+          rawId: p.id,
+          id: p.id || `portfolio-${idx}`,
+          title: p.title || "Untitled Project",
+          email: p.url || "",
+          company: p.client || "Studio Client",
+          industry: p.services_used?.join(", ") || "Showcase",
+          location: "Global",
+          source: "portfolio",
+          phone: p.year?.toString() || "",
+          status: p.featured ? "Featured" : "Published",
+          score: computedScore,
+          date: p.created_at || new Date().toISOString(),
+          assignedTo: assignedName,
+          assignedAvatar: assignedName.slice(0, 2).toUpperCase(),
+          avatarColor: "bg-amber-600",
+          notes: []
+        };
+      });
     }
-  }, [filteredData, activeTableTab, tableSearch, portfolios]);
+  }, [filteredData, activeTableTab, tableSearch, portfolios, user]);
 
   const totalTablePages = Math.ceil(tableDataset.length / tableLimit);
   const paginatedTable = useMemo(() => {
@@ -893,17 +901,17 @@ export default function SuperAdminDashboard() {
 
       {/* Action Success Toast Notification */}
       {actionSuccessMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl border border-indigo-500/40 shadow-2xl flex items-center gap-3 animate-fadeIn">
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-sm border border-indigo-500/40 shadow-2xl flex items-center gap-3 animate-fadeIn">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           <span className="text-xs font-semibold">{actionSuccessMsg}</span>
         </div>
       )}
 
       {/* ── Top Bar Header & Action Controls ── */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-sm border border-slate-200/80 dark:border-slate-800 shadow-sm">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+            <div className="w-9 h-9 rounded-sm bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
               <Zap className="w-5 h-5" />
             </div>
             <div>
@@ -923,7 +931,7 @@ export default function SuperAdminDashboard() {
                 setDateFilter(e.target.value);
                 setShowCustomPicker(e.target.value === "Custom");
               }}
-              className="pl-8 pr-8 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer appearance-none shadow-sm transition"
+              className="pl-8 pr-8 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-sm text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer appearance-none shadow-sm transition"
             >
               {["All Time", "Today", "Yesterday", "Last 7 days", "Last 30 days", "This month", "Previous month", "Custom"].map(f => (
                 <option key={f} value={f}>{f}</option>
@@ -938,7 +946,7 @@ export default function SuperAdminDashboard() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-8 pr-8 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer appearance-none shadow-sm transition"
+              className="pl-8 pr-8 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-sm text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer appearance-none shadow-sm transition"
             >
               {["All Status", "Pending", "Contacted", "Qualified", "Closed"].map(s => (
                 <option key={s} value={s}>{s}</option>
@@ -955,7 +963,7 @@ export default function SuperAdminDashboard() {
               fetchData();
             }}
             disabled={refreshing || loading}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm cursor-pointer disabled:opacity-50"
             title="Refresh Real-time Data"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing || loading ? "animate-spin text-indigo-600 dark:text-indigo-400" : "text-slate-500"}`} />
@@ -966,7 +974,7 @@ export default function SuperAdminDashboard() {
           <button
             type="button"
             onClick={() => setShowImportModal(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-500" />
             <span>Import Leads</span>
@@ -976,7 +984,7 @@ export default function SuperAdminDashboard() {
           <button
             type="button"
             onClick={() => setShowAddLeadModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white shadow-sm shadow-indigo-600/30 transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white shadow-sm shadow-indigo-600/30 transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add Lead</span>
@@ -1018,10 +1026,10 @@ export default function SuperAdminDashboard() {
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
         
         {/* Card 1: Total Leads */}
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition">
+        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-sm border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition">
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold tracking-wide">
             <span>TOTAL LEADS</span>
-            <span className="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold text-[11px] bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded">
+            <span className="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold text-[11px] bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded-xs">
               +{metrics.scrapedGrowth}% MoM
             </span>
           </div>
@@ -1034,7 +1042,7 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Card 2: New Leads */}
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition">
+        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-sm border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition">
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold tracking-wide">
             <span>NEW LEADS</span>
             <span className="text-[11px] text-slate-400 font-medium">Dynamic Live</span>
@@ -1048,10 +1056,10 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Card 3: Qualified */}
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition">
+        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-sm border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition">
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold tracking-wide">
             <span>QUALIFIED</span>
-            <span className="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold text-[11px] bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded">
+            <span className="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold text-[11px] bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded-xs">
               +{metrics.inquiriesGrowth}% MoM
             </span>
           </div>
@@ -1064,10 +1072,10 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Card 4: Contacted */}
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition">
+        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-sm border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition">
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold tracking-wide">
             <span>CONTACTED</span>
-            <span className="inline-flex items-center text-amber-600 dark:text-amber-400 font-bold text-[11px] bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.5 rounded">
+            <span className="inline-flex items-center text-amber-600 dark:text-amber-400 font-bold text-[11px] bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.5 rounded-xs">
               +5.7% MoM
             </span>
           </div>
@@ -1080,10 +1088,10 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Card 5: Conversion Rate */}
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition">
+        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-sm border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition">
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold tracking-wide">
             <span>CONVERSION RATE</span>
-            <span className="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold text-[11px] bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded">
+            <span className="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold text-[11px] bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded-xs">
               Capture
             </span>
           </div>
@@ -1097,11 +1105,11 @@ export default function SuperAdminDashboard() {
       </section>
 
       {/* ── 100% Dynamic Deals Pipeline Overview (Funnel Grid) ── */}
-      <section className="bg-white dark:bg-[#0f172a] p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3.5">
+      <section className="bg-white dark:bg-[#0f172a] p-5 rounded-sm border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Deals Pipeline Overview</h2>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-xs bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
               Live DB Pipeline
             </span>
           </div>
@@ -1110,90 +1118,90 @@ export default function SuperAdminDashboard() {
         {/* Dynamic Funnel Step Grid */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-2.5">
           {/* Step 1: New */}
-          <div className="p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:border-indigo-500/40 transition-all duration-200">
+          <div className="p-3 rounded-sm border border-slate-200/60 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:border-indigo-500/40 transition-all duration-200">
             <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
               <span>NEW</span>
               <span className="font-bold text-slate-700 dark:text-slate-200">{pipelineFunnel.new.pct}%</span>
             </div>
             <div className="text-lg font-bold text-slate-900 dark:text-white mt-1">{pipelineFunnel.new.count.toLocaleString()}</div>
-            <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-indigo-600 h-1.5 rounded-full transition-all duration-500" style={{ width: `${pipelineFunnel.new.pct}%` }} />
+            <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-none mt-2 overflow-hidden">
+              <div className="bg-indigo-600 h-1.5 transition-all duration-500" style={{ width: `${pipelineFunnel.new.pct}%` }} />
             </div>
           </div>
 
           {/* Step 2: Contacted */}
-          <div className="p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:border-indigo-500/40 transition-all duration-200">
+          <div className="p-3 rounded-sm border border-slate-200/60 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:border-indigo-500/40 transition-all duration-200">
             <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
               <span>CONTACTED</span>
               <span className="font-bold text-indigo-600 dark:text-indigo-400">{pipelineFunnel.contacted.pct}%</span>
             </div>
             <div className="text-lg font-bold text-slate-900 dark:text-white mt-1">{pipelineFunnel.contacted.count.toLocaleString()}</div>
-            <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-indigo-600 h-1.5 rounded-full transition-all duration-500" style={{ width: `${pipelineFunnel.contacted.pct}%` }} />
+            <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-none mt-2 overflow-hidden">
+              <div className="bg-indigo-600 h-1.5 transition-all duration-500" style={{ width: `${pipelineFunnel.contacted.pct}%` }} />
             </div>
           </div>
 
           {/* Step 3: Interested */}
-          <div className="p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:border-indigo-500/40 transition-all duration-200">
+          <div className="p-3 rounded-sm border border-slate-200/60 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:border-indigo-500/40 transition-all duration-200">
             <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
               <span>INTERESTED</span>
               <span className="font-bold text-indigo-600 dark:text-indigo-400">{pipelineFunnel.interested.pct}%</span>
             </div>
             <div className="text-lg font-bold text-slate-900 dark:text-white mt-1">{pipelineFunnel.interested.count.toLocaleString()}</div>
-            <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-indigo-600 h-1.5 rounded-full transition-all duration-500" style={{ width: `${pipelineFunnel.interested.pct}%` }} />
+            <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-none mt-2 overflow-hidden">
+              <div className="bg-indigo-600 h-1.5 transition-all duration-500" style={{ width: `${pipelineFunnel.interested.pct}%` }} />
             </div>
           </div>
 
           {/* Step 4: Qualified */}
-          <div className="p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:border-indigo-500/40 transition-all duration-200">
+          <div className="p-3 rounded-sm border border-slate-200/60 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:border-indigo-500/40 transition-all duration-200">
             <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
               <span>QUALIFIED</span>
               <span className="font-bold text-indigo-600 dark:text-indigo-400">{pipelineFunnel.qualified.pct}%</span>
             </div>
             <div className="text-lg font-bold text-slate-900 dark:text-white mt-1">{pipelineFunnel.qualified.count.toLocaleString()}</div>
-            <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-indigo-600 h-1.5 rounded-full transition-all duration-500" style={{ width: `${pipelineFunnel.qualified.pct}%` }} />
+            <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-none mt-2 overflow-hidden">
+              <div className="bg-indigo-600 h-1.5 transition-all duration-500" style={{ width: `${pipelineFunnel.qualified.pct}%` }} />
             </div>
           </div>
 
           {/* Step 5: Converted */}
-          <div className="p-3 rounded-xl border border-emerald-200/60 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40 transition-all duration-200">
+          <div className="p-3 rounded-sm border border-emerald-200/60 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40 transition-all duration-200">
             <div className="flex items-center justify-between text-[11px] text-emerald-800 dark:text-emerald-400 font-semibold">
               <span>CONVERTED</span>
               <span className="font-bold text-emerald-700 dark:text-emerald-400">{pipelineFunnel.converted.pct}%</span>
             </div>
             <div className="text-lg font-bold text-slate-900 dark:text-white mt-1">{pipelineFunnel.converted.count.toLocaleString()}</div>
-            <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" style={{ width: `${pipelineFunnel.converted.pct}%` }} />
+            <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-none mt-2 overflow-hidden">
+              <div className="bg-emerald-500 h-1.5 transition-all duration-500" style={{ width: `${pipelineFunnel.converted.pct}%` }} />
             </div>
           </div>
 
           {/* Step 6: Lost */}
-          <div className="p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:border-rose-500/40 transition-all duration-200">
+          <div className="p-3 rounded-sm border border-slate-200/60 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:border-rose-500/40 transition-all duration-200">
             <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
               <span>LOST</span>
               <span className="font-bold text-rose-500">{pipelineFunnel.lost.pct}%</span>
             </div>
             <div className="text-lg font-bold text-slate-900 dark:text-white mt-1">{pipelineFunnel.lost.count.toLocaleString()}</div>
-            <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-rose-400 h-1.5 rounded-full transition-all duration-500" style={{ width: `${pipelineFunnel.lost.pct}%` }} />
+            <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-none mt-2 overflow-hidden">
+              <div className="bg-rose-400 h-1.5 transition-all duration-500" style={{ width: `${pipelineFunnel.lost.pct}%` }} />
             </div>
           </div>
         </div>
       </section>
 
       {/* ── Dynamic Database Explorer Data Table ── */}
-      <section className="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col w-full max-w-full overflow-hidden">
+      <section className="bg-white dark:bg-[#0f172a] rounded-sm border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col w-full max-w-full overflow-hidden">
         
         {/* Toolbar & Segmented Tabs */}
         <div className="p-4 border-b border-slate-200/80 dark:border-neutral-800 flex flex-col xl:flex-row xl:items-center justify-between gap-3 max-w-full">
           
           {/* Segmented View Tabs */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-1 bg-slate-100 dark:bg-neutral-900 p-1 rounded-xl border border-slate-200/80 dark:border-neutral-800 max-w-full overflow-x-auto">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-1 bg-slate-100 dark:bg-neutral-900 p-1 rounded-sm border border-slate-200/80 dark:border-neutral-800 max-w-full overflow-x-auto">
             <button
               onClick={() => { setActiveTableTab("scraped"); setTablePage(1); }}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition shadow-sm cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-sm transition shadow-sm cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 activeTableTab === "scraped"
                   ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -1201,14 +1209,14 @@ export default function SuperAdminDashboard() {
             >
               <Database className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
               <span>All Scraped Leads</span>
-              <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-bold">
+              <span className="ml-0.5 px-1.5 py-0.5 rounded-xs bg-indigo-600 text-white text-[10px] font-bold">
                 {filteredData.currentScraped.length}
               </span>
             </button>
 
             <button
               onClick={() => { setActiveTableTab("inbound"); setTablePage(1); }}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition shadow-sm cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-sm transition shadow-sm cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 activeTableTab === "inbound"
                   ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -1216,14 +1224,14 @@ export default function SuperAdminDashboard() {
             >
               <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>Inbound Inquiries</span>
-              <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold">
+              <span className="ml-0.5 px-1.5 py-0.5 rounded-xs bg-emerald-600 text-white text-[10px] font-bold">
                 {filteredData.currentInquiries.length}
               </span>
             </button>
 
             <button
               onClick={() => { setActiveTableTab("portfolio"); setTablePage(1); }}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition shadow-sm cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-sm transition shadow-sm cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 activeTableTab === "portfolio"
                   ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -1231,7 +1239,7 @@ export default function SuperAdminDashboard() {
             >
               <Briefcase className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
               <span>Studio Showcase</span>
-              <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-bold">
+              <span className="ml-0.5 px-1.5 py-0.5 rounded-xs bg-amber-600 text-white text-[10px] font-bold">
                 {portfolios.length}
               </span>
             </button>
@@ -1249,16 +1257,16 @@ export default function SuperAdminDashboard() {
                   setTableSearch(e.target.value);
                   setTablePage(1);
                 }}
-                className="w-full pl-9 pr-12 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition"
+                className="w-full pl-9 pr-12 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition"
               />
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 border border-slate-200 dark:border-slate-700 rounded px-1 font-mono">
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 border border-slate-200 dark:border-slate-700 rounded-xs px-1 font-mono">
                 ⌘K
               </span>
             </div>
 
             <button
               type="button"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm cursor-pointer"
             >
               <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
               <span>Filters</span>
@@ -1267,7 +1275,7 @@ export default function SuperAdminDashboard() {
             <button
               type="button"
               onClick={handleExportCSV}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 text-slate-500" />
               <span>Export</span>
@@ -1278,12 +1286,12 @@ export default function SuperAdminDashboard() {
               <button
                 type="button"
                 onClick={() => setShowDeleteMenu(!showDeleteMenu)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-sm bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete Options</span>
                 {selectedRows.size > 0 && (
-                  <span className="bg-white/20 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-full">
+                  <span className="bg-white/20 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-xs">
                     {selectedRows.size}
                   </span>
                 )}
@@ -1291,7 +1299,7 @@ export default function SuperAdminDashboard() {
               </button>
 
               {showDeleteMenu && (
-                <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xl z-50 overflow-hidden py-1 text-xs animate-fadeIn">
+                <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-slate-900 rounded-sm border border-slate-200 dark:border-slate-800 shadow-2xl z-50 overflow-hidden py-1 text-xs animate-fadeIn">
                   {/* Remove Selected */}
                   <button
                     type="button"
@@ -1306,7 +1314,7 @@ export default function SuperAdminDashboard() {
                       <Trash2 className="w-3.5 h-3.5 text-rose-500" />
                       <span>Remove Selected</span>
                     </span>
-                    <span className="font-bold font-mono text-[10px] bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-800">
+                    <span className="font-bold font-mono text-[10px] bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded-xs border border-rose-200 dark:border-rose-800">
                       {selectedRows.size}
                     </span>
                   </button>
@@ -1325,7 +1333,7 @@ export default function SuperAdminDashboard() {
                       <Trash2 className="w-3.5 h-3.5 text-amber-500" />
                       <span>Remove Current Page</span>
                     </span>
-                    <span className="font-bold font-mono text-[10px] bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+                    <span className="font-bold font-mono text-[10px] bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-xs border border-amber-200 dark:border-amber-800">
                       Page {tablePage} ({paginatedTable.length})
                     </span>
                   </button>
@@ -1344,7 +1352,7 @@ export default function SuperAdminDashboard() {
                       <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                       <span>Delete ALL Leads</span>
                     </span>
-                    <span className="font-bold font-mono text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded shadow-xs">
+                    <span className="font-bold font-mono text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded-xs shadow-xs">
                       ALL ({scrapedLeads.length + inquiryLeads.length})
                     </span>
                   </button>
@@ -1510,190 +1518,196 @@ export default function SuperAdminDashboard() {
         )}
       </section>
 
-      {/* ── 100% Dynamic Slide-Over Lead Detail Inspection Drawer / Responsive Popup Modal ── */}
+      {/* ── 100% Dynamic Slide-Over Lead Detail Inspection Business Card Popup Modal ── */}
       {isDrawerOpen && selectedLead && (
         <div
           onClick={() => setIsDrawerOpen(false)}
-          className="fixed inset-0 z-50 overflow-hidden bg-black/80 backdrop-blur-xs flex items-end sm:items-stretch justify-center sm:justify-end animate-fadeIn cursor-pointer"
+          className="fixed inset-0 z-50 overflow-hidden bg-black/80 backdrop-blur-xs flex items-end sm:items-center justify-center sm:justify-end animate-fadeIn cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-md bg-white dark:bg-[#0a0a0a] h-[88vh] sm:h-full rounded-t-2xl sm:rounded-none shadow-2xl flex flex-col justify-between border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-neutral-800 overflow-y-auto cursor-default relative"
+            className="w-full sm:max-w-md bg-white dark:bg-[#0a0a0a] h-[92vh] sm:h-full max-h-[92vh] sm:max-h-full rounded-t-sm sm:rounded-none shadow-2xl flex flex-col justify-between border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-neutral-800 cursor-default relative overflow-hidden"
           >
             {/* Sticky Navigation Header with Prominent Close Icon Button */}
-            <div className="sticky top-0 z-40 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md px-5 py-3.5 border-b border-slate-200/80 dark:border-neutral-800 flex items-center justify-between shadow-xs">
+            <div className="flex-none bg-white dark:bg-[#0a0a0a] px-4 sm:px-5 py-3 border-b border-slate-200 dark:border-neutral-800 flex items-center justify-between z-20 shadow-xs">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
                   <span className="w-2 h-2 rounded-full bg-amber-500" />
                   {selectedLead.status}
                 </span>
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold text-xs border border-emerald-200 dark:border-emerald-800">
+                <span className="px-2.5 py-1 rounded-sm bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold text-xs border border-emerald-200 dark:border-emerald-800">
                   Score: {selectedLead.score}
                 </span>
               </div>
 
-              {/* Responsive Close Button Icon */}
+              {/* Mobile-Friendly Close Button */}
               <button
                 onClick={() => setIsDrawerOpen(false)}
-                className="p-1.5 px-3 rounded-xl bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition border border-slate-200/80 dark:border-neutral-700"
-                aria-label="Close lead popup"
+                className="px-3 py-1.5 rounded-sm bg-rose-500/10 hover:bg-rose-600 hover:text-white text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 dark:hover:bg-rose-600 dark:hover:text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition border border-rose-500/30 shadow-xs"
+                aria-label="Close lead business card popup"
                 title="Close popup"
               >
                 <span>Close</span>
-                <X className="w-4 h-4 text-slate-700 dark:text-slate-200" />
+                <X className="w-4 h-4 shrink-0" />
               </button>
             </div>
             
-            {/* Drawer Content */}
-            <div>
-              {/* Profile Subheader */}
-              <div className="p-6 border-b border-slate-200/80 dark:border-slate-800 space-y-4">
-
-                {/* Profile Header */}
-                <div className="flex items-center gap-4 pt-2">
-                  <div className={`w-14 h-14 rounded-2xl ${selectedLead.avatarColor} text-white font-extrabold text-xl flex items-center justify-center shadow-lg`}>
+            {/* Scrollable Drawer Body Content */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+              {/* Profile Card Header */}
+              <div className="p-4 bg-slate-50 dark:bg-neutral-900/60 border border-slate-200 dark:border-neutral-800 rounded-sm space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-sm ${selectedLead.avatarColor} text-white font-extrabold text-lg flex items-center justify-center shadow-md shrink-0`}>
                     {selectedLead.title?.charAt(0)?.toUpperCase() || "L"}
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug">{selectedLead.title}</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{selectedLead.industry} at {selectedLead.company}</p>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white leading-snug truncate">{selectedLead.title}</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{selectedLead.industry} at {selectedLead.company}</p>
                   </div>
                 </div>
 
-                {/* Priority Tags */}
-                <div className="flex items-center gap-1.5 pt-1">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                    Enterprise
+                {/* 100% Dynamic Badges */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                    Source: {selectedLead.source}
                   </span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800">
-                    High Priority
-                  </span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800">
-                    Q3 Target
-                  </span>
-                </div>
-
-                {/* ── SLEEK & WELL-POSITIONED ACTION BUTTONS TOOLBAR ── */}
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 pt-3">
-                  
-                  {/* Action 1: Call */}
-                  {selectedLead.phone ? (
-                    <a
-                      href={`tel:${selectedLead.phone.replace(/[^0-9+]/g, "")}`}
-                      className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-indigo-500/50 hover:bg-indigo-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0"
-                    >
-                      <Phone className="w-4 h-4 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform shrink-0" />
-                      <span>Call</span>
-                    </a>
-                  ) : (
-                    <button
-                      onClick={() => triggerToast("No phone number listed for this prospect")}
-                      className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/40 dark:bg-neutral-900/40 border border-slate-200/40 dark:border-neutral-800/40 opacity-50 text-slate-400 text-xs font-semibold cursor-not-allowed shrink-0"
-                    >
-                      <Phone className="w-4 h-4 shrink-0" />
-                      <span>Call</span>
-                    </button>
+                  {selectedLead.email && (
+                    <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                      Verified Email
+                    </span>
                   )}
-
-                  {/* Action 2: Email */}
-                  <button
-                    onClick={() => setShowEmailModal(true)}
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-indigo-500/50 hover:bg-indigo-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0"
-                  >
-                    <Mail className="w-4 h-4 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform shrink-0" />
-                    <span>Email</span>
-                  </button>
-
-                  {/* Action 3: WhatsApp */}
-                  <button
-                    onClick={handleWhatsAppClick}
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-emerald-500/50 hover:bg-emerald-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0"
-                  >
-                    <MessageSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
-                    <span className="truncate">Chat</span>
-                  </button>
-
-                  {/* Action 4: Add Note */}
-                  <button
-                    onClick={() => setShowNoteInput(!showNoteInput)}
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-amber-500/50 hover:bg-amber-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0"
-                  >
-                    <Plus className="w-4 h-4 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
-                    <span>Note</span>
-                  </button>
-
-                  {/* Action 5: Follow-up */}
-                  <button
-                    onClick={handleScheduleFollowup}
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-purple-500/50 hover:bg-purple-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0 col-span-2 sm:col-span-1"
-                  >
-                    <Clock className="w-4 h-4 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform shrink-0" />
-                    <span>Follow-up</span>
-                  </button>
+                  {selectedLead.phone && (
+                    <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                      Phone Contact
+                    </span>
+                  )}
                 </div>
-
-                {/* Inline Add Note Input Box */}
-                {showNoteInput && (
-                  <div className="pt-2 animate-fadeIn">
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="Type internal note..."
-                        value={newNoteText}
-                        onChange={(e) => setNewNoteText(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleAddNote()}
-                        className="flex-1 px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
-                      />
-                      <button
-                        onClick={handleAddNote}
-                        className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
 
+              {/* ── ACTION BUTTONS TOOLBAR ── */}
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                {/* Action 1: Call */}
+                {selectedLead.phone ? (
+                  <a
+                    href={`tel:${selectedLead.phone.replace(/[^0-9+]/g, "")}`}
+                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-indigo-500 hover:bg-indigo-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    <span>Call</span>
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => triggerToast("No phone number listed for this prospect")}
+                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100/40 dark:bg-neutral-900/40 border border-slate-200/40 dark:border-neutral-800/40 opacity-50 text-slate-400 text-xs font-semibold cursor-not-allowed shrink-0"
+                  >
+                    <Phone className="w-3.5 h-3.5 shrink-0" />
+                    <span>Call</span>
+                  </button>
+                )}
+
+                {/* Action 2: Email */}
+                <button
+                  onClick={() => setShowEmailModal(true)}
+                  className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-indigo-500 hover:bg-indigo-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0"
+                >
+                  <Mail className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <span>Email</span>
+                </button>
+
+                {/* Action 3: WhatsApp */}
+                <button
+                  onClick={handleWhatsAppClick}
+                  className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-emerald-500 hover:bg-emerald-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="truncate">Chat</span>
+                </button>
+
+                {/* Action 4: Add Note */}
+                <button
+                  onClick={() => setShowNoteInput(!showNoteInput)}
+                  className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-amber-500 hover:bg-amber-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span>Note</span>
+                </button>
+
+                {/* Action 5: Follow-up */}
+                <button
+                  onClick={handleScheduleFollowup}
+                  className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-purple-500 hover:bg-purple-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0 col-span-2 sm:col-span-1"
+                >
+                  <Clock className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+                  <span>Follow-up</span>
+                </button>
+              </div>
+
+              {/* Inline Add Note Input Box */}
+              {showNoteInput && (
+                <div className="pt-1 animate-fadeIn">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Type internal note..."
+                      value={newNoteText}
+                      onChange={(e) => setNewNoteText(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddNote()}
+                      className="flex-1 px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-sm text-slate-800 dark:text-slate-200"
+                    />
+                    <button
+                      onClick={handleAddNote}
+                      className="px-3 py-1.5 bg-indigo-600 text-white rounded-sm text-xs font-semibold hover:bg-indigo-700"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Contact Info Details */}
-              <div className="p-6 space-y-4 border-b border-slate-200/80 dark:border-slate-800">
-                <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Contact Info</h4>
+              <div className="p-4 bg-slate-50 dark:bg-neutral-900/40 border border-slate-200 dark:border-neutral-800 rounded-sm space-y-3">
+                <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Contact Details</h4>
                 <div className="space-y-2.5 text-xs">
                   <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
-                    <Mail className="w-4 h-4 text-slate-400" />
-                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">{selectedLead.email || "No Email"}</span>
+                    <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                    <span className="font-semibold text-indigo-600 dark:text-indigo-400 break-all">{selectedLead.email || "No Email"}</span>
                   </div>
                   <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
-                    <Phone className="w-4 h-4 text-slate-400" />
+                    <Phone className="w-4 h-4 text-slate-400 shrink-0" />
                     <span>{selectedLead.phone || "No Phone"}</span>
                   </div>
                   <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
-                    <MapPin className="w-4 h-4 text-slate-400" />
+                    <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
                     <span>{selectedLead.location}</span>
                   </div>
                 </div>
               </div>
 
               {/* Dynamic Activity History Timeline */}
-              <div className="p-6 space-y-4">
+              <div className="p-4 border border-slate-200 dark:border-neutral-800 rounded-sm space-y-3">
                 <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Activity History</h4>
-                <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
-                  
+                <div className="relative pl-5 space-y-3.5 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
                   {/* Dynamic Custom Notes */}
                   {selectedLead.notes && selectedLead.notes.map((n: any, idx: number) => (
                     <div key={idx} className="relative">
-                      <span className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-white dark:ring-slate-900" />
+                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900" />
                       <div className="text-xs font-semibold text-slate-900 dark:text-white">Internal Note ({n.author})</div>
                       <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{n.text}</div>
-                      <div className="text-[10px] text-slate-400 mt-1">{n.date}</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">{n.date}</div>
                     </div>
                   ))}
 
                   <div className="relative">
-                    <span className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-indigo-600 ring-4 ring-white dark:ring-slate-900" />
-                    <div className="text-xs font-semibold text-slate-900 dark:text-white">Lead Created &amp; Qualified</div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Imported via Justdial scraper &amp; validated.</div>
-                    <div className="text-[10px] text-slate-400 mt-1">
+                    <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-indigo-600 ring-2 ring-white dark:ring-slate-900" />
+                    <div className="text-xs font-semibold text-slate-900 dark:text-white">Lead Record Registered</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {selectedLead.source === "scraped"
+                        ? `Scraped lead entry from ${selectedLead.location} database.`
+                        : selectedLead.source === "inquiry"
+                        ? "Direct web contact form inquiry record."
+                        : "Portfolio showcase item record."}
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
                       {new Date(selectedLead.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </div>
                   </div>
@@ -1701,18 +1715,18 @@ export default function SuperAdminDashboard() {
               </div>
             </div>
 
-            {/* ── 100% WORKING DRAWER FOOTER ACTIONS ── */}
-            <div className="p-6 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/40">
+            {/* Fixed Drawer Footer Actions */}
+            <div className="flex-none p-4 sm:p-5 border-t border-slate-200 dark:border-neutral-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/60 z-20">
               <button
                 onClick={handleDeleteLead}
-                className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 flex items-center gap-1 cursor-pointer"
+                className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 flex items-center gap-1.5 cursor-pointer py-1.5 px-3 rounded-sm border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-950/30"
               >
-                <Trash2 className="w-4 h-4" />
-                Delete Lead
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Lead</span>
               </button>
               <button
                 onClick={() => setShowStatusModal(true)}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer"
+                className="px-4 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition cursor-pointer"
               >
                 Update Status
               </button>
@@ -1724,7 +1738,7 @@ export default function SuperAdminDashboard() {
       {/* ── Update Status Modal ── */}
       {showStatusModal && selectedLead && (
         <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-sm bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
+          <div className="w-full max-w-sm bg-white dark:bg-[#0f172a] rounded-sm border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Update Lead Status</h3>
               <button onClick={() => setShowStatusModal(false)} className="text-slate-400 hover:text-slate-600">
@@ -1740,7 +1754,7 @@ export default function SuperAdminDashboard() {
                   key={s}
                   onClick={() => handlePersistStatusUpdate(s)}
                   disabled={updatingStatus}
-                  className={`w-full p-2.5 rounded-xl border text-xs font-semibold text-left flex items-center justify-between transition cursor-pointer ${
+                  className={`w-full p-2.5 rounded-sm border text-xs font-semibold text-left flex items-center justify-between transition cursor-pointer ${
                     selectedLead.status?.toLowerCase() === s.toLowerCase()
                       ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-500 text-indigo-600 dark:text-indigo-400"
                       : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
@@ -1758,7 +1772,7 @@ export default function SuperAdminDashboard() {
       {/* ── Direct Email Composer Modal ── */}
       {showEmailModal && selectedLead && (
         <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-lg bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
+          <div className="w-full max-w-lg bg-white dark:bg-[#0f172a] rounded-sm border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Send Outreach Email</h3>
               <button onClick={() => setShowEmailModal(false)} className="text-slate-400 hover:text-slate-600">
@@ -1773,7 +1787,7 @@ export default function SuperAdminDashboard() {
                   type="email"
                   readOnly
                   value={selectedLead.email || ""}
-                  className="w-full px-3 py-2 text-xs bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 font-semibold"
+                  className="w-full px-3 py-2 text-xs bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-sm text-slate-800 dark:text-slate-200 font-semibold"
                 />
               </div>
 
@@ -1784,7 +1798,7 @@ export default function SuperAdminDashboard() {
                   required
                   value={emailSubject}
                   onChange={(e) => setEmailSubject(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
+                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-sm text-slate-800 dark:text-slate-200"
                 />
               </div>
 
@@ -1795,7 +1809,7 @@ export default function SuperAdminDashboard() {
                   rows={5}
                   value={emailBody}
                   onChange={(e) => setEmailBody(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
+                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-sm text-slate-800 dark:text-slate-200"
                 />
               </div>
 
@@ -1803,14 +1817,14 @@ export default function SuperAdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowEmailModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300"
+                  className="px-4 py-2 rounded-sm bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={sendingEmail}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 flex items-center gap-1.5"
                 >
                   <Send className="w-3.5 h-3.5" />
                   {sendingEmail ? "Sending..." : "Dispatch Email"}
@@ -1829,11 +1843,11 @@ export default function SuperAdminDashboard() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg bg-white dark:bg-[#0a0a0a] rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl p-6 space-y-5 cursor-default relative"
+            className="w-full max-w-lg bg-white dark:bg-[#0a0a0a] rounded-sm border border-slate-200 dark:border-neutral-800 shadow-2xl p-6 space-y-5 cursor-default relative"
           >
             <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-neutral-800 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-sm bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
                   <FileSpreadsheet className="w-5 h-5" />
                 </div>
                 <div>
@@ -1843,7 +1857,7 @@ export default function SuperAdminDashboard() {
               </div>
               <button
                 onClick={() => setShowImportModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+                className="p-1.5 rounded-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1851,7 +1865,7 @@ export default function SuperAdminDashboard() {
 
             <form onSubmit={handleFileUpload} className="space-y-4">
               {/* File Dropzone */}
-              <div className="border-2 border-dashed border-slate-300 dark:border-neutral-800 rounded-xl p-6 text-center hover:border-indigo-500 transition cursor-pointer bg-slate-50/50 dark:bg-neutral-900/40 relative">
+              <div className="border-2 border-dashed border-slate-300 dark:border-neutral-800 rounded-sm p-6 text-center hover:border-indigo-500 transition cursor-pointer bg-slate-50/50 dark:bg-neutral-900/40 relative">
                 <input
                   type="file"
                   accept=".xlsx, .xls, .csv"
@@ -1873,7 +1887,7 @@ export default function SuperAdminDashboard() {
               </div>
 
               {uploadResult && (
-                <div className={`p-3 rounded-xl text-xs font-mono border ${
+                <div className={`p-3 rounded-sm text-xs font-mono border ${
                   uploadResult.startsWith("Error")
                     ? "bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400"
                     : "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
@@ -1886,14 +1900,14 @@ export default function SuperAdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowImportModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+                  className="px-4 py-2 rounded-sm text-xs font-semibold text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!importFile || uploading}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2"
+                  className="px-4 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2"
                 >
                   {uploading ? (
                     <>
@@ -1921,11 +1935,11 @@ export default function SuperAdminDashboard() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md bg-white dark:bg-[#0a0a0a] rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl p-6 space-y-4 cursor-default relative"
+            className="w-full max-w-md bg-white dark:bg-[#0a0a0a] rounded-sm border border-slate-200 dark:border-neutral-800 shadow-2xl p-6 space-y-4 cursor-default relative"
           >
             <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-neutral-800 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center shadow-md">
+                <div className="w-9 h-9 rounded-sm bg-indigo-600 text-white font-bold flex items-center justify-center shadow-md">
                   <User className="w-4.5 h-4.5" />
                 </div>
                 <div>
@@ -1935,7 +1949,7 @@ export default function SuperAdminDashboard() {
               </div>
               <button
                 onClick={() => setShowAddLeadModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+                className="p-1.5 rounded-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1950,7 +1964,7 @@ export default function SuperAdminDashboard() {
                   placeholder="e.g. Nexus Tech Studios"
                   value={newLeadForm.bussiness_name}
                   onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_name: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                 />
               </div>
 
@@ -1962,7 +1976,7 @@ export default function SuperAdminDashboard() {
                     placeholder="contact@nexus.com"
                     value={newLeadForm.bussiness_email}
                     onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_email: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                   />
                 </div>
                 <div>
@@ -1972,7 +1986,7 @@ export default function SuperAdminDashboard() {
                     placeholder="+1 555-0192"
                     value={newLeadForm.bussiness_number}
                     onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_number: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                   />
                 </div>
               </div>
@@ -1985,7 +1999,7 @@ export default function SuperAdminDashboard() {
                     placeholder="New York"
                     value={newLeadForm.scraped_city}
                     onChange={(e) => setNewLeadForm({ ...newLeadForm, scraped_city: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                   />
                 </div>
                 <div>
@@ -1995,7 +2009,7 @@ export default function SuperAdminDashboard() {
                     placeholder="Web Development"
                     value={newLeadForm.scraped_service}
                     onChange={(e) => setNewLeadForm({ ...newLeadForm, scraped_service: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                   />
                 </div>
               </div>
@@ -2007,7 +2021,7 @@ export default function SuperAdminDashboard() {
                   placeholder="https://nexus.com"
                   value={newLeadForm.bussiness_website}
                   onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_website: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                 />
               </div>
 
@@ -2015,14 +2029,14 @@ export default function SuperAdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowAddLeadModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+                  className="px-4 py-2 rounded-sm text-xs font-semibold text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingNewLead}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2"
+                  className="px-4 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2"
                 >
                   {submittingNewLead ? (
                     <>
