@@ -151,12 +151,13 @@ export default function ContactMessagesManager() {
   const [generatingDraft, setGeneratingDraft] = useState(false);
   const [sendingCustomReply, setSendingCustomReply] = useState(false);
   const [aiDraftData, setAiDraftData] = useState<{
-    lead_id: number;
+    contact_id?: number;
+    lead_id?: number;
     business_name: string;
     recipient_email: string;
     intent: string;
-    scraped_city: string;
-    scraped_service: string;
+    scraped_city?: string;
+    scraped_service?: string;
     subject: string;
     body: string;
     mode: "test" | "production";
@@ -271,7 +272,54 @@ export default function ContactMessagesManager() {
     }
   };
 
-  // Dispatch Approved Email (Supports Test Mode vs Production Mode)
+  // Website Contact AI Draft Generators
+  const handleGenerateContactMeetingDraft = async () => {
+    if (!selectedMessage) return;
+    setGeneratingDraft(true);
+    try {
+      const res = await authFetch(`${API}/api/v1/contacts/${selectedMessage.id}/generate-meeting-draft`, {
+        method: "POST"
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAiDraftData(data);
+        setAiModalOpen(true);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Failed to generate meeting draft: ${formatErrorDetail(err.detail)}`, "error");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("Error generating meeting draft.", "error");
+    } finally {
+      setGeneratingDraft(false);
+    }
+  };
+
+  const handleGenerateContactCustomDraft = async () => {
+    if (!selectedMessage) return;
+    setGeneratingDraft(true);
+    try {
+      const res = await authFetch(`${API}/api/v1/contacts/${selectedMessage.id}/generate-draft`, {
+        method: "POST"
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAiDraftData(data);
+        setAiModalOpen(true);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Failed to generate draft: ${formatErrorDetail(err.detail)}`, "error");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("Error generating custom draft.", "error");
+    } finally {
+      setGeneratingDraft(false);
+    }
+  };
+
+  // Dispatch Approved Email (Supports Test Mode vs Production Mode for both Scraped Leads and Website Inquiries)
   const handleSendCustomReply = async () => {
     if (!aiDraftData) return;
     if (!aiDraftData.subject.trim() || !aiDraftData.body.trim()) {
@@ -280,7 +328,11 @@ export default function ContactMessagesManager() {
     }
     setSendingCustomReply(true);
     try {
-      const res = await authFetch(`${API}/api/v1/email/conversations/${aiDraftData.lead_id}/send-custom`, {
+      const endpoint = aiDraftData.contact_id
+        ? `${API}/api/v1/contacts/${aiDraftData.contact_id}/send-custom`
+        : `${API}/api/v1/email/conversations/${aiDraftData.lead_id}/send-custom`;
+
+      const res = await authFetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -294,7 +346,7 @@ export default function ContactMessagesManager() {
         showToast(`Email approved & sent ${modeLabel}!`, "success");
         setAiModalOpen(false);
         setAiDraftData(null);
-        await fetchRepliedLeads();
+        await Promise.all([fetchRepliedLeads(), fetchContactMessages()]);
       } else {
         const err = await res.json().catch(() => ({}));
         showToast(`Failed to send email: ${formatErrorDetail(err.detail)}`, "error");
@@ -716,9 +768,9 @@ export default function ContactMessagesManager() {
 
           <div className="lg:col-span-7 bg-white dark:bg-[#0f172a] rounded-md border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
             {selectedMessage ? (
-              <div className="flex-1 flex flex-col justify-between p-6">
+              <div className="flex-1 flex flex-col justify-between p-6 overflow-hidden">
                 <div className="space-y-4 border-b border-slate-200/80 dark:border-slate-800 pb-5">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className="w-11 h-11 rounded-md bg-indigo-600 text-white font-extrabold text-lg flex items-center justify-center shadow-md">
                         {selectedMessage.name?.charAt(0)?.toUpperCase() || "M"}
@@ -730,34 +782,88 @@ export default function ContactMessagesManager() {
                         </a>
                       </div>
                     </div>
+
+                    {/* AI Response Generator Buttons for Website Inquiries */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={handleGenerateContactMeetingDraft}
+                        disabled={generatingDraft}
+                        className="px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-mono font-bold text-[11px] rounded-md shadow-md transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        {generatingDraft ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>DRAFTING...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Calendar className="w-3.5 h-3.5 text-amber-300" />
+                            <span>✨ Generate Meeting Email</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={handleGenerateContactCustomDraft}
+                        disabled={generatingDraft}
+                        className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-mono font-bold text-[11px] rounded-md transition cursor-pointer flex items-center gap-1 disabled:opacity-50"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>Custom AI</span>
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
-                    <span className="font-semibold text-slate-900 dark:text-white text-sm">{selectedMessage.subject}</span>
-                    <span>{new Date(selectedMessage.created_at || Date.now()).toLocaleString("en-US")}</span>
+                  <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 pt-1 gap-2">
+                    <span className="font-semibold text-slate-900 dark:text-white text-sm">{selectedMessage.subject || "Website Inquiry"}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-mono font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Auto-Response Sent
+                      </span>
+                      <span className="text-[11px] text-slate-400">{new Date(selectedMessage.created_at || Date.now()).toLocaleString("en-US")}</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex-1 py-6 overflow-y-auto">
-                  <div className="bg-slate-50 dark:bg-slate-900/60 p-5 rounded-md border border-slate-200/60 dark:border-slate-800/60 text-sm leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
-                    {selectedMessage.message}
+                <div className="flex-1 py-4 overflow-y-auto space-y-4">
+                  {/* Visitor Original Inquiry Message Card */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                      <span>Website Visitor Message</span>
+                      <span>{selectedMessage.name}</span>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-md border border-slate-200/60 dark:border-slate-800/60 text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
+                      {selectedMessage.message}
+                    </div>
+                  </div>
+
+                  {/* Automated Thank You Confirmation Notice */}
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-md p-3 text-xs text-emerald-600 dark:text-emerald-400 space-y-1">
+                    <div className="flex items-center gap-2 font-mono font-bold text-[10px] uppercase tracking-wider">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Automated Thank-You Email Dispatched to {selectedMessage.email}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 font-sans">
+                      "Thank you for choosing Nexora AI! We have received your inquiry. Our team will meet soon for further work."
+                    </p>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">Direct reply via mail client</span>
+                  <span className="text-xs text-slate-400 font-mono">Use AI generators above or email client</span>
                   <a
                     href={`mailto:${selectedMessage.email}?subject=Re: ${encodeURIComponent(selectedMessage.subject || "")}`}
                     className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2"
                   >
                     <Send className="w-3.5 h-3.5" />
-                    <span>Send Email</span>
+                    <span>Send Manual Email</span>
                   </a>
                 </div>
               </div>
             ) : (
               <div className="flex-1 flex items-center justify-center text-xs text-slate-400 font-mono">
-                Select a message to view.
+                Select a website inquiry to view details and generate responses.
               </div>
             )}
           </div>
