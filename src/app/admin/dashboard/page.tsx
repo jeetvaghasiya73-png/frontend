@@ -49,6 +49,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
+import { formatServiceText } from "@/lib/formatters";
 import {
   ResponsiveContainer,
   BarChart,
@@ -363,7 +364,7 @@ export default function SuperAdminDashboard() {
 
     const catMap: Record<string, number> = {};
     cLeads.forEach(l => {
-      const cat = l.scraped_service || "General";
+      const cat = formatServiceText(l.scraped_service) || "General";
       catMap[cat] = (catMap[cat] || 0) + 1;
     });
 
@@ -442,7 +443,7 @@ export default function SuperAdminDashboard() {
           title: l.bussiness_name || "Unknown Business",
           email: l.bussiness_email || "",
           company: l.bussiness_name || "Company",
-          industry: l.scraped_service || "Services",
+          industry: formatServiceText(l.scraped_service) || "Services",
           location: l.scraped_city || "India",
           source: "scraped",
           phone: l.bussiness_number || "",

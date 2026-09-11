@@ -33,6 +33,7 @@ import {
   MessageSquare
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
+import { formatServiceText } from "@/lib/formatters";
 
 type SourceFilter = "all" | "inquiry" | "scraped";
 
@@ -135,6 +136,8 @@ export default function LeadsManager() {
         const ratingVal = lead.rating ? parseFloat(lead.rating) : 3.5;
         const score = Math.min(99, Math.round((hasEmail ? 80 : 55) + ratingVal * 3.5));
 
+        const cleanService = formatServiceText(lead.scraped_service || lead.category);
+
         return {
           id: lead.id + 100000,
           rawId: lead.id,
@@ -142,7 +145,7 @@ export default function LeadsManager() {
           email: lead.bussiness_email || "",
           phone: lead.bussiness_number || "",
           company: lead.scraped_city || "Outreach",
-          services: lead.scraped_service ? [lead.scraped_service] : [],
+          services: cleanService ? [cleanService] : [],
           message: "",
           status: "scraped",
           created_at: lead.created_at || new Date().toISOString(),
@@ -150,7 +153,7 @@ export default function LeadsManager() {
           rating: lead.rating || "",
           website: lead.bussiness_website || "",
           city: lead.scraped_city || "",
-          category: lead.category || "",
+          category: formatServiceText(lead.category) || "",
           email_status: lead.email_status || "pending",
           score,
         };
@@ -790,7 +793,12 @@ export default function LeadsManager() {
                   </td>
 
                   <td className="py-3.5 px-3 text-slate-500 dark:text-slate-400">
-                    {lead.services.join(", ") || lead.category || "General Services"}
+                    <span
+                      className="inline-block max-w-[260px] truncate font-medium text-slate-700 dark:text-slate-300"
+                      title={formatServiceText(lead.services.join(" • ") || lead.category)}
+                    >
+                      {formatServiceText(lead.services.join(" • ") || lead.category) || "General Services"}
+                    </span>
                   </td>
 
                   <td className="py-3.5 px-3">
