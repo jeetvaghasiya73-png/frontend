@@ -16,7 +16,7 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] p-12 rounded-xl text-center shadow-sm">
+      <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] p-12 rounded-md text-center shadow-sm">
         <p className="text-sm text-gray-500 dark:text-[#B0B0B0] font-mono">Settings configuration coming soon.</p>
       </div>
     </div>

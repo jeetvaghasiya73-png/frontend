@@ -142,7 +142,7 @@ export default function FaqsManager() {
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-accent-custom hover:text-white dark:hover:bg-accent-custom dark:hover:text-white px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm"
+            className="bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-accent-custom hover:text-white dark:hover:bg-accent-custom dark:hover:text-white px-4 py-2.5 rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm"
           >
             <Plus className="w-4 h-4" />
             Add New FAQ
@@ -152,7 +152,7 @@ export default function FaqsManager() {
 
       {/* Accordion Form Panel */}
       {showForm && (
-        <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-xl p-6 lg:p-8 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-md p-6 lg:p-8 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">
               {editingId ? "Edit FAQ Panel" : "Create New FAQ"}
@@ -163,7 +163,7 @@ export default function FaqsManager() {
           </div>
           
           {formError && (
-            <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-semibold p-4 rounded-lg flex items-start gap-2">
+            <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-semibold p-4 rounded-md flex items-start gap-2">
               <div className="mt-0.5 font-bold uppercase text-[10px] tracking-wider bg-red-500 text-white px-1.5 py-0.5 rounded">ERROR</div>
               <div>{formError}</div>
             </div>
@@ -180,7 +180,7 @@ export default function FaqsManager() {
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 placeholder="What is your delivery timeline?"
-                className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
               />
             </div>
 
@@ -192,7 +192,7 @@ export default function FaqsManager() {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                  className="w-full bg-gray-50 dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
                 >
                   <option value="General">General</option>
                   <option value="Security">Security</option>
@@ -209,7 +209,7 @@ export default function FaqsManager() {
                   type="number"
                   value={orderIndex}
                   onChange={(e) => setOrderIndex(Number(e.target.value))}
-                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
                 />
               </div>
             </div>
@@ -224,14 +224,14 @@ export default function FaqsManager() {
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 placeholder="Our standard delivery is..."
-                className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all resize-none"
+                className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all resize-none"
               />
             </div>
 
             <div className="flex items-center gap-3 pt-4">
               <button
                 type="submit"
-                className="bg-accent-custom hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-lg text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all shadow-md"
+                className="bg-accent-custom hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-md text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all shadow-md"
               >
                 <Check className="w-4 h-4" />
                 {editingId ? "Save Changes" : "Create FAQ"}
@@ -239,7 +239,7 @@ export default function FaqsManager() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white font-bold px-6 py-3 rounded-lg text-xs uppercase tracking-wider transition-all cursor-pointer"
+                className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white font-bold px-6 py-3 rounded-md text-xs uppercase tracking-wider transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -249,7 +249,7 @@ export default function FaqsManager() {
       )}
 
       {/* List */}
-      <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] shadow-sm rounded-xl divide-y divide-gray-100 dark:divide-white/5">
+      <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] shadow-sm rounded-md divide-y divide-gray-100 dark:divide-white/5">
         {faqs.map((faq) => (
           <div key={faq.id} className="p-6 flex items-start justify-between gap-6 hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all">
             <div className="text-left space-y-2">

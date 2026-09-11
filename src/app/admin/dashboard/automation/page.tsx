@@ -78,10 +78,10 @@ export default function AutomationPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
         {/* Card 1: Lead Scraper Automation */}
-        <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:border-accent-custom/50 hover:shadow-[0_0_20px_rgba(79,124,255,0.08)] transition-all duration-300 transform hover:-translate-y-1">
+        <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] rounded-md p-6 shadow-sm flex flex-col justify-between hover:border-accent-custom/50 hover:shadow-[0_0_20px_rgba(79,124,255,0.08)] transition-all duration-300 transform hover:-translate-y-1">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-xl bg-accent-custom/10 flex items-center justify-center text-accent-custom">
+              <div className="w-10 h-10 rounded-md bg-accent-custom/10 flex items-center justify-center text-accent-custom">
                 <Database className="w-5 h-5" />
               </div>
               <span className={`px-2 py-0.5 rounded font-bold uppercase text-[8px] tracking-wider border ${
@@ -114,10 +114,10 @@ export default function AutomationPage() {
         </div>
 
         {/* Card 2: Outbound Email Outreach */}
-        <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:border-accent-custom/50 hover:shadow-[0_0_20px_rgba(79,124,255,0.08)] transition-all duration-300 transform hover:-translate-y-1">
+        <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] rounded-md p-6 shadow-sm flex flex-col justify-between hover:border-accent-custom/50 hover:shadow-[0_0_20px_rgba(79,124,255,0.08)] transition-all duration-300 transform hover:-translate-y-1">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-xl bg-accent-custom/10 flex items-center justify-center text-accent-custom">
+              <div className="w-10 h-10 rounded-md bg-accent-custom/10 flex items-center justify-center text-accent-custom">
                 <Mail className="w-5 h-5" />
               </div>
               <span className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded font-bold uppercase text-[8px] tracking-wider font-mono">
@@ -146,10 +146,10 @@ export default function AutomationPage() {
         </div>
 
         {/* Card 3: SEO Rankings Monitor (Disabled) */}
-        <div className="border border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/2 rounded-xl p-6 opacity-60 flex flex-col justify-between select-none">
+        <div className="border border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/2 rounded-md p-6 opacity-60 flex flex-col justify-between select-none">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-white/5 flex items-center justify-center text-gray-500">
+              <div className="w-10 h-10 rounded-md bg-gray-200 dark:bg-white/5 flex items-center justify-center text-gray-500">
                 <TrendingUp className="w-5 h-5" />
               </div>
               <span className="bg-gray-200 dark:bg-white/5 text-gray-500 border border-transparent px-2 py-0.5 rounded font-bold uppercase text-[8px] tracking-wider font-mono">

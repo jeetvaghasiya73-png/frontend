@@ -218,7 +218,7 @@ function AdminUsersTab() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-xs flex items-center gap-2 transition shadow-md shadow-indigo-600/30 cursor-pointer"
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold text-xs flex items-center gap-2 transition shadow-md shadow-indigo-600/30 cursor-pointer"
         >
           <UserPlus className="w-4 h-4" />
           <span>New Admin User</span>
@@ -226,7 +226,7 @@ function AdminUsersTab() {
       </div>
 
       {error && (
-        <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-xl text-xs text-rose-600 dark:text-rose-400 font-mono">
+        <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-md text-xs text-rose-600 dark:text-rose-400 font-mono">
           {error}
         </div>
       )}
@@ -237,7 +237,7 @@ function AdminUsersTab() {
           <span className="text-xs font-mono">Loading users list…</span>
         </div>
       ) : (
-        <div className="bg-white dark:bg-[#0f172a] border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm w-full">
+        <div className="bg-white dark:bg-[#0f172a] border border-slate-200/80 dark:border-slate-800 rounded-md overflow-hidden shadow-sm w-full">
           <div className="w-full overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse min-w-[650px]">
             <thead>
@@ -306,7 +306,7 @@ function AdminUsersTab() {
       {/* Create Modal */}
       {showCreate && (
         <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
+          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-md border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Create New Admin User</h3>
               <button onClick={() => setShowCreate(false)} className="text-slate-400 hover:text-slate-600">
@@ -354,14 +354,14 @@ function AdminUsersTab() {
                 <button
                   type="button"
                   onClick={() => setShowCreate(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300"
+                  className="px-4 py-2 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={creating}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30"
+                  className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30"
                 >
                   {creating ? "Creating..." : "Create User"}
                 </button>
@@ -374,7 +374,7 @@ function AdminUsersTab() {
       {/* Delete Confirmation Modal */}
       {deleteModalUser && (
         <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
+          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-md border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-900 dark:text-white">Confirm User Deletion</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Are you sure you want to permanently delete admin account <span className="font-bold text-slate-900 dark:text-white">"{deleteModalUser.username}"</span>? This action cannot be undone.
@@ -383,14 +383,14 @@ function AdminUsersTab() {
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setDeleteModalUser(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300"
+                className="px-4 py-2 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-md shadow-rose-600/30"
+                className="px-4 py-2 rounded-md bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-md shadow-rose-600/30"
               >
                 {deleting ? "Deleting..." : "Delete User"}
               </button>
@@ -420,9 +420,9 @@ export default function SecurityPage() {
 
   return (
     <div className="space-y-6 text-left pb-20 relative animate-fadeIn font-sans antialiased text-slate-800 dark:text-slate-200">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-md border border-slate-200/80 dark:border-slate-800 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+          <div className="w-10 h-10 rounded-md bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
             <Shield className="w-5 h-5" />
           </div>
           <div>

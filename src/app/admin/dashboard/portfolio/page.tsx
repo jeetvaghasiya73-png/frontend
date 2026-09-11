@@ -169,7 +169,7 @@ export default function PortfolioManager() {
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-accent-custom hover:text-white dark:hover:bg-accent-custom dark:hover:text-white px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm"
+            className="bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-accent-custom hover:text-white dark:hover:bg-accent-custom dark:hover:text-white px-4 py-2.5 rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm"
           >
             <Plus className="w-4 h-4" />
             Add Project
@@ -179,7 +179,7 @@ export default function PortfolioManager() {
 
       {/* Form Panel */}
       {showForm && (
-        <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-xl p-6 lg:p-8 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-md p-6 lg:p-8 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">
               {editingId ? "Edit Case Study" : "Create New Case Study"}
@@ -190,7 +190,7 @@ export default function PortfolioManager() {
           </div>
 
           {formError && (
-            <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-semibold p-4 rounded-lg flex items-start gap-2">
+            <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-semibold p-4 rounded-md flex items-start gap-2">
               <div className="mt-0.5 font-bold uppercase text-[10px] tracking-wider bg-red-500 text-white px-1.5 py-0.5 rounded">ERROR</div>
               <div>{formError}</div>
             </div>
@@ -208,7 +208,7 @@ export default function PortfolioManager() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Apex Outbound Automator"
-                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
                 />
               </div>
 
@@ -222,7 +222,7 @@ export default function PortfolioManager() {
                   value={client}
                   onChange={(e) => setClient(e.target.value)}
                   placeholder="Apex Growth"
-                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
                 />
               </div>
             </div>
@@ -238,7 +238,7 @@ export default function PortfolioManager() {
                   value={image}
                   onChange={(e) => setImage(e.target.value)}
                   placeholder="from-blue-600/30 to-purple-800/30"
-                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
                 />
               </div>
 
@@ -251,7 +251,7 @@ export default function PortfolioManager() {
                   required
                   value={year}
                   onChange={(e) => setYear(Number(e.target.value))}
-                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
                 />
               </div>
 
@@ -264,7 +264,7 @@ export default function PortfolioManager() {
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://client-demo.com"
-                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
                 />
               </div>
             </div>
@@ -280,7 +280,7 @@ export default function PortfolioManager() {
                   value={servicesUsed}
                   onChange={(e) => setServicesUsed(e.target.value)}
                   placeholder="AI Automation, Email Automation, SEO"
-                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
                 />
               </div>
 
@@ -310,14 +310,14 @@ export default function PortfolioManager() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="A custom outbound pipeline constructed with n8n..."
-                className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all resize-none"
+                className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all resize-none"
               />
             </div>
 
             <div className="flex items-center gap-3 pt-4">
               <button
                 type="submit"
-                className="bg-accent-custom hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-lg text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all shadow-md"
+                className="bg-accent-custom hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-md text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all shadow-md"
               >
                 <Check className="w-4 h-4" />
                 {editingId ? "Save Changes" : "Create Project"}
@@ -325,7 +325,7 @@ export default function PortfolioManager() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white font-bold px-6 py-3 rounded-lg text-xs uppercase tracking-wider transition-all cursor-pointer"
+                className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white font-bold px-6 py-3 rounded-md text-xs uppercase tracking-wider transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -335,7 +335,7 @@ export default function PortfolioManager() {
       )}
 
       {/* List */}
-      <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] shadow-sm rounded-xl divide-y divide-gray-100 dark:divide-white/5">
+      <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] shadow-sm rounded-md divide-y divide-gray-100 dark:divide-white/5">
         {portfolios.length === 0 ? (
           <div className="p-8 text-center text-xs font-mono text-gray-500 dark:text-[#B0B0B0]">
             No projects added yet. Populate your portfolio list.

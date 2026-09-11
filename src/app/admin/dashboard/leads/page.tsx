@@ -458,22 +458,22 @@ export default function LeadsManager() {
       
       {/* Action Toast Notification */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl border border-indigo-500/40 shadow-2xl flex items-center gap-3 animate-fadeIn">
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-sm border border-indigo-500/40 shadow-2xl flex items-center gap-3 animate-fadeIn">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           <span className="text-xs font-semibold">{toastMsg}</span>
         </div>
       )}
 
       {/* Top Bar Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0a0a0a] p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-neutral-800 shadow-sm w-full max-w-full">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0a0a0a] p-4 sm:p-5 rounded-sm border border-slate-200/80 dark:border-neutral-800 shadow-sm w-full max-w-full">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+          <div className="w-10 h-10 rounded-sm bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
             <Users className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Leads Database</h1>
-              <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white font-bold text-xs">
+              <span className="px-2 py-0.5 rounded-xs bg-indigo-600 text-white font-bold text-xs">
                 {allLeads.length} Total
               </span>
             </div>
@@ -486,7 +486,7 @@ export default function LeadsManager() {
           <button
             type="button"
             onClick={handleExportCSV}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs font-semibold text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 transition shadow-sm cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-sm border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs font-semibold text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 transition shadow-sm cursor-pointer"
           >
             <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>Export CSV</span>
@@ -494,7 +494,7 @@ export default function LeadsManager() {
           <button
             type="button"
             onClick={() => setShowImportModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs font-semibold text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 transition shadow-sm cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-sm border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs font-semibold text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 transition shadow-sm cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-500" />
             <span>Import Sheet</span>
@@ -502,7 +502,7 @@ export default function LeadsManager() {
           <button
             type="button"
             onClick={() => setShowAddLeadModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white shadow-sm shadow-indigo-600/30 transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white shadow-sm shadow-indigo-600/30 transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add Lead</span>
@@ -512,56 +512,56 @@ export default function LeadsManager() {
 
       {/* KPI Overview Grid */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-sm border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
           <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">TOTAL PROSPECTS</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 dark:text-white">{allLeads.length}</span>
-            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded">+14.2%</span>
+            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-xs">+14.2%</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-sm border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
           <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">OUTBOUND SCRAPED</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 dark:text-white">
               {allLeads.filter(l => l.source === "scraped").length}
             </span>
-            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded">Justdial</span>
+            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-xs">Justdial</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-sm border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
           <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">INBOUND INQUIRIES</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 dark:text-white">
               {allLeads.filter(l => l.source === "inquiry").length}
             </span>
-            <span className="text-xs font-bold text-purple-600 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded">Web Forms</span>
+            <span className="text-xs font-bold text-purple-600 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-xs">Web Forms</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-sm border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
           <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">EMAIL CAPTURE EFFICIENCY</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 dark:text-white">
               {Math.round((allLeads.filter(l => l.email).length / (allLeads.length || 1)) * 100)}%
             </span>
-            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded">High Quality</span>
+            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-xs">High Quality</span>
           </div>
         </div>
       </section>
 
       {/* Segmented Filter Bar & Lead Table Container */}
-      <section className="bg-white dark:bg-[#0a0a0a] rounded-2xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col w-full max-w-full overflow-hidden">
+      <section className="bg-white dark:bg-[#0a0a0a] rounded-sm border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col w-full max-w-full overflow-hidden">
         
         {/* Controls Deck */}
         <div className="p-3.5 sm:p-4 border-b border-slate-200/80 dark:border-neutral-800 flex flex-col xl:flex-row xl:items-center justify-between gap-3 w-full max-w-full">
           
           {/* Segmented View Tabs */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-1 bg-slate-100 dark:bg-neutral-900 p-1 rounded-xl border border-slate-200/80 dark:border-neutral-800 max-w-full overflow-x-auto">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-1 bg-slate-100 dark:bg-neutral-900 p-1 rounded-sm border border-slate-200/80 dark:border-neutral-800 max-w-full overflow-x-auto">
             <button
               onClick={() => setSourceFilter("all")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-sm transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "all"
                   ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700 shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -571,7 +571,7 @@ export default function LeadsManager() {
             </button>
             <button
               onClick={() => setSourceFilter("scraped")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-sm transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "scraped"
                   ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700 shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -581,7 +581,7 @@ export default function LeadsManager() {
             </button>
             <button
               onClick={() => setSourceFilter("inquiry")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-sm transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "inquiry"
                   ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700 shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -881,63 +881,65 @@ export default function LeadsManager() {
         )}
       </section>
 
-      {/* Slide-Over Drawer / Responsive Popup Modal with Backdrop Click-Outside Close */}
+      {/* ── Lead Business Card Popup Modal ── */}
       {isDrawerOpen && selectedLead && (
         <div
           onClick={() => setIsDrawerOpen(false)}
-          className="fixed inset-0 z-50 overflow-hidden bg-black/80 backdrop-blur-xs flex items-end sm:items-stretch justify-center sm:justify-end animate-fadeIn cursor-pointer"
+          className="fixed inset-0 z-50 overflow-hidden bg-black/80 backdrop-blur-xs flex items-end sm:items-center justify-center sm:justify-end animate-fadeIn cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-md bg-white dark:bg-[#0a0a0a] h-[88vh] sm:h-full rounded-t-2xl sm:rounded-none shadow-2xl flex flex-col justify-between border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-neutral-800 overflow-y-auto cursor-default relative"
+            className="w-full sm:max-w-md bg-white dark:bg-[#0a0a0a] h-[92vh] sm:h-full max-h-[92vh] sm:max-h-full rounded-t-sm sm:rounded-none shadow-2xl flex flex-col justify-between border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-neutral-800 cursor-default relative overflow-hidden"
           >
             {/* Sticky Navigation Header with Prominent Close Icon Button */}
-            <div className="sticky top-0 z-40 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md px-5 py-3.5 border-b border-slate-200/80 dark:border-neutral-800 flex items-center justify-between shadow-xs">
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+            <div className="flex-none bg-white dark:bg-[#0a0a0a] px-4 sm:px-5 py-3 border-b border-slate-200 dark:border-neutral-800 flex items-center justify-between z-20 shadow-xs">
+              <span className="px-2.5 py-1 rounded-sm text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
                 {selectedLead.source === "scraped" ? "Outbound Prospect" : "Inbound Lead"}
               </span>
               
-              {/* Responsive Close Button Icon */}
+              {/* Mobile-Friendly Close Button */}
               <button
                 onClick={() => setIsDrawerOpen(false)}
-                className="p-1.5 px-3 rounded-xl bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition border border-slate-200/80 dark:border-neutral-700"
-                aria-label="Close lead popup"
+                className="px-3 py-1.5 rounded-sm bg-rose-500/10 hover:bg-rose-600 hover:text-white text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 dark:hover:bg-rose-600 dark:hover:text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition border border-rose-500/30 shadow-xs"
+                aria-label="Close lead business card popup"
                 title="Close popup"
               >
                 <span>Close</span>
-                <X className="w-4 h-4 text-slate-700 dark:text-slate-200" />
+                <X className="w-4 h-4 shrink-0" />
               </button>
             </div>
 
             {/* Scrollable Popup Content */}
-            <div className="p-6 space-y-4 flex-1">
-              <div className="flex items-center gap-4 pt-1">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white font-extrabold text-xl flex items-center justify-center shadow-lg shrink-0">
-                  {selectedLead.name.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{selectedLead.name}</h3>
-                  <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">{selectedLead.company || selectedLead.city || "Client Prospect"}</p>
+            <div className="p-4 sm:p-6 space-y-4 flex-1 overflow-y-auto">
+              <div className="p-4 bg-slate-50 dark:bg-neutral-900/60 border border-slate-200 dark:border-neutral-800 rounded-sm space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-sm bg-indigo-600 text-white font-extrabold text-lg flex items-center justify-center shadow-md shrink-0">
+                    {selectedLead.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white leading-snug truncate">{selectedLead.name}</h3>
+                    <p className="text-xs text-slate-500 dark:text-neutral-400 truncate">{selectedLead.company || selectedLead.city || "Client Prospect"}</p>
+                  </div>
                 </div>
               </div>
 
               {/* ── SLEEK & WELL-POSITIONED ACTION BUTTONS TOOLBAR ── */}
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 pt-2">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                 {/* Call */}
                 {selectedLead.phone ? (
                   <a
                     href={`tel:${selectedLead.phone.replace(/[^0-9+]/g, "")}`}
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-indigo-500/50 hover:bg-indigo-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0"
+                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-indigo-500 hover:bg-indigo-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0"
                   >
-                    <Phone className="w-4 h-4 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform shrink-0" />
+                    <Phone className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                     <span>Call</span>
                   </a>
                 ) : (
                   <button
                     disabled
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/40 dark:bg-neutral-900/40 border border-slate-200/40 dark:border-neutral-800/40 opacity-50 text-slate-400 text-xs font-semibold cursor-not-allowed shrink-0"
+                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100/40 dark:bg-neutral-900/40 border border-slate-200/40 dark:border-neutral-800/40 opacity-50 text-slate-400 text-xs font-semibold cursor-not-allowed shrink-0"
                   >
-                    <Phone className="w-4 h-4 shrink-0" />
+                    <Phone className="w-3.5 h-3.5 shrink-0" />
                     <span>Call</span>
                   </button>
                 )}
@@ -946,17 +948,17 @@ export default function LeadsManager() {
                 {selectedLead.email ? (
                   <a
                     href={`mailto:${selectedLead.email}`}
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-indigo-500/50 hover:bg-indigo-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0"
+                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-indigo-500 hover:bg-indigo-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0"
                   >
-                    <Mail className="w-4 h-4 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform shrink-0" />
+                    <Mail className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                     <span>Email</span>
                   </a>
                 ) : (
                   <button
                     disabled
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/40 dark:bg-neutral-900/40 border border-slate-200/40 dark:border-neutral-800/40 opacity-50 text-slate-400 text-xs font-semibold cursor-not-allowed shrink-0"
+                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100/40 dark:bg-neutral-900/40 border border-slate-200/40 dark:border-neutral-800/40 opacity-50 text-slate-400 text-xs font-semibold cursor-not-allowed shrink-0"
                   >
-                    <Mail className="w-4 h-4 shrink-0" />
+                    <Mail className="w-3.5 h-3.5 shrink-0" />
                     <span>Email</span>
                   </button>
                 )}
@@ -967,17 +969,17 @@ export default function LeadsManager() {
                     href={`https://wa.me/${selectedLead.phone.replace(/[^0-9]/g, "")}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-emerald-500/50 hover:bg-emerald-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0"
+                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-emerald-500 hover:bg-emerald-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0"
                   >
-                    <MessageSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
+                    <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span className="truncate">Chat</span>
                   </a>
                 ) : (
                   <button
                     disabled
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/40 dark:bg-neutral-900/40 border border-slate-200/40 dark:border-neutral-800/40 opacity-50 text-slate-400 text-xs font-semibold cursor-not-allowed shrink-0"
+                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100/40 dark:bg-neutral-900/40 border border-slate-200/40 dark:border-neutral-800/40 opacity-50 text-slate-400 text-xs font-semibold cursor-not-allowed shrink-0"
                   >
-                    <MessageSquare className="w-4 h-4 shrink-0" />
+                    <MessageSquare className="w-3.5 h-3.5 shrink-0" />
                     <span>Chat</span>
                   </button>
                 )}
@@ -985,26 +987,26 @@ export default function LeadsManager() {
                 {/* Status Update / Action */}
                 <button
                   onClick={() => handleStatusUpdate(selectedLead.id, selectedLead.status === "qualified" ? "pending" : "qualified")}
-                  className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-amber-500/50 hover:bg-amber-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0"
+                  className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-amber-500 hover:bg-amber-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0"
                 >
-                  <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
                   <span>Qualify</span>
                 </button>
 
                 {/* Delete */}
                 <button
                   onClick={() => handleDeleteLead(selectedLead)}
-                  className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-100/90 dark:bg-neutral-900/90 border border-slate-200/80 dark:border-neutral-800 hover:border-rose-500/50 hover:bg-rose-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition shadow-xs cursor-pointer group shrink-0 col-span-2 sm:col-span-1"
+                  className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-rose-500 hover:bg-rose-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0 col-span-2 sm:col-span-1"
                 >
-                  <Trash2 className="w-4 h-4 text-rose-600 dark:text-rose-400 group-hover:scale-110 transition-transform shrink-0" />
+                  <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
                   <span>Delete</span>
                 </button>
               </div>
 
-              <div className="space-y-3 pt-4 text-xs">
+              <div className="p-4 bg-slate-50 dark:bg-neutral-900/40 border border-slate-200 dark:border-neutral-800 rounded-sm space-y-3 text-xs">
                 <div className="flex items-center gap-3 text-slate-700 dark:text-neutral-300">
                   <Mail className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="font-semibold text-indigo-600 dark:text-indigo-400 truncate">{selectedLead.email || "No Email Listed"}</span>
+                  <span className="font-semibold text-indigo-600 dark:text-indigo-400 break-all">{selectedLead.email || "No Email Listed"}</span>
                 </div>
                 <div className="flex items-center gap-3 text-slate-700 dark:text-neutral-300">
                   <Phone className="w-4 h-4 text-slate-400 shrink-0" />
@@ -1040,7 +1042,7 @@ export default function LeadsManager() {
                     <Tag className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                     <div className="flex flex-wrap gap-1">
                       {selectedLead.services.map((svc, i) => (
-                        <span key={i} className="px-2 py-0.5 rounded bg-slate-100 dark:bg-neutral-800 text-[10px] font-mono text-slate-700 dark:text-neutral-300">
+                        <span key={i} className="px-2 py-0.5 rounded-xs bg-slate-100 dark:bg-neutral-800 text-[10px] font-mono text-slate-700 dark:text-neutral-300">
                           {svc}
                         </span>
                       ))}
@@ -1051,20 +1053,20 @@ export default function LeadsManager() {
             </div>
 
             {/* Bottom Actions Footer */}
-            <div className="p-5 border-t border-slate-200/80 dark:border-neutral-800 flex items-center justify-between bg-slate-50/50 dark:bg-neutral-900/40 shrink-0">
+            <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-neutral-800 flex items-center justify-between bg-slate-50 dark:bg-neutral-900/60 z-20">
               <button
                 onClick={() => handleDeleteLead(selectedLead)}
-                className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 flex items-center gap-1.5 cursor-pointer"
+                className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 flex items-center gap-1.5 cursor-pointer py-1.5 px-3 rounded-sm border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-950/30"
               >
-                <Trash2 className="w-4 h-4" />
-                Delete Prospect
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Prospect</span>
               </button>
               <a
                 href={`mailto:${selectedLead.email}`}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5"
               >
                 <Mail className="w-3.5 h-3.5" />
-                Send Email
+                <span>Send Email</span>
               </a>
             </div>
           </div>

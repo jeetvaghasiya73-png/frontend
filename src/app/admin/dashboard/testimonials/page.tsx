@@ -151,7 +151,7 @@ export default function TestimonialsManager() {
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="bg-white dark:bg-white text-gray-900 dark:text-black border border-gray-200 dark:border-transparent hover:bg-accent-custom hover:text-white dark:hover:bg-accent-custom dark:hover:text-white px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm"
+            className="bg-white dark:bg-white text-gray-900 dark:text-black border border-gray-200 dark:border-transparent hover:bg-accent-custom hover:text-white dark:hover:bg-accent-custom dark:hover:text-white px-4 py-2.5 rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm"
           >
             <Plus className="w-4 h-4" />
             Add Testimonial
@@ -161,7 +161,7 @@ export default function TestimonialsManager() {
 
       {/* Form Panel */}
       {showForm && (
-        <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-xl p-6 lg:p-8 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-md p-6 lg:p-8 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">
               {editingId ? "Edit Testimonial" : "Create New Testimonial"}
@@ -172,7 +172,7 @@ export default function TestimonialsManager() {
           </div>
 
           {formError && (
-            <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-semibold p-4 rounded-lg flex items-start gap-2">
+            <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-semibold p-4 rounded-md flex items-start gap-2">
               <div className="mt-0.5 font-bold uppercase text-[10px] tracking-wider bg-red-500 text-white px-1.5 py-0.5 rounded">ERROR</div>
               <div>{formError}</div>
             </div>
@@ -190,7 +190,7 @@ export default function TestimonialsManager() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Sarah Jenkins"
-                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
                 />
               </div>
 
@@ -204,7 +204,7 @@ export default function TestimonialsManager() {
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   placeholder="VP of Operations"
-                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
                 />
               </div>
 
@@ -218,7 +218,7 @@ export default function TestimonialsManager() {
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
                   placeholder="Vortex Analytics"
-                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
                 />
               </div>
             </div>
@@ -230,7 +230,7 @@ export default function TestimonialsManager() {
               <select
                 value={rating}
                 onChange={(e) => setRating(Number(e.target.value))}
-                className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all w-24"
+                className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all w-24"
               >
                 <option value="5">5 Stars</option>
                 <option value="4">4 Stars</option>
@@ -248,14 +248,14 @@ export default function TestimonialsManager() {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Nexora AI completely transformed..."
-                className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all resize-none"
+                className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all resize-none"
               />
             </div>
 
             <div className="flex items-center gap-3 pt-4">
               <button
                 type="submit"
-                className="bg-accent-custom hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-lg text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all shadow-md"
+                className="bg-accent-custom hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-md text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all shadow-md"
               >
                 <Check className="w-4 h-4" />
                 {editingId ? "Save Changes" : "Create Testimonial"}
@@ -263,7 +263,7 @@ export default function TestimonialsManager() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white font-bold px-6 py-3 rounded-lg text-xs uppercase tracking-wider transition-all cursor-pointer"
+                className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white font-bold px-6 py-3 rounded-md text-xs uppercase tracking-wider transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -275,7 +275,7 @@ export default function TestimonialsManager() {
       {/* List Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {testimonials.map((test) => (
-          <div key={test.id} className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] shadow-sm rounded-xl p-6 flex flex-col justify-between hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all relative">
+          <div key={test.id} className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] shadow-sm rounded-md p-6 flex flex-col justify-between hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all relative">
             <div>
               <div className="flex items-center justify-between gap-4 mb-4">
                 <div className="flex gap-1 text-yellow-400">

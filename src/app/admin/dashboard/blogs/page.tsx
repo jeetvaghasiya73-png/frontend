@@ -154,7 +154,7 @@ export default function BlogsManager() {
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-accent-custom hover:text-white dark:hover:bg-accent-custom dark:hover:text-white px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm"
+            className="bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-accent-custom hover:text-white dark:hover:bg-accent-custom dark:hover:text-white px-4 py-2.5 rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm"
           >
             <Plus className="w-4 h-4" />
             Write Post
@@ -164,7 +164,7 @@ export default function BlogsManager() {
 
       {/* Form Panel */}
       {showForm && (
-        <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] p-6 md:p-8 rounded-xl space-y-6 shadow-sm">
+        <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] p-6 md:p-8 rounded-md space-y-6 shadow-sm">
           <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-white/5">
             <h3 className="text-base font-bold font-mono uppercase tracking-widest text-gray-900 dark:text-white">
               {editingId ? "Edit Article" : "Write New Article"}
@@ -186,7 +186,7 @@ export default function BlogsManager() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Scaling Outbound Operations with AI Agents"
-                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
                 />
               </div>
 
@@ -198,7 +198,7 @@ export default function BlogsManager() {
                   type="text"
                   value={author}
                   onChange={(e) => setAuthor(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
                 />
               </div>
             </div>
@@ -213,7 +213,7 @@ export default function BlogsManager() {
                   value={coverImage}
                   onChange={(e) => setCoverImage(e.target.value)}
                   placeholder="https://example.com/cover.jpg"
-                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                  className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
                 />
               </div>
 
@@ -233,7 +233,7 @@ export default function BlogsManager() {
             </div>
 
             {/* SEO Section */}
-            <div className="border border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-black/20 p-5 rounded-lg space-y-4">
+            <div className="border border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-black/20 p-5 rounded-md space-y-4">
               <span className="text-[10px] font-bold font-mono uppercase tracking-widest text-gray-500 dark:text-[#666666] block">
                 Search Engine Optimization (Meta Parameters)
               </span>
@@ -275,7 +275,7 @@ export default function BlogsManager() {
                 value={summary}
                 onChange={(e) => setSummary(e.target.value)}
                 placeholder="A high-level overview of scaling..."
-                className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all resize-none"
+                className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all resize-none"
               />
             </div>
 
@@ -289,14 +289,14 @@ export default function BlogsManager() {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="## Introduction \n\nAI agents represent..."
-                className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-white font-mono focus:outline-none focus:border-accent-custom transition-all resize-y"
+                className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white font-mono focus:outline-none focus:border-accent-custom transition-all resize-y"
               />
             </div>
 
             <div className="flex items-center gap-3 pt-4">
               <button
                 type="submit"
-                className="bg-accent-custom hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-lg text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all shadow-md"
+                className="bg-accent-custom hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-md text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all shadow-md"
               >
                 <Check className="w-4 h-4" />
                 {editingId ? "Save Changes" : "Create Post"}
@@ -304,7 +304,7 @@ export default function BlogsManager() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white font-bold px-6 py-3 rounded-lg text-xs uppercase tracking-wider transition-all cursor-pointer"
+                className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white font-bold px-6 py-3 rounded-md text-xs uppercase tracking-wider transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -314,7 +314,7 @@ export default function BlogsManager() {
       )}
 
       {/* List */}
-      <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] shadow-sm rounded-xl divide-y divide-gray-100 dark:divide-white/5">
+      <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] shadow-sm rounded-md divide-y divide-gray-100 dark:divide-white/5">
         {blogs.length === 0 ? (
           <div className="p-8 text-center text-xs font-mono text-gray-500 dark:text-[#B0B0B0]">
             No articles drafted yet. Write your first post.

@@ -367,7 +367,7 @@ export default function ContactMessagesManager() {
     return (
       <div className="min-h-[70vh] flex items-center justify-center flex-col gap-4">
         <div className="relative">
-          <div className="w-12 h-12 rounded-xl bg-indigo-600/20 blur-xl animate-pulse" />
+          <div className="w-12 h-12 rounded-md bg-indigo-600/20 blur-xl animate-pulse" />
           <Loader2 className="w-8 h-8 text-indigo-600 dark:text-indigo-400 animate-spin relative" />
         </div>
         <span className="font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">Loading Replied Leads Hub...</span>
@@ -379,15 +379,15 @@ export default function ContactMessagesManager() {
     <div className="space-y-6 text-left pb-20 relative animate-fadeIn font-sans antialiased text-slate-800 dark:text-slate-200">
       
       {/* Top Navigation & Status Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-md border border-slate-200/80 dark:border-slate-800 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+          <div className="w-10 h-10 rounded-md bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
             <MessageSquare className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Replied Leads &amp; Contacts Hub</h1>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-mono font-bold text-xs">
+              <span className="px-2.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-mono font-bold text-xs">
                 {conversations.length} Active Lead Threads
               </span>
             </div>
@@ -396,10 +396,10 @@ export default function ContactMessagesManager() {
         </div>
 
         {/* Tab Switcher Buttons */}
-        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
+        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 shrink-0">
           <button
             onClick={() => setActiveTab("replies")}
-            className={`px-3.5 py-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 py-2 text-xs font-bold rounded-sm transition cursor-pointer flex items-center gap-2 ${
               activeTab === "replies"
                 ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm"
                 : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
@@ -411,7 +411,7 @@ export default function ContactMessagesManager() {
 
           <button
             onClick={() => setActiveTab("contact_forms")}
-            className={`px-3.5 py-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 py-2 text-xs font-bold rounded-sm transition cursor-pointer flex items-center gap-2 ${
               activeTab === "contact_forms"
                 ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm"
                 : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
@@ -428,7 +428,7 @@ export default function ContactMessagesManager() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto lg:h-[720px] w-full max-w-full">
           
           {/* Left List Pane (4 Cols) */}
-          <div className="lg:col-span-4 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
+          <div className="lg:col-span-4 bg-white dark:bg-[#0f172a] rounded-md border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
             
             <div className="p-3.5 border-b border-slate-200/80 dark:border-slate-800 space-y-2.5">
               <div className="relative">
@@ -494,7 +494,7 @@ export default function ContactMessagesManager() {
           </div>
 
           {/* Right Active Lead Thread Viewer (8 Cols) */}
-          <div className="lg:col-span-8 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between overflow-hidden">
+          <div className="lg:col-span-8 bg-white dark:bg-[#0f172a] rounded-md border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between overflow-hidden">
             {selectedLead ? (
               <>
                 {/* Active Lead Header */}
@@ -517,7 +517,7 @@ export default function ContactMessagesManager() {
                     <button
                       onClick={handleGenerateMeetingDraft}
                       disabled={generatingDraft}
-                      className="px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-mono font-bold text-[11px] rounded-xl shadow-md transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                      className="px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-mono font-bold text-[11px] rounded-md shadow-md transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                     >
                       {generatingDraft ? (
                         <>
@@ -536,7 +536,7 @@ export default function ContactMessagesManager() {
                     <button
                       onClick={handleGenerateCustomDraft}
                       disabled={generatingDraft}
-                      className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-mono font-bold text-[11px] rounded-xl transition cursor-pointer flex items-center gap-1 disabled:opacity-50"
+                      className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-mono font-bold text-[11px] rounded-md transition cursor-pointer flex items-center gap-1 disabled:opacity-50"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
                       <span>Custom AI</span>
@@ -550,7 +550,7 @@ export default function ContactMessagesManager() {
                     const isReply = m.type === "REPLY";
                     return (
                       <div key={m.id} className={`flex flex-col ${isReply ? "items-start" : "items-end"}`}>
-                        <div className={`max-w-[90%] sm:max-w-[85%] rounded-2xl p-5 text-xs shadow-md leading-relaxed ${
+                        <div className={`max-w-[90%] sm:max-w-[85%] rounded-md p-5 text-xs shadow-md leading-relaxed ${
                           isReply
                             ? "bg-slate-100 dark:bg-slate-800/90 text-slate-900 dark:text-white rounded-tl-none border border-slate-200 dark:border-slate-700"
                             : "bg-indigo-600 text-white rounded-tr-none"
@@ -578,7 +578,7 @@ export default function ContactMessagesManager() {
                                       <span>{isQuoteExpanded ? "▲ Hide original cold outreach message" : "▼ View original cold outreach message"}</span>
                                     </button>
                                     {isQuoteExpanded && (
-                                      <div className="mt-2.5 whitespace-pre-line text-[10px] text-slate-400 font-mono bg-black/20 p-3.5 rounded-xl border border-slate-700 max-h-[220px] overflow-y-auto leading-relaxed shadow-inner">
+                                      <div className="mt-2.5 whitespace-pre-line text-[10px] text-slate-400 font-mono bg-black/20 p-3.5 rounded-md border border-slate-700 max-h-[220px] overflow-y-auto leading-relaxed shadow-inner">
                                         {quotedText}
                                       </div>
                                     )}
@@ -599,12 +599,12 @@ export default function ContactMessagesManager() {
                     placeholder="Type a manual response message to the prospect..."
                     value={manualReplyText}
                     onChange={(e) => setManualReplyText(e.target.value)}
-                    className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 min-h-[60px] max-h-[120px]"
+                    className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md p-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 min-h-[60px] max-h-[120px]"
                   />
                   <button
                     type="submit"
                     disabled={sendingManualReply || !manualReplyText.trim()}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 rounded-xl flex items-center justify-center transition disabled:opacity-50 cursor-pointer text-xs shrink-0 self-end h-10"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 rounded-md flex items-center justify-center transition disabled:opacity-50 cursor-pointer text-xs shrink-0 self-end h-10"
                   >
                     {sendingManualReply ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   </button>
@@ -624,7 +624,7 @@ export default function ContactMessagesManager() {
       {activeTab === "contact_forms" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto lg:h-[720px] w-full max-w-full">
           
-          <div className="lg:col-span-5 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
+          <div className="lg:col-span-5 bg-white dark:bg-[#0f172a] rounded-md border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
             <div className="p-3.5 border-b border-slate-200/80 dark:border-slate-800 space-y-2.5">
               <div className="relative">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -714,13 +714,13 @@ export default function ContactMessagesManager() {
             </div>
           </div>
 
-          <div className="lg:col-span-7 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
+          <div className="lg:col-span-7 bg-white dark:bg-[#0f172a] rounded-md border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
             {selectedMessage ? (
               <div className="flex-1 flex flex-col justify-between p-6">
                 <div className="space-y-4 border-b border-slate-200/80 dark:border-slate-800 pb-5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-2xl bg-indigo-600 text-white font-extrabold text-lg flex items-center justify-center shadow-md">
+                      <div className="w-11 h-11 rounded-md bg-indigo-600 text-white font-extrabold text-lg flex items-center justify-center shadow-md">
                         {selectedMessage.name?.charAt(0)?.toUpperCase() || "M"}
                       </div>
                       <div>
@@ -739,7 +739,7 @@ export default function ContactMessagesManager() {
                 </div>
 
                 <div className="flex-1 py-6 overflow-y-auto">
-                  <div className="bg-slate-50 dark:bg-slate-900/60 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 text-sm leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
+                  <div className="bg-slate-50 dark:bg-slate-900/60 p-5 rounded-md border border-slate-200/60 dark:border-slate-800/60 text-sm leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
                     {selectedMessage.message}
                   </div>
                 </div>
@@ -748,7 +748,7 @@ export default function ContactMessagesManager() {
                   <span className="text-xs text-slate-400">Direct reply via mail client</span>
                   <a
                     href={`mailto:${selectedMessage.email}?subject=Re: ${encodeURIComponent(selectedMessage.subject || "")}`}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2"
+                    className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>Send Email</span>
@@ -767,12 +767,12 @@ export default function ContactMessagesManager() {
       {/* AI Draft Review & Approval Modal */}
       {aiModalOpen && aiDraftData && (
         <div className="fixed inset-0 z-[999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn text-left">
-          <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl space-y-0 font-sans">
+          <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-md w-full max-w-2xl overflow-hidden shadow-2xl space-y-0 font-sans">
             
             {/* Modal Header */}
             <div className="p-5 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20">
+                <div className="w-9 h-9 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20">
                   <Calendar className="w-5 h-5" />
                 </div>
                 <div>
@@ -791,7 +791,7 @@ export default function ContactMessagesManager() {
             <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
               
               {/* Mode Banner Indicator (Test Mode vs Production Mode) */}
-              <div className={`p-3 rounded-xl border flex items-center justify-between text-xs font-mono font-bold ${
+              <div className={`p-3 rounded-md border flex items-center justify-between text-xs font-mono font-bold ${
                 aiDraftData.mode === "test"
                   ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
                   : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
@@ -808,7 +808,7 @@ export default function ContactMessagesManager() {
               </div>
 
               {/* Lead Context Card */}
-              <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3.5 space-y-1 font-mono text-[11px]">
+              <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-md p-3.5 space-y-1 font-mono text-[11px]">
                 <div className="flex items-center justify-between text-slate-400">
                   <span className="text-[9px] uppercase tracking-wider font-bold text-indigo-500">Target Lead Details</span>
                   <span className="bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 px-2 py-0.5 rounded text-[9px] font-bold">
@@ -832,7 +832,7 @@ export default function ContactMessagesManager() {
                   type="text"
                   value={aiDraftData.subject}
                   onChange={(e) => setAiDraftData({ ...aiDraftData, subject: e.target.value })}
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                 />
               </div>
 
@@ -845,7 +845,7 @@ export default function ContactMessagesManager() {
                   rows={8}
                   value={aiDraftData.body}
                   onChange={(e) => setAiDraftData({ ...aiDraftData, body: e.target.value })}
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 text-xs text-slate-800 dark:text-slate-200 font-sans leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md p-3.5 text-xs text-slate-800 dark:text-slate-200 font-sans leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                 />
               </div>
             </div>
@@ -855,7 +855,7 @@ export default function ContactMessagesManager() {
               <button
                 onClick={handleGenerateMeetingDraft}
                 disabled={generatingDraft}
-                className="px-3.5 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono font-bold text-[10px] rounded-xl transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                className="px-3.5 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono font-bold text-[10px] rounded-md transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
               >
                 {generatingDraft ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                 REGENERATE
@@ -865,14 +865,14 @@ export default function ContactMessagesManager() {
                 <button
                   onClick={() => setAiModalOpen(false)}
                   disabled={sendingCustomReply}
-                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono font-bold text-[10px] rounded-xl transition cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono font-bold text-[10px] rounded-md transition cursor-pointer disabled:opacity-50"
                 >
                   CANCEL
                 </button>
                 <button
                   onClick={handleSendCustomReply}
                   disabled={sendingCustomReply}
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold text-[10px] rounded-xl shadow-lg transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold text-[10px] rounded-md shadow-lg transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {sendingCustomReply ? (
                     <>
@@ -895,7 +895,7 @@ export default function ContactMessagesManager() {
       {/* Internal Memo Modal */}
       {showAddForm && (
         <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn text-left">
-          <div className="w-full max-w-lg bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4 font-sans">
+          <div className="w-full max-w-lg bg-white dark:bg-[#0f172a] rounded-md border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4 font-sans">
             <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Add Internal Memo / Team Note</h3>
               <button onClick={() => setShowAddForm(false)} className="text-slate-400 hover:text-slate-600">
@@ -935,13 +935,13 @@ export default function ContactMessagesManager() {
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300"
+                  className="px-4 py-2 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30"
+                  className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30"
                 >
                   Save Memo
                 </button>
@@ -954,7 +954,7 @@ export default function ContactMessagesManager() {
       {/* Toast Notification Banner */}
       {toast && (
         <div className="fixed bottom-5 right-5 z-[9999] animate-fadeIn font-mono">
-          <div className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-md transition-all duration-300 ${
+          <div className={`flex items-center gap-2.5 px-4 py-3 rounded-md border shadow-xl backdrop-blur-md transition-all duration-300 ${
             toast.type === "success" 
               ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 shadow-emerald-500/5" 
               : toast.type === "error"
