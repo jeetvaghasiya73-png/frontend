@@ -47,8 +47,8 @@ const getLocal = (key: string): string | null => {
 };
 
 export const useAuthStore = create<AuthState>((set) => {
-  const initialToken = getLocal("techinfinix_access_token") || getLocal("nexora_access_token");
-  const initialRefresh = getLocal("techinfinix_refresh_token") || getLocal("nexora_refresh_token");
+  const initialToken = getLocal("techinfinix_access_token");
+  const initialRefresh = getLocal("techinfinix_refresh_token");
 
   return {
     accessToken: initialToken,

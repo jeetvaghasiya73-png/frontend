@@ -11,7 +11,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           "/admin/",
           "/techinfinix-console-77/",
-          "/nexora-console-77/",
           "/api/",
           "/_next/",
         ],

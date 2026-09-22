@@ -123,7 +123,7 @@ export default function ContactSection() {
   // Load existing persistent submission on mount (prevents seeing form again)
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("techinfinix_submitted_lead") || localStorage.getItem("nexora_submitted_lead");
+      const saved = localStorage.getItem("techinfinix_submitted_lead");
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.business_name) {
