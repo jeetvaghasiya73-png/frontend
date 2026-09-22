@@ -139,10 +139,37 @@ export default function ServicesPage() {
       <>
         <Navbar />
         <main className="flex-1 bg-background pt-32 pb-24 text-left">
-          <div className="min-h-[50vh] flex items-center justify-center flex-col gap-3">
-            <Loader2 className="w-8 h-8 text-accent-custom animate-spin" />
-            <span className="font-mono text-xs text-[#B0B0B0]">Loading services...</span>
-          </div>
+          <section className="max-w-7xl mx-auto px-6 md:px-12 w-full mb-16 space-y-4">
+            <div className="w-28 h-4 rounded-full skeleton-pulse" />
+            <div className="w-80 max-w-full h-12 rounded-lg skeleton-pulse" />
+            <div className="w-full max-w-xl h-4 rounded-sm skeleton-pulse opacity-75" />
+          </section>
+
+          <section className="max-w-7xl mx-auto px-6 md:px-12 w-full grid grid-cols-1 lg:grid-cols-3 gap-8 mb-28">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="border border-border-custom/80 bg-surface/30 p-8 rounded-2xl flex flex-col justify-between h-[380px]"
+              >
+                <div className="space-y-4">
+                  <div className="w-12 h-12 rounded-xl skeleton-pulse" />
+                  <div className="w-48 h-6 rounded-md skeleton-pulse" />
+                  <div className="space-y-2">
+                    <div className="w-full h-3.5 rounded-xs skeleton-pulse" />
+                    <div className="w-4/5 h-3.5 rounded-xs skeleton-pulse" />
+                  </div>
+                  <div className="pt-4 border-t border-border-custom/40 space-y-2">
+                    <div className="w-full h-3 rounded-xs skeleton-pulse opacity-60" />
+                    <div className="w-3/4 h-3 rounded-xs skeleton-pulse opacity-60" />
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-border-custom/40 flex justify-between">
+                  <div className="w-20 h-4 rounded-xs skeleton-pulse" />
+                  <div className="w-16 h-4 rounded-xs skeleton-pulse" />
+                </div>
+              </div>
+            ))}
+          </section>
         </main>
         <FooterSection />
       </>

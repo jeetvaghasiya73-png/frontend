@@ -82,3 +82,42 @@ export function formatServiceText(raw?: string | null): string {
 
   return clean || "General Services";
 }
+
+/**
+ * Checks if a website URL is valid, real, and not a placeholder like "none", "null", "N/A", etc.
+ */
+export function isValidWebsite(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return false;
+  const cleaned = url.trim().toLowerCase();
+  if (
+    !cleaned ||
+    cleaned === "none" ||
+    cleaned === "null" ||
+    cleaned === "n/a" ||
+    cleaned === "na" ||
+    cleaned === "-" ||
+    cleaned === "undefined" ||
+    cleaned === "false" ||
+    cleaned === "http://none" ||
+    cleaned === "https://none" ||
+    cleaned === "none/" ||
+    cleaned.startsWith("http://none") ||
+    cleaned.startsWith("https://none")
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Returns a properly formatted HTTPS/HTTP URL if valid, or null if invalid/placeholder.
+ */
+export function formatWebsiteUrl(url?: string | null): string | null {
+  if (!isValidWebsite(url)) return null;
+  const trimmed = url!.trim();
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+

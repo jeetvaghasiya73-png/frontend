@@ -1,24 +1,8 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
-import { API_URL } from "@/lib/config";
+import React, { useRef } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import SplitText from "@/components/animations/SplitText";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
-
-const GRADIENT_COLORS = [
-  "from-blue-600/30 to-purple-800/30",
-  "from-cyan-600/30 to-emerald-800/30",
-  "from-pink-600/30 to-purple-900/30",
-  "from-indigo-600/30 to-blue-900/30",
-  "from-violet-600/30 to-fuchsia-800/30",
-  "from-teal-600/30 to-cyan-900/30",
-];
 
 const SPAN_PATTERN = [
   "lg:col-span-8", "lg:col-span-4",
@@ -27,161 +11,133 @@ const SPAN_PATTERN = [
 
 export default function CaseStudiesSection() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [projects, setProjects] = useState<any[]>([]);
 
-  const fallbackProjects = [
+  // Honest, realistic service blueprints without claiming fake past clients
+  const blueprints = [
     {
-      title: "Intellect CRM System",
-      client: "Vortex Analytics",
-      year: "2026",
-      services_used: ["AI Agents", "CRM Sync"],
-      slug: "vortex-agent-support-node"
+      blueprintNum: "01",
+      title: "Google Maps Top 3 Pack Ranking Blueprint",
+      targetIndustry: "Local Medical Clinics & Service Businesses",
+      type: "Local SEO System",
+      description:
+        "Engineered to dominate local map searches. Incorporates comprehensive Google Business Profile keyword alignment, local citation distribution, and an automated 5-star customer review funnel.",
+      servicesList: ["Google Maps 3-Pack", "Competitor Geo-Grid", "Review Funnels"],
     },
     {
-      title: "Aether Data Farms",
-      client: "Aether Holdings",
-      year: "2025",
-      services_used: ["Scraping", "Lead Gen"],
-      slug: "apex-lead-automator"
+      blueprintNum: "02",
+      title: "High-Performance Business Web Platform",
+      targetIndustry: "Modern Service Providers & Agencies",
+      type: "Web Development",
+      description:
+        "A lightning-fast, mobile-first business website built to establish authority and convert visitors into qualified consultation requests through streamlined booking forms.",
+      servicesList: ["Mobile-First UX", "Sub-Second Speed", "Conversion Flows"],
     },
     {
-      title: "Helios SaaS Platform",
-      client: "Helios Energy",
-      year: "2025",
-      services_used: ["Next.js Web Application"],
-      slug: "vortex-agent-support-node"
+      blueprintNum: "03",
+      title: "Automated Directory & Lead Scraper",
+      targetIndustry: "B2B Sales & Outreach Operations",
+      type: "Data Extraction",
+      description:
+        "Automated data crawler pipeline that extracts thousands of verified local business records (phone numbers, addresses, and websites) from public web directories into clean spreadsheets.",
+      servicesList: ["Directory Scraping", "Phone Verification", "Clean CSV Exports"],
     },
     {
-      title: "Apex Outbound Automator",
-      client: "Apex Growth",
-      year: "2026",
-      services_used: ["Email Automation", "SEO"],
-      slug: "apex-lead-automator"
+      blueprintNum: "04",
+      title: "24/7 WhatsApp Inquiry & Auto-Qualification Bot",
+      targetIndustry: "High-Inquiry Service Businesses",
+      type: "Workflow Automation",
+      description:
+        "Autonomous WhatsApp messaging pipeline that answers inbound customer questions 24/7, qualifies their requirements, and sends instant alert notifications directly to your team.",
+      servicesList: ["WhatsApp Bot", "Instant Auto-Reply", "Team Notification Alerts"],
     }
   ];
 
-  useEffect(() => {
-    const fetchPortfolio = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/v1/public/portfolio`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.length > 0) {
-            setProjects(data);
-            return;
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch portfolio, using fallback", err);
-      }
-      setProjects(fallbackProjects);
-    };
-    fetchPortfolio();
-  }, []);
-
-  const mappedProjects = projects.map((p: any, idx: number) => ({
-    title: p.title,
-    client: p.client || "Client",
-    year: p.year ? String(p.year) : "2025",
-    services: (p.services_used || []).join(" & ") || "Software Development",
-    gradient: GRADIENT_COLORS[idx % GRADIENT_COLORS.length],
-    span: SPAN_PATTERN[idx % SPAN_PATTERN.length],
-    slug: p.slug || "project",
-  }));
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const images = gsap.utils.toArray(".parallax-bg");
-      images.forEach((img: any) => {
-        gsap.fromTo(
-          img,
-          { yPercent: -15 },
-          {
-            yPercent: 15,
-            ease: "none",
-            scrollTrigger: {
-              trigger: img.parentElement,
-              start: "top bottom",
-              end: "bottom top",
-              scrub: true
-            }
-          }
-        );
-      });
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, [mappedProjects]);
+  const handleNavigateToContact = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.location.href = "/contact";
+  };
 
   return (
     <section
       id="work"
       ref={containerRef}
-      className="py-32 bg-background relative overflow-hidden"
+      className="py-24 bg-background relative overflow-hidden text-left"
     >
-      <div className="max-w-7xl mx-auto px-6 md:px-12 w-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full">
         
-        {/* Header */}
-        <div className="max-w-3xl mb-24 text-left">
-          <div className="inline-flex items-center gap-2 border border-border-custom bg-surface/50 px-3 py-1 rounded-full mb-6">
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-accent-custom">
-              Case Studies
-            </span>
+        {/* Section Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-8 border-b border-border-custom pb-8">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 border border-border-custom bg-surface px-3 py-1 rounded-full mb-4">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="text-[10px] uppercase tracking-widest font-mono font-bold text-foreground">
+                [03] &bull; Architecture Blueprints & Concepts
+              </span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-3 text-foreground">
+              <SplitText text="Verified Blueprints Ready for Deployment." type="words" />
+            </h2>
+            <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed">
+              We design every system from scratch. Here are the core production blueprints ready to be customized and launched for your business.
+            </p>
           </div>
-          <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-6">
-            <SplitText text="Selected Case Studies & Projects." type="words" />
-          </h2>
-          <p className="text-lg text-secondary-custom leading-relaxed max-w-xl">
-            A hand-picked selection of high-performance products built to scale operations and maximize revenue loops.
-          </p>
+
+          <a
+            href="/contact"
+            onClick={handleNavigateToContact}
+            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-mono font-bold text-foreground hover:underline self-start md:self-end shrink-0"
+          >
+            <span>Deploy a Blueprint</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </a>
         </div>
 
-        {/* Case Studies Asymmetric Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
-          {mappedProjects.map((project, idx) => (
-            <a
-              href={`/portfolio/${project.slug}`}
+        {/* Blueprint Grid - Strict Geometric Rectangles */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          {blueprints.map((proj, idx) => (
+            <div
               key={idx}
-              className={`${project.span} group border border-border-custom bg-surface/30 backdrop-blur-md rounded-2xl aspect-[4/3] lg:aspect-auto lg:h-[480px] overflow-hidden flex flex-col justify-between p-8 md:p-10 relative cursor-pointer hover:border-accent-custom/40 transition-all duration-500`}
+              className={`${SPAN_PATTERN[idx % SPAN_PATTERN.length]} border border-border-custom bg-surface p-6 sm:p-8 rounded-md flex flex-col justify-between relative overflow-hidden min-h-[300px] group hover:border-foreground/40 transition-all duration-200 text-left`}
             >
-              {/* Parallax Background Gradient Grid */}
-              <div className="absolute inset-0 z-0 overflow-hidden rounded-2xl bg-surface/50">
-                <div
-                  className={`parallax-bg absolute -inset-[20%] bg-gradient-to-tr ${project.gradient} transition-transform duration-700 group-hover:scale-105 will-change-transform`}
-                />
-                {/* Dimming overlay placed under the grid */}
-                <div className="absolute inset-0 bg-background/70" />
-                {/* Visual grid overlay placed on top for texture */}
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:30px_30px]" />
-              </div>
-
-              {/* Card Header (Year & Services) */}
-              <div className="relative z-10 flex items-center justify-between">
-                <span className="text-xs font-bold font-mono text-secondary-custom uppercase tracking-wider bg-background/50 backdrop-blur-md px-3 py-1 rounded border border-border-custom/50">
-                  {project.services}
-                </span>
-                <span className="text-xs font-bold font-mono text-secondary-custom bg-background/50 backdrop-blur-md px-3 py-1 rounded border border-border-custom/50">
-                  {project.year}
-                </span>
-              </div>
-
-              {/* Card Footer (Title & Client) */}
-              <div className="relative z-10 flex items-end justify-between border-t border-border-custom/50 pt-8 mt-12 bg-gradient-to-t from-background/30 to-transparent">
+              {/* Top Meta Info */}
+              <div className="flex items-center justify-between gap-4">
                 <div>
-                  <span className="text-xs font-medium uppercase tracking-wider text-secondary-custom mb-1 block">
-                    {project.client}
+                  <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-secondary-custom block">
+                    BLUEPRINT [{proj.blueprintNum}] &bull; {proj.type}
                   </span>
-                  <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground transition-all group-hover:text-accent-custom group-hover:translate-x-1 duration-300">
-                    {project.title}
-                  </h3>
+                  <span className="text-xs font-mono font-medium text-foreground mt-0.5 block">
+                    Target: {proj.targetIndustry}
+                  </span>
                 </div>
-                
-                {/* Arrow Icon */}
-                <div className="w-12 h-12 rounded-full border border-border-custom bg-background/50 flex items-center justify-center text-foreground group-hover:bg-accent-custom group-hover:text-white group-hover:border-accent-custom transition-all duration-300 shadow-md">
-                  <ArrowUpRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+
+                <div className="w-8 h-8 rounded-sm border border-border-custom bg-background flex items-center justify-center text-foreground group-hover:border-foreground transition-colors shrink-0">
+                  <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </div>
               </div>
-            </a>
+
+              {/* Title & Description */}
+              <div className="space-y-3 mt-8">
+                <h3 className="text-lg sm:text-xl font-bold tracking-tight text-foreground group-hover:text-indigo-400 transition-colors">
+                  {proj.title}
+                </h3>
+
+                <p className="text-xs text-secondary-custom leading-relaxed">
+                  {proj.description}
+                </p>
+
+                {/* Service pills */}
+                <div className="flex flex-wrap gap-1.5 pt-2">
+                  {proj.servicesList.map((srv: string, sIdx: number) => (
+                    <span
+                      key={sIdx}
+                      className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-xs border border-border-custom bg-background text-secondary-custom"
+                    >
+                      {srv}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           ))}
         </div>
 

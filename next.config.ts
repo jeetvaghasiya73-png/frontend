@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ["192.168.1.23", "localhost", "127.0.0.1"],
+  devIndicators: false,
+  allowedDevOrigins: [
+    "192.168.1.9",
+    "192.168.1.9:3000",
+    "192.168.1.*",
+    "192.168.1.23",
+    "localhost",
+    "127.0.0.1"
+  ],
 
   typescript: {
     // !! WARN !!
@@ -9,6 +17,15 @@ const nextConfig: NextConfig = {
     // your project has type errors.
     // !! WARN !!
     ignoreBuildErrors: true,
+  },
+  async rewrites() {
+    const backendUrl = process.env.INTERNAL_BACKEND_URL || "http://127.0.0.1:8000";
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${backendUrl}/api/:path*`,
+      },
+    ];
   },
   async headers() {
     return [

@@ -29,7 +29,7 @@ Using LangGraph, we define stateful multi-agent workflows. The coordination is s
 
 ## Results & Optimization
 By shifting from manual processing loops to autonomous agent pipelines, we reduce ticket latency from hours to seconds and ensure 100% data compliance.`,
-      author: "Nexora Team",
+      author: "Tech Infinix Team",
       created_at: new Date().toISOString()
     },
     "shift-to-edge-computing-databases": {
@@ -54,20 +54,24 @@ We recommend setting up database caches close to the uvicorn API nodes to avoid 
   useEffect(() => {
     const fetchBlog = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/v1/blogs/`);
+        let response = await fetch(`${API_URL}/api/v1/blogs/${slug}`);
+        if (!response.ok) {
+          response = await fetch(`${API_URL}/api/v1/blogs/published`);
+        }
         if (response.ok) {
           const data = await response.json();
-          const found = data.find((b: any) => b.slug === slug);
-          if (found) {
-            setBlog(found);
+          if (data && data.slug === slug) {
+            setBlog(data);
+          } else if (Array.isArray(data)) {
+            const found = data.find((b: any) => b.slug === slug);
+            setBlog(found || fallbackBlogs[slug] || fallbackBlogs["scaling-outbound-lead-pipelines"]);
           } else {
             setBlog(fallbackBlogs[slug] || fallbackBlogs["scaling-outbound-lead-pipelines"]);
           }
         } else {
           setBlog(fallbackBlogs[slug] || fallbackBlogs["scaling-outbound-lead-pipelines"]);
         }
-      } catch (err) {
-        console.error("Fetch failed, using fallback blog details", err);
+      } catch {
         setBlog(fallbackBlogs[slug] || fallbackBlogs["scaling-outbound-lead-pipelines"]);
       } finally {
         setLoading(false);

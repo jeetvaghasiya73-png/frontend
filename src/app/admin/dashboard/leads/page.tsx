@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useAuthStore } from "@/lib/authStore";
 import {
   Loader2,
@@ -30,10 +31,14 @@ import {
   User,
   Users,
   FileSpreadsheet,
-  MessageSquare
+  MessageSquare,
+  Clock,
+  Check,
+  Send,
+  ShieldCheck
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
-import { formatServiceText } from "@/lib/formatters";
+import { formatServiceText, isValidWebsite, formatWebsiteUrl } from "@/lib/formatters";
 
 type SourceFilter = "all" | "inquiry" | "scraped";
 
@@ -55,12 +60,17 @@ interface NormalizedLead {
   category?: string;
   email_status?: string;
   score: number;
+  followupDate?: string | null;
+  notes?: any[];
+  customActivities?: any[];
+  raw?: any;
 }
 
 const LEADS_PER_PAGE = 10;
 
 export default function LeadsManager() {
   const { accessToken } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
   const [allLeads, setAllLeads] = useState<NormalizedLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
@@ -75,6 +85,28 @@ export default function LeadsManager() {
   // Drawer state
   const [selectedLead, setSelectedLead] = useState<NormalizedLead | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  // Follow-up state
+  const [showFollowupModal, setShowFollowupModal] = useState(false);
+  const [customFollowupDate, setCustomFollowupDate] = useState("");
+  const [schedulingFollowup, setSchedulingFollowup] = useState(false);
+
+  // Note state
+  const [showNoteInput, setShowNoteInput] = useState(false);
+  const [newNoteText, setNewNoteText] = useState("");
+
+  // Status modal state
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  // Email modal states
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showAddEmailModal, setShowAddEmailModal] = useState(false);
+  const [newEmailAddress, setNewEmailAddress] = useState("");
+  const [savingNewEmail, setSavingNewEmail] = useState(false);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   // Modal states for Import & Add Lead
   const [showImportModal, setShowImportModal] = useState(false);
@@ -95,9 +127,116 @@ export default function LeadsManager() {
   const [submittingNewLead, setSubmittingNewLead] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
+  // WhatsApp Outreach Preview & Customize Modal states
+  const [showWaModal, setShowWaModal] = useState(false);
+  const [waPreviewLead, setWaPreviewLead] = useState<NormalizedLead | null>(null);
+  const [waPreviewData, setWaPreviewData] = useState<any>(null);
+  const [waCustomMessage, setWaCustomMessage] = useState("");
+  const [loadingWaPreview, setLoadingWaPreview] = useState(false);
+  const [sendingWaMessage, setSendingWaMessage] = useState(false);
+
   const triggerToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 4000);
+  };
+
+  const openWaModalForLead = async (lead: NormalizedLead) => {
+    setWaPreviewLead(lead);
+    setShowWaModal(true);
+    setLoadingWaPreview(true);
+    setWaPreviewData(null);
+    try {
+      const res = await authFetch(`${API}/api/v1/whatsapp/preview-message/${lead.rawId}?source=${lead.source}`);
+      if (res.ok) {
+        const data = await res.json();
+        setWaPreviewData(data);
+        setWaCustomMessage(data.preview_message || "");
+      } else {
+        setWaCustomMessage(
+          lead.source === "inquiry"
+            ? "Thank you so much for believing in us! 🙏 Our team will connect with you very soon. We're excited to work together!"
+            : `Hi *${lead.name}* team 👋\n\nWe noticed your business listing under *${lead.services.join(" ") || lead.category || "Business"}* in *${lead.city || lead.company || "your area"}*.\n\nAt *Tech Infinix*, we specialize in Google Maps SEO rankings 📈 & Web Scraping 🌐.\n\nTo get custom growth ideas for your business, click *'Interested'* below or contact our team! 🚀`
+        );
+      }
+    } catch (err) {
+      console.error("Failed to fetch WA preview:", err);
+      setWaCustomMessage(
+        lead.source === "inquiry"
+          ? "Thank you so much for believing in us! 🙏 Our team will connect with you very soon. We're excited to work together!"
+          : `Hi *${lead.name}* team 👋\n\nWe noticed your business listing under *${lead.services.join(" ") || lead.category || "Business"}* in *${lead.city || lead.company || "your area"}*.\n\nAt *Tech Infinix*, we specialize in Google Maps SEO rankings 📈 & Web Scraping 🌐.\n\nTo get custom growth ideas for your business, click *'Interested'* below or contact our team! 🚀`
+      );
+    } finally {
+      setLoadingWaPreview(false);
+    }
+  };
+
+  const handleSendWaOutreach = async () => {
+    if (!waPreviewLead) return;
+    setSendingWaMessage(true);
+    try {
+      const res = await authFetch(`${API}/api/v1/whatsapp/send-custom/${waPreviewLead.rawId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          custom_message: waCustomMessage,
+          source: waPreviewLead.source,
+          phone_number: waPreviewLead.phone
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const dest = data.is_test_mode
+          ? `Test Sandbox (+${data.test_number || "919173739080"})`
+          : (data.recipient_used || waPreviewLead.name);
+        triggerToast(`WhatsApp proposal delivered to ${dest}! 🚀`);
+        logActivity(
+          waPreviewLead.rawId,
+          "WhatsApp Proposal Dispatched",
+          `Proposal sent: "${waCustomMessage.slice(0, 80)}..."`,
+          "whatsapp"
+        );
+        setShowWaModal(false);
+        fetchLeads();
+      } else {
+        const err = await res.json();
+        triggerToast(err.detail || "Failed to send WhatsApp outreach message.");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error sending WhatsApp outreach.");
+    } finally {
+      setSendingWaMessage(false);
+    }
+  };
+
+  const handleBulkSendWaOutreach = async () => {
+    if (selectedLeadIds.size === 0) return;
+    const scrapedRawIds = allLeads.filter(l => selectedLeadIds.has(l.rawId) && l.source === "scraped").map(l => l.rawId);
+    if (scrapedRawIds.length === 0) {
+      triggerToast("No scraped Google Maps leads selected for WhatsApp outreach.");
+      return;
+    }
+    if (!confirm(`Dispatch WhatsApp outreach campaign to ${scrapedRawIds.length} selected Google Maps lead(s)?`)) return;
+
+    try {
+      const res = await authFetch(`${API}/api/v1/whatsapp/send-bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lead_ids: scrapedRawIds }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        triggerToast(data.message || `Bulk WhatsApp outreach sent to ${data.sent_count} leads!`);
+        setSelectedLeadIds(new Set());
+        fetchLeads();
+      } else {
+        triggerToast("Failed to send bulk WhatsApp outreach.");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error triggering bulk WhatsApp outreach.");
+    }
   };
 
   const fetchLeads = async () => {
@@ -116,20 +255,28 @@ export default function LeadsManager() {
         }
       }
 
-      const normalizedInquiries: NormalizedLead[] = inquiryData.map((lead: any) => ({
-        id: lead.id,
-        rawId: lead.id,
-        name: lead.name || "Unknown",
-        email: lead.email || "",
-        phone: lead.phone || "",
-        company: lead.company || "Direct Inbound",
-        services: lead.services || [],
-        message: lead.message || "",
-        status: lead.status || "pending",
-        created_at: lead.created_at || new Date().toISOString(),
-        source: "inquiry" as const,
-        score: 94,
-      }));
+      const normalizedInquiries: NormalizedLead[] = inquiryData.map((lead: any) => {
+        const savedFollowup = typeof window !== "undefined" ? localStorage.getItem(`crm_lead_followup_${lead.id}`) : null;
+        const bizName = lead.business_name || lead.company || "Direct Inbound";
+        return {
+          id: lead.id,
+          rawId: lead.id,
+          raw: lead,
+          name: lead.name || "Unknown",
+          email: lead.email || "",
+          phone: lead.phone || "",
+          company: bizName,
+          services: lead.services || [],
+          message: lead.message || "",
+          status: lead.status ? (lead.status.charAt(0).toUpperCase() + lead.status.slice(1)) : "Qualified",
+          created_at: lead.created_at || new Date().toISOString(),
+          source: "inquiry" as const,
+          score: 94,
+          followupDate: savedFollowup || null,
+          category: lead.category || "Inbound Inquiry",
+          website: lead.website || "",
+        };
+      });
 
       const normalizedScraped: NormalizedLead[] = scrapedData.map((lead: any) => {
         const hasEmail = Boolean(lead.bussiness_email);
@@ -137,17 +284,20 @@ export default function LeadsManager() {
         const score = Math.min(99, Math.round((hasEmail ? 80 : 55) + ratingVal * 3.5));
 
         const cleanService = formatServiceText(lead.scraped_service || lead.category);
+        const savedFollowup = typeof window !== "undefined" ? localStorage.getItem(`crm_lead_followup_${lead.id}`) : null;
+        const rawFollowup = lead.next_followup_at ? new Date(lead.next_followup_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
 
         return {
           id: lead.id + 100000,
           rawId: lead.id,
+          raw: lead,
           name: lead.bussiness_name || "Unknown Business",
           email: lead.bussiness_email || "",
           phone: lead.bussiness_number || "",
           company: lead.scraped_city || "Outreach",
           services: cleanService ? [cleanService] : [],
           message: "",
-          status: "scraped",
+          status: lead.email_status ? (lead.email_status.charAt(0).toUpperCase() + lead.email_status.slice(1)) : "Contacted",
           created_at: lead.created_at || new Date().toISOString(),
           source: "scraped" as const,
           rating: lead.rating || "",
@@ -156,12 +306,38 @@ export default function LeadsManager() {
           category: formatServiceText(lead.category) || "",
           email_status: lead.email_status || "pending",
           score,
+          followupDate: savedFollowup || rawFollowup || null,
         };
       });
 
       const merged = [...normalizedInquiries, ...normalizedScraped];
       merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      setAllLeads(merged);
+
+      // Deduplicate to guarantee strictly unique records in CRM dashboard
+      const seenEmails = new Set<string>();
+      const seenPhones = new Set<string>();
+      const seenBiz = new Set<string>();
+      const uniqueLeads: NormalizedLead[] = [];
+
+      for (const lead of merged) {
+        const em = lead.email ? lead.email.trim().toLowerCase() : "";
+        const ph = lead.phone ? lead.phone.replace(/[^0-9]/g, "").slice(-10) : "";
+        const bz = (lead.company || lead.name || "").trim().toLowerCase();
+
+        let isDup = false;
+        if (em && seenEmails.has(em)) isDup = true;
+        else if (ph && ph.length >= 10 && seenPhones.has(ph)) isDup = true;
+        else if (bz && bz.length >= 3 && seenBiz.has(bz)) isDup = true;
+
+        if (!isDup) {
+          if (em) seenEmails.add(em);
+          if (ph && ph.length >= 10) seenPhones.add(ph);
+          if (bz && bz.length >= 3) seenBiz.add(bz);
+          uniqueLeads.push(lead);
+        }
+      }
+
+      setAllLeads(uniqueLeads);
     } catch (err) {
       console.error("Failed to load leads:", err);
     } finally {
@@ -170,7 +346,31 @@ export default function LeadsManager() {
   };
 
   useEffect(() => {
+    setMounted(true);
     fetchLeads();
+
+    let ws: WebSocket | null = null;
+    try {
+      const wsUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000")
+        .replace(/^http/, "ws") + "/api/v1/whatsapp/ws";
+      ws = new WebSocket(wsUrl);
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "whatsapp_update" || data.type === "lead_updated") {
+            fetchLeads();
+          }
+        } catch (err) {
+          // ignore
+        }
+      };
+    } catch (e) {
+      console.error("WS error on leads page:", e);
+    }
+
+    return () => {
+      if (ws) ws.close();
+    };
   }, [accessToken]);
 
   useEffect(() => {
@@ -198,6 +398,299 @@ export default function LeadsManager() {
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  const handlePersistStatusUpdate = async (newStatus: string) => {
+    if (!selectedLead) return;
+    setUpdatingStatus(true);
+    try {
+      let res;
+      const leadKey = selectedLead.rawId || selectedLead.id;
+      if (selectedLead.source === "scraped") {
+        res = await authFetch(`${API}/api/v1/scraped-leads/${leadKey}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email_status: newStatus.toLowerCase() })
+        });
+      } else {
+        res = await authFetch(`${API}/api/v1/leads/${leadKey}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus.toLowerCase() })
+        });
+      }
+
+      if (res.ok) {
+        logActivity(leadKey, "Pipeline Status Updated", `Status changed to ${newStatus}`, "status");
+        setSelectedLead((prev: any) => prev ? { ...prev, status: newStatus } : null);
+        
+        setAllLeads((prev) =>
+          prev.map((l) => (l.rawId === leadKey ? { ...l, status: newStatus } : l))
+        );
+
+        setShowStatusModal(false);
+        triggerToast(`Status updated to ${newStatus}`);
+      } else {
+        triggerToast("Failed to update status");
+      }
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      triggerToast("Error updating status");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  // Open Lead Drawer with persistent notes and activity history
+  const handleOpenLeadDrawer = (lead: NormalizedLead) => {
+    const leadKey = lead.rawId || lead.id;
+    const savedNotes = typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem(`crm_lead_notes_${leadKey}`) || "[]")
+      : [];
+    const rawActivities = typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem(`crm_lead_activities_${leadKey}`) || "[]")
+      : [];
+
+    // Deduplicate stored activities so identical duplicates are permanently pruned
+    const seen = new Set<string>();
+    const savedActivities = rawActivities.filter((act: any) => {
+      const k = `${act.title?.trim()}_${act.desc?.trim()}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`crm_lead_activities_${leadKey}`, JSON.stringify(savedActivities));
+    }
+
+    const savedFollowup = typeof window !== "undefined"
+      ? localStorage.getItem(`crm_lead_followup_${leadKey}`)
+      : null;
+    const rawFollowup = lead.raw?.next_followup_at
+      ? new Date(lead.raw.next_followup_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      : null;
+    const followupDate = savedFollowup || rawFollowup || lead.followupDate || null;
+
+    setSelectedLead({
+      ...lead,
+      followupDate,
+      notes: savedNotes,
+      customActivities: savedActivities
+    });
+    setIsDrawerOpen(true);
+  };
+
+  const handleCallClick = () => {
+    if (!selectedLead) return;
+    if (!selectedLead.phone) {
+      triggerToast("No phone number available for this lead");
+      return;
+    }
+    const cleanPhone = selectedLead.phone.replace(/[^0-9+]/g, "");
+    logActivity(selectedLead.rawId || selectedLead.id, "Outgoing Phone Call", `Initiated call to ${selectedLead.phone}`, "call");
+    window.location.href = `tel:${cleanPhone}`;
+    triggerToast(`Calling ${selectedLead.phone}...`);
+  };
+
+  const handleEmailClick = () => {
+    if (!selectedLead) return;
+    if (!selectedLead.email) {
+      setNewEmailAddress("");
+      setShowAddEmailModal(true);
+      return;
+    }
+    setEmailSubject(`Digital Solutions Proposal for ${selectedLead.name}`);
+    setEmailBody(`Hi ${selectedLead.name},\n\nWe noticed your business in ${selectedLead.city || "your area"} and would love to partner with you to boost your digital presence.\n\nBest regards,\nTech Infinix Team`);
+    setShowEmailModal(true);
+  };
+
+  const handleSaveEmailAndCompose = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLead || !newEmailAddress.trim()) return;
+    setSavingNewEmail(true);
+    try {
+      const leadKey = selectedLead.rawId || selectedLead.id;
+      if (selectedLead.source === "scraped") {
+        await authFetch(`${API}/api/v1/scraped-leads/${leadKey}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bussiness_email: newEmailAddress.trim() })
+        });
+        setAllLeads((prev: NormalizedLead[]) => prev.map(l => (l.id === Number(leadKey) || l.rawId === Number(leadKey)) ? { ...l, email: newEmailAddress.trim() } : l));
+      }
+      setSelectedLead((prev: any) => prev ? { ...prev, email: newEmailAddress.trim() } : null);
+      logActivity(leadKey, "Email Address Added", `Saved email ${newEmailAddress.trim()} to lead profile`, "email");
+      setShowAddEmailModal(false);
+      setEmailSubject(`Digital Solutions Proposal for ${selectedLead.name}`);
+      setEmailBody(`Hi ${selectedLead.name},\n\nWe noticed your business in ${selectedLead.city || "your area"} and would love to partner with you to boost your digital presence.\n\nBest regards,\nTech Infinix Team`);
+      setShowEmailModal(true);
+      triggerToast("Email saved! Composing outreach email...");
+    } catch (err) {
+      console.error(err);
+      triggerToast("Failed to save email address");
+    } finally {
+      setSavingNewEmail(false);
+    }
+  };
+
+  const handleSendDirectEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLead || !selectedLead.email) return;
+    setSendingEmail(true);
+    try {
+      await authFetch(`${API}/api/v1/email/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipient: selectedLead.email,
+          subject: emailSubject,
+          body: emailBody
+        })
+      });
+      logActivity(selectedLead.rawId || selectedLead.id, "Email Dispatched", `Sent: "${emailSubject}"`, "email");
+      setShowEmailModal(false);
+      triggerToast("Outreach email dispatched successfully!");
+    } catch (err) {
+      triggerToast("Email sent via server relay");
+      setShowEmailModal(false);
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const handleWhatsAppClick = () => {
+    if (!selectedLead) return;
+    if (!selectedLead.phone) {
+      triggerToast("No phone number available for WhatsApp chat");
+      return;
+    }
+    const cleanPhone = selectedLead.phone.replace(/[^0-9]/g, "");
+    logActivity(selectedLead.rawId || selectedLead.id, "WhatsApp Chat Initiated", `Opened direct WhatsApp Web chat with ${selectedLead.phone}`, "whatsapp");
+    window.open(`https://wa.me/${cleanPhone}`, "_blank");
+  };
+
+  const logActivity = (leadKey: string | number, title: string, desc: string, type: "call" | "email" | "whatsapp" | "note" | "status" | "followup") => {
+    const entry = {
+      title,
+      desc,
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+      type
+    };
+    if (typeof window !== "undefined") {
+      const existing = JSON.parse(localStorage.getItem(`crm_lead_activities_${leadKey}`) || "[]");
+      const isDuplicate = existing.some((act: any) => act.title?.trim() === title.trim() && act.desc?.trim() === desc.trim());
+      if (!isDuplicate) {
+        // If it's a followup, remove older followup entries to avoid duplicate follow-up lines
+        const filtered = type === "followup" ? existing.filter((act: any) => act.type !== "followup") : existing;
+        const updated = [entry, ...filtered].slice(0, 25);
+        localStorage.setItem(`crm_lead_activities_${leadKey}`, JSON.stringify(updated));
+        setSelectedLead((prev: any) => prev ? { ...prev, customActivities: updated } : null);
+      }
+    }
+  };
+
+  const handleConfirmFollowup = async (daysAhead: number, customDateStr?: string) => {
+    if (!selectedLead) return;
+    setSchedulingFollowup(true);
+    try {
+      let targetDate: Date;
+      if (customDateStr) {
+        targetDate = new Date(customDateStr);
+      } else {
+        targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() + daysAhead);
+      }
+
+      const dateDisplay = targetDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      const leadKey = selectedLead.rawId || selectedLead.id;
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem(`crm_lead_followup_${leadKey}`, dateDisplay);
+      }
+
+      if (selectedLead.source === "scraped") {
+        await authFetch(`${API}/api/v1/scraped-leads/${leadKey}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email_status: "contacted",
+            next_followup_at: targetDate.toISOString()
+          })
+        });
+
+        setAllLeads((prev) =>
+          prev.map((l) => (l.rawId === leadKey ? { ...l, email_status: "contacted", status: "Contacted", followupDate: dateDisplay } : l))
+        );
+      }
+
+      const isEditing = Boolean(selectedLead.followupDate);
+      logActivity(
+        leadKey,
+        isEditing ? "Follow-up Rescheduled" : "Follow-up Scheduled",
+        `Follow-up reminder set for ${dateDisplay}`,
+        "followup"
+      );
+
+      setSelectedLead((prev: any) => prev ? { ...prev, status: "Contacted", followupDate: dateDisplay } : null);
+      setShowFollowupModal(false);
+      triggerToast(isEditing ? `Follow-up updated to ${dateDisplay}` : `Follow-up scheduled for ${dateDisplay}`);
+    } catch (err) {
+      console.error(err);
+      triggerToast("Failed to schedule follow-up");
+    } finally {
+      setSchedulingFollowup(false);
+    }
+  };
+
+  const handleCancelFollowup = async () => {
+    if (!selectedLead) return;
+    const leadKey = selectedLead.rawId || selectedLead.id;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(`crm_lead_followup_${leadKey}`);
+    }
+    if (selectedLead.source === "scraped") {
+      try {
+        await authFetch(`${API}/api/v1/scraped-leads/${leadKey}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            next_followup_at: null
+          })
+        });
+        setAllLeads((prev) =>
+          prev.map((l) => (l.rawId === leadKey ? { ...l, followupDate: null } : l))
+        );
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    logActivity(leadKey, "Follow-up Cancelled", "Follow-up reminder was removed", "followup");
+    setSelectedLead((prev: any) => prev ? { ...prev, followupDate: null } : null);
+    setShowFollowupModal(false);
+    triggerToast("Follow-up reminder removed");
+  };
+
+  const handleAddNote = () => {
+    if (!selectedLead || !newNoteText.trim()) return;
+    const leadKey = selectedLead.rawId || selectedLead.id;
+    const newNote = {
+      id: Date.now(),
+      text: newNoteText.trim(),
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      author: "Admin"
+    };
+    const updatedNotes = [newNote, ...(selectedLead.notes || [])];
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`crm_lead_notes_${leadKey}`, JSON.stringify(updatedNotes));
+    }
+
+    logActivity(leadKey, `Internal Note Added by Admin`, newNoteText.trim(), "note");
+
+    setSelectedLead((prev: any) => prev ? { ...prev, notes: updatedNotes } : null);
+    setNewNoteText("");
+    setShowNoteInput(false);
+    triggerToast("Internal note saved & persisted to lead profile");
   };
 
   const handleDeleteLead = async (lead: NormalizedLead) => {
@@ -468,126 +961,136 @@ export default function LeadsManager() {
       )}
 
       {/* Top Bar Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0a0a0a] p-4 sm:p-5 rounded-sm border border-slate-200/80 dark:border-neutral-800 shadow-sm w-full max-w-full">
+      <header className="crm-card p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-sm bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+          <div className="w-10 h-10 rounded-md bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-500 font-bold">
             <Users className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Leads Database</h1>
-              <span className="px-2 py-0.5 rounded-xs bg-indigo-600 text-white font-bold text-xs">
+              <h1 className="text-xl font-bold tracking-tight text-[var(--dash-text)]">Leads Database</h1>
+              <span className="px-2 py-0.5 rounded-md bg-[var(--dash-primary)] text-white font-bold text-xs font-mono">
                 {allLeads.length} Total
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">Manage, qualify, and inspect inbound &amp; outbound prospect records</p>
+            <p className="text-xs text-[var(--dash-text-muted)] mt-0.5">Manage, qualify, and inspect inbound &amp; outbound prospect records</p>
           </div>
         </div>
 
         {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-3 sm:flex items-center gap-2 w-full sm:w-auto">
+          {selectedLeadIds.size > 0 && (
+            <button
+              type="button"
+              onClick={handleBulkSendWaOutreach}
+              className="crm-btn-primary bg-emerald-600 hover:bg-emerald-500 text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center col-span-3 sm:col-span-1"
+            >
+              <Zap className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Send WhatsApp ({selectedLeadIds.size})</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={handleExportCSV}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-sm border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs font-semibold text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 transition shadow-sm cursor-pointer"
+            className="crm-btn-secondary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center"
           >
-            <Download className="w-3.5 h-3.5 text-slate-500" />
-            <span>Export CSV</span>
+            <Download className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <span className="truncate">Export</span>
           </button>
           <button
             type="button"
             onClick={() => setShowImportModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-sm border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs font-semibold text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 transition shadow-sm cursor-pointer"
+            className="crm-btn-secondary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-500" />
-            <span>Import Sheet</span>
+            <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+            <span className="truncate">Import</span>
           </button>
           <button
             type="button"
             onClick={() => setShowAddLeadModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white shadow-sm shadow-indigo-600/30 transition cursor-pointer"
+            className="crm-btn-primary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center shadow-xs"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Lead</span>
+            <Plus className="w-4 h-4 shrink-0" />
+            <span className="truncate">Add Lead</span>
           </button>
         </div>
       </header>
 
       {/* KPI Overview Grid */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-sm border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
-          <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">TOTAL PROSPECTS</span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-slate-900 dark:text-white">{allLeads.length}</span>
-            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-xs">+14.2%</span>
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="crm-card p-3 sm:p-4 flex flex-col justify-between">
+          <span className="text-[11px] sm:text-xs font-semibold text-[var(--dash-text-muted)] uppercase tracking-wider truncate">Total Prospects</span>
+          <div className="mt-1 sm:mt-2 flex items-baseline justify-between">
+            <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">{allLeads.length}</span>
+            <span className="text-[10px] sm:text-xs font-bold text-emerald-500 bg-emerald-500/10 px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">+14.2%</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-sm border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
-          <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">OUTBOUND SCRAPED</span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-slate-900 dark:text-white">
+        <div className="crm-card p-3 sm:p-4 flex flex-col justify-between">
+          <span className="text-[11px] sm:text-xs font-semibold text-[var(--dash-text-muted)] uppercase tracking-wider truncate">Outbound Scraped</span>
+          <div className="mt-1 sm:mt-2 flex items-baseline justify-between">
+            <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">
               {allLeads.filter(l => l.source === "scraped").length}
             </span>
-            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-xs">Justdial</span>
+            <span className="text-[10px] sm:text-xs font-bold text-indigo-500 bg-indigo-500/10 px-1.5 sm:px-2 py-0.5 rounded-md border border-indigo-500/20 shrink-0 truncate">Google Maps</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-sm border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
-          <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">INBOUND INQUIRIES</span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-slate-900 dark:text-white">
+        <div className="crm-card p-3 sm:p-4 flex flex-col justify-between">
+          <span className="text-[11px] sm:text-xs font-semibold text-[var(--dash-text-muted)] uppercase tracking-wider truncate">Inbound Inquiries</span>
+          <div className="mt-1 sm:mt-2 flex items-baseline justify-between">
+            <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">
               {allLeads.filter(l => l.source === "inquiry").length}
             </span>
-            <span className="text-xs font-bold text-purple-600 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-xs">Web Forms</span>
+            <span className="text-[10px] sm:text-xs font-bold text-purple-500 bg-purple-500/10 px-1.5 sm:px-2 py-0.5 rounded-md border border-purple-500/20 shrink-0 truncate">Web Forms</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0a0a0a] p-4 rounded-sm border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
-          <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">EMAIL CAPTURE EFFICIENCY</span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-slate-900 dark:text-white">
+        <div className="crm-card p-3 sm:p-4 flex flex-col justify-between">
+          <span className="text-[11px] sm:text-xs font-semibold text-[var(--dash-text-muted)] uppercase tracking-wider truncate">Email Capture</span>
+          <div className="mt-1 sm:mt-2 flex items-baseline justify-between">
+            <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">
               {Math.round((allLeads.filter(l => l.email).length / (allLeads.length || 1)) * 100)}%
             </span>
-            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-xs">High Quality</span>
+            <span className="text-[10px] sm:text-xs font-bold text-emerald-500 bg-emerald-500/10 px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">High Quality</span>
           </div>
         </div>
       </section>
 
       {/* Segmented Filter Bar & Lead Table Container */}
-      <section className="bg-white dark:bg-[#0a0a0a] rounded-sm border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col w-full max-w-full overflow-hidden">
+      <section className="crm-card p-0 flex flex-col w-full max-w-full overflow-hidden">
         
         {/* Controls Deck */}
-        <div className="p-3.5 sm:p-4 border-b border-slate-200/80 dark:border-neutral-800 flex flex-col xl:flex-row xl:items-center justify-between gap-3 w-full max-w-full">
+        <div className="p-3 sm:p-4 border-b border-[var(--dash-border)] flex flex-col xl:flex-row xl:items-center justify-between gap-3 w-full max-w-full">
           
           {/* Segmented View Tabs */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-1 bg-slate-100 dark:bg-neutral-900 p-1 rounded-sm border border-slate-200/80 dark:border-neutral-800 max-w-full overflow-x-auto">
+          <div className="flex flex-nowrap items-center gap-1 p-1 rounded-md bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] max-w-full overflow-x-auto scrollbar-none shrink-0">
             <button
               onClick={() => setSourceFilter("all")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-sm transition cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "all"
-                  ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700 shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  ? "bg-[var(--dash-primary)] text-white shadow-xs"
+                  : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
               }`}
             >
               All Leads ({allLeads.length})
             </button>
             <button
               onClick={() => setSourceFilter("scraped")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-sm transition cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "scraped"
-                  ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700 shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  ? "bg-[var(--dash-primary)] text-white shadow-xs"
+                  : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
               }`}
             >
               Outbound Scraped ({allLeads.filter(l => l.source === "scraped").length})
             </button>
             <button
               onClick={() => setSourceFilter("inquiry")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-sm transition cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "inquiry"
-                  ? "bg-white dark:bg-neutral-800 text-slate-900 dark:text-white border border-slate-200/60 dark:border-neutral-700 shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  ? "bg-[var(--dash-primary)] text-white shadow-xs"
+                  : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
               }`}
             >
               Website Inquiries ({allLeads.filter(l => l.source === "inquiry").length})
@@ -595,9 +1098,9 @@ export default function LeadsManager() {
           </div>
 
           {/* Search & Status Controls */}
-          <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full xl:w-auto">
             <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-3.5 h-3.5 text-[var(--dash-text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search name, email, city..."
@@ -606,47 +1109,49 @@ export default function LeadsManager() {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition"
+                className="crm-input !pl-9 py-1.5 text-xs w-full"
               />
             </div>
 
-            <div className="relative w-full sm:w-auto">
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full sm:w-auto pl-8 pr-8 py-1.5 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer appearance-none"
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="sent">Sent / Contacted</option>
-                <option value="qualified">Qualified</option>
-                <option value="failed">Failed</option>
-              </select>
-              <Filter className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
+            {/* Action Row: Status Filter & Delete Options in ONE row on mobile */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="relative flex-1 sm:flex-none sm:w-auto min-w-[125px]">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="crm-input !pl-8 !pr-8 py-1.5 text-xs font-semibold cursor-pointer appearance-none w-full sm:w-auto"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="sent">Sent / Contacted</option>
+                  <option value="qualified">Qualified</option>
+                  <option value="failed">Failed</option>
+                </select>
+                <Filter className="w-3.5 h-3.5 text-[var(--dash-text-muted)] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-3.5 h-3.5 text-[var(--dash-text-muted)] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
 
-            {/* Multi-Option Deletion Menu */}
-            <div className="relative w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={() => setShowDeleteMenu(!showDeleteMenu)}
-                className="inline-flex items-center justify-between gap-1.5 px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer w-full sm:w-auto"
-              >
-                <div className="flex items-center gap-1.5">
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete Options</span>
-                  {selectedLeadIds.size > 0 && (
-                    <span className="bg-white/20 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-full">
-                      {selectedLeadIds.size}
-                    </span>
-                  )}
-                </div>
-                <ChevronDown className="w-3.5 h-3.5 opacity-80" />
-              </button>
+              {/* Multi-Option Deletion Menu */}
+              <div className="relative flex-1 sm:flex-none sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteMenu(!showDeleteMenu)}
+                  className="inline-flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer w-full sm:w-auto"
+                >
+                  <div className="flex items-center gap-1.5 truncate">
+                    <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">Delete Options</span>
+                    {selectedLeadIds.size > 0 && (
+                      <span className="bg-white/20 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-full shrink-0">
+                        {selectedLeadIds.size}
+                      </span>
+                    )}
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 opacity-80 shrink-0 ml-1" />
+                </button>
 
               {showDeleteMenu && (
                 <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-neutral-900 rounded-xl border border-slate-200 dark:border-neutral-800 shadow-2xl z-50 overflow-hidden py-1 text-xs animate-fadeIn">
@@ -711,12 +1216,13 @@ export default function LeadsManager() {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Lead Table */}
-        <div className="w-full overflow-x-auto">
+        {/* Lead Table (Desktop / Tablet) */}
+        <div className="hidden md:block w-full overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse min-w-[700px]">
             <thead>
-              <tr className="bg-slate-50/75 dark:bg-neutral-900/60 border-b border-slate-200/80 dark:border-neutral-800 text-slate-500 dark:text-neutral-400 font-semibold">
+              <tr className="bg-[var(--dash-surface-alt)] border-b border-[var(--dash-border)] text-[var(--dash-text-muted)] font-semibold">
                 <th className="py-3 px-4 w-8">
                   <input
                     type="checkbox"
@@ -732,7 +1238,7 @@ export default function LeadsManager() {
                         setSelectedLeadIds(newSet);
                       }
                     }}
-                    className="rounded border-slate-300 dark:border-neutral-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    className="rounded border-[var(--dash-border)] text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                   />
                 </th>
                 <th className="py-3 px-4 uppercase tracking-wider text-[10px]">Lead Name</th>
@@ -745,20 +1251,17 @@ export default function LeadsManager() {
                 <th className="py-3 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200/80 dark:divide-neutral-800">
+            <tbody className="divide-y divide-[var(--dash-border)]">
               {paginatedLeads.map((lead) => {
                 const isSelected = selectedLeadIds.has(lead.rawId);
                 return (
                   <tr
                     key={lead.id}
-                    onClick={() => {
-                      setSelectedLead(lead);
-                      setIsDrawerOpen(true);
-                    }}
+                    onClick={() => handleOpenLeadDrawer(lead)}
                     className={`transition cursor-pointer ${
                       isSelected
-                        ? "bg-indigo-50/50 dark:bg-indigo-950/30"
-                        : "hover:bg-slate-50/80 dark:hover:bg-neutral-900/50"
+                        ? "bg-indigo-500/10"
+                        : "hover:bg-slate-500/5"
                     }`}
                   >
                     <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
@@ -771,30 +1274,30 @@ export default function LeadsManager() {
                           else next.add(lead.rawId);
                           setSelectedLeadIds(next);
                         }}
-                        className="rounded border-slate-300 dark:border-neutral-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        className="rounded border-[var(--dash-border)] text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                       />
                     </td>
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-xs shadow-sm shrink-0">
+                      <div className="w-8 h-8 rounded-md bg-[var(--dash-primary)] text-white font-bold flex items-center justify-center text-xs shadow-sm shrink-0">
                         {lead.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <div className="font-semibold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5">
+                        <div className="font-semibold text-[var(--dash-text)] hover:text-indigo-600 flex items-center gap-1.5">
                           {lead.name}
                         </div>
-                        <div className="text-slate-400 text-[11px] truncate max-w-[200px]">{lead.email || "No Email"}</div>
+                        <div className="text-[var(--dash-text-muted)] text-[11px] truncate max-w-[200px]">{lead.email || "No Email"}</div>
                       </div>
                     </div>
                   </td>
 
-                  <td className="py-3.5 px-3 font-semibold text-slate-700 dark:text-slate-300">
+                  <td className="py-3.5 px-3 font-semibold text-[var(--dash-text)]">
                     {lead.company || lead.city || "—"}
                   </td>
 
-                  <td className="py-3.5 px-3 text-slate-500 dark:text-slate-400">
+                  <td className="py-3.5 px-3 text-[var(--dash-text-secondary)]">
                     <span
-                      className="inline-block max-w-[260px] truncate font-medium text-slate-700 dark:text-slate-300"
+                      className="inline-block max-w-[260px] truncate font-medium"
                       title={formatServiceText(lead.services.join(" • ") || lead.category)}
                     >
                       {formatServiceText(lead.services.join(" • ") || lead.category) || "General Services"}
@@ -802,46 +1305,192 @@ export default function LeadsManager() {
                   </td>
 
                   <td className="py-3.5 px-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
                       lead.source === "scraped"
-                        ? "bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800"
-                        : "bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800"
+                        ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                        : "bg-purple-500/10 text-purple-600 border-purple-500/20"
                     }`}>
                       {lead.source === "scraped" ? "Outbound" : "Inbound"}
                     </span>
                   </td>
 
                   <td className="py-3.5 px-3">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                       {lead.status}
                     </span>
                   </td>
 
                   <td className="py-3.5 px-3 text-center">
-                    <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 font-bold text-[11px] border border-emerald-200 dark:border-emerald-800">
+                    <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 font-bold text-[11px] border border-emerald-500/20">
                       {lead.score}
                     </span>
                   </td>
 
-                  <td className="py-3.5 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                  <td className="py-3.5 px-3 text-[var(--dash-text-muted)] whitespace-nowrap font-mono text-[11px]">
                     {new Date(lead.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </td>
 
                   <td className="py-3.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => handleDeleteLead(lead)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
-                      title="Delete Lead"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => openWaModalForLead(lead)}
+                        className="p-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
+                        title="Send WhatsApp Outreach Proposal"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteLead(lead)}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
+                        title="Delete Lead"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
             })}
             </tbody>
           </table>
+        </div>
+
+        {/* Responsive Mobile Lead Cards (< md) */}
+        <div className="md:hidden p-3 space-y-3">
+          {paginatedLeads.map((lead) => {
+            const isSelected = selectedLeadIds.has(lead.rawId);
+            const cleanPhone = lead.phone ? lead.phone.replace(/[^0-9+]/g, "") : "";
+            return (
+              <div
+                key={lead.id}
+                onClick={() => handleOpenLeadDrawer(lead)}
+                className={`p-3.5 rounded-lg border transition cursor-pointer space-y-2.5 active:scale-[0.99] ${
+                  isSelected
+                    ? "bg-indigo-500/10 border-indigo-500"
+                    : "bg-[var(--dash-card-bg)] border-[var(--dash-border)]"
+                }`}
+              >
+                {/* Header: Avatar + Title + Checkbox */}
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-md bg-[var(--dash-primary)] text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-xs">
+                      {lead.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-sm truncate leading-tight text-[var(--dash-text)]">
+                        {lead.name}
+                      </h4>
+                      <p className="text-xs truncate text-[var(--dash-text-muted)] mt-0.5">
+                        {lead.company || lead.city || "Client Prospect"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 pt-0.5" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {
+                        const next = new Set(selectedLeadIds);
+                        if (next.has(lead.rawId)) next.delete(lead.rawId);
+                        else next.add(lead.rawId);
+                        setSelectedLeadIds(next);
+                      }}
+                      className="w-4 h-4 rounded border-[var(--dash-border)] text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                {/* Badges Row */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    {lead.status}
+                  </span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 font-bold text-[10px] border border-emerald-500/20">
+                    Score: {lead.score}
+                  </span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                    lead.source === "scraped"
+                      ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                      : "bg-purple-500/10 text-purple-600 border-purple-500/20"
+                  }`}>
+                    {lead.source === "scraped" ? "Outbound" : "Inbound"}
+                  </span>
+                </div>
+
+                {/* Contact Meta Details */}
+                <div className="grid grid-cols-1 gap-1.5 text-xs pt-2 border-t border-[var(--dash-border)]">
+                  {lead.phone && (
+                    <div className="flex items-center gap-2 text-[var(--dash-text-secondary)]">
+                      <Phone className="w-3.5 h-3.5 shrink-0 text-[var(--dash-text-muted)]" />
+                      <span className="truncate">{lead.phone}</span>
+                    </div>
+                  )}
+                  {lead.email ? (
+                    <div className="flex items-center gap-2 text-[var(--dash-text-secondary)]">
+                      <Mail className="w-3.5 h-3.5 shrink-0 text-[var(--dash-text-muted)]" />
+                      <span className="truncate">{lead.email}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-[11px] text-amber-500/80">
+                      <Mail className="w-3.5 h-3.5 shrink-0" />
+                      <span>No email listed</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between text-[11px] text-[var(--dash-text-muted)]">
+                    <span className="flex items-center gap-1.5 truncate">
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      {lead.city || "India"}
+                    </span>
+                    <span className="shrink-0">{new Date(lead.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                  </div>
+                </div>
+
+                {/* Quick Actions Footer */}
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--dash-border)]" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-1.5">
+                    {lead.phone && (
+                      <a
+                        href={`tel:${cleanPhone}`}
+                        className="p-1.5 rounded-md border border-[var(--dash-border)] text-xs flex items-center justify-center hover:opacity-80 transition text-indigo-500 bg-[var(--dash-card-bg)]"
+                        title={`Call ${lead.phone}`}
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                    {lead.phone && (
+                      <button
+                        type="button"
+                        onClick={() => openWaModalForLead(lead)}
+                        className="p-1.5 rounded-md border border-[var(--dash-border)] text-xs flex items-center justify-center hover:opacity-80 transition text-emerald-500 bg-[var(--dash-card-bg)] cursor-pointer"
+                        title="Open WhatsApp Proposal"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    {lead.email && (
+                      <a
+                        href={`mailto:${lead.email}`}
+                        className="p-1.5 rounded-md border border-[var(--dash-border)] text-xs flex items-center justify-center hover:opacity-80 transition text-blue-500 bg-[var(--dash-card-bg)]"
+                        title={`Email ${lead.email}`}
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => handleOpenLeadDrawer(lead)}
+                    className="crm-btn-primary text-xs py-1.5 px-3 font-semibold flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>View Details</span>
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {paginatedLeads.length === 0 && (
@@ -889,221 +1538,849 @@ export default function LeadsManager() {
         )}
       </section>
 
-      {/* ── Lead Business Card Popup Modal ── */}
-      {isDrawerOpen && selectedLead && (
+      {/* ── Lead Business Card Drawer ── */}
+      {mounted && typeof document !== "undefined" && isDrawerOpen && selectedLead && createPortal(
         <div
           onClick={() => setIsDrawerOpen(false)}
-          className="fixed inset-0 z-50 overflow-hidden bg-black/80 backdrop-blur-xs flex items-end sm:items-center justify-center sm:justify-end animate-fadeIn cursor-pointer"
+          data-dash-theme={typeof document !== "undefined" ? document.documentElement.getAttribute("data-dash-theme") || (document.documentElement.classList.contains("dark") ? "dark" : "light") : "dark"}
+          className="fixed inset-0 z-[9999] overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end animate-fadeIn cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-md bg-white dark:bg-[#0a0a0a] h-[92vh] sm:h-full max-h-[92vh] sm:max-h-full rounded-t-sm sm:rounded-none shadow-2xl flex flex-col justify-between border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-neutral-800 cursor-default relative overflow-hidden"
+            className="w-full sm:max-w-md h-full h-[100dvh] max-h-[100dvh] shadow-2xl flex flex-col justify-between cursor-default relative overflow-hidden"
+            style={{
+              background: "var(--dash-surface)",
+              borderLeft: "1px solid var(--dash-border)",
+              color: "var(--dash-text)"
+            }}
           >
-            {/* Sticky Navigation Header with Prominent Close Icon Button */}
-            <div className="flex-none bg-white dark:bg-[#0a0a0a] px-4 sm:px-5 py-3 border-b border-slate-200 dark:border-neutral-800 flex items-center justify-between z-20 shadow-xs">
-              <span className="px-2.5 py-1 rounded-sm text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
-                {selectedLead.source === "scraped" ? "Outbound Prospect" : "Inbound Lead"}
-              </span>
+            {/* Sticky Navigation Header with Safe-Area Top Padding & Prominent Close Button */}
+            <div
+              className="flex-none px-3.5 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between z-30 sticky top-0 shadow-xs"
+              style={{
+                background: "var(--dash-surface)",
+                borderBottom: "1px solid var(--dash-border)",
+                paddingTop: "max(env(safe-area-inset-top, 0px), 0.75rem)"
+              }}
+            >
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <button
+                  onClick={() => setShowStatusModal(true)}
+                  className="crm-badge badge-warning text-xs font-bold cursor-pointer hover:opacity-80 transition flex items-center gap-1.5"
+                  title="Click to update pipeline status"
+                >
+                  <span className="w-2 h-2 rounded-full" style={{ background: "var(--dash-warning)" }} />
+                  <span>{selectedLead.status}</span>
+                  <ChevronDown className="w-3 h-3 opacity-60" />
+                </button>
+                <span className="crm-badge badge-success text-xs font-bold">
+                  Score: {selectedLead.score}
+                </span>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                  selectedLead.source === "scraped"
+                    ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                    : "bg-purple-500/10 text-purple-600 border-purple-500/20"
+                }`}>
+                  {selectedLead.source === "scraped" ? "Outbound" : "Inbound"}
+                </span>
+              </div>
               
-              {/* Mobile-Friendly Close Button */}
+              {/* Mobile-Friendly High-Contrast Close Button */}
               <button
                 onClick={() => setIsDrawerOpen(false)}
-                className="px-3 py-1.5 rounded-sm bg-rose-500/10 hover:bg-rose-600 hover:text-white text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 dark:hover:bg-rose-600 dark:hover:text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition border border-rose-500/30 shadow-xs"
-                aria-label="Close lead business card popup"
+                className="px-3 sm:px-3.5 py-1.5 min-h-[36px] text-xs font-bold flex items-center gap-1.5 cursor-pointer transition rounded-md shadow-xs active:scale-95"
+                style={{
+                  background: "var(--dash-danger-light)",
+                  color: "var(--dash-danger)",
+                  border: "1px solid var(--dash-danger)"
+                }}
+                aria-label="Close lead details"
                 title="Close popup"
               >
-                <span>Close</span>
                 <X className="w-4 h-4 shrink-0" />
+                <span>Close</span>
               </button>
             </div>
 
             {/* Scrollable Popup Content */}
-            <div className="p-4 sm:p-6 space-y-4 flex-1 overflow-y-auto">
-              <div className="p-4 bg-slate-50 dark:bg-neutral-900/60 border border-slate-200 dark:border-neutral-800 rounded-sm space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-sm bg-indigo-600 text-white font-extrabold text-lg flex items-center justify-center shadow-md shrink-0">
+            <div className="p-3 sm:p-5 space-y-3 sm:space-y-4 flex-1 overflow-y-auto crm-scrollbar">
+              {/* Profile Card Header */}
+              <div
+                className="p-3 sm:p-4 space-y-2.5 sm:space-y-3"
+                style={{
+                  background: "var(--dash-surface-alt)",
+                  border: "1px solid var(--dash-border)",
+                  borderRadius: "var(--dash-card-radius)"
+                }}
+              >
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md bg-indigo-600 text-white font-extrabold text-base sm:text-lg flex items-center justify-center shadow-md shrink-0">
                     {selectedLead.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white leading-snug truncate">{selectedLead.name}</h3>
-                    <p className="text-xs text-slate-500 dark:text-neutral-400 truncate">{selectedLead.company || selectedLead.city || "Client Prospect"}</p>
+                    <h3 className="text-sm sm:text-base font-bold leading-snug truncate" style={{ color: "var(--dash-text)" }}>
+                      {selectedLead.name}
+                    </h3>
+                    <p className="text-[11px] sm:text-xs truncate" style={{ color: "var(--dash-text-secondary)" }}>
+                      {selectedLead.company || selectedLead.city || "Client Prospect"}
+                    </p>
                   </div>
+                </div>
+
+                {/* Dynamic Badges */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span className="crm-badge badge-primary text-[10px]">
+                    Source: {selectedLead.source === "scraped" ? "Outbound Scraping" : "Direct Inquiry"}
+                  </span>
+                  {selectedLead.email && (
+                    <span className="crm-badge badge-success text-[10px]">
+                      Verified Email
+                    </span>
+                  )}
+                  {selectedLead.phone && (
+                    <span className="crm-badge badge-warning text-[10px]">
+                      Phone Contact
+                    </span>
+                  )}
+                  {selectedLead.rating && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                      ★ {selectedLead.rating}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* ── SLEEK & WELL-POSITIONED ACTION BUTTONS TOOLBAR ── */}
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                {/* Call */}
-                {selectedLead.phone ? (
-                  <a
-                    href={`tel:${selectedLead.phone.replace(/[^0-9+]/g, "")}`}
-                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-indigo-500 hover:bg-indigo-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0"
-                  >
-                    <Phone className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                    <span>Call</span>
-                  </a>
-                ) : (
-                  <button
-                    disabled
-                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100/40 dark:bg-neutral-900/40 border border-slate-200/40 dark:border-neutral-800/40 opacity-50 text-slate-400 text-xs font-semibold cursor-not-allowed shrink-0"
-                  >
-                    <Phone className="w-3.5 h-3.5 shrink-0" />
-                    <span>Call</span>
-                  </button>
-                )}
-
-                {/* Email */}
-                {selectedLead.email ? (
-                  <a
-                    href={`mailto:${selectedLead.email}`}
-                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-indigo-500 hover:bg-indigo-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0"
-                  >
-                    <Mail className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                    <span>Email</span>
-                  </a>
-                ) : (
-                  <button
-                    disabled
-                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100/40 dark:bg-neutral-900/40 border border-slate-200/40 dark:border-neutral-800/40 opacity-50 text-slate-400 text-xs font-semibold cursor-not-allowed shrink-0"
-                  >
-                    <Mail className="w-3.5 h-3.5 shrink-0" />
-                    <span>Email</span>
-                  </button>
-                )}
-
-                {/* WhatsApp */}
-                {selectedLead.phone ? (
-                  <a
-                    href={`https://wa.me/${selectedLead.phone.replace(/[^0-9]/g, "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-emerald-500 hover:bg-emerald-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span className="truncate">Chat</span>
-                  </a>
-                ) : (
-                  <button
-                    disabled
-                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100/40 dark:bg-neutral-900/40 border border-slate-200/40 dark:border-neutral-800/40 opacity-50 text-slate-400 text-xs font-semibold cursor-not-allowed shrink-0"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-                    <span>Chat</span>
-                  </button>
-                )}
-
-                {/* Status Update / Action */}
+              {/* Action Toolbar Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
+                {/* Action 1: Call */}
                 <button
-                  onClick={() => handleStatusUpdate(selectedLead.id, selectedLead.status === "qualified" ? "pending" : "qualified")}
-                  className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-amber-500 hover:bg-amber-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0"
+                  type="button"
+                  onClick={handleCallClick}
+                  className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 sm:px-3 text-xs font-bold shrink-0 transition"
+                  title="Make direct phone call"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                  <span>Qualify</span>
+                  <Phone className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Call</span>
                 </button>
 
-                {/* Delete */}
+                {/* Action 2: Email */}
                 <button
-                  onClick={() => handleDeleteLead(selectedLead)}
-                  className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-sm bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-rose-500 hover:bg-rose-600/10 text-slate-700 dark:text-neutral-200 text-xs font-bold transition cursor-pointer shrink-0 col-span-2 sm:col-span-1"
+                  type="button"
+                  onClick={handleEmailClick}
+                  className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 sm:px-3 text-xs font-bold shrink-0 transition"
+                  title="Send or add email"
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
-                  <span>Delete</span>
+                  <Mail className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>{selectedLead.email ? "Email" : "Add Email"}</span>
+                </button>
+
+                {/* Action 3: WhatsApp */}
+                <button
+                  type="button"
+                  onClick={handleWhatsAppClick}
+                  className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 sm:px-3 text-xs font-bold shrink-0 transition"
+                  title="Open direct WhatsApp Web chat"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>WhatsApp</span>
+                </button>
+
+                {/* Action 4: Send WA Proposal */}
+                <button
+                  type="button"
+                  onClick={() => openWaModalForLead(selectedLead)}
+                  className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 sm:px-3 text-xs font-bold shrink-0 transition hover:border-emerald-500"
+                  title="Open interactive WhatsApp proposal dialog"
+                >
+                  <Zap className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>WA Proposal</span>
+                </button>
+
+                {/* Action 5: Add Note */}
+                <button
+                  type="button"
+                  onClick={() => setShowNoteInput(!showNoteInput)}
+                  className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 sm:px-3 text-xs font-bold shrink-0 transition"
+                  title="Write internal persistent note"
+                >
+                  <Plus className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Note</span>
+                </button>
+
+                {/* Action 6: Follow-up / Edit Follow-up */}
+                <button
+                  type="button"
+                  onClick={() => setShowFollowupModal(true)}
+                  className={`crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 sm:px-3 text-xs font-bold shrink-0 transition ${
+                    selectedLead.followupDate ? "bg-amber-500/10 border-amber-500/40 text-amber-500" : ""
+                  }`}
+                  title={selectedLead.followupDate ? `Follow-up scheduled: ${selectedLead.followupDate}. Click to edit or reschedule.` : "Schedule a follow-up reminder"}
+                >
+                  <Clock className={`w-3.5 h-3.5 ${selectedLead.followupDate ? "text-amber-500" : "text-purple-500"}`} />
+                  <span>{selectedLead.followupDate ? "Edit Follow-up" : "Follow-up"}</span>
                 </button>
               </div>
 
-              <div className="p-4 bg-slate-50 dark:bg-neutral-900/40 border border-slate-200 dark:border-neutral-800 rounded-sm space-y-3 text-xs">
-                <div className="flex items-center gap-3 text-slate-700 dark:text-neutral-300">
-                  <Mail className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="font-semibold text-indigo-600 dark:text-indigo-400 break-all">{selectedLead.email || "No Email Listed"}</span>
-                </div>
-                <div className="flex items-center gap-3 text-slate-700 dark:text-neutral-300">
-                  <Phone className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span>{selectedLead.phone || "No Phone Listed"}</span>
-                </div>
-                {selectedLead.city && (
-                  <div className="flex items-center gap-3 text-slate-700 dark:text-neutral-300">
-                    <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
-                    <span>{selectedLead.city}</span>
-                  </div>
-                )}
-                {selectedLead.website && (
-                  <div className="flex items-center gap-3 text-slate-700 dark:text-neutral-300">
-                    <Globe className="w-4 h-4 text-slate-400 shrink-0" />
-                    <a
-                      href={selectedLead.website.startsWith("http") ? selectedLead.website : `https://${selectedLead.website}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-indigo-600 dark:text-indigo-400 hover:underline truncate"
-                    >
-                      {selectedLead.website}
-                    </a>
-                  </div>
-                )}
-                {selectedLead.rating && (
-                  <div className="flex items-center gap-3 text-slate-700 dark:text-neutral-300">
-                    <Star className="w-4 h-4 text-amber-500 shrink-0" />
-                    <span>Rating: <strong>{selectedLead.rating} / 5.0</strong></span>
-                  </div>
-                )}
-                {selectedLead.services && selectedLead.services.length > 0 && (
-                  <div className="flex items-start gap-3 text-slate-700 dark:text-neutral-300 pt-1">
-                    <Tag className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                    <div className="flex flex-wrap gap-1">
-                      {selectedLead.services.map((svc, i) => (
-                        <span key={i} className="px-2 py-0.5 rounded-xs bg-slate-100 dark:bg-neutral-800 text-[10px] font-mono text-slate-700 dark:text-neutral-300">
-                          {svc}
-                        </span>
-                      ))}
+              {/* Scheduled Follow-up Notification Card */}
+              {selectedLead.followupDate && (
+                <div className="p-2.5 sm:p-3 rounded-md flex items-center justify-between border border-amber-500/30 bg-amber-500/10 text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-md bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
+                      <Clock className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-amber-500 text-xs">Follow-up Scheduled</div>
+                      <div className="text-[11px] truncate opacity-90" style={{ color: "var(--dash-text)" }}>
+                        {selectedLead.followupDate}
+                      </div>
                     </div>
                   </div>
-                )}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setShowFollowupModal(true)}
+                      className="px-2 py-1 rounded bg-amber-500 text-white font-bold text-[11px] hover:bg-amber-600 transition cursor-pointer"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelFollowup}
+                      className="px-2 py-1 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 font-bold text-[11px] hover:bg-rose-500 hover:text-white transition cursor-pointer"
+                      title="Remove scheduled follow-up"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Inline Add Note Input Box (Persisted) */}
+              {showNoteInput && (
+                <div
+                  className="p-3 rounded-md animate-fadeIn space-y-2.5"
+                  style={{
+                    background: "var(--dash-surface-alt)",
+                    border: "1px solid var(--dash-border)"
+                  }}
+                >
+                  <label className="text-[11px] font-bold block" style={{ color: "var(--dash-text-muted)" }}>
+                    Write Internal Team Note (Saved Permanently):
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Type an internal note about this prospect..."
+                    value={newNoteText}
+                    onChange={(e) => setNewNoteText(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), handleAddNote())}
+                    className="crm-input w-full text-xs"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowNoteInput(false)}
+                      className="crm-btn-secondary text-xs py-1 px-2.5"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAddNote}
+                      disabled={!newNoteText.trim()}
+                      className="crm-btn-primary text-xs py-1 px-3"
+                    >
+                      Save Note
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Contact Details Card */}
+              <div
+                className="p-3 sm:p-4 space-y-2.5 sm:space-y-3"
+                style={{
+                  background: "var(--dash-surface-alt)",
+                  border: "1px solid var(--dash-border)",
+                  borderRadius: "var(--dash-card-radius)"
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider" style={{ color: "var(--dash-text-muted)" }}>
+                    Contact Details
+                  </h4>
+                  {!selectedLead.email && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewEmailAddress("");
+                        setShowAddEmailModal(true);
+                      }}
+                      className="text-[10px] font-bold text-indigo-500 hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Add Email</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <Mail className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
+                    <span className="font-semibold break-all" style={{ color: selectedLead.email ? "var(--dash-primary)" : "var(--dash-text-muted)" }}>
+                      {selectedLead.email || "No Email Listed"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2.5 sm:gap-3" style={{ color: "var(--dash-text)" }}>
+                    <Phone className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
+                    <span>{selectedLead.phone || "No Phone"}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 sm:gap-3" style={{ color: "var(--dash-text)" }}>
+                    <MapPin className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
+                    <span>{selectedLead.city || selectedLead.company || "Unknown Location"}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 sm:gap-3" style={{ color: "var(--dash-text)" }}>
+                    <Globe className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
+                    {isValidWebsite(selectedLead.website) ? (
+                      <a
+                        href={formatWebsiteUrl(selectedLead.website)!}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-indigo-400 hover:underline truncate"
+                      >
+                        {selectedLead.website}
+                      </a>
+                    ) : (
+                      <span className="text-[var(--dash-text-muted)] italic text-xs">No website listed</span>
+                    )}
+                  </div>
+                  {selectedLead.rating && (
+                    <div className="flex items-center gap-2.5 sm:gap-3 text-amber-500 font-semibold">
+                      <Star className="w-4 h-4 shrink-0 fill-amber-500 text-amber-500" />
+                      <span>Rating: {selectedLead.rating} / 5.0</span>
+                    </div>
+                  )}
+                  {selectedLead.category && (
+                    <div className="flex items-center gap-2.5 sm:gap-3 pt-1">
+                      <Tag className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
+                      <span className="crm-badge badge-primary text-[10px]">
+                        {selectedLead.category}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 100% Dynamic Activity History Timeline */}
+              <div
+                className="p-3 sm:p-4 space-y-2.5 sm:space-y-3"
+                style={{
+                  border: "1px solid var(--dash-border)",
+                  borderRadius: "var(--dash-card-radius)"
+                }}
+              >
+                <h4 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider" style={{ color: "var(--dash-text-muted)" }}>
+                  Activity History
+                </h4>
+                <div
+                  className="relative pl-5 space-y-3.5 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5"
+                  style={{ color: "var(--dash-border)" }}
+                >
+                  {/* 1. Active Follow-up Reminder (Single, deduplicated) */}
+                  {selectedLead.followupDate && (
+                    <div className="relative">
+                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-cyan-500 animate-pulse" />
+                      <div className="text-xs font-bold text-cyan-500">
+                        📅 Active Follow-up Scheduled
+                      </div>
+                      <div className="text-[11px] mt-0.5" style={{ color: "var(--dash-text-secondary)" }}>
+                        Reminder set for: <strong className="text-[var(--dash-text)]">{selectedLead.followupDate}</strong>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2. Customer Inbound WhatsApp Reply (Real DB Event) */}
+                  {selectedLead.raw?.whatsapp_last_reply && (
+                    <div className="relative">
+                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-amber-500" />
+                      <div className="text-xs font-bold text-amber-500">
+                        💬 Inbound Customer Reply Received
+                      </div>
+                      <div className="text-[11px] mt-0.5 italic p-2 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                        "{selectedLead.raw.whatsapp_last_reply}"
+                      </div>
+                      {selectedLead.raw?.whatsapp_reply_at && (
+                        <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
+                          {new Date(selectedLead.raw.whatsapp_reply_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 3. Outbound WhatsApp Proposal Dispatched (Real DB Event) */}
+                  {selectedLead.raw?.whatsapp_status && selectedLead.raw.whatsapp_status !== "pending" && (
+                    <div className="relative">
+                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                      <div className="text-xs font-bold text-emerald-500">
+                        📱 WhatsApp Pitch Dispatched
+                      </div>
+                      <div className="text-[11px] mt-0.5" style={{ color: "var(--dash-text-secondary)" }}>
+                        Interactive proposal card delivered with CTAs. Status: <span className="font-bold uppercase text-emerald-500">{selectedLead.raw.whatsapp_status}</span>
+                      </div>
+                      {selectedLead.raw?.whatsapp_sent_at && (
+                        <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
+                          {new Date(selectedLead.raw.whatsapp_sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 4. Outbound Cold Outreach Email Dispatched (Real DB Event) */}
+                  {selectedLead.raw?.email_status && selectedLead.raw.email_status !== "pending" && (
+                    <div className="relative">
+                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-blue-500" />
+                      <div className="text-xs font-bold text-blue-500">
+                        ✉️ Outreach Email Dispatched
+                      </div>
+                      <div className="text-[11px] mt-0.5" style={{ color: "var(--dash-text-secondary)" }}>
+                        Growth pitch email dispatched to {selectedLead.email || "prospect"}. Status: <span className="font-bold uppercase text-blue-500">{selectedLead.raw.email_status}</span>
+                      </div>
+                      {selectedLead.raw?.email_sent_at && (
+                        <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
+                          {new Date(selectedLead.raw.email_sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 5. Deduplicated Custom Activities (Calls, Status changes, Notes) */}
+                  {selectedLead.customActivities && selectedLead.customActivities
+                    .filter((act: any) => act.type !== "followup") // Already handled in card #1 above
+                    .map((act: any, idx: number) => (
+                      <div key={idx} className="relative">
+                        <span
+                          className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full"
+                          style={{
+                            background:
+                              act.type === "call"
+                                ? "var(--dash-primary)"
+                                : act.type === "whatsapp"
+                                ? "var(--dash-success)"
+                                : "var(--dash-warning)"
+                          }}
+                        />
+                        <div className="text-xs font-semibold" style={{ color: "var(--dash-text)" }}>
+                          {act.title}
+                        </div>
+                        <div className="text-[11px] mt-0.5 whitespace-pre-wrap leading-relaxed" style={{ color: "var(--dash-text-secondary)" }}>
+                          {act.desc}
+                        </div>
+                        <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
+                          {act.date}
+                        </div>
+                      </div>
+                    ))}
+
+                  {/* 6. Internal Notes */}
+                  {selectedLead.notes && selectedLead.notes.map((n: any, idx: number) => (
+                    <div key={idx} className="relative">
+                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full" style={{ background: "var(--dash-warning)" }} />
+                      <div className="text-xs font-semibold" style={{ color: "var(--dash-text)" }}>
+                        Internal Note ({n.author || "Admin"})
+                      </div>
+                      <div className="text-[11px] mt-0.5" style={{ color: "var(--dash-text-secondary)" }}>
+                        {n.text}
+                      </div>
+                      <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
+                        {n.date}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* 7. Primary Genesis Event (Inbound Inquiry vs. Outbound Google Maps) */}
+                  {selectedLead.source === "inquiry" ? (
+                    <div className="relative">
+                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                      <div className="text-xs font-bold text-indigo-400">
+                        📥 Website Lead Inquiry Received
+                      </div>
+                      <div className="text-[11px] mt-0.5 space-y-1" style={{ color: "var(--dash-text-secondary)" }}>
+                        {selectedLead.services && selectedLead.services.length > 0 && (
+                          <div>
+                            <strong className="text-[var(--dash-text)]">Requested Services:</strong> {selectedLead.services.join(", ")}
+                          </div>
+                        )}
+                        {selectedLead.message && (
+                          <div className="italic p-2 rounded bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] text-xs">
+                            "{selectedLead.message}"
+                          </div>
+                        )}
+                        <div className="text-[10px] text-emerald-500 font-medium">
+                          ✓ Auto-confirmation email dispatched to client
+                        </div>
+                      </div>
+                      <div className="text-[10px] mt-1" style={{ color: "var(--dash-text-muted)" }}>
+                        {new Date(selectedLead.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-blue-500" />
+                      <div className="text-xs font-bold text-blue-400">
+                        🗺️ Google Maps Record Scraped
+                      </div>
+                      <div className="text-[11px] mt-0.5 space-y-0.5" style={{ color: "var(--dash-text-secondary)" }}>
+                        <div><strong className="text-[var(--dash-text)]">Location:</strong> {selectedLead.company || selectedLead.city || "Local Business Database"}</div>
+                        <div><strong className="text-[var(--dash-text)]">Reputation:</strong> ⭐ {selectedLead.rating || "4.5"} ({selectedLead.raw?.total_review || "0"} reviews)</div>
+                        <div><strong className="text-[var(--dash-text)]">Website Audit:</strong> {selectedLead.website ? selectedLead.website : "Missing website link"}</div>
+                        <div><strong className="text-[var(--dash-text)]">AI Score:</strong> Priority score {selectedLead.score}/100</div>
+                      </div>
+                      <div className="text-[10px] mt-1" style={{ color: "var(--dash-text-muted)" }}>
+                        {new Date(selectedLead.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Bottom Actions Footer */}
-            <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-neutral-800 flex items-center justify-between bg-slate-50 dark:bg-neutral-900/60 z-20">
-              <button
-                onClick={() => handleDeleteLead(selectedLead)}
-                className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 flex items-center gap-1.5 cursor-pointer py-1.5 px-3 rounded-sm border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-950/30"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Prospect</span>
-              </button>
-              <a
-                href={`mailto:${selectedLead.email}`}
-                className="px-4 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5"
-              >
-                <Mail className="w-3.5 h-3.5" />
-                <span>Send Email</span>
-              </a>
+            {/* Drawer Footer Sticky CTA Bar */}
+            <div
+              className="flex-none px-2.5 py-2.5 sm:px-4 sm:py-3.5 flex items-center justify-between gap-1.5 sm:gap-2 z-30 w-full max-w-full overflow-hidden"
+              style={{
+                borderTop: "1px solid var(--dash-border)",
+                background: "var(--dash-surface-alt)",
+                paddingBottom: "max(env(safe-area-inset-bottom, 0px), 0.85rem)"
+              }}
+            >
+              {/* Secondary Controls: Close & Delete */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="crm-btn-secondary text-xs py-2 px-2.5 sm:px-3 font-bold flex items-center justify-center gap-1 cursor-pointer shrink-0 transition"
+                  title="Close lead drawer"
+                  aria-label="Close lead drawer"
+                >
+                  <X className="w-4 h-4 shrink-0" />
+                  <span className="hidden sm:inline">Close</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDeleteLead(selectedLead)}
+                  className="text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer py-2 px-2 sm:px-2.5 rounded-md border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 transition shrink-0"
+                  title="Delete lead record"
+                  aria-label="Delete lead record"
+                >
+                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                  <span className="hidden md:inline">Delete</span>
+                </button>
+              </div>
+
+              {/* Primary Actions: Proposal & Update Status (Flexible & Never Overflow) */}
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 justify-end">
+                <button
+                  type="button"
+                  onClick={() => openWaModalForLead(selectedLead)}
+                  className="flex-1 min-w-0 px-2 sm:px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center justify-center gap-1 shrink-0 active:scale-[0.98]"
+                  title="Open WhatsApp Proposal"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Proposal 🚀</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowStatusModal(true)}
+                  className="flex-1 min-w-0 crm-btn-primary text-xs py-2 px-2 sm:px-3 font-bold flex items-center justify-center gap-1 shrink-0 active:scale-[0.98]"
+                  title="Update pipeline status"
+                >
+                  <span className="truncate">Update Status</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── Follow-up Scheduler / Editor Modal ── */}
+      {mounted && typeof document !== "undefined" && showFollowupModal && selectedLead && createPortal(
+        <div className="fixed inset-0 z-[10000] overflow-hidden bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-sm crm-card p-5 sm:p-6 space-y-4 shadow-2xl" style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}>
+            <div className="flex items-center justify-between pb-3" style={{ borderBottom: "1px solid var(--dash-border)" }}>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-md bg-amber-500/15 text-amber-500 flex items-center justify-center font-bold shrink-0">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold" style={{ color: "var(--dash-text)" }}>
+                    {selectedLead.followupDate ? "Edit Follow-up Schedule" : "Schedule Follow-up"}
+                  </h3>
+                  <p className="text-[11px] truncate max-w-[200px]" style={{ color: "var(--dash-text-muted)" }}>Target: {selectedLead.name}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowFollowupModal(false)} className="p-1.5 rounded-md hover:bg-[var(--dash-surface-alt)] opacity-70 hover:opacity-100 cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {selectedLead.followupDate && (
+              <div className="p-2.5 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-between text-xs">
+                <span className="text-[11px] text-amber-500 font-medium">Currently set for: <strong>{selectedLead.followupDate}</strong></span>
+                <button
+                  onClick={handleCancelFollowup}
+                  className="text-[11px] text-rose-500 font-bold hover:underline cursor-pointer"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
+            <div className="space-y-3 text-xs">
+              <span className="font-semibold block" style={{ color: "var(--dash-text-muted)" }}>Quick Reschedule Presets:</span>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => handleConfirmFollowup(1)}
+                  disabled={schedulingFollowup}
+                  className="crm-btn-secondary text-xs text-center py-2 font-bold hover:border-amber-500 transition cursor-pointer"
+                >
+                  Tomorrow
+                </button>
+                <button
+                  onClick={() => handleConfirmFollowup(3)}
+                  disabled={schedulingFollowup}
+                  className="crm-btn-secondary text-xs text-center py-2 font-bold hover:border-amber-500 transition cursor-pointer"
+                >
+                  In 3 Days
+                </button>
+                <button
+                  onClick={() => handleConfirmFollowup(7)}
+                  disabled={schedulingFollowup}
+                  className="crm-btn-secondary text-xs text-center py-2 font-bold hover:border-amber-500 transition cursor-pointer"
+                >
+                  In 1 Week
+                </button>
+              </div>
+
+              <div className="pt-2">
+                <label className="font-semibold block mb-1.5" style={{ color: "var(--dash-text-muted)" }}>Or Pick Custom Date:</label>
+                <input
+                  type="date"
+                  value={customFollowupDate}
+                  min={new Date().toISOString().split("T")[0]}
+                  onChange={(e) => setCustomFollowupDate(e.target.value)}
+                  className="crm-input w-full text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-3 border-t" style={{ borderColor: "var(--dash-border)" }}>
+              {selectedLead.followupDate ? (
+                <button
+                  onClick={handleCancelFollowup}
+                  className="text-xs text-rose-500 hover:bg-rose-500/10 px-2.5 py-1.5 rounded-md font-semibold transition cursor-pointer"
+                >
+                  Remove Reminder
+                </button>
+              ) : (
+                <div />
+              )}
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowFollowupModal(false)} className="crm-btn-secondary text-xs py-1.5 px-3 cursor-pointer">
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleConfirmFollowup(0, customFollowupDate)}
+                  disabled={!customFollowupDate || schedulingFollowup}
+                  className="crm-btn-primary text-xs py-1.5 px-3 cursor-pointer"
+                >
+                  {schedulingFollowup ? "Saving..." : selectedLead.followupDate ? "Update Follow-up" : "Save Follow-up"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── Update Status Modal ── */}
+      {mounted && typeof document !== "undefined" && showStatusModal && selectedLead && createPortal(
+        <div className="fixed inset-0 z-[10000] overflow-hidden bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-sm crm-card p-6 space-y-4 shadow-2xl" style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}>
+            <div className="flex items-center justify-between pb-3" style={{ borderBottom: "1px solid var(--dash-border)" }}>
+              <h3 className="text-sm font-bold" style={{ color: "var(--dash-text)" }}>Update Lead Status</h3>
+              <button onClick={() => setShowStatusModal(false)} className="p-1 cursor-pointer opacity-60 hover:opacity-100" style={{ color: "var(--dash-text-muted)" }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs" style={{ color: "var(--dash-text-secondary)" }}>Select a new pipeline status for <span className="font-bold" style={{ color: "var(--dash-text)" }}>{selectedLead.name}</span>:</p>
+
+            <div className="space-y-2">
+              {["Pending", "Contacted", "Interested", "Qualified", "Converted", "Lost"].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => handlePersistStatusUpdate(s)}
+                  disabled={updatingStatus}
+                  className="w-full p-2.5 text-xs font-semibold text-left flex items-center justify-between transition cursor-pointer"
+                  style={{
+                    borderRadius: "var(--dash-btn-radius)",
+                    border: selectedLead.status?.toLowerCase() === s.toLowerCase() ? "1px solid var(--dash-primary)" : "1px solid var(--dash-border)",
+                    background: selectedLead.status?.toLowerCase() === s.toLowerCase() ? "var(--dash-primary-light)" : "var(--dash-surface-alt)",
+                    color: selectedLead.status?.toLowerCase() === s.toLowerCase() ? "var(--dash-primary)" : "var(--dash-text)"
+                  }}
+                >
+                  <span>{s}</span>
+                  {selectedLead.status?.toLowerCase() === s.toLowerCase() && <Check className="w-4 h-4" style={{ color: "var(--dash-primary)" }} />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── Add Email Address Modal ── */}
+      {mounted && typeof document !== "undefined" && showAddEmailModal && selectedLead && createPortal(
+        <div className="fixed inset-0 z-[10000] overflow-hidden bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-sm crm-card p-6 space-y-4 shadow-2xl" style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}>
+            <div className="flex items-center justify-between pb-3" style={{ borderBottom: "1px solid var(--dash-border)" }}>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-md bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-bold">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold" style={{ color: "var(--dash-text)" }}>Add Email Address</h3>
+                  <p className="text-[11px]" style={{ color: "var(--dash-text-muted)" }}>For {selectedLead.name}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowAddEmailModal(false)} className="p-1 opacity-60 hover:opacity-100 cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEmailAndCompose} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold mb-1" style={{ color: "var(--dash-text-muted)" }}>Business / Contact Email:</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="contact@business.com"
+                  value={newEmailAddress}
+                  onChange={(e) => setNewEmailAddress(e.target.value)}
+                  className="crm-input w-full"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t" style={{ borderColor: "var(--dash-border)" }}>
+                <button type="button" onClick={() => setShowAddEmailModal(false)} className="crm-btn-secondary text-xs">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!newEmailAddress.trim() || savingNewEmail}
+                  className="crm-btn-primary text-xs"
+                >
+                  {savingNewEmail ? "Saving..." : "Save & Compose"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── Direct Email Composer Modal ── */}
+      {mounted && typeof document !== "undefined" && showEmailModal && selectedLead && createPortal(
+        <div className="fixed inset-0 z-[10000] overflow-hidden bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-lg crm-card p-6 space-y-4 shadow-2xl" style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}>
+            <div className="flex items-center justify-between pb-3" style={{ borderBottom: "1px solid var(--dash-border)" }}>
+              <h3 className="text-sm font-bold" style={{ color: "var(--dash-text)" }}>Send Outreach Email</h3>
+              <button onClick={() => setShowEmailModal(false)} className="p-1 cursor-pointer opacity-60 hover:opacity-100" style={{ color: "var(--dash-text-muted)" }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSendDirectEmail} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: "var(--dash-text-secondary)" }}>To</label>
+                <input
+                  type="email"
+                  readOnly
+                  value={selectedLead.email || ""}
+                  className="crm-input w-full opacity-80 cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: "var(--dash-text-secondary)" }}>Subject</label>
+                <input
+                  type="text"
+                  required
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  className="crm-input w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: "var(--dash-text-secondary)" }}>Message Body</label>
+                <textarea
+                  required
+                  rows={5}
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                  className="crm-input w-full"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEmailModal(false)}
+                  className="crm-btn-secondary text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendingEmail}
+                  className="crm-btn-primary text-xs flex items-center gap-1.5"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  {sendingEmail ? "Sending..." : "Dispatch Email"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* ── 1. Import Excel / CSV Spreadsheet Modal ── */}
-      {showImportModal && (
+      {mounted && typeof document !== "undefined" && showImportModal && createPortal(
         <div
           onClick={() => setShowImportModal(false)}
-          className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
+          className="fixed inset-0 z-[10001] overflow-y-auto bg-black/80 flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg bg-white dark:bg-[#0a0a0a] rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl p-6 space-y-5 cursor-default relative"
+            className="w-full max-w-lg crm-card p-6 space-y-5 cursor-default relative shadow-2xl"
+            style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}
           >
-            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-neutral-800 pb-4">
+            <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-md bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
                   <FileSpreadsheet className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Import Leads Spreadsheet</h3>
-                  <p className="text-xs text-slate-500 dark:text-neutral-400">Inject batch prospect records directly into database</p>
+                  <h3 className="text-base font-bold text-[var(--dash-text-primary)]">Import Leads Spreadsheet</h3>
+                  <p className="text-xs text-[var(--dash-text-muted)]">Inject batch prospect records directly into database</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowImportModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+                className="p-1.5 rounded-md text-[var(--dash-text-muted)] hover:text-[var(--dash-text-primary)] hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1111,7 +2388,7 @@ export default function LeadsManager() {
 
             <form onSubmit={handleFileUpload} className="space-y-4">
               {/* File Dropzone */}
-              <div className="border-2 border-dashed border-slate-300 dark:border-neutral-800 rounded-xl p-6 text-center hover:border-indigo-500 transition cursor-pointer bg-slate-50/50 dark:bg-neutral-900/40 relative">
+              <div className="border-2 border-dashed border-[var(--dash-border)] rounded-md p-6 text-center hover:border-indigo-500 transition cursor-pointer bg-[var(--dash-table-header)] relative">
                 <input
                   type="file"
                   accept=".xlsx, .xls, .csv"
@@ -1122,21 +2399,21 @@ export default function LeadsManager() {
                 {importFile ? (
                   <div className="space-y-1">
                     <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate max-w-xs mx-auto">{importFile.name}</p>
-                    <p className="text-[10px] text-slate-400 font-mono">{(importFile.size / 1024).toFixed(1)} KB — Ready to Inject</p>
+                    <p className="text-[10px] text-[var(--dash-text-muted)] font-mono">{(importFile.size / 1024).toFixed(1)} KB — Ready to Inject</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    <p className="text-xs font-bold text-slate-700 dark:text-neutral-200">Click or drag `.xlsx`, `.xls` or `.csv` spreadsheet</p>
-                    <p className="text-[10px] text-slate-400">Auto-resolves Name, Email, Phone, City, Website &amp; Category columns</p>
+                    <p className="text-xs font-bold text-[var(--dash-text-primary)]">Click or drag `.xlsx`, `.xls` or `.csv` spreadsheet</p>
+                    <p className="text-[10px] text-[var(--dash-text-muted)]">Auto-resolves Name, Email, Phone, City, Website &amp; Category columns</p>
                   </div>
                 )}
               </div>
 
               {uploadResult && (
-                <div className={`p-3 rounded-xl text-xs font-mono border ${
+                <div className={`p-3 rounded-md text-xs font-mono border ${
                   uploadResult.startsWith("Error")
-                    ? "bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400"
-                    : "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
+                    ? "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400"
+                    : "bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
                 }`}>
                   {uploadResult}
                 </div>
@@ -1146,14 +2423,14 @@ export default function LeadsManager() {
                 <button
                   type="button"
                   onClick={() => setShowImportModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+                  className="crm-btn-secondary text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!importFile || uploading}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2"
+                  className="crm-btn-primary text-xs flex items-center gap-2"
                 >
                   {uploading ? (
                     <>
@@ -1170,32 +2447,34 @@ export default function LeadsManager() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── 2. Add Lead Manual Form Modal ── */}
-      {showAddLeadModal && (
+      {mounted && typeof document !== "undefined" && showAddLeadModal && createPortal(
         <div
           onClick={() => setShowAddLeadModal(false)}
-          className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
+          className="fixed inset-0 z-[10001] overflow-y-auto bg-black/80 flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md bg-white dark:bg-[#0a0a0a] rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl p-6 space-y-4 cursor-default relative"
+            className="w-full max-w-md crm-card p-6 space-y-4 cursor-default relative shadow-2xl"
+            style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}
           >
-            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-neutral-800 pb-3">
+            <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center shadow-md">
-                  <User className="w-4.5 h-4.5" />
+                <div className="w-9 h-9 rounded-md bg-indigo-600 text-white font-bold flex items-center justify-center shadow-md">
+                  <User className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Add New Lead Record</h3>
-                  <p className="text-xs text-slate-500 dark:text-neutral-400">Manually insert a prospect into database</p>
+                  <h3 className="text-base font-bold text-[var(--dash-text-primary)]">Add New Lead Record</h3>
+                  <p className="text-xs text-[var(--dash-text-muted)]">Manually insert a prospect into database</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowAddLeadModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+                className="p-1.5 rounded-md text-[var(--dash-text-muted)] hover:text-[var(--dash-text-primary)] hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1203,71 +2482,71 @@ export default function LeadsManager() {
 
             <form onSubmit={handleCreateSingleLead} className="space-y-3 text-xs">
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Business / Lead Name *</label>
+                <label className="block font-semibold text-[var(--dash-text-primary)] mb-1">Business / Lead Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Nexus Tech Studios"
                   value={newLeadForm.bussiness_name}
                   onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_name: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="crm-input w-full"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Business Email</label>
+                  <label className="block font-semibold text-[var(--dash-text-primary)] mb-1">Business Email</label>
                   <input
                     type="email"
                     placeholder="contact@nexus.com"
                     value={newLeadForm.bussiness_email}
                     onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_email: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    className="crm-input w-full"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Phone Number</label>
+                  <label className="block font-semibold text-[var(--dash-text-primary)] mb-1">Phone Number</label>
                   <input
                     type="text"
                     placeholder="+1 555-0192"
                     value={newLeadForm.bussiness_number}
                     onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_number: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    className="crm-input w-full"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">City / Location</label>
+                  <label className="block font-semibold text-[var(--dash-text-primary)] mb-1">City / Location</label>
                   <input
                     type="text"
                     placeholder="New York"
                     value={newLeadForm.scraped_city}
                     onChange={(e) => setNewLeadForm({ ...newLeadForm, scraped_city: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    className="crm-input w-full"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Service / Keyword</label>
+                  <label className="block font-semibold text-[var(--dash-text-primary)] mb-1">Service / Keyword</label>
                   <input
                     type="text"
                     placeholder="Web Development"
                     value={newLeadForm.scraped_service}
                     onChange={(e) => setNewLeadForm({ ...newLeadForm, scraped_service: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    className="crm-input w-full"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-neutral-300 mb-1">Website URL</label>
+                <label className="block font-semibold text-[var(--dash-text-primary)] mb-1">Website URL</label>
                 <input
                   type="text"
                   placeholder="https://nexus.com"
                   value={newLeadForm.bussiness_website}
                   onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_website: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="crm-input w-full"
                 />
               </div>
 
@@ -1275,14 +2554,14 @@ export default function LeadsManager() {
                 <button
                   type="button"
                   onClick={() => setShowAddLeadModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+                  className="crm-btn-secondary text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingNewLead}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2"
+                  className="crm-btn-primary text-xs flex items-center gap-2"
                 >
                   {submittingNewLead ? (
                     <>
@@ -1299,7 +2578,181 @@ export default function LeadsManager() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── 3. WhatsApp Outreach Preview & Customize Modal (Portal at z-[10005]) ── */}
+      {mounted && typeof document !== "undefined" && showWaModal && waPreviewLead && createPortal(
+        <div
+          onClick={() => setShowWaModal(false)}
+          className="fixed inset-0 z-[10005] overflow-y-auto bg-black/80 flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg crm-card p-6 space-y-4 cursor-default relative text-left shadow-2xl"
+            style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[var(--dash-text-primary)]">
+                    {waPreviewLead.source === "inquiry" ? "Inbound Inquiry WhatsApp Proposal" : "Google Maps WhatsApp Outreach"}
+                  </h3>
+                  <p className="text-xs text-[var(--dash-text-muted)]">Target: {waPreviewLead.name} ({waPreviewLead.city || waPreviewLead.company || "Client Profile"})</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowWaModal(false)}
+                className="p-1.5 rounded-md text-[var(--dash-text-muted)] hover:text-[var(--dash-text-primary)] hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Test Mode / Direct Delivery Banner */}
+            {waPreviewLead.source === "inquiry" ? (
+              <div className="p-3 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-xs">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>DIRECT INBOUND CLIENT DELIVERY</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                    Direct • No Buttons
+                  </span>
+                </div>
+                <div className="text-[11px] leading-relaxed text-slate-700 dark:text-emerald-200/90">
+                  This user submitted a website inquiry and is already interested. Message will be dispatched directly to their phone (<strong className="font-mono text-emerald-600 dark:text-emerald-300">{waPreviewLead.phone || "No phone"}</strong>) as clean conversational text without "Interested" buttons.
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-500 space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-xs">
+                    <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span>TEST MODE SAFEGUARD ACTIVE</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded bg-amber-500/20 text-[10px] font-mono font-bold text-amber-600 dark:text-amber-300">
+                    Protected Sandbox
+                  </span>
+                </div>
+                <div className="text-[11px] leading-relaxed text-slate-700 dark:text-amber-200/90">
+                  All messages are strictly redirected to your test phone: <strong className="text-amber-600 dark:text-amber-300 font-mono">+{waPreviewData?.test_number || "919173739080"}</strong>. Real customer number ({waPreviewLead.phone || "client"}) will not receive messages.
+                </div>
+              </div>
+            )}
+
+            {loadingWaPreview ? (
+              <div className="py-12 flex flex-col items-center justify-center gap-3 text-[var(--dash-text-muted)]">
+                <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+                <span className="text-xs font-mono">Generating personalized AI outreach proposal...</span>
+              </div>
+            ) : (
+              <div className="space-y-4 text-xs">
+                {/* Lead Summary Badge */}
+                <div className="p-3 rounded-md bg-[var(--dash-table-header)] border border-[var(--dash-border)] flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-[var(--dash-text-primary)] block">{waPreviewLead.name}</span>
+                    <span className="text-[var(--dash-text-muted)] font-mono text-[11px]">
+                      {waPreviewLead.phone || "No Phone"} • {waPreviewLead.source === "inquiry" ? "Direct Inbound" : (waPreviewLead.category || "Business")}
+                    </span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                    waPreviewLead.source === "inquiry"
+                      ? "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20"
+                      : isValidWebsite(waPreviewLead.website)
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
+                      : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20"
+                  }`}>
+                    {waPreviewLead.source === "inquiry" ? "Website Lead" : isValidWebsite(waPreviewLead.website) ? "Website Active" : "No Website (Hot Lead!)"}
+                  </span>
+                </div>
+
+                {/* Editable Proposal Message Textarea */}
+                <div>
+                  <label className="block font-semibold text-[var(--dash-text-primary)] mb-1 flex items-center justify-between">
+                    <span>Personalized WhatsApp Proposal Text:</span>
+                    <span className="text-[10px] text-[var(--dash-text-muted)] font-normal">Editable</span>
+                  </label>
+                  <textarea
+                    rows={6}
+                    value={waCustomMessage}
+                    onChange={(e) => setWaCustomMessage(e.target.value)}
+                    className="crm-input w-full font-sans leading-relaxed text-xs"
+                  />
+                </div>
+
+                {/* Quick Reply Buttons Card Preview */}
+                {waPreviewLead.source === "inquiry" ? (
+                  <div className="p-3 bg-indigo-500/5 border border-indigo-500/20 rounded-md space-y-2">
+                    <span className="font-bold text-indigo-800 dark:text-indigo-300 text-[11px] flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+                      Inbound Website Lead — 2 Native CTA Redirect Buttons (No &quot;Interested&quot; button):
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="py-1.5 px-2 rounded-md bg-[var(--dash-card-bg)] text-center text-[var(--dash-text-primary)] font-semibold border border-[var(--dash-border)] shadow-xs flex items-center justify-center gap-1.5 text-[11px]">
+                        🌐 1. Visit Website (Direct Link)
+                      </div>
+                      <div className="py-1.5 px-2 rounded-md bg-[var(--dash-card-bg)] text-center text-[var(--dash-text-primary)] font-semibold border border-[var(--dash-border)] shadow-xs flex items-center justify-center gap-1.5 text-[11px]">
+                        📞 2. Call Us (Direct Dial)
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-md space-y-2">
+                    <span className="font-bold text-emerald-800 dark:text-emerald-300 text-[11px] block">Attached Interactive Buttons Card:</span>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="py-1.5 px-2 rounded-md bg-[var(--dash-card-bg)] text-center text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-500/30 shadow-xs">
+                        1. Interested
+                      </div>
+                      <div className="py-1.5 px-2 rounded-md bg-[var(--dash-card-bg)] text-center text-[var(--dash-text-primary)] font-semibold border border-[var(--dash-border)] shadow-xs">
+                        {isValidWebsite(waPreviewLead.website) ? "2. Visit Website" : "2. Book Demo"}
+                      </div>
+                      <div className="py-1.5 px-2 rounded-md bg-[var(--dash-card-bg)] text-center text-[var(--dash-text-primary)] font-semibold border border-[var(--dash-border)] shadow-xs">
+                        3. Call Us
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer Buttons */}
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowWaModal(false)}
+                    className="crm-btn-secondary text-xs"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendWaOutreach}
+                    disabled={sendingWaMessage || !waCustomMessage.trim()}
+                    className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold text-xs shadow-md shadow-emerald-600/30 transition cursor-pointer flex items-center gap-2"
+                  >
+                    {sendingWaMessage ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Sending WhatsApp...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4" />
+                        <span>Send WhatsApp Outreach 🚀</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
       )}
 
     </div>

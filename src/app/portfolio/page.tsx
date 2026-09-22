@@ -121,10 +121,31 @@ export default function PortfolioPage() {
 
         {/* Grid List */}
         {loading ? (
-          <div className="min-h-[30vh] flex items-center justify-center flex-col gap-3">
-            <Loader2 className="w-8 h-8 text-accent-custom animate-spin" />
-            <span className="font-mono text-xs text-[#B0B0B0]">Loading gallery...</span>
-          </div>
+          <section className="max-w-7xl mx-auto px-6 md:px-12 w-full grid grid-cols-1 md:grid-cols-2 gap-8">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="border border-border-custom bg-surface/30 rounded-2xl overflow-hidden flex flex-col justify-between"
+              >
+                <div className="h-[240px] border-b border-border-custom/50 bg-surface/40 skeleton-pulse relative p-4 flex justify-between items-start">
+                  <div className="w-24 h-5 rounded-xs skeleton-pulse" />
+                  <div className="w-16 h-5 rounded-xs skeleton-pulse" />
+                </div>
+                <div className="p-6 space-y-4">
+                  <div className="space-y-2">
+                    <div className="w-20 h-3 rounded-xs skeleton-pulse" />
+                    <div className="w-3/4 h-6 rounded-md skeleton-pulse" />
+                    <div className="w-full h-3.5 rounded-xs skeleton-pulse" />
+                    <div className="w-4/5 h-3.5 rounded-xs skeleton-pulse" />
+                  </div>
+                  <div className="flex gap-2 pt-4 border-t border-border-custom/40">
+                    <div className="w-16 h-4 rounded-xs skeleton-pulse" />
+                    <div className="w-20 h-4 rounded-xs skeleton-pulse" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </section>
         ) : (
           <section className="max-w-7xl mx-auto px-6 md:px-12 w-full grid grid-cols-1 md:grid-cols-2 gap-8">
             {filtered.map((proj) => (

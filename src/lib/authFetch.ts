@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthStore } from "./authStore";
-import { API_URL } from "./config";
+import { API_URL, ADMIN_PATH } from "./config";
 
 export const API = API_URL;
 
@@ -76,28 +76,41 @@ export async function authFetch(
     headers["Authorization"] = `Bearer ${accessToken}`;
   }
 
-  const response = await fetch(url, {
-    ...options,
-    credentials: "include", // Always include cookies for session security
-    headers,
-  });
+  try {
+    const response = await fetch(url, {
+      ...options,
+      credentials: "include", // Always include cookies for session security
+      headers,
+    });
 
-  // Token expired → try silent refresh + retry
-  if (response.status === 401) {
-    const newToken = await silentRefresh();
+    // Token expired → try silent refresh + retry
+    if (response.status === 401) {
+      const newToken = await silentRefresh();
 
-    if (newToken) {
-      // Retry the original request with the fresh token
-      headers["Authorization"] = `Bearer ${newToken}`;
-      return fetch(url, { ...options, credentials: "include", headers });
+      if (newToken) {
+        // Retry the original request with the fresh token
+        headers["Authorization"] = `Bearer ${newToken}`;
+        try {
+          return await fetch(url, { ...options, credentials: "include", headers });
+        } catch {
+          return new Response(JSON.stringify({ detail: "Network error connecting to API backend." }), {
+            status: 503,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+      }
+
+      // Refresh failed → force logout
+      useAuthStore.getState().logout();
+      if (typeof window !== "undefined") {
+        window.location.href = `${ADMIN_PATH}/login`;
+      }
     }
-
-    // Refresh failed → force logout
-    useAuthStore.getState().logout();
-    if (typeof window !== "undefined") {
-      window.location.href = "/admin/login";
-    }
+    return response;
+  } catch {
+    return new Response(JSON.stringify({ detail: "API backend is currently offline or unreachable." }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" }
+    });
   }
-
-  return response;
 }

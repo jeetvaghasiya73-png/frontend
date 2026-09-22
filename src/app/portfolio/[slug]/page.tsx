@@ -23,7 +23,7 @@ export default function CaseStudyPage({ params }: { params: Promise<{ slug: stri
       year: 2025,
       url: "https://apex-growth.com",
       challenge: "Apex Growth spent over 120 manual hours weekly mapping, clean-filtering, and scraping outbound targets across 4 platforms, experiencing a 15% duplicate entry rate in Salesforce.",
-      solution: "Nexora AI engineered a headless n8n pipeline containing OpenAI GPT-4o intelligence nodes. The system scrapes lead tables, matches profiles, performs real-time deduplication, and appends validated records to Salesforce. Running on a secure VPS, it performs 24/7 with zero human intervention.",
+      solution: "Tech Infinix engineered a headless n8n pipeline containing OpenAI GPT-4o intelligence nodes. The system scrapes lead tables, matches profiles, performs real-time deduplication, and appends validated records to Salesforce. Running on a secure VPS, it performs 24/7 with zero human intervention.",
       results: [
         "Eliminated 100% of duplicate outbound lead inputs",
         "Generated over 55,000 leads in the first month",
@@ -53,7 +53,10 @@ export default function CaseStudyPage({ params }: { params: Promise<{ slug: stri
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/v1/portfolio/`);
+        let response = await fetch(`${API_URL}/api/v1/public/portfolio`);
+        if (!response.ok) {
+          response = await fetch(`${API_URL}/api/v1/portfolio/`);
+        }
         if (response.ok) {
           const data = await response.json();
           const found = data.find((p: any) => p.slug === slug);
@@ -67,7 +70,7 @@ export default function CaseStudyPage({ params }: { params: Promise<{ slug: stri
               year: found.year || 2025,
               url: found.url || "",
               challenge: found.challenge || "The client required an automated structure to handle operational bottlenecks, reduce manual entry overhead, and synchronize lead intelligence files.",
-              solution: found.solution || `Nexora AI constructed an end-to-end orchestration pipeline. By routing data through clean middleware layers and integrating custom LLM nodes, we automated manual processing tasks and established reliable monitoring channels.`,
+              solution: found.solution || `Tech Infinix constructed an end-to-end orchestration pipeline. By routing data through clean middleware layers and integrating custom LLM nodes, we automated manual processing tasks and established reliable monitoring channels.`,
               results: found.results || [
                 "Streamlined operations workflow loops",
                 "Automated document classification and database entries",
@@ -81,8 +84,7 @@ export default function CaseStudyPage({ params }: { params: Promise<{ slug: stri
         } else {
           setProject(fallbackProjects[slug] || fallbackProjects["apex-lead-automator"]);
         }
-      } catch (err) {
-        console.error("Fetch error, using fallback case study details", err);
+      } catch {
         setProject(fallbackProjects[slug] || fallbackProjects["apex-lead-automator"]);
       } finally {
         setLoading(false);

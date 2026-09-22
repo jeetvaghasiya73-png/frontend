@@ -1,47 +1,10 @@
-"use client";
+import React from "react";
 
-import React, { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import { ADMIN_PATH } from "@/lib/config";
-
-export default function PageLoader() {
-  const [visible, setVisible] = useState(true);
-  const [fadeOut, setFadeOut] = useState(false);
-  const pathname = usePathname();
-
-  useEffect(() => {
-    // Check document readiness or give a brief micro-delay to let React hydrate smoothly
-    const startFade = () => {
-      const fadeTimer = setTimeout(() => setFadeOut(true), 350);
-      const removeTimer = setTimeout(() => setVisible(false), 750);
-      return () => {
-        clearTimeout(fadeTimer);
-        clearTimeout(removeTimer);
-      };
-    };
-
-    if (document.readyState === "complete") {
-      return startFade();
-    } else {
-      const handleLoad = () => startFade();
-      window.addEventListener("load", handleLoad, { once: true });
-      // Fallback timer if load event already fired
-      const fallbackTimer = setTimeout(startFade, 600);
-      return () => {
-        window.removeEventListener("load", handleLoad);
-        clearTimeout(fallbackTimer);
-      };
-    }
-  }, []);
-
-  if (!visible || pathname?.startsWith("/admin") || (ADMIN_PATH && pathname?.startsWith(ADMIN_PATH))) return null;
-
+export default function Loading() {
   return (
     <div
       aria-hidden="true"
-      className={`fixed inset-0 z-[9999] bg-background flex flex-col justify-start overflow-hidden transition-opacity duration-400 ease-out select-none pointer-events-none ${
-        fadeOut ? "opacity-0" : "opacity-100"
-      }`}
+      className="fixed inset-0 z-[9998] bg-background flex flex-col justify-start overflow-hidden select-none pointer-events-none"
     >
       {/* Skeleton Header Navbar (matching capsule pill layout) */}
       <div className="w-full pt-3.5 px-4 sm:px-6 md:px-12 flex justify-center">
@@ -79,23 +42,19 @@ export default function PageLoader() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center pt-6 pb-6 flex-1">
         {/* Left Column */}
         <div className="lg:col-span-7 flex flex-col items-start gap-4">
-          {/* Tag Pill */}
           <div className="w-48 h-6 rounded-full skeleton-pulse mb-1" />
 
-          {/* Headline */}
           <div className="w-full flex flex-col gap-2.5 max-w-2xl">
             <div className="w-11/12 h-10 sm:h-12 md:h-14 rounded-lg skeleton-pulse" />
             <div className="w-4/5 h-10 sm:h-12 md:h-14 rounded-lg skeleton-pulse" />
             <div className="w-2/3 h-7 sm:h-9 rounded-md skeleton-pulse opacity-75 mt-1" />
           </div>
 
-          {/* Description */}
           <div className="w-full max-w-lg flex flex-col gap-2 mt-2">
             <div className="w-full h-4 rounded-sm skeleton-pulse opacity-80" />
             <div className="w-4/5 h-4 rounded-sm skeleton-pulse opacity-80" />
           </div>
 
-          {/* Micro-Badges */}
           <div className="flex flex-wrap gap-2 mt-2">
             <div className="w-24 h-6 rounded-sm skeleton-pulse" />
             <div className="w-28 h-6 rounded-sm skeleton-pulse" />
@@ -103,7 +62,6 @@ export default function PageLoader() {
             <div className="w-32 h-6 rounded-sm skeleton-pulse" />
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-3">
             <div className="w-full sm:w-44 h-11 rounded-full skeleton-pulse" />
             <div className="w-full sm:w-36 h-11 rounded-full skeleton-pulse" />

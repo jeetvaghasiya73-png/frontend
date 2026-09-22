@@ -230,6 +230,17 @@ html.lenis, html.lenis body {
 
 .animate-spin-slow { animation: spin-slow 25s linear infinite; }
 
+/* Floating Card Keyframes for 3D Hero */
+@keyframes float-card {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float-card {
+  animation: float-card 5s ease-in-out infinite;
+  will-change: transform;
+}
+
 /* GPU hardware acceleration for lag-free rendering */
 .glass-panel,
 .cursor-glow,
@@ -244,4 +255,375 @@ html.lenis, html.lenis body {
   backface-visibility: hidden;
   perspective: 1000px;
   will-change: transform, opacity;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CRM DASHBOARD DESIGN SYSTEM
+   Modern Sales Performance Management Aesthetic
+   ═══════════════════════════════════════════════════════════ */
+
+:root,
+[data-dash-theme="light"] {
+  /* Dashboard surfaces */
+  --dash-bg: #F8FAFC;
+  --dash-surface: #FFFFFF;
+  --dash-surface-alt: #F1F5F9;
+  --dash-border: #E2E8F0;
+  --dash-border-subtle: #EDF2F7;
+  
+  /* Dashboard text */
+  --dash-text: #0F172A;
+  --dash-text-secondary: #475569;
+  --dash-text-muted: #64748B;
+  
+  /* Dashboard sidebar - Clean Light CRM */
+  --dash-sidebar-bg: #FFFFFF;
+  --dash-sidebar-hover: #F1F5F9;
+  --dash-sidebar-active: rgba(99,102,241,0.12);
+  --dash-sidebar-text: #334155;
+  --dash-sidebar-border: #E2E8F0;
+  
+  /* Dashboard header */
+  --dash-header-bg: #FFFFFF;
+  --dash-header-border: #E2E8F0;
+  
+  /* Primary accent */
+  --dash-primary: #6366F1;
+  --dash-primary-hover: #4F46E5;
+  --dash-primary-light: rgba(99,102,241,0.1);
+  --dash-primary-glow: rgba(99,102,241,0.25);
+  
+  /* Status colors */
+  --dash-success: #10B981;
+  --dash-success-light: rgba(16,185,129,0.1);
+  --dash-warning: #F59E0B;
+  --dash-warning-light: rgba(245,158,11,0.1);
+  --dash-danger: #EF4444;
+  --dash-danger-light: rgba(239,68,68,0.1);
+  --dash-info: #3B82F6;
+  --dash-info-light: rgba(59,130,246,0.1);
+  
+  /* Chart palette */
+  --dash-chart-1: #6366F1;
+  --dash-chart-2: #8B5CF6;
+  --dash-chart-3: #EC4899;
+  --dash-chart-4: #14B8A6;
+  --dash-chart-5: #F97316;
+  --dash-chart-grid: rgba(0,0,0,0.06);
+  
+  /* Card styling */
+  --dash-card-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+  --dash-card-shadow-hover: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --dash-card-radius: 8px;
+  --dash-btn-radius: 6px;
+  --dash-badge-radius: 4px;
+  --dash-input-radius: 6px;
+
+  /* Aliases for compatibility */
+  --dash-card-bg: var(--dash-surface);
+  --dash-text-primary: var(--dash-text);
+  --dash-table-header: var(--dash-surface-alt);
+}
+
+html.dark,
+html[data-dash-theme="dark"],
+body[data-dash-theme="dark"],
+[data-dash-theme="dark"] {
+  /* Dashboard surfaces */
+  --dash-bg: #06080D;
+  --dash-surface: #0D1017;
+  --dash-surface-alt: #111520;
+  --dash-border: #1E2231;
+  --dash-border-subtle: #161A26;
+  
+  /* Dashboard text */
+  --dash-text: #E8EAF0;
+  --dash-text-secondary: #8B92A5;
+  --dash-text-muted: #5C6378;
+
+  /* Aliases for compatibility */
+  --dash-card-bg: #0D1017;
+  --dash-text-primary: #E8EAF0;
+  --dash-table-header: #111520;
+  
+  /* Dashboard sidebar */
+  --dash-sidebar-bg: #06080D;
+  --dash-sidebar-hover: rgba(255,255,255,0.04);
+  --dash-sidebar-active: rgba(99,102,241,0.12);
+  --dash-sidebar-text: #94A3B8;
+  --dash-sidebar-border: #1A1E2E;
+  
+  /* Dashboard header */
+  --dash-header-bg: #0D1017;
+  --dash-header-border: #1E2231;
+  
+  /* Primary accent */
+  --dash-primary: #818CF8;
+  --dash-primary-hover: #6366F1;
+  --dash-primary-light: rgba(129,140,248,0.1);
+  --dash-primary-glow: rgba(129,140,248,0.2);
+  
+  /* Status colors */
+  --dash-success: #34D399;
+  --dash-success-light: rgba(52,211,153,0.1);
+  --dash-warning: #FBBF24;
+  --dash-warning-light: rgba(251,191,36,0.1);
+  --dash-danger: #F87171;
+  --dash-danger-light: rgba(248,113,113,0.1);
+  --dash-info: #60A5FA;
+  --dash-info-light: rgba(96,165,250,0.1);
+  
+  /* Chart palette */
+  --dash-chart-1: #818CF8;
+  --dash-chart-2: #A78BFA;
+  --dash-chart-3: #F472B6;
+  --dash-chart-4: #2DD4BF;
+  --dash-chart-5: #FB923C;
+  --dash-chart-grid: rgba(255,255,255,0.03);
+  
+  /* Card styling */
+  --dash-card-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.12);
+  --dash-card-shadow-hover: 0 4px 16px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.16);
+  --dash-card-radius: 8px;
+  --dash-btn-radius: 6px;
+  --dash-badge-radius: 4px;
+  --dash-input-radius: 6px;
+}
+
+/* Reusable CRM Classes */
+.crm-card {
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-card-radius);
+  box-shadow: var(--dash-card-shadow);
+  color: var(--dash-text);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+@layer components {
+  .crm-card-flat {
+    background: var(--dash-surface);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-card-radius);
+    color: var(--dash-text);
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .crm-btn-primary {
+    background: var(--dash-primary);
+    color: #ffffff;
+    border-radius: var(--dash-btn-radius);
+    padding: 0.5rem 0.875rem;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+
+  .crm-btn-primary:hover {
+    background: var(--dash-primary-hover);
+    box-shadow: 0 2px 8px var(--dash-primary-glow);
+  }
+
+  .crm-btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  .crm-btn-secondary {
+    background: var(--dash-surface-alt);
+    border: 1px solid var(--dash-border);
+    color: var(--dash-text);
+    border-radius: var(--dash-btn-radius);
+    padding: 0.5rem 0.875rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    cursor: pointer;
+  }
+
+  .crm-btn-secondary:hover {
+    background: var(--dash-border-subtle);
+    border-color: var(--dash-primary);
+  }
+
+  .crm-input {
+    background: var(--dash-surface-alt);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-input-radius);
+    color: var(--dash-text);
+    padding: 0.5rem 0.75rem;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .crm-input:focus {
+    border-color: var(--dash-primary);
+    box-shadow: 0 0 0 3px var(--dash-primary-light);
+  }
+
+  .crm-input::placeholder {
+    color: var(--dash-text-muted);
+  }
+
+  .crm-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: var(--dash-badge-radius);
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+}
+
+/* Light Mode Overrides for Legacy / Child Tailwind Classes in Dashboard */
+[data-dash-theme="light"] .bg-white {
+  background-color: #FFFFFF !important;
+}
+[data-dash-theme="light"] .dark\:bg-\[\#0a0a0a\],
+[data-dash-theme="light"] .dark\:bg-\[\#0b141a\],
+[data-dash-theme="light"] .dark\:bg-\[\#111b21\],
+[data-dash-theme="light"] .dark\:bg-\[\#202c33\],
+[data-dash-theme="light"] .dark\:bg-neutral-900,
+[data-dash-theme="light"] .dark\:bg-slate-900 {
+  background-color: #FFFFFF !important;
+}
+[data-dash-theme="light"] .dark\:border-neutral-800,
+[data-dash-theme="light"] .dark\:border-slate-800,
+[data-dash-theme="light"] .dark\:border-neutral-700 {
+  border-color: #E2E8F0 !important;
+}
+[data-dash-theme="light"] .dark\:text-white {
+  color: #0F172A !important;
+}
+[data-dash-theme="light"] .dark\:text-slate-200,
+[data-dash-theme="light"] .dark\:text-neutral-200,
+[data-dash-theme="light"] .dark\:text-slate-300 {
+  color: #334155 !important;
+}
+[data-dash-theme="light"] .dark\:text-slate-400,
+[data-dash-theme="light"] .dark\:text-neutral-400 {
+  color: #64748B !important;
+}
+
+/* ── CRM Dashboard Animations ── */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--dash-primary-glow); }
+  50% { box-shadow: 0 0 0 6px transparent; }
+}
+
+@keyframes progressFill {
+  from { width: 0%; }
+  to { width: var(--progress-width, 100%); }
+}
+
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
+.animate-fadeUp { animation: fadeUp 0.35s ease-out forwards; }
+.animate-slideInRight { animation: slideInRight 0.3s ease-out forwards; }
+.animate-slideInLeft { animation: slideInLeft 0.3s ease-out forwards; }
+.animate-scaleIn { animation: scaleIn 0.25s ease-out forwards; }
+.animate-pulseGlow { animation: pulseGlow 2s ease-in-out infinite; }
+.animate-countUp { animation: countUp 0.4s ease-out forwards; }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Staggered animation delays for cards */
+.anim-delay-1 { animation-delay: 0.05s; }
+.anim-delay-2 { animation-delay: 0.1s; }
+.anim-delay-3 { animation-delay: 0.15s; }
+.anim-delay-4 { animation-delay: 0.2s; }
+.anim-delay-5 { animation-delay: 0.25s; }
+
+/* ── CRM Utility Classes ── */
+
+.crm-card {
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-card-radius);
+  box-shadow: var(--dash-card-shadow);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.crm-card:hover {
+  box-shadow: var(--dash-card-shadow-hover);
+  border-color: var(--dash-primary);
+}
+
+.crm-card-flat {
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-card-radius);
+  box-shadow: var(--dash-card-shadow);
+}
+
+.crm-surface {
+  background: var(--dash-surface);
+  color: var(--dash-text);
+}
+
+.crm-surface-alt {
+  background: var(--dash-surface-alt);
+  color: var(--dash-text);
+}
+
+
+
+/* Dashboard-specific scrollbar (thinner) */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.crm-scrollbar::-webkit-scrollbar { width: 5px; }
+.crm-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.crm-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--dash-border);
+  border-radius: 3px;
+}
+.crm-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--dash-text-muted);
+}
+
+/* Status badge variants */
+.badge-success { background: var(--dash-success-light); color: var(--dash-success); }
+.badge-warning { background: var(--dash-warning-light); color: var(--dash-warning); }
+.badge-danger { background: var(--dash-danger-light); color: var(--dash-danger); }
+.badge-info { background: var(--dash-info-light); color: var(--dash-info); }
+.badge-primary { background: var(--dash-primary-light); color: var(--dash-primary); }
+.badge-neutral {
+  background: var(--dash-surface-alt);
+  color: var(--dash-text-secondary);
+  border: 1px solid var(--dash-border);
 }

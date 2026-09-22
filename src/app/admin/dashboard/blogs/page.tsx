@@ -18,7 +18,7 @@ export default function BlogsManager() {
   const [content, setContent] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [published, setPublished] = useState(false);
-  const [author, setAuthor] = useState("Nexora Team");
+  const [author, setAuthor] = useState("Tech Infinix Team");
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDescription, setSeoDescription] = useState("");
 
@@ -46,7 +46,7 @@ export default function BlogsManager() {
     setContent("");
     setCoverImage("");
     setPublished(false);
-    setAuthor("Nexora Team");
+    setAuthor("Tech Infinix Team");
     setSeoTitle("");
     setSeoDescription("");
     setEditingId(null);

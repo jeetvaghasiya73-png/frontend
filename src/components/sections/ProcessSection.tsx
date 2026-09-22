@@ -14,14 +14,26 @@ export default function ProcessSection() {
   const [activeStep, setActiveStep] = useState(0);
 
   const steps = [
-    { num: "01", title: "Discovery", desc: "We host alignment calls to analyze your current operational bottlenecks, manual processes, and technical layout." },
-    { num: "02", title: "Research", desc: "Our engineers audit database formats, scraping targets, security requirements, and third-party API configurations." },
-    { num: "03", title: "Planning", desc: "We design a comprehensive roadmap, system architecture charts, data schemas, and key milestone schedules." },
-    { num: "04", title: "Design", desc: "We craft custom visual boards, high-end typography, Figma designs, and motion mockups prioritizing aesthetics." },
-    { num: "05", title: "Development", desc: "We construct the FastAPI backend repositories and write type-safe React/Next.js 15 components with premium animations." },
-    { num: "06", title: "Testing", desc: "We execute end-to-end load tests, captcha bypass checks, and rigorous security evaluations across all databases." },
-    { num: "07", title: "Deployment", desc: "We build Docker images, configure Cloudflare routing, secure database clusters, and launch client products." },
-    { num: "08", title: "Optimization", desc: "We continuously fine-tune page speed, audit API latency, adjust LLM prompt tokens, and audit database scaling." }
+    {
+      num: "01",
+      title: "Discovery & Audit",
+      desc: "We analyze your current local Google Maps visibility, website user experience, or manual workflow bottlenecks to identify the highest-impact opportunities."
+    },
+    {
+      num: "02",
+      title: "Custom Blueprint & Proposal",
+      desc: "We present a structured architecture plan with exact deliverables, transparent pricing, and predictable delivery dates with zero hidden surprises."
+    },
+    {
+      num: "03",
+      title: "Focused Build & Preview",
+      desc: "We engineer your custom system with dedicated founder focus. You review working prototypes and blueprints at every milestone before public launch."
+    },
+    {
+      num: "04",
+      title: "Launch & Direct Support",
+      desc: "We deploy your system live, configure your team notifications, and provide ongoing direct WhatsApp and email assistance to ensure continuous results."
+    }
   ];
 
   useEffect(() => {
@@ -30,7 +42,6 @@ export default function ProcessSection() {
     const cards = containerRef.current.querySelectorAll(".process-step-card");
     const progressLine = containerRef.current.querySelector(".process-progress-line");
     
-    // Animate connecting timeline line based on scroll progress
     const lineTrigger = ScrollTrigger.create({
       trigger: containerRef.current,
       start: "top 60%",
@@ -38,18 +49,16 @@ export default function ProcessSection() {
       scrub: true,
       onUpdate: (self) => {
         if (progressLine) {
-          // Sync height of progress indicator SVG/Div to scroll progress
           (progressLine as HTMLElement).style.height = `${self.progress * 100}%`;
         }
       }
     });
 
-    // Detect active step cards
     const triggers = Array.from(cards).map((card: any, idx) => {
       return ScrollTrigger.create({
         trigger: card,
-        start: "top 50%",
-        end: "bottom 50%",
+        start: "top 55%",
+        end: "bottom 55%",
         onToggle: (self) => {
           if (self.isActive) {
             setActiveStep(idx);
@@ -68,84 +77,69 @@ export default function ProcessSection() {
     <section
       id="process"
       ref={containerRef}
-      className="py-32 bg-background relative overflow-hidden"
+      className="py-24 bg-background relative overflow-hidden text-left border-t border-border-custom"
     >
-      <div className="max-w-7xl mx-auto px-6 md:px-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-16 relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 relative">
         
-        {/* Left Side: Sticky Title and Active Index Indicator */}
-        <div className="lg:col-span-4 lg:sticky lg:top-32 lg:h-[70vh] flex flex-col justify-between items-start">
+        {/* Left: Sticky Section Info */}
+        <div className="lg:col-span-4 lg:sticky lg:top-28 lg:h-[55vh] flex flex-col justify-between items-start">
           <div>
-            <div className="inline-flex items-center gap-2 border border-border-custom bg-surface/50 px-3 py-1 rounded-full mb-6">
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-accent-custom">
-                Methodology
+            <div className="inline-flex items-center gap-2 border border-border-custom bg-surface px-3 py-1 rounded-full mb-4">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="text-[10px] uppercase tracking-widest font-mono font-bold text-foreground">
+                Client Delivery Methodology
               </span>
             </div>
-            <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-6">
-              <SplitText text="Our Handcrafted Process." type="words" />
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3 text-foreground">
+              <SplitText text="A Transparent 4-Step Journey." type="words" />
             </h2>
-            <p className="text-sm md:text-base text-secondary-custom leading-relaxed max-w-sm">
-              We guide each project through a rigorous, transparent deployment funnel designed to guarantee success.
+            <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed max-w-sm">
+              From our first audit call to final handover, you know exactly what is being built, when it will launch, and how it will drive results.
             </p>
           </div>
 
-          {/* Large active step indicator */}
-          <div className="hidden lg:block mt-12">
-            <span className="text-[100px] font-bold font-mono tracking-tighter text-accent-custom/10 leading-none">
+          <div className="hidden lg:block mt-8">
+            <span className="text-7xl font-bold font-mono tracking-tighter text-foreground/10 leading-none block">
               {steps[activeStep].num}
             </span>
-            <h3 className="text-xl font-bold uppercase tracking-widest text-foreground mt-2">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground font-mono mt-1">
               {steps[activeStep].title}
             </h3>
           </div>
         </div>
 
-        {/* Right Side: Scrollable Timeline Steps */}
-        <div className="lg:col-span-8 relative pl-8 md:pl-16">
+        {/* Right: Step Cards with Connecting Timeline */}
+        <div className="lg:col-span-8 relative pl-6 sm:pl-8">
           
-          {/* Vertical progress line background */}
-          <div className="absolute left-[3px] md:left-[7px] top-4 bottom-4 w-[2px] bg-border-custom z-0" />
-          
-          {/* Active progress indicator line */}
-          <div
-            className="process-progress-line absolute left-[3px] md:left-[7px] top-4 w-[2px] bg-accent-custom z-10 transition-all duration-100 origin-top"
-            style={{ height: "0%" }}
-          />
+          {/* Vertical Track Line */}
+          <div className="absolute top-4 bottom-4 left-0 w-[1px] bg-border-custom">
+            <div className="process-progress-line absolute top-0 left-0 w-full bg-foreground h-0 transition-all" />
+          </div>
 
-          {/* Steps List */}
-          <div className="flex flex-col gap-16">
+          <div className="space-y-6 sm:space-y-8">
             {steps.map((step, idx) => {
-              const isActive = idx === activeStep;
+              const isActive = activeStep === idx;
               return (
                 <div
                   key={idx}
-                  className="process-step-card flex flex-col items-start relative z-20 group"
+                  className={`process-step-card border p-6 sm:p-8 rounded-md transition-all duration-300 relative ${
+                    isActive
+                      ? "border-foreground bg-surface shadow-xs"
+                      : "border-border-custom bg-surface/50 opacity-60"
+                  }`}
                 >
-                  {/* Bullet Node */}
-                  <div
-                    className={`absolute -left-[37px] md:-left-[61px] top-1.5 w-[10px] h-[10px] md:w-[14px] md:h-[14px] rounded-full border bg-background transition-all duration-500 z-30 ${
-                      isActive
-                        ? "border-accent-custom scale-125 shadow-[0_0_10px_var(--accent-glow)] bg-accent-custom"
-                        : "border-border-custom bg-surface"
-                    }`}
-                  />
-
-                  {/* Step Card Content */}
-                  <div className="flex items-center gap-4 mb-4">
-                    <span className={`text-sm font-bold font-mono transition-colors duration-300 ${
-                      isActive ? "text-accent-custom" : "text-secondary-custom"
-                    }`}>
-                      {step.num}
+                  <div className="flex items-center justify-between gap-4 mb-3">
+                    <span className="text-xs font-mono font-bold text-secondary-custom uppercase">
+                      Step {step.num}
                     </span>
-                    <h3 className={`text-xl md:text-2xl font-bold tracking-tight transition-colors duration-300 ${
-                      isActive ? "text-foreground" : "text-secondary-custom"
-                    }`}>
-                      {step.title}
-                    </h3>
+                    <span className="w-2 h-2 rounded-full border border-border-custom bg-background" />
                   </div>
 
-                  <p className={`text-sm md:text-base leading-relaxed max-w-xl transition-opacity duration-300 ${
-                    isActive ? "text-secondary-custom" : "text-secondary-custom/60"
-                  }`}>
+                  <h3 className="text-base sm:text-lg font-bold text-foreground mb-2">
+                    {step.title}
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed">
                     {step.desc}
                   </p>
                 </div>

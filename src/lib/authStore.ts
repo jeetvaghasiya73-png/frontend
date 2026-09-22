@@ -47,8 +47,8 @@ const getLocal = (key: string): string | null => {
 };
 
 export const useAuthStore = create<AuthState>((set) => {
-  const initialToken = getLocal("nexora_access_token");
-  const initialRefresh = getLocal("nexora_refresh_token");
+  const initialToken = getLocal("techinfinix_access_token") || getLocal("nexora_access_token");
+  const initialRefresh = getLocal("techinfinix_refresh_token") || getLocal("nexora_refresh_token");
 
   return {
     accessToken: initialToken,
@@ -58,8 +58,8 @@ export const useAuthStore = create<AuthState>((set) => {
 
     login: (accessToken: string, refreshToken: string) => {
       if (typeof window !== "undefined") {
-        localStorage.setItem("nexora_access_token", accessToken);
-        localStorage.setItem("nexora_refresh_token", refreshToken);
+        localStorage.setItem("techinfinix_access_token", accessToken);
+        localStorage.setItem("techinfinix_refresh_token", refreshToken);
       }
       set({
         accessToken,
@@ -71,6 +71,8 @@ export const useAuthStore = create<AuthState>((set) => {
 
     logout: () => {
       if (typeof window !== "undefined") {
+        localStorage.removeItem("techinfinix_access_token");
+        localStorage.removeItem("techinfinix_refresh_token");
         localStorage.removeItem("nexora_access_token");
         localStorage.removeItem("nexora_refresh_token");
       }

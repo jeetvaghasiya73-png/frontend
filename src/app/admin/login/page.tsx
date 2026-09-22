@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/authStore";
-import { API_URL } from "@/lib/config";
+import { API_URL, ADMIN_PATH } from "@/lib/config";
 import { ArrowRight, Loader2, ShieldAlert, Timer, Eye, EyeOff, Zap, Lock, User } from "lucide-react";
 
 const MAX_CLIENT_ATTEMPTS = 5;
@@ -21,7 +21,11 @@ export default function AdminLoginPage() {
   const [attempts, setAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
   const [countdown, setCountdown] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Handle auto-redirect or forced logout via URL search params
   useEffect(() => {
@@ -33,11 +37,12 @@ export default function AdminLoginPage() {
       }
     }
     if (isAuthenticated) {
-      router.push("/admin/dashboard");
+      router.push(`${ADMIN_PATH}/dashboard`);
     }
   }, [isAuthenticated, router, logout]);
 
   // Lockout countdown timer
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
     if (!lockedUntil) return;
 
@@ -105,7 +110,7 @@ export default function AdminLoginPage() {
 
       const data = await response.json();
       login(data.access_token, data.refresh_token);
-      router.push("/admin/dashboard");
+      router.push(`${ADMIN_PATH}/dashboard`);
     } catch (err: any) {
       setError(err.message || "Unable to complete login request.");
     } finally {
@@ -221,7 +226,7 @@ export default function AdminLoginPage() {
 
         {/* Footer info */}
         <div className="pt-2 text-center text-[11px] text-slate-500 font-mono space-y-2">
-          {isAuthenticated && (
+          {mounted && isAuthenticated && (
             <button
               type="button"
               onClick={() => logout()}

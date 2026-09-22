@@ -1,33 +1,34 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useAuthStore } from "@/lib/authStore";
 import {
   Loader2,
   Trash2,
   Mail,
   Calendar,
-  Eye,
-  EyeOff,
-  Plus,
-  FileText,
   Sparkles,
-  ShieldCheck,
   Search,
-  CheckCircle2,
-  Clock,
   Send,
   MessageSquare,
   X,
-  User,
   Zap,
-  Filter,
-  Inbox,
-  RefreshCw,
   Globe,
   Building2,
-  MapPin,
-  Tag
+  Phone,
+  RefreshCw,
+  Clock,
+  CheckCheck,
+  Bot,
+  UserCheck,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  Inbox,
+  Filter,
+  CheckCircle2,
+  MessageCircle,
+  FileText
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
 
@@ -49,7 +50,6 @@ function cleanEmailBody(body: string): { cleanText: string; quotedText: string }
   if (!body) return { cleanText: "", quotedText: "" };
 
   let text = body;
-
   text = text
     .replace(/&nbsp;/gi, " ")
     .replace(/&bull;/gi, "•")
@@ -93,6 +93,7 @@ function cleanEmailBody(body: string): { cleanText: string; quotedText: string }
       trimmed.startsWith(">") ||
       (trimmed.startsWith("On ") && trimmed.includes("wrote:")) ||
       trimmed.includes("Partnership Opportunity —") ||
+      trimmed.includes("TECHINFINIX.COM OFFICIAL PARTNERSHIP INVITATION") ||
       trimmed.includes("NEXORA.AI OFFICIAL PARTNERSHIP INVITATION") ||
       trimmed.includes("PREPARED EXCLUSIVELY FOR")
     ) {
@@ -117,34 +118,64 @@ function cleanEmailBody(body: string): { cleanText: string; quotedText: string }
   return { cleanText: cleanResult, quotedText: quotedResult };
 }
 
-function renderCleanText(text: string) {
-  if (!text) return null;
-  const parts = text.split("\n\n");
-  return parts.map((part, index) => {
-    const trimmedPart = part.trim();
-    if (!trimmedPart) return null;
-    return (
-      <p key={index} className="leading-relaxed">
-        {trimmedPart}
-      </p>
-    );
-  });
+// Normalized Omni-Channel Message Interface
+interface UnifiedMessage {
+  id: string; // Unique composite key: "wa-123", "web-456", "email-789"
+  channel: "whatsapp" | "website" | "email";
+  sourceId: number;
+  senderName: string;
+  senderContact: string; // phone or email
+  city?: string;
+  category?: string;
+  subject?: string;
+  snippet: string;
+  timestamp: string;
+  status: string; // "interested" | "replied" | "pending" | "sent" | "unread"
+  isInterested?: boolean;
+  aiEnabled?: boolean;
+  raw: any;
+}
+
+interface WhatsAppChatMessage {
+  id: number;
+  lead_id: number | null;
+  direction: "inbound" | "outbound" | string;
+  message_text: string;
+  button_id: string | null;
+  created_at: string;
 }
 
 export default function ContactMessagesManager() {
   const { accessToken } = useAuthStore();
 
-  // Active Main Tab ("replies" | "contact_forms")
-  const [activeTab, setActiveTab] = useState<"replies" | "contact_forms">("replies");
+  // Channels Tab: "all" | "whatsapp" | "website" | "email"
+  const [channelTab, setChannelTab] = useState<"all" | "whatsapp" | "website" | "email">("all");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Replied Leads State
-  const [conversations, setConversations] = useState<any[]>([]);
-  const [selectedLead, setSelectedLead] = useState<any | null>(null);
-  const [repliedSearch, setRepliedSearch] = useState("");
-  const [expandedQuotes, setExpandedQuotes] = useState<Record<number, boolean>>({});
+  // Raw data collections
+  const [waConversations, setWaConversations] = useState<any[]>([]);
+  const [websiteInquiries, setWebsiteInquiries] = useState<any[]>([]);
+  const [emailConversations, setEmailConversations] = useState<any[]>([]);
+
+  // Selected Message in CRM 2-pane view
+  const [selectedMessage, setSelectedMessage] = useState<UnifiedMessage | null>(null);
+
+  // WhatsApp Active Thread Messages
+  const [waChatMessages, setWaChatMessages] = useState<WhatsAppChatMessage[]>([]);
+  const [loadingWaChats, setLoadingWaChats] = useState(false);
+  const [waReplyText, setWaReplyText] = useState("");
+  const [sendingWaReply, setSendingWaReply] = useState(false);
+  const [togglingWaAi, setTogglingWaAi] = useState(false);
+
+  // Email / Website Manual Reply
   const [manualReplyText, setManualReplyText] = useState("");
   const [sendingManualReply, setSendingManualReply] = useState(false);
+  const [expandedQuotes, setExpandedQuotes] = useState<Record<string, boolean>>({});
+
+  // Filters & Search
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "unread" | "replied" | "interested">("all");
 
   // AI Meeting / Reply Modal State
   const [aiModalOpen, setAiModalOpen] = useState(false);
@@ -164,18 +195,6 @@ export default function ContactMessagesManager() {
     test_recipient?: string;
   } | null>(null);
 
-  // Website Contact Form State
-  const [messages, setMessages] = useState<any[]>([]);
-  const [selectedMessage, setSelectedMessage] = useState<any | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [memoTitle, setMemoTitle] = useState("");
-  const [memoCategory, setMemoCategory] = useState("General Note");
-  const [memoMessage, setMemoMessage] = useState("");
-  const [submittingMemo, setSubmittingMemo] = useState(false);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
-
   // Toast Notification
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
@@ -183,62 +202,346 @@ export default function ContactMessagesManager() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const fetchRepliedLeads = async () => {
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // ── Concurrent Data Ingestion Across All Channels ──
+  const fetchAllData = useCallback(async () => {
     try {
-      const response = await authFetch(`${API}/api/v1/email/conversations`);
-      if (response.ok) {
-        const data = await response.json();
-        setConversations(data);
-        if (data.length > 0 && !selectedLead) {
-          setSelectedLead(data[0]);
-        }
+      setRefreshing(true);
+      const [waRes, contactRes, emailRes] = await Promise.allSettled([
+        authFetch(`${API}/api/v1/whatsapp/conversations?limit=100`),
+        authFetch(`${API}/api/v1/contacts/`),
+        authFetch(`${API}/api/v1/email/conversations`)
+      ]);
+
+      let waData: any[] = [];
+      let contData: any[] = [];
+      let emData: any[] = [];
+
+      if (waRes.status === "fulfilled" && waRes.value.ok) {
+        const d = await waRes.value.json();
+        waData = d.conversations || [];
+        setWaConversations(waData);
+      }
+
+      if (contactRes.status === "fulfilled" && contactRes.value.ok) {
+        const d = await contactRes.value.json();
+        contData = Array.isArray(d) ? d : [];
+        setWebsiteInquiries(contData);
+      }
+
+      if (emailRes.status === "fulfilled" && emailRes.value.ok) {
+        const d = await emailRes.value.json();
+        emData = Array.isArray(d) ? d : [];
+        setEmailConversations(emData);
       }
     } catch (err) {
-      console.error("Fetch conversations error:", err);
+      console.error("Omni-channel inbox fetch error:", err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  };
-
-  const fetchContactMessages = async () => {
-    try {
-      const response = await authFetch(`${API}/api/v1/contacts/`);
-      if (response.ok) {
-        const data = await response.json();
-        const reversed = data.reverse();
-        setMessages(reversed);
-        if (reversed.length > 0 && !selectedMessage) {
-          setSelectedMessage(reversed[0]);
-        }
-      }
-    } catch (err) {
-      console.error("Fetch contacts error:", err);
-    }
-  };
-
-  const initData = async () => {
-    setLoading(true);
-    await Promise.all([fetchRepliedLeads(), fetchContactMessages()]);
-    setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
-    initData();
-  }, [accessToken]);
+    fetchAllData();
+  }, [accessToken, fetchAllData]);
 
-  // AI Meeting Draft Generator ("Thank you for inquiry & arranging a meeting soon")
+  // Normalize all channels into a unified array
+  const unifiedMessages: UnifiedMessage[] = useMemo(() => {
+    const list: UnifiedMessage[] = [];
+
+    // 1. WhatsApp conversations
+    waConversations.forEach((wa) => {
+      list.push({
+        id: `wa-${wa.lead_id}`,
+        channel: "whatsapp",
+        sourceId: wa.lead_id,
+        senderName: wa.bussiness_name || "WhatsApp Contact",
+        senderContact: wa.phone_number || wa.clean_phone || "No Phone",
+        city: wa.scraped_city,
+        category: wa.category,
+        subject: wa.category ? `WhatsApp Outreach: ${wa.category}` : "WhatsApp Chat",
+        snippet: wa.latest_message || wa.last_reply || "No messages yet",
+        timestamp: wa.latest_timestamp || wa.reply_at || new Date().toISOString(),
+        status: wa.is_interested ? "interested" : (wa.whatsapp_status || "pending"),
+        isInterested: wa.is_interested,
+        aiEnabled: wa.whatsapp_ai_enabled,
+        raw: wa
+      });
+    });
+
+    // 2. Website contact inquiries
+    websiteInquiries.forEach((cont) => {
+      list.push({
+        id: `web-${cont.id}`,
+        channel: "website",
+        sourceId: cont.id,
+        senderName: cont.name || "Website Visitor",
+        senderContact: cont.email || "No Email",
+        city: cont.city || undefined,
+        category: "Website Form",
+        subject: cont.subject || "Website Inquiry",
+        snippet: cont.message || "New website submission",
+        timestamp: cont.created_at || new Date().toISOString(),
+        status: cont.status || "unread",
+        raw: cont
+      });
+    });
+
+    // 3. Email outreach replies
+    emailConversations.forEach((em) => {
+      const thread = em.thread || [];
+      const lastMsg = thread[thread.length - 1];
+      const snippet = lastMsg ? cleanEmailBody(lastMsg.body).cleanText : "Email conversation";
+      list.push({
+        id: `email-${em.lead_id}`,
+        channel: "email",
+        sourceId: em.lead_id,
+        senderName: em.business_name || "Email Prospect",
+        senderContact: em.email || "No Email",
+        city: em.city || undefined,
+        category: "Email Outreach",
+        subject: lastMsg?.subject || "Email Outreach Thread",
+        snippet: snippet.slice(0, 160),
+        timestamp: lastMsg?.received_at || em.created_at || new Date().toISOString(),
+        status: em.intent || "replied",
+        isInterested: em.intent === "interested",
+        raw: em
+      });
+    });
+
+    // Sort by timestamp descending (newest first)
+    list.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return list;
+  }, [waConversations, websiteInquiries, emailConversations]);
+
+  // Filter messages based on active channel tab, search query, and status
+  const filteredMessages = useMemo(() => {
+    return unifiedMessages.filter((msg) => {
+      // Channel Tab filter
+      if (channelTab !== "all" && msg.channel !== channelTab) {
+        return false;
+      }
+
+      // Status filter
+      if (statusFilter === "unread" && !["pending", "unread", "new"].includes(msg.status.toLowerCase())) {
+        return false;
+      }
+      if (statusFilter === "replied" && !["replied", "sent", "read"].includes(msg.status.toLowerCase())) {
+        return false;
+      }
+      if (statusFilter === "interested" && !msg.isInterested && msg.status.toLowerCase() !== "interested") {
+        return false;
+      }
+
+      // Search Query filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchName = msg.senderName.toLowerCase().includes(q);
+        const matchContact = msg.senderContact.toLowerCase().includes(q);
+        const matchSnippet = msg.snippet.toLowerCase().includes(q);
+        const matchSubject = msg.subject?.toLowerCase().includes(q);
+        const matchCity = msg.city?.toLowerCase().includes(q);
+        return matchName || matchContact || matchSnippet || matchSubject || matchCity;
+      }
+
+      return true;
+    });
+  }, [unifiedMessages, channelTab, statusFilter, searchQuery]);
+
+  // Keep selected message in sync or auto-select first item
+  useEffect(() => {
+    if (!selectedMessage && filteredMessages.length > 0) {
+      setSelectedMessage(filteredMessages[0]);
+    } else if (selectedMessage) {
+      const exists = filteredMessages.find((m) => m.id === selectedMessage.id);
+      if (exists) {
+        setSelectedMessage(exists);
+      } else if (filteredMessages.length > 0) {
+        setSelectedMessage(filteredMessages[0]);
+      }
+    }
+  }, [filteredMessages, selectedMessage]);
+
+  // Fetch WhatsApp chat thread when a WhatsApp item is selected
+  useEffect(() => {
+    if (selectedMessage && selectedMessage.channel === "whatsapp") {
+      setLoadingWaChats(true);
+      authFetch(`${API}/api/v1/whatsapp/chats/${selectedMessage.sourceId}`)
+        .then(async (res) => {
+          if (res.ok) {
+            const data = await res.json();
+            setWaChatMessages(data.chats || []);
+          }
+        })
+        .catch((e) => console.error("Error loading WA chats:", e))
+        .finally(() => setLoadingWaChats(false));
+    }
+  }, [selectedMessage?.id, selectedMessage?.channel, selectedMessage?.sourceId]);
+
+  // Scroll to bottom of chat on load
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [waChatMessages]);
+
+  // ── WhatsApp Actions ──
+  const handleSendWaReply = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!selectedMessage || selectedMessage.channel !== "whatsapp" || !waReplyText.trim()) return;
+
+    setSendingWaReply(true);
+    try {
+      const res = await authFetch(`${API}/api/v1/whatsapp/chats/${selectedMessage.sourceId}/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message_text: waReplyText.trim() })
+      });
+
+      if (res.ok) {
+        // Optimistic UI push
+        const newMsg: WhatsAppChatMessage = {
+          id: Date.now(),
+          lead_id: selectedMessage.sourceId,
+          direction: "outbound",
+          message_text: waReplyText.trim(),
+          button_id: null,
+          created_at: new Date().toISOString()
+        };
+        setWaChatMessages((prev) => [...prev, newMsg]);
+        setWaReplyText("");
+        showToast("WhatsApp message sent successfully 🚀", "success");
+        fetchAllData();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Failed to send WhatsApp: ${formatErrorDetail(err.detail)}`, "error");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("Error sending WhatsApp message.", "error");
+    } finally {
+      setSendingWaReply(false);
+    }
+  };
+
+  const handleToggleWaAi = async () => {
+    if (!selectedMessage || selectedMessage.channel !== "whatsapp") return;
+    setTogglingWaAi(true);
+    try {
+      const res = await authFetch(`${API}/api/v1/whatsapp/chats/${selectedMessage.sourceId}/toggle-ai`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (res.ok) {
+        const d = await res.json();
+        showToast(
+          d.ai_enabled ? "🤖 AI Auto-Pilot enabled for this lead." : "👤 Human Takeover active. AI Auto-Pilot paused.",
+          "info"
+        );
+        fetchAllData();
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("Error updating AI status.", "error");
+    } finally {
+      setTogglingWaAi(false);
+    }
+  };
+
+  // ── Website Contact Status & Delete Actions ──
+  const handleUpdateContactStatus = async (status: string) => {
+    if (!selectedMessage || selectedMessage.channel !== "website") return;
+    try {
+      const res = await authFetch(`${API}/api/v1/contacts/${selectedMessage.sourceId}/status?status=${status}`, {
+        method: "PUT"
+      });
+      if (res.ok) {
+        showToast(`Status updated to ${status}.`, "success");
+        fetchAllData();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteContact = async () => {
+    if (!selectedMessage || selectedMessage.channel !== "website") return;
+    if (!confirm("Are you sure you want to delete this website inquiry?")) return;
+    try {
+      const res = await authFetch(`${API}/api/v1/contacts/${selectedMessage.sourceId}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        showToast("Inquiry deleted.", "info");
+        setSelectedMessage(null);
+        fetchAllData();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // ── Email / Contact Reply Handlers ──
+  const handleSendManualReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMessage || !manualReplyText.trim()) return;
+    setSendingManualReply(true);
+    try {
+      const endpoint =
+        selectedMessage.channel === "website"
+          ? `${API}/api/v1/contacts/${selectedMessage.sourceId}/send-custom`
+          : `${API}/api/v1/email/conversations/${selectedMessage.sourceId}/send-custom`;
+
+      const subject =
+        selectedMessage.channel === "website"
+          ? `Re: ${selectedMessage.subject || "Website Inquiry"}`
+          : `Re: ${selectedMessage.subject || "Partnership Inquiry"}`;
+
+      const res = await authFetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject,
+          body: manualReplyText
+        })
+      });
+
+      if (res.ok) {
+        setManualReplyText("");
+        showToast("Email reply sent successfully!", "success");
+        fetchAllData();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Failed to send reply: ${formatErrorDetail(err.detail)}`, "error");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("Error sending reply.", "error");
+    } finally {
+      setSendingManualReply(false);
+    }
+  };
+
+  // ── AI Draft Generators ──
   const handleGenerateMeetingDraft = async () => {
-    if (!selectedLead) return;
+    if (!selectedMessage) return;
     setGeneratingDraft(true);
     try {
-      const res = await authFetch(`${API}/api/v1/email/conversations/${selectedLead.lead_id}/generate-meeting-draft`, {
-        method: "POST"
-      });
+      const endpoint =
+        selectedMessage.channel === "website"
+          ? `${API}/api/v1/contacts/${selectedMessage.sourceId}/generate-meeting-draft`
+          : `${API}/api/v1/email/conversations/${selectedMessage.sourceId}/generate-meeting-draft`;
+
+      const res = await authFetch(endpoint, { method: "POST" });
       if (res.ok) {
         const data = await res.json();
         setAiDraftData(data);
         setAiModalOpen(true);
       } else {
         const err = await res.json().catch(() => ({}));
-        showToast(`Failed to generate meeting draft: ${formatErrorDetail(err.detail)}`, "error");
+        showToast(`Failed to generate draft: ${formatErrorDetail(err.detail)}`, "error");
       }
     } catch (e) {
       console.error(e);
@@ -248,21 +551,23 @@ export default function ContactMessagesManager() {
     }
   };
 
-  // AI Custom Reply Generator
   const handleGenerateCustomDraft = async () => {
-    if (!selectedLead) return;
+    if (!selectedMessage) return;
     setGeneratingDraft(true);
     try {
-      const res = await authFetch(`${API}/api/v1/email/conversations/${selectedLead.lead_id}/generate-draft`, {
-        method: "POST"
-      });
+      const endpoint =
+        selectedMessage.channel === "website"
+          ? `${API}/api/v1/contacts/${selectedMessage.sourceId}/generate-draft`
+          : `${API}/api/v1/email/conversations/${selectedMessage.sourceId}/generate-draft`;
+
+      const res = await authFetch(endpoint, { method: "POST" });
       if (res.ok) {
         const data = await res.json();
         setAiDraftData(data);
         setAiModalOpen(true);
       } else {
         const err = await res.json().catch(() => ({}));
-        showToast(`Failed to generate draft: ${formatErrorDetail(err.detail)}`, "error");
+        showToast(`Failed to generate custom draft: ${formatErrorDetail(err.detail)}`, "error");
       }
     } catch (e) {
       console.error(e);
@@ -272,60 +577,8 @@ export default function ContactMessagesManager() {
     }
   };
 
-  // Website Contact AI Draft Generators
-  const handleGenerateContactMeetingDraft = async () => {
-    if (!selectedMessage) return;
-    setGeneratingDraft(true);
-    try {
-      const res = await authFetch(`${API}/api/v1/contacts/${selectedMessage.id}/generate-meeting-draft`, {
-        method: "POST"
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAiDraftData(data);
-        setAiModalOpen(true);
-      } else {
-        const err = await res.json().catch(() => ({}));
-        showToast(`Failed to generate meeting draft: ${formatErrorDetail(err.detail)}`, "error");
-      }
-    } catch (e) {
-      console.error(e);
-      showToast("Error generating meeting draft.", "error");
-    } finally {
-      setGeneratingDraft(false);
-    }
-  };
-
-  const handleGenerateContactCustomDraft = async () => {
-    if (!selectedMessage) return;
-    setGeneratingDraft(true);
-    try {
-      const res = await authFetch(`${API}/api/v1/contacts/${selectedMessage.id}/generate-draft`, {
-        method: "POST"
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAiDraftData(data);
-        setAiModalOpen(true);
-      } else {
-        const err = await res.json().catch(() => ({}));
-        showToast(`Failed to generate draft: ${formatErrorDetail(err.detail)}`, "error");
-      }
-    } catch (e) {
-      console.error(e);
-      showToast("Error generating custom draft.", "error");
-    } finally {
-      setGeneratingDraft(false);
-    }
-  };
-
-  // Dispatch Approved Email (Supports Test Mode vs Production Mode for both Scraped Leads and Website Inquiries)
-  const handleSendCustomReply = async () => {
+  const handleSendCustomApprovedReply = async () => {
     if (!aiDraftData) return;
-    if (!aiDraftData.subject.trim() || !aiDraftData.body.trim()) {
-      showToast("Subject line and email body cannot be empty.", "error");
-      return;
-    }
     setSendingCustomReply(true);
     try {
       const endpoint = aiDraftData.contact_id
@@ -340,744 +593,765 @@ export default function ContactMessagesManager() {
           body: aiDraftData.body
         })
       });
+
       if (res.ok) {
         const result = await res.json();
-        const modeLabel = result.mode === "test" ? `[TEST MODE -> ${result.sent_to}]` : `[PRODUCTION MODE -> ${result.sent_to}]`;
-        showToast(`Email approved & sent ${modeLabel}!`, "success");
+        showToast(`Email dispatched to ${result.sent_to || "recipient"}!`, "success");
         setAiModalOpen(false);
         setAiDraftData(null);
-        await Promise.all([fetchRepliedLeads(), fetchContactMessages()]);
+        fetchAllData();
       } else {
         const err = await res.json().catch(() => ({}));
         showToast(`Failed to send email: ${formatErrorDetail(err.detail)}`, "error");
       }
     } catch (e) {
       console.error(e);
-      showToast("Error sending email.", "error");
+      showToast("Error dispatching email.", "error");
     } finally {
       setSendingCustomReply(false);
     }
   };
 
-  // Manual reply form handler
-  const handleSendManualReply = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedLead || !manualReplyText.trim()) return;
-    setSendingManualReply(true);
-    try {
-      const thread = selectedLead.thread || [];
-      const lastMsg = thread[thread.length - 1] || {};
-      const res = await authFetch(`${API}/api/v1/email/conversations/${selectedLead.lead_id}/send-custom`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subject: lastMsg.subject ? (lastMsg.subject.startsWith("Re:") ? lastMsg.subject : `Re: ${lastMsg.subject}`) : `Re: Inquiry from ${selectedLead.business_name}`,
-          body: manualReplyText
-        })
-      });
-      if (res.ok) {
-        setManualReplyText("");
-        showToast("Manual reply sent successfully!", "success");
-        await fetchRepliedLeads();
-      } else {
-        showToast("Failed to send manual reply.", "error");
-      }
-    } catch (e) {
-      console.error(e);
-      showToast("Error sending reply.", "error");
-    } finally {
-      setSendingManualReply(false);
-    }
-  };
-
-  // Filtered Replied Leads
-  const filteredConversations = useMemo(() => {
-    const s = repliedSearch.toLowerCase().trim();
-    if (!s) return conversations;
-    return conversations.filter(
-      (c: any) =>
-        c.business_name?.toLowerCase().includes(s) ||
-        c.email?.toLowerCase().includes(s) ||
-        c.intent?.toLowerCase().includes(s)
-    );
-  }, [conversations, repliedSearch]);
-
-  // Filtered Website Contacts
-  const filteredMessages = useMemo(() => {
-    return messages.filter(m => {
-      const matchesSearch =
-        m.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.message?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === "all" || m.status?.toLowerCase() === statusFilter.toLowerCase();
-      return matchesSearch && matchesStatus;
-    });
-  }, [messages, searchQuery, statusFilter]);
+  // Channel Counters
+  const counts = useMemo(() => {
+    const wa = unifiedMessages.filter((m) => m.channel === "whatsapp").length;
+    const web = unifiedMessages.filter((m) => m.channel === "website").length;
+    const em = unifiedMessages.filter((m) => m.channel === "email").length;
+    const interested = unifiedMessages.filter((m) => m.isInterested).length;
+    return { all: unifiedMessages.length, wa, web, em, interested };
+  }, [unifiedMessages]);
 
   if (loading) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center flex-col gap-4">
-        <div className="relative">
-          <div className="w-12 h-12 rounded-md bg-indigo-600/20 blur-xl animate-pulse" />
-          <Loader2 className="w-8 h-8 text-indigo-600 dark:text-indigo-400 animate-spin relative" />
-        </div>
-        <span className="font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">Loading Replied Leads Hub...</span>
+      <div className="min-h-[70vh] flex items-center justify-center flex-col gap-4 text-[var(--dash-text-muted)]">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        <span className="font-mono text-xs font-semibold">Connecting Omni-Channel Message Center...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 text-left pb-20 relative animate-fadeIn font-sans antialiased text-slate-800 dark:text-slate-200">
-      
-      {/* Top Navigation & Status Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-md border border-slate-200/80 dark:border-slate-800 shadow-sm">
+    <div className="space-y-4 text-left pb-16 animate-fadeIn font-sans antialiased">
+      {/* ── Top Header & Channel Summary Bar ── */}
+      <header className="crm-card p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-md bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+          <div className="w-10 h-10 rounded-md bg-indigo-600 text-white flex items-center justify-center shadow-md shrink-0">
             <MessageSquare className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Replied Leads &amp; Contacts Hub</h1>
-              <span className="px-2.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-mono font-bold text-xs">
-                {conversations.length} Active Lead Threads
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-lg sm:text-xl font-bold text-[var(--dash-text-primary)] tracking-tight">
+                Unified Message Center
+              </h1>
+              <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                {counts.all} Total Conversations
               </span>
+              {counts.interested > 0 && (
+                <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                  🔥 {counts.interested} Interested Leads
+                </span>
+              )}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Manage prospect email replies, AI meeting invitation responses, and contact form submissions</p>
+            <p className="text-xs text-[var(--dash-text-muted)] mt-0.5">
+              Omni-channel inbox managing WhatsApp chats, Website contact inquiries, and Email replies in one place
+            </p>
           </div>
         </div>
 
-        {/* Tab Switcher Buttons */}
-        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 shrink-0">
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setActiveTab("replies")}
-            className={`px-3.5 py-2 text-xs font-bold rounded-sm transition cursor-pointer flex items-center gap-2 ${
-              activeTab === "replies"
-                ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm"
-                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-            }`}
+            onClick={fetchAllData}
+            disabled={refreshing}
+            className="crm-btn-secondary text-xs flex items-center gap-1.5"
+            title="Refresh inbox"
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Prospect Email Replies ({conversations.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("contact_forms")}
-            className={`px-3.5 py-2 text-xs font-bold rounded-sm transition cursor-pointer flex items-center gap-2 ${
-              activeTab === "contact_forms"
-                ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm"
-                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            <Mail className="w-3.5 h-3.5" />
-            <span>Website Inquiries ({messages.length})</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-indigo-500" : ""}`} />
+            <span>Sync</span>
           </button>
         </div>
       </header>
 
-      {/* TAB 1: PROSPECT EMAIL REPLIES & MEETING DESK */}
-      {activeTab === "replies" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto lg:h-[720px] w-full max-w-full">
-          
-          {/* Left List Pane (4 Cols) */}
-          <div className="lg:col-span-4 bg-white dark:bg-[#0f172a] rounded-md border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
-            
-            <div className="p-3.5 border-b border-slate-200/80 dark:border-slate-800 space-y-2.5">
-              <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search prospects by name, email, intent..."
-                  value={repliedSearch}
-                  onChange={(e) => setRepliedSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition"
-                />
-              </div>
+      {/* ── Channel Navigation Tabs ── */}
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto scrollbar-none shrink-0 pb-1 max-w-full">
+        <button
+          onClick={() => setChannelTab("all")}
+          className={`px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 ${
+            channelTab === "all"
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "crm-btn-secondary text-[var(--dash-text-muted)]"
+          }`}
+        >
+          <Inbox className="w-3.5 h-3.5" />
+          <span>All Channels</span>
+          <span className="ml-1 px-1.5 py-0.2 rounded text-[10px] bg-black/20 text-inherit">{counts.all}</span>
+        </button>
+
+        <button
+          onClick={() => setChannelTab("whatsapp")}
+          className={`px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 ${
+            channelTab === "whatsapp"
+              ? "bg-emerald-600 text-white shadow-sm"
+              : "crm-btn-secondary text-[var(--dash-text-muted)]"
+          }`}
+        >
+          <MessageCircle className="w-3.5 h-3.5 text-emerald-500" />
+          <span>WhatsApp</span>
+          <span className="ml-1 px-1.5 py-0.2 rounded text-[10px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-bold">
+            {counts.wa}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setChannelTab("website")}
+          className={`px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 ${
+            channelTab === "website"
+              ? "bg-sky-600 text-white shadow-sm"
+              : "crm-btn-secondary text-[var(--dash-text-muted)]"
+          }`}
+        >
+          <Globe className="w-3.5 h-3.5 text-sky-500" />
+          <span>Website Inquiries</span>
+          <span className="ml-1 px-1.5 py-0.2 rounded text-[10px] bg-sky-500/20 text-sky-600 dark:text-sky-300 font-bold">
+            {counts.web}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setChannelTab("email")}
+          className={`px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 ${
+            channelTab === "email"
+              ? "bg-violet-600 text-white shadow-sm"
+              : "crm-btn-secondary text-[var(--dash-text-muted)]"
+          }`}
+        >
+          <Mail className="w-3.5 h-3.5 text-violet-500" />
+          <span>Email Replies</span>
+          <span className="ml-1 px-1.5 py-0.2 rounded text-[10px] bg-violet-500/20 text-violet-600 dark:text-violet-300 font-bold">
+            {counts.em}
+          </span>
+        </button>
+      </div>
+
+      {/* ── Main 2-Pane CRM Inbox Layout ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-auto lg:h-[760px] w-full">
+        {/* ── Left Pane: Conversation Feed (4 Cols) ── */}
+        <div className="lg:col-span-5 xl:col-span-4 crm-card flex flex-col overflow-hidden h-[600px] lg:h-full">
+          {/* Search & Status Filter Deck */}
+          <div className="p-3 border-b border-[var(--dash-border)] space-y-2.5 bg-[var(--dash-table-header)]">
+            <div className="relative">
+              <Search className="w-4 h-4 text-[var(--dash-text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search messages, phone, email, text..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="crm-input w-full pl-9 text-xs"
+              />
             </div>
 
-            {/* Scrollable Conversations List */}
-            <div className="flex-1 overflow-y-auto divide-y divide-slate-200/60 dark:divide-slate-800">
-              {filteredConversations.map((conv) => {
-                const isSelected = selectedLead?.lead_id === conv.lead_id;
-                const lastMsg = conv.thread?.[conv.thread.length - 1];
+            <div className="flex items-center gap-1.5 text-[11px] overflow-x-auto no-scrollbar">
+              {(["all", "unread", "replied", "interested"] as const).map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setStatusFilter(st)}
+                  className={`px-2.5 py-1 rounded-md capitalize font-semibold transition cursor-pointer whitespace-nowrap ${
+                    statusFilter === st
+                      ? "bg-indigo-600 text-white shadow-xs"
+                      : "bg-[var(--dash-card-bg)] border border-[var(--dash-border)] text-[var(--dash-text-muted)] hover:text-[var(--dash-text-primary)]"
+                  }`}
+                >
+                  {st === "all" ? "All Statuses" : st}
+                </button>
+              ))}
+            </div>
+          </div>
 
-                return (
-                  <div
-                    key={conv.lead_id}
-                    onClick={() => {
-                      setSelectedLead(conv);
-                      setManualReplyText("");
-                    }}
-                    className={`p-4 transition cursor-pointer flex flex-col gap-1.5 ${
-                      isSelected
-                        ? "bg-indigo-50/60 dark:bg-indigo-950/30 border-l-4 border-indigo-600"
-                        : "hover:bg-slate-50/80 dark:hover:bg-slate-900/40"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
-                        {conv.business_name || "Unknown Prospect"}
+          {/* Conversation List */}
+          <div className="flex-1 overflow-y-auto divide-y divide-[var(--dash-border)]">
+            {filteredMessages.map((item) => {
+              const isSelected = selectedMessage?.id === item.id;
+              const isWa = item.channel === "whatsapp";
+              const isWeb = item.channel === "website";
+              const isEm = item.channel === "email";
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => {
+                    setSelectedMessage(item);
+                    setWaReplyText("");
+                    setManualReplyText("");
+                  }}
+                  className={`p-3.5 transition cursor-pointer flex flex-col gap-1.5 ${
+                    isSelected
+                      ? "bg-indigo-500/10 border-l-4 border-indigo-600"
+                      : "hover:bg-[var(--dash-table-header)]"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {/* Channel Icon Badge */}
+                      <span
+                        className={`p-1 rounded-md text-[10px] font-bold shrink-0 ${
+                          isWa
+                            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                            : isWeb
+                            ? "bg-sky-500/15 text-sky-600 dark:text-sky-400"
+                            : "bg-violet-500/15 text-violet-600 dark:text-violet-400"
+                        }`}
+                        title={item.channel.toUpperCase()}
+                      >
+                        {isWa ? <MessageSquare className="w-3.5 h-3.5" /> : isWeb ? <Globe className="w-3.5 h-3.5" /> : <Mail className="w-3.5 h-3.5" />}
                       </span>
-                      <span className={`text-[8px] uppercase font-mono font-bold px-1.5 py-0.5 rounded border shrink-0 ${
-                        conv.intent === "interested" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
-                        conv.intent === "unsubscribe" ? "bg-rose-500/10 text-rose-500 border-rose-500/20" :
-                        conv.intent === "question" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
-                        "bg-slate-500/10 text-slate-500 border-slate-500/20"
-                      }`}>
-                        {conv.intent}
+
+                      <span className="font-bold text-xs text-[var(--dash-text-primary)] truncate">
+                        {item.senderName}
                       </span>
                     </div>
 
-                    <div className="text-[10px] font-mono text-slate-400 truncate">{conv.email}</div>
-
-                    {lastMsg && (
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
-                        {cleanEmailBody(lastMsg.body).cleanText}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-
-              {filteredConversations.length === 0 && (
-                <div className="text-center py-16 text-xs text-slate-400 font-mono">No replied leads found.</div>
-              )}
-            </div>
-          </div>
-
-          {/* Right Active Lead Thread Viewer (8 Cols) */}
-          <div className="lg:col-span-8 bg-white dark:bg-[#0f172a] rounded-md border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between overflow-hidden">
-            {selectedLead ? (
-              <>
-                {/* Active Lead Header */}
-                <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-indigo-500" />
-                      {selectedLead.business_name}
-                    </h3>
-                    <p className="text-xs text-slate-400 font-mono">{selectedLead.email}</p>
-                  </div>
-
-                  {/* AI Response Generator Buttons */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[9px] uppercase font-mono font-bold px-2 py-1 rounded bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                      INTENT: {selectedLead.intent}
-                    </span>
-
-                    {/* Step 1: Thank You & Meeting Invitation Template Generator */}
-                    <button
-                      onClick={handleGenerateMeetingDraft}
-                      disabled={generatingDraft}
-                      className="px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-mono font-bold text-[11px] rounded-md shadow-md transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
-                    >
-                      {generatingDraft ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          <span>DRAFTING...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Calendar className="w-3.5 h-3.5 text-amber-300" />
-                          <span>✨ Generate Meeting Email</span>
-                        </>
-                      )}
-                    </button>
-
-                    {/* Step 2: Custom AI Reply Generator */}
-                    <button
-                      onClick={handleGenerateCustomDraft}
-                      disabled={generatingDraft}
-                      className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-mono font-bold text-[11px] rounded-md transition cursor-pointer flex items-center gap-1 disabled:opacity-50"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                      <span>Custom AI</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Message Bubble Thread Container */}
-                <div className="p-6 flex-1 overflow-y-auto space-y-5 min-h-[450px] max-h-[540px]">
-                  {selectedLead.thread?.map((m: any) => {
-                    const isReply = m.type === "REPLY";
-                    return (
-                      <div key={m.id} className={`flex flex-col ${isReply ? "items-start" : "items-end"}`}>
-                        <div className={`max-w-[90%] sm:max-w-[85%] rounded-md p-5 text-xs shadow-md leading-relaxed ${
-                          isReply
-                            ? "bg-slate-100 dark:bg-slate-800/90 text-slate-900 dark:text-white rounded-tl-none border border-slate-200 dark:border-slate-700"
-                            : "bg-indigo-600 text-white rounded-tr-none"
-                        }`}>
-                          <div className="flex items-center justify-between gap-4 font-mono text-[9px] opacity-70 mb-2 border-b border-slate-200/20 dark:border-white/10 pb-1.5">
-                            <span className="font-bold uppercase tracking-wider">{isReply ? "Lead Response" : "AI Assistant / Admin Outreach"}</span>
-                            <span>{new Date(m.timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} &bull; {new Date(m.timestamp).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</span>
-                          </div>
-                          {(() => {
-                            const { cleanText, quotedText } = cleanEmailBody(m.body);
-                            const isQuoteExpanded = !!expandedQuotes[m.id];
-                            return (
-                              <>
-                                <div className="space-y-3 font-sans text-xs sm:text-sm leading-relaxed">{renderCleanText(cleanText)}</div>
-                                {quotedText && (
-                                  <div className="mt-3 pt-3 border-t border-slate-200/20 dark:border-white/10">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        setExpandedQuotes(prev => ({ ...prev, [m.id]: !prev[m.id] }));
-                                      }}
-                                      className="text-[10px] text-slate-400 hover:text-indigo-400 flex items-center gap-1.5 cursor-pointer bg-transparent border-0 p-0 font-mono focus:outline-none font-bold"
-                                    >
-                                      <span>{isQuoteExpanded ? "▲ Hide original cold outreach message" : "▼ View original cold outreach message"}</span>
-                                    </button>
-                                    {isQuoteExpanded && (
-                                      <div className="mt-2.5 whitespace-pre-line text-[10px] text-slate-400 font-mono bg-black/20 p-3.5 rounded-md border border-slate-700 max-h-[220px] overflow-y-auto leading-relaxed shadow-inner">
-                                        {quotedText}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Manual Reply Form */}
-                <form onSubmit={handleSendManualReply} className="p-4 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex gap-2">
-                  <textarea
-                    placeholder="Type a manual response message to the prospect..."
-                    value={manualReplyText}
-                    onChange={(e) => setManualReplyText(e.target.value)}
-                    className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md p-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 min-h-[60px] max-h-[120px]"
-                  />
-                  <button
-                    type="submit"
-                    disabled={sendingManualReply || !manualReplyText.trim()}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 rounded-md flex items-center justify-center transition disabled:opacity-50 cursor-pointer text-xs shrink-0 self-end h-10"
-                  >
-                    {sendingManualReply ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  </button>
-                </form>
-              </>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8">
-                <Inbox className="w-12 h-12 mb-3 opacity-30" />
-                <span className="text-xs font-mono">Select a replied lead thread to view details and generate meeting email responses.</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 2: WEBSITE CONTACT FORM INQUIRIES */}
-      {activeTab === "contact_forms" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto lg:h-[720px] w-full max-w-full">
-          
-          <div className="lg:col-span-5 bg-white dark:bg-[#0f172a] rounded-md border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
-            <div className="p-3.5 border-b border-slate-200/80 dark:border-slate-800 space-y-2.5">
-              <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search website contact submissions..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition"
-                />
-              </div>
-
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800">
-                  {["all", "unread", "read", "replied"].map(status => (
-                    <button
-                      key={status}
-                      onClick={() => setStatusFilter(status)}
-                      className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition cursor-pointer capitalize ${
-                        statusFilter === status
-                          ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs font-bold"
-                          : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                    <span
+                      className={`text-[9px] uppercase font-mono font-bold px-1.5 py-0.5 rounded-md border shrink-0 ${
+                        item.isInterested || item.status === "interested"
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-extrabold"
+                          : item.status === "unread" || item.status === "pending"
+                          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                          : "bg-slate-500/10 text-[var(--dash-text-muted)] border-slate-500/20"
                       }`}
                     >
-                      {status}
-                    </button>
-                  ))}
+                      {item.isInterested ? "🔥 INTERESTED" : item.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-[var(--dash-text-muted)] font-mono">
+                    <span className="truncate max-w-[180px]">{item.senderContact}</span>
+                    <span className="text-[10px] shrink-0">
+                      {new Date(item.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-[var(--dash-text-muted)] line-clamp-2 leading-relaxed">
+                    {item.snippet}
+                  </p>
                 </div>
+              );
+            })}
 
-                <button
-                  onClick={() => setShowAddForm(true)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-[11px] font-bold text-white shadow-xs transition cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Internal Memo</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto divide-y divide-slate-200/60 dark:divide-slate-800">
-              {filteredMessages.map((msg) => {
-                const isSelected = selectedMessage?.id === msg.id;
-                const isInternal = msg.subject?.startsWith("[INTERNAL]");
-                const isUnread = msg.status === "unread" || !msg.status;
-
-                return (
-                  <div
-                    key={msg.id}
-                    onClick={() => setSelectedMessage(msg)}
-                    className={`p-4 transition cursor-pointer ${
-                      isSelected
-                        ? "bg-indigo-50/60 dark:bg-indigo-950/30 border-l-4 border-indigo-600"
-                        : "hover:bg-slate-50/80 dark:hover:bg-slate-900/40"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {isUnread && <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />}
-                        <span className="font-bold text-xs text-slate-900 dark:text-white truncate max-w-[180px]">
-                          {msg.name}
-                        </span>
-                        {isInternal && (
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-600 border border-amber-200 dark:border-amber-800">
-                            MEMO
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-slate-400">
-                        {new Date(msg.created_at || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                      </span>
-                    </div>
-
-                    <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 mt-1 truncate">
-                      {msg.subject || "No Subject"}
-                    </div>
-
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
-                      {msg.message}
-                    </p>
-                  </div>
-                );
-              })}
-
-              {filteredMessages.length === 0 && (
-                <div className="text-center py-16 text-xs text-slate-400 font-mono">No matching contact messages found.</div>
-              )}
-            </div>
-          </div>
-
-          <div className="lg:col-span-7 bg-white dark:bg-[#0f172a] rounded-md border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
-            {selectedMessage ? (
-              <div className="flex-1 flex flex-col justify-between p-6 overflow-hidden">
-                <div className="space-y-4 border-b border-slate-200/80 dark:border-slate-800 pb-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-md bg-indigo-600 text-white font-extrabold text-lg flex items-center justify-center shadow-md">
-                        {selectedMessage.name?.charAt(0)?.toUpperCase() || "M"}
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold text-slate-900 dark:text-white">{selectedMessage.name}</h3>
-                        <a href={`mailto:${selectedMessage.email}`} className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
-                          {selectedMessage.email}
-                        </a>
-                      </div>
-                    </div>
-
-                    {/* AI Response Generator Buttons for Website Inquiries */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        onClick={handleGenerateContactMeetingDraft}
-                        disabled={generatingDraft}
-                        className="px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-mono font-bold text-[11px] rounded-md shadow-md transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
-                      >
-                        {generatingDraft ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>DRAFTING...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Calendar className="w-3.5 h-3.5 text-amber-300" />
-                            <span>✨ Generate Meeting Email</span>
-                          </>
-                        )}
-                      </button>
-
-                      <button
-                        onClick={handleGenerateContactCustomDraft}
-                        disabled={generatingDraft}
-                        className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-mono font-bold text-[11px] rounded-md transition cursor-pointer flex items-center gap-1 disabled:opacity-50"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                        <span>Custom AI</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 pt-1 gap-2">
-                    <span className="font-semibold text-slate-900 dark:text-white text-sm">{selectedMessage.subject || "Website Inquiry"}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-mono font-bold flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" />
-                        Auto-Response Sent
-                      </span>
-                      <span className="text-[11px] text-slate-400">{new Date(selectedMessage.created_at || Date.now()).toLocaleString("en-US")}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex-1 py-4 overflow-y-auto space-y-4">
-                  {/* Visitor Original Inquiry Message Card */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
-                      <span>Website Visitor Message</span>
-                      <span>{selectedMessage.name}</span>
-                    </div>
-                    <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-md border border-slate-200/60 dark:border-slate-800/60 text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
-                      {selectedMessage.message}
-                    </div>
-                  </div>
-
-                  {/* Automated Thank You Confirmation Notice */}
-                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-md p-3 text-xs text-emerald-600 dark:text-emerald-400 space-y-1">
-                    <div className="flex items-center gap-2 font-mono font-bold text-[10px] uppercase tracking-wider">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Automated Thank-You Email Dispatched to {selectedMessage.email}</span>
-                    </div>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-300 font-sans">
-                      "Thank you for choosing Nexora AI! We have received your inquiry. Our team will meet soon for further work."
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
-                  <span className="text-xs text-slate-400 font-mono">Use AI generators above or email client</span>
-                  <a
-                    href={`mailto:${selectedMessage.email}?subject=Re: ${encodeURIComponent(selectedMessage.subject || "")}`}
-                    className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Send Manual Email</span>
-                  </a>
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-xs text-slate-400 font-mono">
-                Select a website inquiry to view details and generate responses.
+            {filteredMessages.length === 0 && (
+              <div className="text-center py-16 text-xs text-[var(--dash-text-muted)] font-mono">
+                No messages found matching this filter.
               </div>
             )}
           </div>
         </div>
-      )}
 
-      {/* AI Draft Review & Approval Modal */}
+        {/* ── Right Pane: Active Thread & Channel Reply Desk (8 Cols) ── */}
+        <div className="lg:col-span-7 xl:col-span-8 crm-card flex flex-col justify-between overflow-hidden h-[600px] lg:h-full">
+          {selectedMessage ? (
+            <>
+              {/* Header */}
+              <div className="p-4 border-b border-[var(--dash-border)] bg-[var(--dash-table-header)] flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={`w-10 h-10 rounded-md flex items-center justify-center font-bold text-white text-base shadow-sm shrink-0 ${
+                      selectedMessage.channel === "whatsapp"
+                        ? "bg-emerald-600"
+                        : selectedMessage.channel === "website"
+                        ? "bg-sky-600"
+                        : "bg-violet-600"
+                    }`}
+                  >
+                    {selectedMessage.senderName.charAt(0).toUpperCase()}
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-sm sm:text-base font-bold text-[var(--dash-text-primary)] truncate">
+                        {selectedMessage.senderName}
+                      </h3>
+                      <span
+                        className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-md border ${
+                          selectedMessage.channel === "whatsapp"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                            : selectedMessage.channel === "website"
+                            ? "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20"
+                            : "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20"
+                        }`}
+                      >
+                        {selectedMessage.channel.toUpperCase()}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-xs text-[var(--dash-text-muted)] font-mono mt-0.5">
+                      <span>{selectedMessage.senderContact}</span>
+                      {selectedMessage.city && <span>• {selectedMessage.city}</span>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Header Action Tools */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* WhatsApp Specific Actions */}
+                  {selectedMessage.channel === "whatsapp" && (
+                    <>
+                      <button
+                        onClick={handleToggleWaAi}
+                        disabled={togglingWaAi}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-md border transition cursor-pointer flex items-center gap-1.5 ${
+                          selectedMessage.aiEnabled !== false
+                            ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-400"
+                            : "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400"
+                        }`}
+                        title="Toggle AI Auto-Pilot on/off for this contact"
+                      >
+                        {togglingWaAi ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : selectedMessage.aiEnabled !== false ? (
+                          <Bot className="w-3.5 h-3.5" />
+                        ) : (
+                          <UserCheck className="w-3.5 h-3.5" />
+                        )}
+                        <span>{selectedMessage.aiEnabled !== false ? "AI Auto-Pilot ON" : "Human Takeover"}</span>
+                      </button>
+
+                      <a
+                        href={`https://wa.me/${selectedMessage.senderContact.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 text-xs font-bold rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 flex items-center gap-1.5 transition"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Open Web</span>
+                      </a>
+                    </>
+                  )}
+
+                  {/* Website Specific Actions */}
+                  {selectedMessage.channel === "website" && (
+                    <>
+                      <select
+                        value={selectedMessage.status}
+                        onChange={(e) => handleUpdateContactStatus(e.target.value)}
+                        className="crm-input text-xs py-1 px-2 font-semibold"
+                      >
+                        <option value="unread">Status: Unread</option>
+                        <option value="read">Status: Read</option>
+                        <option value="replied">Status: Replied</option>
+                      </select>
+
+                      <button
+                        onClick={handleDeleteContact}
+                        className="p-2 rounded-md border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                        title="Delete Inquiry"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </>
+                  )}
+
+                  {/* Email Outreach AI Draft Buttons */}
+                  {(selectedMessage.channel === "email" || selectedMessage.channel === "website") && (
+                    <>
+                      <button
+                        onClick={handleGenerateMeetingDraft}
+                        disabled={generatingDraft}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-md shadow-xs transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        {generatingDraft ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Calendar className="w-3.5 h-3.5 text-amber-300" />
+                        )}
+                        <span>✨ AI Meeting Draft</span>
+                      </button>
+
+                      <button
+                        onClick={handleGenerateCustomDraft}
+                        disabled={generatingDraft}
+                        className="crm-btn-secondary text-xs flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>AI Custom</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* ── Middle: Conversation Viewer ── */}
+              <div className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-4 bg-[var(--dash-bg)] min-h-[300px]">
+                {/* 1. WHATSAPP LIVE BUBBLE CHAT */}
+                {selectedMessage.channel === "whatsapp" && (
+                  <>
+                    {loadingWaChats ? (
+                      <div className="py-20 flex flex-col items-center justify-center gap-2 text-[var(--dash-text-muted)]">
+                        <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+                        <span className="text-xs font-mono">Loading WhatsApp chat history...</span>
+                      </div>
+                    ) : waChatMessages.length === 0 ? (
+                      <div className="p-6 text-center text-xs text-[var(--dash-text-muted)] font-mono">
+                        No previous chat messages recorded for this contact yet. Send an outreach reply below!
+                      </div>
+                    ) : (
+                      waChatMessages.map((chat) => {
+                        const isOutbound = chat.direction === "outbound";
+                        return (
+                          <div
+                            key={chat.id}
+                            className={`flex flex-col ${isOutbound ? "items-end" : "items-start"}`}
+                          >
+                            <div
+                              className={`max-w-[85%] sm:max-w-[70%] p-3.5 rounded-md text-xs leading-relaxed shadow-xs ${
+                                isOutbound
+                                  ? "bg-indigo-600 text-white"
+                                  : "bg-[var(--dash-card-bg)] text-[var(--dash-text-primary)] border border-[var(--dash-border)]"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-3 text-[10px] opacity-75 font-mono mb-1">
+                                <span className="font-bold">{isOutbound ? "Tech Infinix Team / AI" : selectedMessage.senderName}</span>
+                                <span>{new Date(chat.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                              </div>
+                              <p className="whitespace-pre-wrap font-sans">{chat.message_text}</p>
+                              {chat.button_id && (
+                                <div className="mt-2 pt-1 border-t border-white/20 text-[10px] font-mono">
+                                  Clicked Button: <strong className="underline">{chat.button_id}</strong>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                    <div ref={chatEndRef} />
+                  </>
+                )}
+
+                {/* 2. WEBSITE INQUIRY DETAIL CARD */}
+                {selectedMessage.channel === "website" && (
+                  <div className="space-y-4">
+                    <div className="crm-card p-5 space-y-3">
+                      <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-3">
+                        <div>
+                          <span className="text-xs font-bold text-[var(--dash-text-muted)] font-mono uppercase">
+                            Website Contact Form Submission
+                          </span>
+                          <h2 className="text-base font-bold text-[var(--dash-text-primary)] mt-0.5">
+                            {selectedMessage.subject || "General Inquiry"}
+                          </h2>
+                        </div>
+                        <span className="text-xs text-[var(--dash-text-muted)] font-mono">
+                          {new Date(selectedMessage.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-[var(--dash-table-header)] p-3 rounded-md border border-[var(--dash-border)]">
+                        <div>
+                          <span className="text-[var(--dash-text-muted)] block">Visitor Name:</span>
+                          <strong className="text-[var(--dash-text-primary)]">{selectedMessage.senderName}</strong>
+                        </div>
+                        <div>
+                          <span className="text-[var(--dash-text-muted)] block">Email Address:</span>
+                          <strong className="text-indigo-600 dark:text-indigo-400 break-all">{selectedMessage.senderContact}</strong>
+                        </div>
+                      </div>
+
+                      <div className="pt-2">
+                        <label className="text-[11px] font-bold text-[var(--dash-text-muted)] uppercase tracking-wider block mb-1.5">
+                          Submitted Message Body
+                        </label>
+                        <div className="p-4 rounded-md bg-[var(--dash-table-header)] border border-[var(--dash-border)] text-xs text-[var(--dash-text-primary)] leading-relaxed whitespace-pre-wrap">
+                          {selectedMessage.snippet}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. EMAIL THREAD VIEWER */}
+                {selectedMessage.channel === "email" && (
+                  <div className="space-y-4">
+                    {((selectedMessage.raw?.thread as any[]) || []).map((msg: any, idx: number) => {
+                      const cleaned = cleanEmailBody(msg.body);
+                      const isExpanded = expandedQuotes[`${selectedMessage.id}-${idx}`] || false;
+                      const isOutbound = msg.direction === "outbound";
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`crm-card p-4 space-y-2 border-l-4 ${
+                            isOutbound ? "border-l-indigo-600" : "border-l-emerald-500"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-2 text-xs">
+                            <div>
+                              <span className="font-bold text-[var(--dash-text-primary)]">
+                                {isOutbound ? "Tech Infinix Outreach Team" : selectedMessage.senderName}
+                              </span>
+                              <span className="text-[var(--dash-text-muted)] ml-2 text-[11px] font-mono">
+                                ({isOutbound ? "To: " + selectedMessage.senderContact : "From: " + selectedMessage.senderContact})
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-[var(--dash-text-muted)] font-mono">
+                              {new Date(msg.received_at || selectedMessage.timestamp).toLocaleString()}
+                            </span>
+                          </div>
+
+                          <div className="text-xs text-[var(--dash-text-primary)] leading-relaxed whitespace-pre-wrap">
+                            {cleaned.cleanText}
+                          </div>
+
+                          {cleaned.quotedText && (
+                            <div className="pt-2 border-t border-[var(--dash-border)]">
+                              <button
+                                onClick={() =>
+                                  setExpandedQuotes((prev) => ({
+                                    ...prev,
+                                    [`${selectedMessage.id}-${idx}`]: !isExpanded
+                                  }))
+                                }
+                                className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                              >
+                                {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                <span>{isExpanded ? "Hide quoted history" : "Show quoted email history"}</span>
+                              </button>
+                              {isExpanded && (
+                                <div className="mt-2 p-3 bg-[var(--dash-table-header)] rounded-md text-[11px] text-[var(--dash-text-muted)] font-mono whitespace-pre-wrap">
+                                  {cleaned.quotedText}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* ── Bottom: Channel Reply Composer Desk ── */}
+              <div className="p-4 border-t border-[var(--dash-border)] bg-[var(--dash-table-header)] shrink-0">
+                {/* WhatsApp Reply Composer */}
+                {selectedMessage.channel === "whatsapp" && (
+                  <form onSubmit={handleSendWaReply} className="space-y-2">
+                    {/* Quick Reply Presets */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-[10px]">
+                      {[
+                        "Thanks for your reply! When is a good time for a quick 5-min call?",
+                        "Here is our work portfolio: https://techinfinix.com",
+                        "Would tomorrow at 3:00 PM work for an intro session?"
+                      ].map((prompt, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setWaReplyText(prompt)}
+                          className="px-2.5 py-1 rounded-md bg-[var(--dash-card-bg)] border border-[var(--dash-border)] text-[var(--dash-text-muted)] hover:text-indigo-500 hover:border-indigo-500 transition cursor-pointer whitespace-nowrap"
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Type a direct WhatsApp response..."
+                        value={waReplyText}
+                        onChange={(e) => setWaReplyText(e.target.value)}
+                        className="crm-input flex-1 text-xs"
+                      />
+                      <button
+                        type="submit"
+                        disabled={sendingWaReply || !waReplyText.trim()}
+                        className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 shrink-0"
+                      >
+                        {sendingWaReply ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                        <span>Send WhatsApp</span>
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* Email / Website Inquiry Composer */}
+                {(selectedMessage.channel === "website" || selectedMessage.channel === "email") && (
+                  <form onSubmit={handleSendManualReply} className="space-y-2">
+                    <div className="flex items-center justify-between text-xs text-[var(--dash-text-muted)]">
+                      <span className="font-semibold">
+                        Direct Email Response to: <strong>{selectedMessage.senderContact}</strong>
+                      </span>
+                    </div>
+
+                    <textarea
+                      rows={3}
+                      placeholder={`Draft reply to ${selectedMessage.senderName}...`}
+                      value={manualReplyText}
+                      onChange={(e) => setManualReplyText(e.target.value)}
+                      className="crm-input w-full text-xs font-sans"
+                    />
+
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="submit"
+                        disabled={sendingManualReply || !manualReplyText.trim()}
+                        className="crm-btn-primary text-xs flex items-center gap-1.5"
+                      >
+                        {sendingManualReply ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Send className="w-3.5 h-3.5" />
+                        )}
+                        <span>Dispatch Email Reply</span>
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-[var(--dash-text-muted)] space-y-3">
+              <div className="w-14 h-14 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                <Inbox className="w-7 h-7" />
+              </div>
+              <h3 className="text-base font-bold text-[var(--dash-text-primary)]">No Conversation Selected</h3>
+              <p className="text-xs max-w-sm">
+                Select a message from the left inbox to view full chat history, prospect threads, and send replies.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── AI Draft Approval Popup Modal ── */}
       {aiModalOpen && aiDraftData && (
-        <div className="fixed inset-0 z-[999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn text-left">
-          <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-md w-full max-w-2xl overflow-hidden shadow-2xl space-y-0 font-sans">
-            
-            {/* Modal Header */}
-            <div className="p-5 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20">
-                  <Calendar className="w-5 h-5" />
+        <div
+          onClick={() => setAiModalOpen(false)}
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-2xl crm-card p-6 space-y-4 cursor-default relative shadow-2xl text-left"
+          >
+            <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-md bg-emerald-600 text-white font-bold flex items-center justify-center shadow-md">
+                  <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white font-mono">AI Meeting Email Proposal (Admin Approval)</h3>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400">Review &amp; approve before sending directly to the prospect</p>
+                  <h3 className="text-base font-bold text-[var(--dash-text-primary)]">
+                    Review &amp; Approve AI Response Draft
+                  </h3>
+                  <p className="text-xs text-[var(--dash-text-muted)]">
+                    Target: {aiDraftData.business_name} ({aiDraftData.recipient_email})
+                  </p>
                 </div>
               </div>
               <button
                 onClick={() => setAiModalOpen(false)}
-                className="text-slate-400 hover:text-white transition cursor-pointer p-1 rounded-lg hover:bg-white/5"
+                className="p-1.5 rounded-md text-[var(--dash-text-muted)] hover:text-[var(--dash-text-primary)] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-              
-              {/* Mode Banner Indicator (Test Mode vs Production Mode) */}
-              <div className={`p-3 rounded-md border flex items-center justify-between text-xs font-mono font-bold ${
-                aiDraftData.mode === "test"
-                  ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                  : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-              }`}>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
-                  <span>{aiDraftData.mode === "test" ? "🧪 TEST MODE ACTIVE" : "🌐 PRODUCTION DISPATCH MODE"}</span>
-                </div>
+            <div className="space-y-3 text-xs">
+              <div
+                className={`p-3 rounded-md border flex items-center justify-between text-xs font-mono font-bold ${
+                  aiDraftData.mode === "test"
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                    : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                }`}
+              >
+                <span>{aiDraftData.mode === "test" ? "🧪 TEST MODE ACTIVE" : "🌐 PRODUCTION DISPATCH MODE"}</span>
                 <span className="text-[10px] font-normal">
                   {aiDraftData.mode === "test"
                     ? `Dispatching to test mailbox (${aiDraftData.test_recipient || "configured test email"})`
-                    : `Dispatching to actual lead address (${aiDraftData.recipient_email})`}
+                    : `Dispatching to ${aiDraftData.recipient_email}`}
                 </span>
               </div>
 
-              {/* Lead Context Card */}
-              <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-md p-3.5 space-y-1 font-mono text-[11px]">
-                <div className="flex items-center justify-between text-slate-400">
-                  <span className="text-[9px] uppercase tracking-wider font-bold text-indigo-500">Target Lead Details</span>
-                  <span className="bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 px-2 py-0.5 rounded text-[9px] font-bold">
-                    INTENT: {aiDraftData.intent}
-                  </span>
-                </div>
-                <div className="text-slate-900 dark:text-white font-bold text-xs">{aiDraftData.business_name}</div>
-                <div className="text-slate-500 dark:text-slate-400 text-[10px] flex flex-wrap gap-x-3 gap-y-1">
-                  <span>✉️ {aiDraftData.recipient_email}</span>
-                  {aiDraftData.scraped_city && <span>📍 {aiDraftData.scraped_city}</span>}
-                  {aiDraftData.scraped_service && <span>🏷️ {aiDraftData.scraped_service}</span>}
-                </div>
-              </div>
-
-              {/* Subject Input */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 font-mono uppercase tracking-wider block">
+              <div>
+                <label className="text-[10px] font-bold text-[var(--dash-text-muted)] font-mono uppercase tracking-wider block mb-1">
                   Subject Line
                 </label>
                 <input
                   type="text"
                   value={aiDraftData.subject}
                   onChange={(e) => setAiDraftData({ ...aiDraftData, subject: e.target.value })}
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="crm-input w-full"
                 />
               </div>
 
-              {/* Email Body Textarea */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 font-mono uppercase tracking-wider block">
+              <div>
+                <label className="text-[10px] font-bold text-[var(--dash-text-muted)] font-mono uppercase tracking-wider block mb-1">
                   Email Response Body (Admin Editable)
                 </label>
                 <textarea
                   rows={8}
                   value={aiDraftData.body}
                   onChange={(e) => setAiDraftData({ ...aiDraftData, body: e.target.value })}
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md p-3.5 text-xs text-slate-800 dark:text-slate-200 font-sans leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="crm-input w-full font-sans leading-relaxed text-xs"
                 />
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between border-t border-[var(--dash-border)] pt-3">
               <button
                 onClick={handleGenerateMeetingDraft}
                 disabled={generatingDraft}
-                className="px-3.5 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono font-bold text-[10px] rounded-md transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                className="crm-btn-secondary text-xs flex items-center gap-1.5"
               >
                 {generatingDraft ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                REGENERATE
+                <span>Regenerate</span>
               </button>
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setAiModalOpen(false)}
-                  disabled={sendingCustomReply}
-                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono font-bold text-[10px] rounded-md transition cursor-pointer disabled:opacity-50"
-                >
-                  CANCEL
-                </button>
-                <button
-                  onClick={handleSendCustomReply}
-                  disabled={sendingCustomReply}
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold text-[10px] rounded-md shadow-lg transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  {sendingCustomReply ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      DISPATCHING...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5" />
-                      APPROVE &amp; SEND TO BUSINESS
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Internal Memo Modal */}
-      {showAddForm && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn text-left">
-          <div className="w-full max-w-lg bg-white dark:bg-[#0f172a] rounded-md border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4 font-sans">
-            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Add Internal Memo / Team Note</h3>
-              <button onClick={() => setShowAddForm(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              setShowAddForm(false);
-            }} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Title / Author</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Sales Team Note"
-                  value={memoTitle}
-                  onChange={(e) => setMemoTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Memo Content</label>
-                <textarea
-                  required
-                  rows={4}
-                  placeholder="Write internal team updates or follow-up instructions..."
-                  value={memoMessage}
-                  onChange={(e) => setMemoMessage(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
                   type="button"
-                  onClick={() => setShowAddForm(false)}
-                  className="px-4 py-2 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300"
+                  onClick={() => setAiModalOpen(false)}
+                  className="crm-btn-secondary text-xs"
                 >
                   Cancel
                 </button>
                 <button
-                  type="submit"
-                  className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30"
+                  type="button"
+                  onClick={handleSendCustomApprovedReply}
+                  disabled={sendingCustomReply}
+                  className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition cursor-pointer flex items-center gap-1.5"
                 >
-                  Save Memo
+                  {sendingCustomReply ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Send className="w-3.5 h-3.5" />
+                  )}
+                  <span>Approve &amp; Dispatch</span>
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Toast Notification Banner */}
+      {/* ── Toast Notification Banner ── */}
       {toast && (
         <div className="fixed bottom-5 right-5 z-[9999] animate-fadeIn font-mono">
-          <div className={`flex items-center gap-2.5 px-4 py-3 rounded-md border shadow-xl backdrop-blur-md transition-all duration-300 ${
-            toast.type === "success" 
-              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 shadow-emerald-500/5" 
-              : toast.type === "error"
-              ? "bg-rose-500/10 border-rose-500/20 text-rose-500 shadow-rose-500/5"
-              : "bg-blue-500/10 border-blue-500/20 text-blue-500 shadow-blue-500/5"
-          }`}>
+          <div
+            className={`flex items-center gap-2.5 px-4 py-3 rounded-md border shadow-xl backdrop-blur-md transition-all ${
+              toast.type === "success"
+                ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                : toast.type === "error"
+                ? "bg-rose-500/15 border-rose-500/30 text-rose-600 dark:text-rose-400"
+                : "bg-blue-500/15 border-blue-500/30 text-blue-600 dark:text-blue-400"
+            }`}
+          >
             <span className="flex-1 text-xs font-semibold tracking-wide">{toast.message}</span>
-            <button 
-              onClick={() => setToast(null)}
-              className="text-slate-400 hover:text-white transition cursor-pointer text-sm font-bold ml-1.5"
-            >
+            <button onClick={() => setToast(null)} className="text-inherit hover:opacity-75 text-sm font-bold ml-1.5">
               ✕
             </button>
           </div>
         </div>
       )}
-
     </div>
   );
 }

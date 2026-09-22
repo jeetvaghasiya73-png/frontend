@@ -7,10 +7,12 @@ import {
   Database, 
   Mail, 
   TrendingUp,
-  Loader2
+  Loader2,
+  MessageSquare
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
 import { useAuthStore } from "@/lib/authStore";
+import { ADMIN_PATH } from "@/lib/config";
 
 export default function AutomationPage() {
   const router = useRouter();
@@ -95,7 +97,7 @@ export default function AutomationPage() {
             <div>
               <h3 className="text-base font-bold text-gray-900 dark:text-white">Lead Scraper Automation</h3>
               <p className="text-xs text-gray-500 dark:text-[#B0B0B0] mt-1.5 font-sans leading-relaxed">
-                Targeted Justdial scraper that extracts business listings, crawls detailed page properties, and filters leads containing emails.
+                Targeted Google Maps scraper export importer that extracts business listings, phone numbers, and categories for outreach.
               </p>
             </div>
           </div>
@@ -105,7 +107,7 @@ export default function AutomationPage() {
               Synced Leads: <span className="font-bold text-gray-700 dark:text-white">{leadsCount}</span>
             </div>
             <button
-              onClick={() => router.push("/admin/dashboard/automation/lead-scraper")}
+              onClick={() => router.push(`${ADMIN_PATH}/dashboard/automation/lead-scraper`)}
               className="px-3.5 py-2 bg-accent-custom hover:bg-accent-custom/90 text-white rounded-lg text-xs font-mono font-bold transition-all hover:scale-102 cursor-pointer shadow-sm"
             >
               Open Automation
@@ -137,7 +139,7 @@ export default function AutomationPage() {
               Emails Sent: <span className="font-bold text-gray-700 dark:text-white">{sentCount}</span>
             </div>
             <button
-              onClick={() => router.push("/admin/dashboard/automation/outreach")}
+              onClick={() => router.push(`${ADMIN_PATH}/dashboard/automation/outreach`)}
               className="px-3.5 py-2 bg-accent-custom hover:bg-accent-custom/90 text-white rounded-lg text-xs font-mono font-bold transition-all hover:scale-102 cursor-pointer shadow-sm"
             >
               Open Outreach
@@ -145,30 +147,37 @@ export default function AutomationPage() {
           </div>
         </div>
 
-        {/* Card 3: SEO Rankings Monitor (Disabled) */}
-        <div className="border border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/2 rounded-md p-6 opacity-60 flex flex-col justify-between select-none">
+        {/* Card 3: WhatsApp Outreach & Evolution API */}
+        <div className="border border-gray-200 dark:border-white/10 bg-white dark:bg-[#111111] rounded-md p-6 shadow-sm flex flex-col justify-between hover:border-emerald-500/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.12)] transition-all duration-300 transform hover:-translate-y-1">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-md bg-gray-200 dark:bg-white/5 flex items-center justify-center text-gray-500">
-                <TrendingUp className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-md bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                <MessageSquare className="w-5 h-5" />
               </div>
-              <span className="bg-gray-200 dark:bg-white/5 text-gray-500 border border-transparent px-2 py-0.5 rounded font-bold uppercase text-[8px] tracking-wider font-mono">
-                Disabled
+              <span className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded font-bold uppercase text-[8px] tracking-wider font-mono">
+                LIVE
               </span>
             </div>
             <div>
-              <h3 className="text-base font-bold text-gray-400">SEO Rankings Monitor</h3>
-              <p className="text-xs text-gray-400 mt-1.5 font-sans leading-relaxed">
-                Track organic keywords position and index status for websites. Notifies you of search shifts and crawl anomalies.
+              <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                WhatsApp Automation
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-[#B0B0B0] mt-1.5 font-sans leading-relaxed">
+                Evolution API powered WhatsApp outreach with interactive buttons, test mode redirection, interested customer tracking &amp; instant email alerts.
               </p>
             </div>
           </div>
           
           <div className="mt-8 pt-4 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
-            <div className="font-mono text-[10px] text-gray-400">
-              Tracked Sites: <span className="font-bold">0</span>
+            <div className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+              Sender: 7990738939
             </div>
-            <span className="text-xs font-mono text-gray-400">Coming soon</span>
+            <button
+              onClick={() => router.push(`${ADMIN_PATH}/dashboard/automation/whatsapp`)}
+              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-mono font-bold transition-all hover:scale-102 cursor-pointer shadow-sm"
+            >
+              Launch WhatsApp &rarr;
+            </button>
           </div>
         </div>
 

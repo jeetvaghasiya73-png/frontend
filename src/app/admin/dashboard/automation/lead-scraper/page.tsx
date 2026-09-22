@@ -17,6 +17,7 @@ import {
   ShieldAlert
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
+import { ADMIN_PATH } from "@/lib/config";
 
 // Helper to format any error object into a safe human-readable string
 const formatErrorDetail = (detail: any): string => {
@@ -185,7 +186,7 @@ function LeadScraperUploadContent() {
 
         if (response.status === 401) {
           setErrorMsg("Session expired or unauthorized access. Redirecting to login...");
-          setTimeout(() => router.push("/admin/login"), 1500);
+          setTimeout(() => router.push(`${ADMIN_PATH}/login`), 1500);
         } else if (response.status === 413) {
           setErrorMsg("File size is too large for server processing limit.");
         } else if (response.status === 422) {
@@ -213,15 +214,15 @@ function LeadScraperUploadContent() {
             <div className="w-10 h-10 rounded-xl bg-accent-custom/10 border border-accent-custom/20 flex items-center justify-center text-accent-custom">
               <Database className="w-5 h-5" />
             </div>
-            Import Scraped Justdial Leads
+            Import Scraped Google Maps Leads
           </h1>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-mono">
-            Upload your local Justdial scraper Excel (.xlsx) files to seed outbound campaigns.
+            Upload your local Google Maps scraper Excel (.xlsx) files to seed outbound campaigns.
           </p>
         </div>
 
         <button
-          onClick={() => router.push("/admin/dashboard")}
+          onClick={() => router.push(`${ADMIN_PATH}/dashboard`)}
           className="self-start md:self-auto text-xs font-mono font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
         >
           View Dashboard
@@ -271,7 +272,7 @@ function LeadScraperUploadContent() {
                     Click to select Excel file <span className="text-gray-400 font-normal">or drag & drop</span>
                   </p>
                   <p className="text-[11px] font-mono text-gray-400 dark:text-gray-500">
-                    Supports Justdial .xlsx data tables (with Business Email &amp; City)
+                    Supports Google Maps export .xlsx data tables (with Business Name, Phone &amp; City)
                   </p>
                 </>
               )}
@@ -395,7 +396,7 @@ function LeadScraperUploadContent() {
             {/* Modal Actions */}
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
               <button
-                onClick={() => router.push("/admin/dashboard")}
+                onClick={() => router.push(`${ADMIN_PATH}/dashboard`)}
                 className="w-full bg-accent-custom hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all shadow-sm"
               >
                 Go to Dashboard

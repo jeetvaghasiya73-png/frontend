@@ -2,8 +2,13 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import OutreachPage from "../automation/outreach/page";
+import { ADMIN_PATH } from "@/lib/config";
 
 export default function EmailOutreachAliasPage() {
-  return <OutreachPage />;
+  const router = useRouter();
+  useEffect(() => {
+    router.replace(`${ADMIN_PATH}/dashboard/automation/whatsapp`);
+  }, [router]);
+
+  return null;
 }

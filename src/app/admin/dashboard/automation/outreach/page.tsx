@@ -168,6 +168,7 @@ function cleanEmailBody(body: string): { cleanText: string; quotedText: string }
       trimmed.startsWith(">") ||
       (trimmed.startsWith("On ") && trimmed.includes("wrote:")) ||
       trimmed.includes("Partnership Opportunity —") ||
+      trimmed.includes("TECHINFINIX.COM OFFICIAL PARTNERSHIP INVITATION") ||
       trimmed.includes("NEXORA.AI OFFICIAL PARTNERSHIP INVITATION") ||
       trimmed.includes("PREPARED EXCLUSIVELY FOR")
     ) {
@@ -667,7 +668,7 @@ function OutreachManager() {
         // Use manually typed content
         body: JSON.stringify({
           recipient_email: selectedConversation.email,
-          subject: lastMsg.subject ? (lastMsg.subject.startsWith("Re:") ? lastMsg.subject : `Re: ${lastMsg.subject}`) : "Follow up from Nexora AI",
+          subject: lastMsg.subject ? (lastMsg.subject.startsWith("Re:") ? lastMsg.subject : `Re: ${lastMsg.subject}`) : "Follow up from Tech Infinix",
           body: replyText
         })
       });
@@ -756,9 +757,9 @@ function OutreachManager() {
 
       {/* KPI Cards deck */}
       {analytics && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
           {/* Card 1: Sender Engine */}
-          <div className={`p-4 rounded-xl border flex items-center justify-between transition-all duration-300 bg-white dark:bg-[#0c0c0c] hover:shadow-md ${
+          <div className={`p-3 sm:p-4 rounded-xl border flex items-center justify-between transition-all duration-300 bg-white dark:bg-[#0c0c0c] hover:shadow-md ${
             senderActive 
               ? "border-emerald-500/30 dark:border-emerald-500/20 shadow-[0_0_12px_rgba(16,185,129,0.05)]" 
               : "border-gray-200 dark:border-white/10"
@@ -778,10 +779,10 @@ function OutreachManager() {
           </div>
           
           {/* Card 2: Outbound Sent */}
-          <div className="p-4 rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-between transition-all bg-white dark:bg-[#0c0c0c] hover:border-teal-500/20 hover:shadow-sm">
+          <div className="p-3 sm:p-4 rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-between transition-all bg-white dark:bg-[#0c0c0c] hover:border-teal-500/20 hover:shadow-sm">
             <div className="space-y-0.5">
               <span className="text-[9px] font-mono text-gray-400 uppercase tracking-wider block">Outbound Sent</span>
-              <span className="text-2xl font-bold font-mono text-gray-900 dark:text-white block">
+              <span className="text-xl sm:text-2xl font-bold font-mono text-gray-900 dark:text-white block">
                 {analytics.total_sent}
               </span>
             </div>
@@ -791,10 +792,10 @@ function OutreachManager() {
           </div>
           
           {/* Card 3: Pending Queue */}
-          <div className="p-4 rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-between transition-all bg-white dark:bg-[#0c0c0c] hover:border-yellow-500/20 hover:shadow-sm">
+          <div className="p-3 sm:p-4 rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-between transition-all bg-white dark:bg-[#0c0c0c] hover:border-yellow-500/20 hover:shadow-sm">
             <div className="space-y-0.5">
               <span className="text-[9px] font-mono text-gray-400 uppercase tracking-wider block">Pending Queue</span>
-              <span className="text-2xl font-bold font-mono text-gray-900 dark:text-white block">
+              <span className="text-xl sm:text-2xl font-bold font-mono text-gray-900 dark:text-white block">
                 {analytics ? analytics.total_queued : 0}
               </span>
             </div>
@@ -804,11 +805,11 @@ function OutreachManager() {
           </div>
 
           {/* Card 4: Replies / Rate */}
-          <div className="p-4 rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-between transition-all bg-white dark:bg-[#0c0c0c] hover:border-emerald-500/20 hover:shadow-sm">
+          <div className="p-3 sm:p-4 rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-between transition-all bg-white dark:bg-[#0c0c0c] hover:border-emerald-500/20 hover:shadow-sm">
             <div className="space-y-0.5">
               <span className="text-[9px] font-mono text-gray-400 uppercase tracking-wider block">Replies / Rate</span>
               <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-2xl font-bold font-mono text-gray-900 dark:text-white">
+                <span className="text-xl sm:text-2xl font-bold font-mono text-gray-900 dark:text-white">
                   {analytics.total_replied}
                 </span>
                 <span className="text-[10px] text-emerald-500 font-semibold font-mono">
@@ -822,10 +823,10 @@ function OutreachManager() {
           </div>
 
           {/* Card 5: Unsubscribed */}
-          <div className="p-4 rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-between transition-all bg-white dark:bg-[#0c0c0c] hover:border-purple-500/20 hover:shadow-sm">
+          <div className="col-span-2 lg:col-span-1 p-3 sm:p-4 rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-between transition-all bg-white dark:bg-[#0c0c0c] hover:border-purple-500/20 hover:shadow-sm">
             <div className="space-y-0.5">
               <span className="text-[9px] font-mono text-gray-400 uppercase tracking-wider block">Unsubscribed</span>
-              <span className="text-2xl font-bold font-mono text-gray-900 dark:text-white block">
+              <span className="text-xl sm:text-2xl font-bold font-mono text-gray-900 dark:text-white block">
                 {analytics.total_unsubscribed}
               </span>
             </div>
@@ -928,7 +929,7 @@ function OutreachManager() {
                     </div>
                     <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">Offer Web Design & Mockup Proposal</h3>
                     <p className="text-xs text-gray-555 dark:text-[#A0A0A0] leading-relaxed font-sans">
-                      If the business does not have a website link registered on Justdial, the AI personalization engine pitches:
+                      If the business does not have a website link registered on Google Maps, the AI personalization engine pitches:
                     </p>
                     <ul className="text-[11px] text-gray-600 dark:text-gray-400 space-y-2 font-mono list-none pl-1">
                       <li className="flex items-center gap-1.5"><span className="text-emerald-500 text-xs font-bold">✦</span> Custom Web Development</li>
@@ -1215,7 +1216,7 @@ function OutreachManager() {
                     >
                       CLEAR
                     </button>
-                    <span className="text-[9px] text-gray-600">Nexora OS v1.3</span>
+                    <span className="text-[9px] text-gray-600">Tech Infinix OS v1.3</span>
                   </div>
                 </div>
 
@@ -1257,7 +1258,7 @@ function OutreachManager() {
                       })}
                       {senderActive && (
                         <div className="text-emerald-400 animate-pulse font-bold flex items-center gap-1">
-                          <span>nexora-os:~$ uvicorn worker running...</span>
+                          <span>techinfinix-os:~$ uvicorn worker running...</span>
                           <span className="w-1.5 h-3 bg-emerald-400 inline-block animate-pulse" />
                         </div>
                       )}
@@ -1265,11 +1266,11 @@ function OutreachManager() {
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-600 italic font-mono text-[10px] py-16">
                       <div className="text-left w-full pl-2">
-                        <div>nexora-os:~$ systemctl status outreach-worker</div>
-                        <div className="text-gray-505">● outreach-worker.service - Nexora Outreach Daemon</div>
+                        <div>techinfinix-os:~$ systemctl status outreach-worker</div>
+                        <div className="text-gray-505">● outreach-worker.service - Tech Infinix Outreach Daemon</div>
                         <div className="text-gray-550">   Loaded: loaded (/etc/systemd/system/outreach-worker.service; enabled)</div>
                         <div className="text-gray-550">   Active: inactive (idle) since Sun 2026-08-23; terminal standby</div>
-                        <div className="text-gray-550 mt-2">nexora-os:~$ _</div>
+                        <div className="text-gray-550 mt-2">techinfinix-os:~$ _</div>
                       </div>
                     </div>
                   )}

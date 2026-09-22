@@ -17,7 +17,7 @@ export default function BlogsPage() {
       id: 1,
       title: "Scaling Outbound Lead Pipelines with LangGraph Agents",
       summary: "Explore how we design autonomous agents that coordinate tasks, validate lead profiles, and reduce duplicate entry latency.",
-      author: "Nexora Team",
+      author: "Tech Infinix Team",
       created_at: new Date().toISOString(),
       slug: "scaling-outbound-lead-pipelines",
       published: true
@@ -79,11 +79,11 @@ export default function BlogsPage() {
               Our Insights
             </span>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white mb-6">
-              <SplitText text="The Nexora Ledger" type="words" />
+              <SplitText text="The Tech Infinix Ledger" type="words" />
             </h1>
             <p className="text-sm md:text-base text-secondary-custom max-w-xl leading-relaxed">
               Technical findings, engineering breakthroughs, and operations blueprints
-              developed by the Nexora automation laboratory.
+              developed by the Tech Infinix automation laboratory.
             </p>
           </section>
 
@@ -101,9 +101,29 @@ export default function BlogsPage() {
 
           {/* Grid List */}
           {loading ? (
-            <div className="min-h-[30vh] flex items-center justify-center flex-col gap-3">
-              <Loader2 className="w-8 h-8 text-accent-custom animate-spin" />
-              <span className="font-mono text-xs text-[#B0B0B0]">Loading articles...</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  className="border border-border-custom bg-surface/30 rounded-2xl p-6 flex flex-col justify-between h-[220px]"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-24 h-3 rounded-xs skeleton-pulse" />
+                      <div className="w-16 h-3 rounded-xs skeleton-pulse" />
+                    </div>
+                    <div className="w-4/5 h-6 rounded-md skeleton-pulse" />
+                    <div className="space-y-2">
+                      <div className="w-full h-3.5 rounded-xs skeleton-pulse" />
+                      <div className="w-3/4 h-3.5 rounded-xs skeleton-pulse" />
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-border-custom/30 flex justify-between">
+                    <div className="w-28 h-3 rounded-xs skeleton-pulse" />
+                    <div className="w-4 h-4 rounded-xs skeleton-pulse" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
