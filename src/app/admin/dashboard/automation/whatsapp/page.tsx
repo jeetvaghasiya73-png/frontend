@@ -100,6 +100,17 @@ interface WhatsAppStats {
   response_rate?: number;
   conversion_rate?: number;
   delivery_rate?: number;
+  cta_click_rate?: number;
+  total_cta_clicks?: number;
+  cta_clicks?: {
+    interested: number;
+    website: number;
+    call: number;
+    agent: number;
+  };
+  sent_today?: number;
+  daily_limit?: number;
+  remaining_today?: number;
   main_number: string;
   test_mode: boolean;
   test_number: string;
@@ -117,31 +128,64 @@ interface WhatsAppStats {
 interface AnalyticsData {
   daily_breakdown: Array<{
     date: string;
+    label?: string;
     sent: number;
-    delivered: number;
+    delivered?: number;
     replied: number;
     interested: number;
     blocked: number;
   }>;
   summary: {
+    total_leads?: number;
     total_sent: number;
+    total_delivered?: number;
     total_replied: number;
     total_interested: number;
-    total_blocked: number;
-    total_reported: number;
+    total_blocked?: number;
+    total_reported?: number;
+    total_blocked_reported?: number;
     response_rate: number;
     conversion_rate: number;
-    delivery_rate: number;
+    delivery_rate?: number;
+    cta_click_rate?: number;
+    total_cta_clicks?: number;
+    spam_block_rate?: number;
+    sent_today?: number;
+    daily_limit?: number;
+    remaining_today?: number;
   };
+  cta_breakdown?: {
+    call_clicks: number;
+    website_clicks: number;
+    interested_clicks: number;
+    agent_clicks: number;
+    total_clicks: number;
+    click_rate: number;
+  };
+  cta_chart_data?: Array<{
+    name: string;
+    value: number;
+    color: string;
+  }>;
+  funnel_data?: Array<{
+    stage: string;
+    count: number;
+    fill: string;
+  }>;
   spam_and_blocks: Array<{
-    lead_id: number;
+    id?: number;
+    lead_id?: number;
     bussiness_name: string;
     phone_number: string;
-    scraped_city: string;
+    city?: string;
+    scraped_city?: string;
     category: string;
-    whatsapp_status: string;
-    last_reply: string;
-    reply_at: string;
+    status?: string;
+    whatsapp_status?: string;
+    reason?: string;
+    last_reply?: string;
+    date?: string;
+    reply_at?: string;
   }>;
 }
 
@@ -847,37 +891,31 @@ export default function WhatsAppOutreachPage() {
   };
 
   // ── 3. Data for Charts & Analytics ──
-  const ctaChartData = [
-    { name: "📞 Call CTA", value: Math.max(stats?.interested || 1, 14), color: "#10b981" },
-    { name: "🌐 Website Visit", value: Math.max(stats?.replied || 1, 28), color: "#3b82f6" },
-    { name: "📅 Book Demo", value: Math.max(stats?.sent || 1, 19), color: "#8b5cf6" },
-    { name: "💬 Speak to Agent", value: Math.max(stats?.pending || 1, 9), color: "#f59e0b" },
-  ];
+  const ctaChartData = (analyticsData?.cta_chart_data && analyticsData.cta_chart_data.some((c) => c.value > 0))
+    ? analyticsData.cta_chart_data
+    : [
+        { name: "📞 Call Us", value: analyticsData?.cta_breakdown?.call_clicks ?? stats?.cta_clicks?.call ?? 0, color: "#10b981" },
+        { name: "🌐 Website Visit", value: analyticsData?.cta_breakdown?.website_clicks ?? stats?.cta_clicks?.website ?? 0, color: "#3b82f6" },
+        { name: "↩️ Interested", value: analyticsData?.cta_breakdown?.interested_clicks ?? stats?.interested ?? 0, color: "#f59e0b" },
+        { name: "💬 Speak to Agent", value: analyticsData?.cta_breakdown?.agent_clicks ?? stats?.cta_clicks?.agent ?? 0, color: "#8b5cf6" },
+      ];
 
   const dailyOutreachChartData = analyticsData?.daily_breakdown && analyticsData.daily_breakdown.length > 0
     ? analyticsData.daily_breakdown.map((item) => ({
-        day: item.date.slice(5),
+        day: item.label || (item.date && item.date.length > 5 ? item.date.slice(5) : item.date),
         sent: item.sent,
         replied: item.replied,
         interested: item.interested,
-        blocked: item.blocked,
+        blocked: item.blocked || 0,
       }))
-    : [
-        { day: "09-13", sent: 18, replied: 6, interested: 2, blocked: 0 },
-        { day: "09-14", sent: 22, replied: 8, interested: 4, blocked: 1 },
-        { day: "09-15", sent: 20, replied: 7, interested: 3, blocked: 0 },
-        { day: "09-16", sent: 25, replied: 11, interested: 6, blocked: 1 },
-        { day: "09-17", sent: 19, replied: 9, interested: 5, blocked: 0 },
-        { day: "09-18", sent: 15, replied: 5, interested: 2, blocked: 0 },
-        { day: "09-19", sent: sentToday || 14, replied: stats?.replied || 7, interested: stats?.interested || 3, blocked: stats?.blocked || 0 },
-      ];
+    : [];
 
-  const funnelData = [
-    { stage: "Scraped Leads", count: stats?.total_prospects || 120, fill: "#64748b" },
-    { stage: "Queued", count: queueStatus?.pending || 45, fill: "#38bdf8" },
-    { stage: "Delivered", count: stats?.delivered || stats?.sent || 38, fill: "#6366f1" },
-    { stage: "Replied", count: stats?.replied || 18, fill: "#f59e0b" },
-    { stage: "Interested ⭐", count: stats?.interested || 9, fill: "#10b981" }
+  const funnelData = analyticsData?.funnel_data || [
+    { stage: "Scraped Leads", count: stats?.total_prospects || 0, fill: "#64748b" },
+    { stage: "Queued", count: queueStatus?.pending || 0, fill: "#38bdf8" },
+    { stage: "Delivered", count: stats?.delivered || stats?.sent || 0, fill: "#6366f1" },
+    { stage: "Replied", count: stats?.replied || 0, fill: "#f59e0b" },
+    { stage: "Interested ⭐", count: stats?.interested || 0, fill: "#10b981" }
   ];
 
   const spamAndBlocksList = analyticsData?.spam_and_blocks || [];
@@ -1009,7 +1047,7 @@ export default function WhatsAppOutreachPage() {
           </div>
           <div className="text-2xl font-bold font-mono mt-2 text-amber-500">{stats?.replied || 0}</div>
           <div className="text-[11px] text-[var(--dash-text-muted)] mt-1">
-            {stats?.response_rate ? `${stats.response_rate}%` : "18.5%"} response rate
+            {stats?.response_rate !== undefined ? `${stats.response_rate}%` : "0.0%"} response rate
           </div>
         </div>
 
@@ -1020,7 +1058,7 @@ export default function WhatsAppOutreachPage() {
           </div>
           <div className="text-2xl font-bold font-mono mt-2 text-emerald-500">{stats?.interested || 0}</div>
           <div className="text-[11px] text-emerald-500 font-semibold mt-1">
-            {stats?.conversion_rate ? `${stats.conversion_rate}%` : "8.2%"} qualified conversion
+            {stats?.conversion_rate !== undefined ? `${stats.conversion_rate}%` : "0.0%"} qualified conversion
           </div>
         </div>
 
@@ -1057,7 +1095,7 @@ export default function WhatsAppOutreachPage() {
           </button>
 
           <button
-            onClick={() => { setActiveTab("analytics"); fetchAnalytics(); }}
+            onClick={() => { setActiveTab("analytics"); fetchAnalytics(); fetchOverview(); }}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer ${
               activeTab === "analytics"
                 ? "bg-[var(--dash-primary)] text-white shadow-sm"
@@ -1683,7 +1721,9 @@ export default function WhatsAppOutreachPage() {
                 <TrendingUp className="w-4 h-4 text-emerald-500" />
               </div>
               <div className="text-2xl font-bold font-mono text-emerald-500 mt-2">
-                {analyticsData?.summary?.response_rate || stats?.response_rate || 18.5}%
+                {analyticsData?.summary?.response_rate !== undefined
+                  ? analyticsData.summary.response_rate
+                  : (stats?.response_rate ?? 0)}%
               </div>
               <div className="text-[11px] text-[var(--dash-text-muted)] mt-1">Outreach to inbound reply ratio</div>
             </div>
@@ -1693,7 +1733,11 @@ export default function WhatsAppOutreachPage() {
                 <span>CTA Click Rate</span>
                 <Sparkles className="w-4 h-4 text-blue-500" />
               </div>
-              <div className="text-2xl font-bold font-mono text-blue-500 mt-2">34.2%</div>
+              <div className="text-2xl font-bold font-mono text-blue-500 mt-2">
+                {analyticsData?.summary?.cta_click_rate !== undefined
+                  ? analyticsData.summary.cta_click_rate
+                  : (stats?.cta_click_rate ?? 0)}%
+              </div>
               <div className="text-[11px] text-[var(--dash-text-muted)] mt-1">Prospects who clicked CTA</div>
             </div>
 
@@ -1702,7 +1746,11 @@ export default function WhatsAppOutreachPage() {
                 <span>Qualified Hot Leads</span>
                 <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
               </div>
-              <div className="text-2xl font-bold font-mono text-amber-500 mt-2">{stats?.interested || 0}</div>
+              <div className="text-2xl font-bold font-mono text-amber-500 mt-2">
+                {analyticsData?.summary?.total_interested !== undefined
+                  ? analyticsData.summary.total_interested
+                  : (stats?.interested || 0)}
+              </div>
               <div className="text-[11px] text-[var(--dash-text-muted)] mt-1">Marked Interested ⭐</div>
             </div>
 
@@ -1712,7 +1760,9 @@ export default function WhatsAppOutreachPage() {
                 <ShieldAlert className="w-4 h-4 text-rose-500" />
               </div>
               <div className="text-2xl font-bold font-mono text-rose-500 mt-2">
-                {stats?.sent ? (((stats.blocked || 0) + (stats.reported || 0)) / stats.sent * 100).toFixed(1) : "0.0"}%
+                {analyticsData?.summary?.spam_block_rate !== undefined
+                  ? analyticsData.summary.spam_block_rate
+                  : (stats?.sent ? (((stats.blocked || 0) + (stats.reported || 0)) / stats.sent * 100).toFixed(1) : "0.0")}%
               </div>
               <div className="text-[11px] text-[var(--dash-text-muted)] mt-1">Safe threshold (&lt; 2.0%)</div>
             </div>
