@@ -114,7 +114,30 @@ export default function BlogsManager() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setContent((event.target?.result as string) || "");
+        const rawContent = (event.target?.result as string) || "";
+        setContent(rawContent);
+
+        // Auto-extract title if title field is empty
+        if (!title.trim()) {
+          const matchTitle = rawContent.match(/<title[^>]*>(.*?)<\/title>/i) || rawContent.match(/<h1[^>]*>(.*?)<\/h1>/i);
+          if (matchTitle && matchTitle[1]) {
+            const extracted = matchTitle[1].replace(/<[^>]+>/g, "").trim();
+            if (extracted) setTitle(extracted);
+          } else {
+            const fname = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+            setTitle(fname.charAt(0).toUpperCase() + fname.slice(1));
+          }
+        }
+
+        // Auto-extract embedded <style> tags into customCss if present
+        const styleMatches = rawContent.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
+        if (styleMatches && styleMatches.length > 0) {
+          const extractedStyles = styleMatches.map(s => s.replace(/<\/?style[^>]*>/gi, "")).join("\n\n");
+          if (extractedStyles.trim()) {
+            setCustomCss(prev => prev ? `${prev}\n\n${extractedStyles}` : extractedStyles);
+            setCssPreset("custom");
+          }
+        }
       };
       reader.readAsText(file);
     }
@@ -122,19 +145,22 @@ export default function BlogsManager() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const finalTitle = (title || "Untitled Article").trim();
+    const finalSlug = finalTitle.toLowerCase().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").trim() || "blog-post";
+
     const payload = {
-      title,
-      summary,
-      content,
+      title: finalTitle,
+      summary: summary || "",
+      content: content || "<p>Article content goes here.</p>",
       cover_image: coverImage || null,
       published,
-      author,
+      author: author || "Tech Infinix Team",
       seo_title: seoTitle || null,
       seo_description: seoDescription || null,
       custom_css: customCss || null,
-      css_preset: cssPreset || null,
+      css_preset: cssPreset || "modern",
       include_contact_form: includeContactForm,
-      slug: title.toLowerCase().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").trim()
+      slug: finalSlug
     };
 
     try {
@@ -143,7 +169,6 @@ export default function BlogsManager() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            
           },
           body: JSON.stringify(payload)
         });
@@ -156,7 +181,6 @@ export default function BlogsManager() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            
           },
           body: JSON.stringify(payload)
         });
