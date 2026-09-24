@@ -33,9 +33,39 @@ export default function Navbar() {
       setScrolled(window.scrollY > 25);
     };
 
+    if (window.location.hash) {
+      const hash = window.location.hash.replace("#", "");
+      setTimeout(() => {
+        const el = document.getElementById(hash);
+        if (el) {
+          const yOffset = -80;
+          const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: "smooth" });
+        }
+      }, 400);
+    }
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleHashLink = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (typeof window !== "undefined" && href.includes("#")) {
+      const hash = href.split("#")[1];
+      if (window.location.pathname === "/" || window.location.pathname === "") {
+        e.preventDefault();
+        const element = document.getElementById(hash);
+        if (element) {
+          const yOffset = -80;
+          const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: "smooth" });
+          window.history.pushState(null, "", `/#${hash}`);
+        } else {
+          window.location.hash = hash;
+        }
+      }
+    }
+  };
 
   // Lock body scroll when mobile menu is open & listen for Escape key
   useEffect(() => {
@@ -132,6 +162,7 @@ export default function Navbar() {
               <a
                 key={link.name}
                 href={link.href}
+                onClick={(e) => handleHashLink(e, link.href)}
                 className="text-secondary-custom hover:text-foreground relative py-1 transition-colors duration-200 group"
               >
                 <span>{link.name}</span>
@@ -256,7 +287,10 @@ export default function Navbar() {
                     <a
                       key={link.name}
                       href={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={(e) => {
+                        setMobileMenuOpen(false);
+                        handleHashLink(e, link.href);
+                      }}
                       className="group flex items-center justify-between p-3 rounded-xl border border-border-custom/40 bg-surface/40 hover:bg-surface/90 hover:border-accent-custom/40 transition-all duration-200 active:scale-[0.99]"
                     >
                       <div className="flex items-center gap-3">

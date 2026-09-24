@@ -112,6 +112,7 @@ function RoleBadge({ isSuperadmin, isMainAdmin }: { isSuperadmin: boolean; isMai
 
 /* ─────────────────────────── Tab 1: Admin Users ─────────────────────────── */
 function AdminUsersTab() {
+  const { user: currentUser } = useAuthStore();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -271,9 +272,9 @@ function AdminUsersTab() {
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleToggleActive(u)}
-                        disabled={u.is_main_admin}
+                        disabled={u.is_main_admin || (!currentUser?.is_main_admin && u.is_superadmin)}
                         className={`p-1.5 rounded-lg transition cursor-pointer ${
-                          u.is_main_admin
+                          u.is_main_admin || (!currentUser?.is_main_admin && u.is_superadmin)
                             ? "opacity-30 cursor-not-allowed"
                             : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"
                         }`}
@@ -281,18 +282,26 @@ function AdminUsersTab() {
                       >
                         {u.is_active ? <ToggleRight className="w-5 h-5 text-emerald-500" /> : <ToggleLeft className="w-5 h-5 text-slate-400" />}
                       </button>
-                      <button
-                        onClick={() => setDeleteModalUser(u)}
-                        disabled={u.is_main_admin}
-                        className={`p-1.5 rounded-lg transition cursor-pointer ${
-                          u.is_main_admin
-                            ? "opacity-30 cursor-not-allowed"
-                            : "hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-500"
-                        }`}
-                        title={u.is_main_admin ? "Main Admin cannot be deleted" : "Delete User"}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {currentUser?.is_main_admin && (
+                        <button
+                          onClick={() => setDeleteModalUser(u)}
+                          disabled={u.is_main_admin || u.id === currentUser?.id}
+                          className={`p-1.5 rounded-lg transition cursor-pointer ${
+                            u.is_main_admin || u.id === currentUser?.id
+                              ? "opacity-30 cursor-not-allowed"
+                              : "hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-500"
+                          }`}
+                          title={
+                            u.is_main_admin
+                              ? "Main Admin cannot be deleted"
+                              : u.id === currentUser?.id
+                              ? "You cannot delete your own account"
+                              : "Delete User"
+                          }
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

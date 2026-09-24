@@ -21,6 +21,22 @@ export default function BlogsManager() {
   const [author, setAuthor] = useState("Tech Infinix Team");
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDescription, setSeoDescription] = useState("");
+  const [cssPreset, setCssPreset] = useState("modern-cyber");
+  const [customCss, setCustomCss] = useState("");
+  const [includeContactForm, setIncludeContactForm] = useState(true);
+  const [cssPresetsList, setCssPresetsList] = useState<any[]>([]);
+
+  const fetchPresets = async () => {
+    try {
+      const res = await fetch(`${API}/api/v1/blogs/css-presets`);
+      if (res.ok) {
+        const data = await res.json();
+        setCssPresetsList(data);
+      }
+    } catch (e) {
+      console.warn("Could not fetch CSS presets:", e);
+    }
+  };
 
   const fetchBlogs = async () => {
     try {
@@ -38,6 +54,7 @@ export default function BlogsManager() {
 
   useEffect(() => {
     fetchBlogs();
+    fetchPresets();
   }, []);
 
   const resetForm = () => {
@@ -49,6 +66,9 @@ export default function BlogsManager() {
     setAuthor("Tech Infinix Team");
     setSeoTitle("");
     setSeoDescription("");
+    setCssPreset("modern-cyber");
+    setCustomCss("");
+    setIncludeContactForm(true);
     setEditingId(null);
     setShowForm(false);
   };
@@ -63,7 +83,41 @@ export default function BlogsManager() {
     setAuthor(blog.author);
     setSeoTitle(blog.seo_title || "");
     setSeoDescription(blog.seo_description || "");
+    setCssPreset(blog.css_preset || "modern-cyber");
+    setCustomCss(blog.custom_css || "");
+    setIncludeContactForm(blog.include_contact_form !== false);
     setShowForm(true);
+  };
+
+  const handlePresetChange = (presetId: string) => {
+    setCssPreset(presetId);
+    const found = cssPresetsList.find((p) => p.id === presetId);
+    if (found && found.css) {
+      setCustomCss(found.css);
+    }
+  };
+
+  const handleCssFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setCustomCss((event.target?.result as string) || "");
+        setCssPreset("custom");
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleHtmlFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setContent((event.target?.result as string) || "");
+      };
+      reader.readAsText(file);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,6 +131,9 @@ export default function BlogsManager() {
       author,
       seo_title: seoTitle || null,
       seo_description: seoDescription || null,
+      custom_css: customCss || null,
+      css_preset: cssPreset || null,
+      include_contact_form: includeContactForm,
       slug: title.toLowerCase().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").trim()
     };
 
@@ -279,18 +336,105 @@ export default function BlogsManager() {
               />
             </div>
 
-            <div className="flex flex-col items-start">
-              <label className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-[#B0B0B0] mb-2">
-                Article Body Content (Markdown Supported) *
-              </label>
+            {/* HTML / Markdown Content Area with File Upload */}
+            <div className="flex flex-col items-start space-y-2">
+              <div className="flex items-center justify-between w-full">
+                <label className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-[#B0B0B0]">
+                  Article Content (HTML or Markdown) *
+                </label>
+                <label className="cursor-pointer inline-flex items-center gap-1.5 text-[11px] font-mono font-semibold px-2.5 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 transition-colors">
+                  <span>Upload .html file</span>
+                  <input
+                    type="file"
+                    accept=".html,.htm,.txt,.md"
+                    className="hidden"
+                    onChange={handleHtmlFileUpload}
+                  />
+                </label>
+              </div>
               <textarea
-                rows={8}
+                rows={10}
                 required
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="## Introduction \n\nAI agents represent..."
+                placeholder="<article>\n  <h2>Section Title</h2>\n  <p>Write or paste your custom HTML here...</p>\n</article>"
                 className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-md px-4 py-3 text-sm text-gray-900 dark:text-white font-mono focus:outline-none focus:border-accent-custom transition-all resize-y"
               />
+            </div>
+
+            {/* CSS Styling & Presets Section */}
+            <div className="border border-indigo-500/20 bg-indigo-500/[0.03] p-5 rounded-md space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span className="text-xs font-bold font-mono uppercase tracking-wider text-indigo-400 block">
+                    Custom CSS & Stylesheet Library
+                  </span>
+                  <p className="text-[11px] text-gray-500 dark:text-[#A0A0A0] mt-0.5">
+                    Select a curated preset from the library, upload your own .css file, or paste custom rules.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 text-[11px] font-mono font-semibold px-2.5 py-1.5 rounded bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 transition-colors">
+                    <span>Upload .css file</span>
+                    <input
+                      type="file"
+                      accept=".css,.txt"
+                      className="hidden"
+                      onChange={handleCssFileUpload}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col items-start">
+                  <label className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-[#B0B0B0] mb-1.5">
+                    Choose Preset Theme
+                  </label>
+                  <select
+                    value={cssPreset}
+                    onChange={(e) => handlePresetChange(e.target.value)}
+                    className="w-full bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-white/10 rounded px-3 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom"
+                  >
+                    <option value="modern-cyber">Modern Cyber Dark (Neon & Monospace)</option>
+                    <option value="clean-editorial">Clean Editorial Minimal (Serif Reading)</option>
+                    <option value="enterprise-slate">Enterprise Slate Blue (B2B Tables & Callouts)</option>
+                    <option value="vibrant-gradient">Vibrant Gradient Glow (High-impact Tech)</option>
+                    <option value="custom">Custom (User CSS)</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-start pt-5">
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={includeContactForm}
+                      onChange={(e) => setIncludeContactForm(e.target.checked)}
+                      className="w-4.5 h-4.5 rounded border border-gray-300 dark:border-white/10 bg-white dark:bg-black/50 text-accent-custom"
+                    />
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-[#D0D0D0]">
+                      Embed Interactive Lead & Contact Form at bottom
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-start">
+                <label className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-[#B0B0B0] mb-1.5">
+                  Raw CSS Rules (Scoped to this article)
+                </label>
+                <textarea
+                  rows={4}
+                  value={customCss}
+                  onChange={(e) => {
+                    setCustomCss(e.target.value);
+                    setCssPreset("custom");
+                  }}
+                  placeholder="/* Custom CSS */ .blog-content h2 { color: #818CF8; }"
+                  className="w-full bg-white dark:bg-[#0D0D0D] border border-gray-200 dark:border-white/10 rounded px-3 py-2 text-xs font-mono text-gray-900 dark:text-white focus:outline-none focus:border-accent-custom transition-all"
+                />
+              </div>
             </div>
 
             <div className="flex items-center gap-3 pt-4">

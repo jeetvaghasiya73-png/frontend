@@ -332,8 +332,8 @@ export default function DashboardLayout({
   const navGroups = [
     { title: "CORE CRM", links: [
       { name: "Dashboard", href: `${ADMIN_PATH}/dashboard`, icon: LayoutDashboard },
-      { name: "Leads Database", href: `${ADMIN_PATH}/dashboard/leads`, icon: Users, badge: leadsBadge },
-      { name: "Messages Inbox", href: `${ADMIN_PATH}/dashboard/contacts`, icon: MessageSquare, badge: contactsBadge },
+      { name: "Leads Database", href: `${ADMIN_PATH}/dashboard/leads`, icon: Users },
+      { name: "Messages Inbox", href: `${ADMIN_PATH}/dashboard/contacts`, icon: MessageSquare },
     ]},
     { title: "AUTOMATION & TOOLS", links: [
       { name: "WhatsApp Outreach", href: `${ADMIN_PATH}/dashboard/automation/whatsapp`, icon: MessageSquare, badge: "ACTIVE" },
@@ -355,6 +355,72 @@ export default function DashboardLayout({
     const last = seg[seg.length - 1];
     if (last === "dashboard") return "Overview";
     return last ? last.charAt(0).toUpperCase() + last.slice(1).replace(/-/g, " ") : "Dashboard";
+  };
+
+  const renderNotificationDropdown = (isMobile = false) => {
+    if (!notificationsOpen) return null;
+    return (
+      <div
+        className={`${
+          isMobile
+            ? "fixed right-3 top-14 w-[calc(100vw-1.5rem)] sm:w-96 max-w-sm"
+            : "absolute right-0 mt-2 w-80 sm:w-96"
+        } overflow-hidden animate-scaleIn z-50`}
+        style={{
+          background: "var(--dash-surface)",
+          border: "1px solid var(--dash-border)",
+          borderRadius: "var(--dash-card-radius)",
+          boxShadow: "0 12px 40px rgba(0,0,0,0.22)"
+        }}
+      >
+        <div className="p-3.5 flex items-center justify-between" style={{ borderBottom: "1px solid var(--dash-border)", background: "var(--dash-surface-alt)" }}>
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-xs" style={{ color: "var(--dash-text)" }}>Notifications</span>
+            {unreadCount > 0 && <span className="crm-badge badge-danger text-[9px]">{unreadCount} new</span>}
+          </div>
+          <div className="flex items-center gap-2 text-[11px]">
+            <button onClick={triggerTestNotification} className="crm-badge badge-primary cursor-pointer flex items-center gap-1" title="Test notification"><Zap className="w-3 h-3" /><span>Test</span></button>
+            {unreadCount > 0 && <button onClick={markAllAsRead} className="font-semibold cursor-pointer flex items-center gap-1" style={{ color: "var(--dash-primary)" }}><CheckCheck className="w-3.5 h-3.5" /><span>Read all</span></button>}
+            <button onClick={handleClearNotifications} className="cursor-pointer p-1 opacity-40 hover:opacity-100" style={{ color: "var(--dash-text-secondary)" }} title="Clear all"><Trash2 className="w-3.5 h-3.5" /></button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 px-3 py-1.5 text-[11px]" style={{ borderBottom: "1px solid var(--dash-border)", background: "var(--dash-surface-alt)" }}>
+          {(["all", "unread", "inquiry", "system"] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveNotifFilter(tab)} className="px-2.5 py-0.5 capitalize font-medium transition cursor-pointer" style={{ borderRadius: "var(--dash-badge-radius)", background: activeNotifFilter === tab ? "var(--dash-primary)" : "transparent", color: activeNotifFilter === tab ? "#FFFFFF" : "var(--dash-text-muted)" }}>{tab}</button>
+          ))}
+        </div>
+
+        <div className="max-h-80 overflow-y-auto crm-scrollbar">
+          {filteredNotifications.length === 0 ? (
+            <div className="p-8 text-center text-xs space-y-1" style={{ color: "var(--dash-text-muted)" }}>
+              <CheckCircle2 className="w-8 h-8 mx-auto opacity-30" /><p className="font-semibold" style={{ color: "var(--dash-text-secondary)" }}>All caught up!</p><p className="text-[11px]">No notifications found.</p>
+            </div>
+          ) : filteredNotifications.map(n => (
+            <div key={n.id} onClick={() => handleNotificationClick(n)} className="p-3 transition flex items-start gap-3 cursor-pointer" style={{ background: !n.read ? "var(--dash-primary-light)" : "transparent", borderBottom: "1px solid var(--dash-border-subtle)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--dash-surface-alt)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = !n.read ? "var(--dash-primary-light)" : "transparent"; }}
+            >
+              <div className="p-2 shrink-0 mt-0.5" style={{ borderRadius: "var(--dash-btn-radius)", background: n.type === "inquiry" ? "var(--dash-primary-light)" : n.type === "lead" ? "var(--dash-success-light)" : n.type === "email" ? "var(--dash-warning-light)" : "var(--dash-surface-alt)", color: n.type === "inquiry" ? "var(--dash-primary)" : n.type === "lead" ? "var(--dash-success)" : n.type === "email" ? "var(--dash-warning)" : "var(--dash-text-secondary)" }}>
+                {n.type === "inquiry" && <Mail className="w-3.5 h-3.5" />}{n.type === "lead" && <UserCheck className="w-3.5 h-3.5" />}{n.type === "email" && <MessageSquare className="w-3.5 h-3.5" />}{n.type === "system" && <Zap className="w-3.5 h-3.5" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-xs font-bold truncate" style={{ color: !n.read ? "var(--dash-primary)" : "var(--dash-text)" }}>{n.title}</span>
+                  <span className="text-[10px] font-mono shrink-0" style={{ color: "var(--dash-text-muted)" }}>{n.time}</span>
+                </div>
+                <p className="text-xs mt-0.5 line-clamp-2 leading-relaxed" style={{ color: "var(--dash-text-secondary)" }}>{n.message}</p>
+              </div>
+              {!n.read && <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ background: "var(--dash-danger)" }} />}
+            </div>
+          ))}
+        </div>
+
+        <div className="p-2.5 text-center" style={{ borderTop: "1px solid var(--dash-border)", background: "var(--dash-surface-alt)" }}>
+          <button onClick={() => { setNotificationsOpen(false); router.push(`${ADMIN_PATH}/dashboard/leads`); }} className="text-xs font-semibold hover:underline cursor-pointer inline-flex items-center gap-1" style={{ color: "var(--dash-primary)" }}><span>View All Pipeline Leads</span><ExternalLink className="w-3 h-3" /></button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -403,6 +469,7 @@ export default function DashboardLayout({
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: "var(--dash-danger)" }} />}
             </button>
+            {renderNotificationDropdown(true)}
           </div>
           <div className="relative">
             <span className="w-8 h-8 flex items-center justify-center font-bold text-xs text-white" style={{ background: "var(--dash-primary)", borderRadius: "var(--dash-btn-radius)" }} suppressHydrationWarning>{mounted ? (user?.username || "Admin").slice(0, 2).toUpperCase() : "AD"}</span>
@@ -527,56 +594,7 @@ export default function DashboardLayout({
                 {unreadCount > 0 && <><span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full animate-ping" style={{ background: "var(--dash-danger)" }} /><span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full" style={{ background: "var(--dash-danger)" }} /></>}
               </button>
 
-              {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 overflow-hidden animate-scaleIn z-50" style={{ background: "var(--dash-surface)", border: "1px solid var(--dash-border)", borderRadius: "var(--dash-card-radius)", boxShadow: "0 12px 40px rgba(0,0,0,0.12)" }}>
-                  <div className="p-3.5 flex items-center justify-between" style={{ borderBottom: "1px solid var(--dash-border)", background: "var(--dash-surface-alt)" }}>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-xs" style={{ color: "var(--dash-text)" }}>Notifications</span>
-                      {unreadCount > 0 && <span className="crm-badge badge-danger text-[9px]">{unreadCount} new</span>}
-                    </div>
-                    <div className="flex items-center gap-2 text-[11px]">
-                      <button onClick={triggerTestNotification} className="crm-badge badge-primary cursor-pointer flex items-center gap-1" title="Test notification"><Zap className="w-3 h-3" /><span>Test</span></button>
-                      {unreadCount > 0 && <button onClick={markAllAsRead} className="font-semibold cursor-pointer flex items-center gap-1" style={{ color: "var(--dash-primary)" }}><CheckCheck className="w-3.5 h-3.5" /><span>Read all</span></button>}
-                      <button onClick={handleClearNotifications} className="cursor-pointer p-1 opacity-40 hover:opacity-100" style={{ color: "var(--dash-text-secondary)" }} title="Clear all"><Trash2 className="w-3.5 h-3.5" /></button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1 px-3 py-1.5 text-[11px]" style={{ borderBottom: "1px solid var(--dash-border)", background: "var(--dash-surface-alt)" }}>
-                    {(["all", "unread", "inquiry", "system"] as const).map(tab => (
-                      <button key={tab} onClick={() => setActiveNotifFilter(tab)} className="px-2.5 py-0.5 capitalize font-medium transition cursor-pointer" style={{ borderRadius: "var(--dash-badge-radius)", background: activeNotifFilter === tab ? "var(--dash-primary)" : "transparent", color: activeNotifFilter === tab ? "#FFFFFF" : "var(--dash-text-muted)" }}>{tab}</button>
-                    ))}
-                  </div>
-
-                  <div className="max-h-80 overflow-y-auto crm-scrollbar">
-                    {filteredNotifications.length === 0 ? (
-                      <div className="p-8 text-center text-xs space-y-1" style={{ color: "var(--dash-text-muted)" }}>
-                        <CheckCircle2 className="w-8 h-8 mx-auto opacity-30" /><p className="font-semibold" style={{ color: "var(--dash-text-secondary)" }}>All caught up!</p><p className="text-[11px]">No notifications found.</p>
-                      </div>
-                    ) : filteredNotifications.map(n => (
-                      <div key={n.id} onClick={() => handleNotificationClick(n)} className="p-3 transition flex items-start gap-3 cursor-pointer" style={{ background: !n.read ? "var(--dash-primary-light)" : "transparent", borderBottom: "1px solid var(--dash-border-subtle)" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--dash-surface-alt)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = !n.read ? "var(--dash-primary-light)" : "transparent"; }}
-                      >
-                        <div className="p-2 shrink-0 mt-0.5" style={{ borderRadius: "var(--dash-btn-radius)", background: n.type === "inquiry" ? "var(--dash-primary-light)" : n.type === "lead" ? "var(--dash-success-light)" : n.type === "email" ? "var(--dash-warning-light)" : "var(--dash-surface-alt)", color: n.type === "inquiry" ? "var(--dash-primary)" : n.type === "lead" ? "var(--dash-success)" : n.type === "email" ? "var(--dash-warning)" : "var(--dash-text-secondary)" }}>
-                          {n.type === "inquiry" && <Mail className="w-3.5 h-3.5" />}{n.type === "lead" && <UserCheck className="w-3.5 h-3.5" />}{n.type === "email" && <MessageSquare className="w-3.5 h-3.5" />}{n.type === "system" && <Zap className="w-3.5 h-3.5" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="text-xs font-bold truncate" style={{ color: !n.read ? "var(--dash-primary)" : "var(--dash-text)" }}>{n.title}</span>
-                            <span className="text-[10px] font-mono shrink-0" style={{ color: "var(--dash-text-muted)" }}>{n.time}</span>
-                          </div>
-                          <p className="text-xs mt-0.5 line-clamp-2 leading-relaxed" style={{ color: "var(--dash-text-secondary)" }}>{n.message}</p>
-                        </div>
-                        {!n.read && <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ background: "var(--dash-danger)" }} />}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="p-2.5 text-center" style={{ borderTop: "1px solid var(--dash-border)", background: "var(--dash-surface-alt)" }}>
-                    <button onClick={() => { setNotificationsOpen(false); router.push(`${ADMIN_PATH}/dashboard/leads`); }} className="text-xs font-semibold hover:underline cursor-pointer inline-flex items-center gap-1" style={{ color: "var(--dash-primary)" }}><span>View All Pipeline Leads</span><ExternalLink className="w-3 h-3" /></button>
-                  </div>
-                </div>
-              )}
+              {renderNotificationDropdown(false)}
             </div>
 
             <div className="h-5 w-[1px]" style={{ background: "var(--dash-border)" }} />

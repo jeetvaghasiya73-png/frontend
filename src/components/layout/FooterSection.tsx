@@ -51,6 +51,24 @@ export default function FooterSection() {
     }
   };
 
+  const handleHashLink = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (typeof window !== "undefined" && href.includes("#")) {
+      const hash = href.split("#")[1];
+      if (window.location.pathname === "/" || window.location.pathname === "") {
+        e.preventDefault();
+        const element = document.getElementById(hash);
+        if (element) {
+          const yOffset = -80;
+          const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: "smooth" });
+          window.history.pushState(null, "", `/#${hash}`);
+        } else {
+          window.location.hash = hash;
+        }
+      }
+    }
+  };
+
   return (
     <footer className="bg-surface/30 border-t border-border-custom relative overflow-hidden pt-16 sm:pt-20 pb-12 text-left font-sans">
       {/* Subtle Background Grid */}
@@ -151,10 +169,10 @@ export default function FooterSection() {
               Core Pillars
             </h5>
             <div className="flex flex-col gap-2.5 text-sm text-secondary-custom">
-              <Link href="/#services" className="hover:text-foreground transition-colors">Local SEO 3-Pack</Link>
-              <Link href="/#services" className="hover:text-foreground transition-colors">Next.js Web Dev</Link>
-              <Link href="/#services" className="hover:text-foreground transition-colors">Data Lead Scraping</Link>
-              <Link href="/#services" className="hover:text-foreground transition-colors">WhatsApp AI Agents</Link>
+              <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Local SEO 3-Pack</Link>
+              <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Next.js Web Dev</Link>
+              <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Data Lead Scraping</Link>
+              <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">WhatsApp AI Agents</Link>
             </div>
           </div>
 
@@ -163,10 +181,10 @@ export default function FooterSection() {
               Capabilities
             </h5>
             <div className="flex flex-col gap-2.5 text-sm text-secondary-custom">
-              <Link href="/#services" className="hover:text-foreground transition-colors">Geo-Grid Rank Trackers</Link>
-              <Link href="/#services" className="hover:text-foreground transition-colors">Playwright Crawlers</Link>
-              <Link href="/#services" className="hover:text-foreground transition-colors">n8n Automation Nodes</Link>
-              <Link href="/#services" className="hover:text-foreground transition-colors">Evolution API Baileys</Link>
+              <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Geo-Grid Rank Trackers</Link>
+              <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Playwright Crawlers</Link>
+              <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">n8n Automation Nodes</Link>
+              <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Evolution API Baileys</Link>
             </div>
           </div>
 
@@ -175,9 +193,9 @@ export default function FooterSection() {
               Agency
             </h5>
             <div className="flex flex-col gap-2.5 text-sm text-secondary-custom">
-              <Link href="/#work" className="hover:text-foreground transition-colors">Case Studies</Link>
-              <Link href="/#process" className="hover:text-foreground transition-colors">Our Process</Link>
-              <Link href="/#faq" className="hover:text-foreground transition-colors">FAQ Knowledge</Link>
+              <Link href="/#work" onClick={(e) => handleHashLink(e, "/#work")} className="hover:text-foreground transition-colors">Case Studies</Link>
+              <Link href="/#process" onClick={(e) => handleHashLink(e, "/#process")} className="hover:text-foreground transition-colors">Our Process</Link>
+              <Link href="/#faq" onClick={(e) => handleHashLink(e, "/#faq")} className="hover:text-foreground transition-colors">FAQ Knowledge</Link>
               <Link href="/contact" className="hover:text-indigo-400 font-semibold transition-colors">
                 Request a Quote &rarr;
               </Link>
@@ -234,7 +252,7 @@ export default function FooterSection() {
               Request Quote
             </Link>
             <span>&bull;</span>
-            <Link href="/#faq" className="hover:text-foreground transition-colors">
+            <Link href="/#faq" onClick={(e) => handleHashLink(e, "/#faq")} className="hover:text-foreground transition-colors">
               Documentation
             </Link>
           </div>

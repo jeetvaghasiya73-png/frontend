@@ -6,6 +6,7 @@ interface AuthUser {
   id: number;
   username: string;
   is_superadmin: boolean;
+  is_main_admin?: boolean;
 }
 
 interface AuthState {
@@ -38,6 +39,7 @@ function buildUser(token: string): AuthUser | null {
     id: Number(payload.sub) || 0,
     username: (payload.username as string) || "",
     is_superadmin: Boolean(payload.is_superadmin),
+    is_main_admin: Boolean(payload.is_main_admin),
   };
 }
 

@@ -55,10 +55,23 @@ interface NormalizedLead {
   created_at: string;
   source: "inquiry" | "scraped";
   rating?: string;
+  total_review?: string;
   website?: string;
   city?: string;
   category?: string;
+  address?: string;
+  landmark?: string;
+  building?: string;
+  pincode?: string;
+  bussiness_area?: string;
+  scraped_service?: string;
   email_status?: string;
+  whatsapp_status?: string;
+  whatsapp_sent_at?: string;
+  whatsapp_last_reply?: string;
+  whatsapp_reply_at?: string;
+  whatsapp_ai_enabled?: boolean;
+  is_interested?: boolean;
   score: number;
   followupDate?: string | null;
   notes?: any[];
@@ -66,16 +79,16 @@ interface NormalizedLead {
   raw?: any;
 }
 
-const LEADS_PER_PAGE = 10;
-
 export default function LeadsManager() {
   const { accessToken } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const [allLeads, setAllLeads] = useState<NormalizedLead[]>([]);
+  const [totalLeadsFromAPI, setTotalLeadsFromAPI] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(10);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -211,7 +224,7 @@ export default function LeadsManager() {
 
   const handleBulkSendWaOutreach = async () => {
     if (selectedLeadIds.size === 0) return;
-    const scrapedRawIds = allLeads.filter(l => selectedLeadIds.has(l.rawId) && l.source === "scraped").map(l => l.rawId);
+    const scrapedRawIds = allLeads.filter(l => selectedLeadIds.has(l.id) && l.source === "scraped").map(l => l.rawId);
     if (scrapedRawIds.length === 0) {
       triggerToast("No scraped Google Maps leads selected for WhatsApp outreach.");
       return;
@@ -244,14 +257,17 @@ export default function LeadsManager() {
       const inquiryRes = await authFetch(`${API}/api/v1/leads/`);
       const inquiryData: any[] = inquiryRes.ok ? await inquiryRes.json() : [];
 
-      const scrapedRes = await authFetch(`${API}/api/v1/scraped-leads/?page=1&limit=1000`);
+      const scrapedRes = await authFetch(`${API}/api/v1/scraped-leads/?page=1&limit=10000`);
       let scrapedData: any[] = [];
+      let scrapedTotal = 0;
       if (scrapedRes.ok) {
         const scrapedJson = await scrapedRes.json();
         if (Array.isArray(scrapedJson)) {
           scrapedData = scrapedJson;
+          scrapedTotal = scrapedJson.length;
         } else if (scrapedJson && Array.isArray(scrapedJson.leads)) {
           scrapedData = scrapedJson.leads;
+          scrapedTotal = scrapedJson.total || scrapedJson.leads.length;
         }
       }
 
@@ -275,6 +291,18 @@ export default function LeadsManager() {
           followupDate: savedFollowup || null,
           category: lead.category || "Inbound Inquiry",
           website: lead.website || "",
+          address: lead.address || "",
+          landmark: "",
+          building: "",
+          pincode: "",
+          bussiness_area: "",
+          scraped_service: "",
+          whatsapp_status: "inbound",
+          whatsapp_sent_at: null,
+          whatsapp_last_reply: null,
+          whatsapp_reply_at: null,
+          whatsapp_ai_enabled: true,
+          is_interested: true,
         };
       });
 
@@ -301,10 +329,23 @@ export default function LeadsManager() {
           created_at: lead.created_at || new Date().toISOString(),
           source: "scraped" as const,
           rating: lead.rating || "",
+          total_review: lead.total_review || "",
           website: lead.bussiness_website || "",
           city: lead.scraped_city || "",
           category: formatServiceText(lead.category) || "",
+          address: lead.bussiness_address || "",
+          landmark: lead.landmark || "",
+          building: lead.building || "",
+          pincode: lead.pincode || "",
+          bussiness_area: lead.bussiness_area || "",
+          scraped_service: lead.scraped_service || "",
           email_status: lead.email_status || "pending",
+          whatsapp_status: lead.whatsapp_status || "pending",
+          whatsapp_sent_at: lead.whatsapp_sent_at || null,
+          whatsapp_last_reply: lead.whatsapp_last_reply || null,
+          whatsapp_reply_at: lead.whatsapp_reply_at || null,
+          whatsapp_ai_enabled: lead.whatsapp_ai_enabled !== false,
+          is_interested: Boolean(lead.is_interested),
           score,
           followupDate: savedFollowup || rawFollowup || null,
         };
@@ -313,31 +354,20 @@ export default function LeadsManager() {
       const merged = [...normalizedInquiries, ...normalizedScraped];
       merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      // Deduplicate to guarantee strictly unique records in CRM dashboard
-      const seenEmails = new Set<string>();
-      const seenPhones = new Set<string>();
-      const seenBiz = new Set<string>();
+      // Retain all distinct lead entries from database by unique source & id
+      const seenKeys = new Set<string>();
       const uniqueLeads: NormalizedLead[] = [];
 
       for (const lead of merged) {
-        const em = lead.email ? lead.email.trim().toLowerCase() : "";
-        const ph = lead.phone ? lead.phone.replace(/[^0-9]/g, "").slice(-10) : "";
-        const bz = (lead.company || lead.name || "").trim().toLowerCase();
-
-        let isDup = false;
-        if (em && seenEmails.has(em)) isDup = true;
-        else if (ph && ph.length >= 10 && seenPhones.has(ph)) isDup = true;
-        else if (bz && bz.length >= 3 && seenBiz.has(bz)) isDup = true;
-
-        if (!isDup) {
-          if (em) seenEmails.add(em);
-          if (ph && ph.length >= 10) seenPhones.add(ph);
-          if (bz && bz.length >= 3) seenBiz.add(bz);
+        const key = `${lead.source}_${lead.rawId}`;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
           uniqueLeads.push(lead);
         }
       }
 
       setAllLeads(uniqueLeads);
+      setTotalLeadsFromAPI(Math.max(uniqueLeads.length, scrapedTotal + inquiryData.length));
     } catch (err) {
       console.error("Failed to load leads:", err);
     } finally {
@@ -719,8 +749,8 @@ export default function LeadsManager() {
     if (!confirm(`Are you sure you want to permanently delete ${selectedLeadIds.size} selected lead(s)?`)) return;
 
     try {
-      const scrapedRawIds = allLeads.filter(l => selectedLeadIds.has(l.rawId) && l.source === "scraped").map(l => l.rawId);
-      const inquiryRawIds = allLeads.filter(l => selectedLeadIds.has(l.rawId) && l.source === "inquiry").map(l => l.rawId);
+      const scrapedRawIds = allLeads.filter(l => selectedLeadIds.has(l.id) && l.source === "scraped").map(l => l.rawId);
+      const inquiryRawIds = allLeads.filter(l => selectedLeadIds.has(l.id) && l.source === "inquiry").map(l => l.rawId);
 
       if (scrapedRawIds.length > 0) {
         await authFetch(`${API}/api/v1/scraped-leads/bulk-delete`, {
@@ -738,7 +768,7 @@ export default function LeadsManager() {
         });
       }
 
-      setAllLeads(prev => prev.filter(l => !selectedLeadIds.has(l.rawId)));
+      setAllLeads(prev => prev.filter(l => !selectedLeadIds.has(l.id)));
       setSelectedLeadIds(new Set());
       triggerToast(`Successfully deleted selected lead(s)`);
     } catch (err) {
@@ -931,11 +961,11 @@ export default function LeadsManager() {
     return result;
   }, [allLeads, sourceFilter, statusFilter, searchQuery]);
 
-  const totalPages = Math.ceil(filteredLeads.length / LEADS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(filteredLeads.length / pageSize));
   const paginatedLeads = useMemo(() => {
-    const start = (currentPage - 1) * LEADS_PER_PAGE;
-    return filteredLeads.slice(start, start + LEADS_PER_PAGE);
-  }, [filteredLeads, currentPage]);
+    const start = (currentPage - 1) * pageSize;
+    return filteredLeads.slice(start, start + pageSize);
+  }, [filteredLeads, currentPage, pageSize]);
 
   if (loading) {
     return (
@@ -970,7 +1000,7 @@ export default function LeadsManager() {
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold tracking-tight text-[var(--dash-text)]">Leads Database</h1>
               <span className="px-2 py-0.5 rounded-md bg-[var(--dash-primary)] text-white font-bold text-xs font-mono">
-                {allLeads.length} Total
+                {totalLeadsFromAPI || allLeads.length} Total
               </span>
             </div>
             <p className="text-xs text-[var(--dash-text-muted)] mt-0.5">Manage, qualify, and inspect inbound &amp; outbound prospect records</p>
@@ -1021,7 +1051,7 @@ export default function LeadsManager() {
         <div className="crm-card p-3 sm:p-4 flex flex-col justify-between">
           <span className="text-[11px] sm:text-xs font-semibold text-[var(--dash-text-muted)] uppercase tracking-wider truncate">Total Prospects</span>
           <div className="mt-1 sm:mt-2 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">{allLeads.length}</span>
+            <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">{totalLeadsFromAPI || allLeads.length}</span>
             <span className="text-[10px] sm:text-xs font-bold text-emerald-500 bg-emerald-500/10 px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">+14.2%</span>
           </div>
         </div>
@@ -1498,44 +1528,94 @@ export default function LeadsManager() {
         )}
 
         {/* Pagination Controls */}
-        {totalPages > 1 && (
+        {filteredLeads.length > 0 && (() => {
+          const startItem = (currentPage - 1) * pageSize + 1;
+          const endItem = Math.min(currentPage * pageSize, filteredLeads.length);
+          // Smart sliding window pagination: currentPage - 2 to currentPage + 2
+          const getPageNumbers = () => {
+            const pages: (number | string)[] = [];
+            if (totalPages <= 7) {
+              for (let i = 1; i <= totalPages; i++) pages.push(i);
+            } else {
+              pages.push(1);
+              const start = Math.max(2, currentPage - 2);
+              const end = Math.min(totalPages - 1, currentPage + 2);
+              if (start > 2) pages.push("...");
+              for (let i = start; i <= end; i++) pages.push(i);
+              if (end < totalPages - 1) pages.push("...");
+              pages.push(totalPages);
+            }
+            return pages;
+          };
+          return (
           <div className="p-4 border-t border-slate-200/80 dark:border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
-            <span className="text-xs text-slate-500 dark:text-neutral-400">
-              Page <span className="font-semibold text-slate-900 dark:text-white">{currentPage}</span> of{" "}
-              <span className="font-semibold text-slate-900 dark:text-white">{totalPages}</span>
-            </span>
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-xs text-slate-500 dark:text-neutral-400">
+                Showing <span className="font-semibold text-slate-900 dark:text-white">{startItem}-{endItem}</span> of{" "}
+                <span className="font-semibold text-slate-900 dark:text-white">{filteredLeads.length}</span> leads
+                {filteredLeads.length < (totalLeadsFromAPI || allLeads.length) && (
+                  <span className="ml-1 text-slate-400">({totalLeadsFromAPI || allLeads.length} total)</span>
+                )}
+              </span>
 
-            <div className="flex items-center gap-1.5 flex-wrap justify-center">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className="px-3.5 py-1.5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-neutral-200 disabled:opacity-40 cursor-pointer hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
-              >
-                Previous
-              </button>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map(p => (
-                <button
-                  key={p}
-                  onClick={() => setCurrentPage(p)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm cursor-pointer ${
-                    currentPage === p
-                      ? "bg-indigo-600 text-white font-bold"
-                      : "hidden sm:inline-flex bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-neutral-800"
-                  }`}
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-neutral-400">
+                <span>Per page:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="px-2 py-1 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-md text-xs font-semibold text-slate-700 dark:text-neutral-200 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                 >
-                  {p}
-                </button>
-              ))}
-              <button
-                disabled={currentPage >= totalPages}
-                onClick={() => setCurrentPage(p => p + 1)}
-                className="px-3.5 py-1.5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-neutral-200 disabled:opacity-40 cursor-pointer hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
-              >
-                Next
-              </button>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
             </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1 flex-wrap justify-center">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className="px-3 py-1.5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-neutral-200 disabled:opacity-40 cursor-pointer hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
+                  title="Previous page"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                {getPageNumbers().map((p, idx) => (
+                  typeof p === "string" ? (
+                    <span key={`dots-${idx}`} className="px-1.5 py-1.5 text-xs text-slate-400 dark:text-neutral-500 select-none">…</span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
+                        currentPage === p
+                          ? "bg-indigo-600 text-white font-bold shadow-md shadow-indigo-500/30"
+                          : "bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-neutral-800"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                ))}
+                <button
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  className="px-3 py-1.5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-neutral-200 disabled:opacity-40 cursor-pointer hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
+                  title="Next page"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           </div>
-        )}
+          );
+        })()}
       </section>
 
       {/* ── Lead Business Card Drawer ── */}
@@ -1823,7 +1903,7 @@ export default function LeadsManager() {
                   )}
                 </div>
 
-                <div className="space-y-2 text-xs">
+                <div className="space-y-2.5 text-xs">
                   <div className="flex items-center gap-2.5 sm:gap-3">
                     <Mail className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
                     <span className="font-semibold break-all" style={{ color: selectedLead.email ? "var(--dash-primary)" : "var(--dash-text-muted)" }}>
@@ -1832,12 +1912,56 @@ export default function LeadsManager() {
                   </div>
                   <div className="flex items-center gap-2.5 sm:gap-3" style={{ color: "var(--dash-text)" }}>
                     <Phone className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
-                    <span>{selectedLead.phone || "No Phone"}</span>
+                    <span className="font-semibold">{selectedLead.phone || "No Phone"}</span>
                   </div>
-                  <div className="flex items-center gap-2.5 sm:gap-3" style={{ color: "var(--dash-text)" }}>
-                    <MapPin className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
-                    <span>{selectedLead.city || selectedLead.company || "Unknown Location"}</span>
-                  </div>
+
+                  {/* Scraped Physical Address & Landmark */}
+                  {(selectedLead.address || selectedLead.raw?.bussiness_address) && (
+                    <div className="flex items-start gap-2.5 sm:gap-3 pt-0.5" style={{ color: "var(--dash-text)" }}>
+                      <MapPin className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" />
+                      <div className="min-w-0">
+                        <span className="font-medium text-slate-800 dark:text-slate-200">
+                          {selectedLead.address || selectedLead.raw?.bussiness_address}
+                        </span>
+                        {(selectedLead.landmark || selectedLead.raw?.landmark) && (
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            Landmark: <span className="font-semibold text-slate-700 dark:text-slate-300">{selectedLead.landmark || selectedLead.raw?.landmark}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Building, Area, City & Pincode Chips */}
+                  {((selectedLead.building || selectedLead.raw?.building) ||
+                    (selectedLead.bussiness_area || selectedLead.raw?.bussiness_area) ||
+                    (selectedLead.pincode || selectedLead.raw?.pincode) ||
+                    selectedLead.city) && (
+                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                      {(selectedLead.building || selectedLead.raw?.building) && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          <Building className="w-3 h-3 text-slate-400" />
+                          {selectedLead.building || selectedLead.raw?.building}
+                        </span>
+                      )}
+                      {(selectedLead.bussiness_area || selectedLead.raw?.bussiness_area) && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          {selectedLead.bussiness_area || selectedLead.raw?.bussiness_area}
+                        </span>
+                      )}
+                      {selectedLead.city && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                          {selectedLead.city}
+                        </span>
+                      )}
+                      {(selectedLead.pincode || selectedLead.raw?.pincode) && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 font-mono">
+                          PIN: {selectedLead.pincode || selectedLead.raw?.pincode}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-2.5 sm:gap-3" style={{ color: "var(--dash-text)" }}>
                     <Globe className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
                     {isValidWebsite(selectedLead.website) ? (
@@ -1853,12 +1977,22 @@ export default function LeadsManager() {
                       <span className="text-[var(--dash-text-muted)] italic text-xs">No website listed</span>
                     )}
                   </div>
-                  {selectedLead.rating && (
+
+                  {/* Rating & Total Reviews Count */}
+                  {(selectedLead.rating || selectedLead.raw?.rating) && (
                     <div className="flex items-center gap-2.5 sm:gap-3 text-amber-500 font-semibold">
                       <Star className="w-4 h-4 shrink-0 fill-amber-500 text-amber-500" />
-                      <span>Rating: {selectedLead.rating} / 5.0</span>
+                      <span>
+                        Rating: {selectedLead.rating || selectedLead.raw?.rating} / 5.0
+                        {(selectedLead.total_review || selectedLead.raw?.total_review) && (
+                          <span className="text-slate-400 dark:text-slate-500 font-normal ml-1">
+                            ({selectedLead.total_review || selectedLead.raw?.total_review} reviews)
+                          </span>
+                        )}
+                      </span>
                     </div>
                   )}
+
                   {selectedLead.category && (
                     <div className="flex items-center gap-2.5 sm:gap-3 pt-1">
                       <Tag className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
@@ -1867,6 +2001,45 @@ export default function LeadsManager() {
                       </span>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Outreach & Campaign Intelligence Card */}
+              <div
+                className="p-3 sm:p-4 space-y-2.5 sm:space-y-3"
+                style={{
+                  background: "var(--dash-surface-alt)",
+                  border: "1px solid var(--dash-border)",
+                  borderRadius: "var(--dash-card-radius)"
+                }}
+              >
+                <h4 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider" style={{ color: "var(--dash-text-muted)" }}>
+                  Outreach & Campaign Intelligence
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-2.5 rounded-lg bg-white/50 dark:bg-black/20 border border-slate-200/80 dark:border-neutral-800">
+                    <span className="text-[10px] text-slate-400 block font-medium">WhatsApp Outreach</span>
+                    <span className="font-bold capitalize text-emerald-500">
+                      {selectedLead.whatsapp_status || selectedLead.raw?.whatsapp_status || "Pending"}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-white/50 dark:bg-black/20 border border-slate-200/80 dark:border-neutral-800">
+                    <span className="text-[10px] text-slate-400 block font-medium">Email Campaign</span>
+                    <span className="font-bold capitalize text-indigo-500">
+                      {selectedLead.email_status || selectedLead.raw?.email_status || "Pending"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs px-1">
+                  <span className="text-slate-500 dark:text-neutral-400 font-medium">AI Auto-Reply Bot</span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                    (selectedLead.whatsapp_ai_enabled ?? selectedLead.raw?.whatsapp_ai_enabled) !== false
+                      ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                      : "bg-rose-500/10 text-rose-500 border border-rose-500/20"
+                  }`}>
+                    {(selectedLead.whatsapp_ai_enabled ?? selectedLead.raw?.whatsapp_ai_enabled) !== false ? "Active" : "Disabled"}
+                  </span>
                 </div>
               </div>
 
