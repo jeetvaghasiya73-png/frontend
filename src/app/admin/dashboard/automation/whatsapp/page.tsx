@@ -6,6 +6,7 @@ import {
   Send,
   Sparkles,
   CheckCircle2,
+  History,
   AlertCircle,
   Clock,
   RefreshCw,
@@ -304,6 +305,10 @@ export default function WhatsAppOutreachPage() {
   const [selectedConv, setSelectedConv] = useState<ConversationItem | null>(null);
   const [convMessages, setConvMessages] = useState<ChatMessage[]>([]);
   const [loadingConvMessages, setLoadingConvMessages] = useState(false);
+  const [showAllMessages, setShowAllMessages] = useState(false);
+  const [totalMessageCount, setTotalMessageCount] = useState(0);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [loadingMoreMessages, setLoadingMoreMessages] = useState(false);
   const [manualMessageText, setManualMessageText] = useState("");
   const [sendingManualReply, setSendingManualReply] = useState(false);
   const [togglingAi, setTogglingAi] = useState(false);
@@ -454,14 +459,21 @@ export default function WhatsAppOutreachPage() {
     }
   }, [convFilter, convSearch]);
 
-  const fetchChatMessages = useCallback(async (leadId: number) => {
-    setLoadingConvMessages(true);
+  const fetchChatMessages = useCallback(async (leadId: number, loadAll: boolean = false, isBackground: boolean = false) => {
+    if (!isBackground) {
+      if (loadAll) setLoadingMoreMessages(true);
+      else setLoadingConvMessages(true);
+    }
     try {
-      const res = await authFetch(`${API}/api/v1/whatsapp/chats/${leadId}`);
+      const url = `${API}/api/v1/whatsapp/chats/${leadId}${loadAll ? "" : "?limit=5"}`;
+      const res = await authFetch(url);
       if (res.ok) {
         const data = await res.json();
+        setTotalMessageCount(data.total_count ?? (data.chats || []).length);
+        setHasMoreMessages(Boolean(data.has_more));
+
         const rawChats: ChatMessage[] = (data.chats || []).map((m: any) => {
-          const hasCta = m.button_id || m.message_text.includes("Call") || m.message_text.includes("Website") || m.message_text.includes("Demo");
+          const hasCta = m.button_id || (m.message_text && (m.message_text.includes("Call") || m.message_text.includes("Website") || m.message_text.includes("Demo")));
           let ctaButtons: any[] = [];
 
           if (hasCta || m.direction === "outbound") {
@@ -478,7 +490,7 @@ export default function WhatsAppOutreachPage() {
 
           return {
             ...m,
-            msg_type: m.button_id ? "interactive_cta" : (m.message_text.includes("[AUDIO]") ? "voice_note" : "text"),
+            msg_type: m.button_id ? "interactive_cta" : (m.message_text && m.message_text.includes("[AUDIO]") ? "voice_note" : "text"),
             cta_buttons: ctaButtons
           };
         });
@@ -488,6 +500,7 @@ export default function WhatsAppOutreachPage() {
       console.error("Fetch chat messages error:", e);
     } finally {
       setLoadingConvMessages(false);
+      setLoadingMoreMessages(false);
     }
   }, [selectedConv?.phone_number, selectedConv?.website]);
 
@@ -528,11 +541,22 @@ export default function WhatsAppOutreachPage() {
     fetchLeadsTable();
   }, [fetchOverview, fetchAnalytics, fetchConversations, fetchLeadsTable]);
 
+  // When switching conversation, reset to 5 messages and fetch
   useEffect(() => {
     if (selectedConv?.lead_id) {
-      fetchChatMessages(selectedConv.lead_id);
+      setShowAllMessages(false);
+      fetchChatMessages(selectedConv.lead_id, false);
     }
   }, [selectedConv?.lead_id, fetchChatMessages]);
+
+  // Real-time background sync every 3 seconds for active conversation
+  useEffect(() => {
+    if (!selectedConv?.lead_id) return;
+    const interval = setInterval(() => {
+      fetchChatMessages(selectedConv.lead_id, showAllMessages, true);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [selectedConv?.lead_id, showAllMessages, fetchChatMessages]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1422,7 +1446,42 @@ export default function WhatsAppOutreachPage() {
                       </p>
                     </div>
                   ) : (
-                    convMessages.map((m) => {
+                    <>
+                      {/* Load Earlier Messages Button */}
+                      {hasMoreMessages && !showAllMessages && (
+                        <div className="flex justify-center py-2 mb-2 sticky top-0 z-10">
+                          <button
+                            onClick={() => {
+                              setShowAllMessages(true);
+                              fetchChatMessages(selectedConv.lead_id, true);
+                            }}
+                            disabled={loadingMoreMessages}
+                            className="px-3.5 py-1.5 text-xs font-semibold rounded-full bg-[var(--dash-card-bg)] hover:bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-60 cursor-pointer"
+                          >
+                            {loadingMoreMessages ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                <span>Loading earlier messages...</span>
+                              </>
+                            ) : (
+                              <>
+                                <History className="w-3.5 h-3.5" />
+                                <span>Load earlier messages ({totalMessageCount - convMessages.length} more)</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
+
+                      {showAllMessages && totalMessageCount > 5 && (
+                        <div className="flex justify-center py-1.5 mb-2">
+                          <span className="px-2.5 py-0.5 text-[10px] font-medium rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            Showing all {totalMessageCount} messages
+                          </span>
+                        </div>
+                      )}
+
+                      {convMessages.map((m) => {
                       const isOutbound = m.direction === "outbound";
                       return (
                         <div
@@ -1485,8 +1544,9 @@ export default function WhatsAppOutreachPage() {
                           </div>
                         </div>
                       );
-                    })
-                  )}
+                    })}
+                  </>
+                )}
 
                   {/* Typing Indicator */}
                   {isTyping && (

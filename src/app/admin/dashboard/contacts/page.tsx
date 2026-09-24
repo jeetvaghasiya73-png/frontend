@@ -28,6 +28,7 @@ import {
   Filter,
   CheckCircle2,
   MessageCircle,
+  History,
   FileText
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
@@ -164,6 +165,10 @@ export default function ContactMessagesManager() {
   // WhatsApp Active Thread Messages
   const [waChatMessages, setWaChatMessages] = useState<WhatsAppChatMessage[]>([]);
   const [loadingWaChats, setLoadingWaChats] = useState(false);
+  const [waShowAll, setWaShowAll] = useState(false);
+  const [waTotalCount, setWaTotalCount] = useState(0);
+  const [waHasMore, setWaHasMore] = useState(false);
+  const [loadingMoreWa, setLoadingMoreWa] = useState(false);
   const [waReplyText, setWaReplyText] = useState("");
   const [sendingWaReply, setSendingWaReply] = useState(false);
   const [togglingWaAi, setTogglingWaAi] = useState(false);
@@ -364,21 +369,42 @@ export default function ContactMessagesManager() {
     }
   }, [filteredMessages, selectedMessage]);
 
-  // Fetch WhatsApp chat thread when a WhatsApp item is selected
+  // Fetch WhatsApp chat thread when a WhatsApp item is selected (5 last messages by default)
+  const fetchWaChats = useCallback(
+    async (leadId: number, loadAll: boolean = false, isBackground: boolean = false) => {
+      if (!isBackground) setLoadingWaChats(true);
+      if (loadAll) setLoadingMoreWa(true);
+      try {
+        const url = `${API}/api/v1/whatsapp/chats/${leadId}${loadAll ? "" : "?limit=5"}`;
+        const res = await authFetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          setWaChatMessages(data.chats || []);
+          setWaTotalCount(data.total_count ?? (data.chats || []).length);
+          setWaHasMore(data.has_more ?? false);
+        }
+      } catch (e) {
+        console.error("Error loading WA chats:", e);
+      } finally {
+        if (!isBackground) setLoadingWaChats(false);
+        if (loadAll) setLoadingMoreWa(false);
+      }
+    },
+    [accessToken]
+  );
+
+  // Fetch when selectedMessage changes or polling in real time
   useEffect(() => {
     if (selectedMessage && selectedMessage.channel === "whatsapp") {
-      setLoadingWaChats(true);
-      authFetch(`${API}/api/v1/whatsapp/chats/${selectedMessage.sourceId}`)
-        .then(async (res) => {
-          if (res.ok) {
-            const data = await res.json();
-            setWaChatMessages(data.chats || []);
-          }
-        })
-        .catch((e) => console.error("Error loading WA chats:", e))
-        .finally(() => setLoadingWaChats(false));
+      setWaShowAll(false);
+      fetchWaChats(selectedMessage.sourceId, false, false);
+
+      const interval = setInterval(() => {
+        fetchWaChats(selectedMessage.sourceId, waShowAll, true);
+      }, 3000);
+      return () => clearInterval(interval);
     }
-  }, [selectedMessage?.id, selectedMessage?.channel, selectedMessage?.sourceId]);
+  }, [selectedMessage?.id, selectedMessage?.channel, selectedMessage?.sourceId, waShowAll, fetchWaChats]);
 
   // Scroll to bottom of chat on load
   useEffect(() => {
@@ -992,7 +1018,36 @@ export default function ContactMessagesManager() {
                         No previous chat messages recorded for this contact yet. Send an outreach reply below!
                       </div>
                     ) : (
-                      waChatMessages.map((chat) => {
+                      <>
+                        {waHasMore && (
+                          <div className="flex justify-center sticky top-0 z-10 py-1">
+                            <button
+                              onClick={() => {
+                                setWaShowAll(true);
+                                fetchWaChats(selectedMessage.sourceId, true, false);
+                              }}
+                              disabled={loadingMoreWa}
+                              className="px-3.5 py-1.5 rounded-full bg-[var(--dash-card-bg)] hover:bg-[var(--dash-card-hover)] border border-[var(--dash-border)] text-emerald-600 dark:text-emerald-400 text-xs font-semibold shadow-sm flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                            >
+                              {loadingMoreWa ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <History className="w-3.5 h-3.5" />
+                              )}
+                              <span>
+                                Load earlier messages ({waTotalCount - waChatMessages.length} more)
+                              </span>
+                            </button>
+                          </div>
+                        )}
+                        {waShowAll && waTotalCount > 5 && (
+                          <div className="flex justify-center py-1">
+                            <span className="text-[11px] font-mono text-[var(--dash-text-muted)] bg-[var(--dash-card-bg)] px-3 py-1 rounded-full border border-[var(--dash-border)]">
+                              Showing all {waTotalCount} messages
+                            </span>
+                          </div>
+                        )}
+                        {waChatMessages.map((chat) => {
                         const isOutbound = chat.direction === "outbound";
                         return (
                           <div
@@ -1019,8 +1074,9 @@ export default function ContactMessagesManager() {
                             </div>
                           </div>
                         );
-                      })
-                    )}
+                      })}
+                    </>
+                  )}
                     <div ref={chatEndRef} />
                   </>
                 )}
