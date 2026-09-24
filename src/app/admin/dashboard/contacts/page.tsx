@@ -393,18 +393,79 @@ export default function ContactMessagesManager() {
     [accessToken]
   );
 
-  // Fetch when selectedMessage changes or polling in real time
+  const selectedMessageRef = useRef(selectedMessage);
+  useEffect(() => {
+    selectedMessageRef.current = selectedMessage;
+  }, [selectedMessage]);
+
+  // Fetch when selectedMessage changes (initial 5 messages load)
   useEffect(() => {
     if (selectedMessage && selectedMessage.channel === "whatsapp") {
       setWaShowAll(false);
       fetchWaChats(selectedMessage.sourceId, false, false);
-
-      const interval = setInterval(() => {
-        fetchWaChats(selectedMessage.sourceId, waShowAll, true);
-      }, 3000);
-      return () => clearInterval(interval);
     }
-  }, [selectedMessage?.id, selectedMessage?.channel, selectedMessage?.sourceId, waShowAll, fetchWaChats]);
+  }, [selectedMessage?.id, selectedMessage?.channel, selectedMessage?.sourceId, fetchWaChats]);
+
+  // Real-time WebSocket sync for WhatsApp chat modal in Contacts (zero polling)
+  useEffect(() => {
+    let ws: WebSocket | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let unmounted = false;
+
+    const connect = () => {
+      if (unmounted) return;
+      try {
+        const wsUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000")
+          .replace(/^http/, "ws") + "/api/v1/whatsapp/ws";
+        ws = new WebSocket(wsUrl);
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === "new_chat_message" && data.chat) {
+              const currentActive = selectedMessageRef.current;
+              if (
+                currentActive &&
+                currentActive.channel === "whatsapp" &&
+                (
+                  Number(currentActive.sourceId) === Number(data.chat.lead_id) ||
+                  (data.chat.phone_number && currentActive.phone && data.chat.phone_number.includes(currentActive.phone.replace(/\D/g, "").slice(-10)))
+                )
+              ) {
+                const newMsg = {
+                  id: data.chat.id,
+                  direction: data.chat.direction,
+                  message_text: data.chat.message_text,
+                  button_id: data.chat.button_id,
+                  created_at: data.chat.created_at
+                };
+                setWaChatMessages((prev) => {
+                  if (prev.some((m) => m.id === newMsg.id || (m.message_text === newMsg.message_text && m.direction === newMsg.direction && m.created_at === newMsg.created_at))) return prev;
+                  return [...prev, newMsg];
+                });
+              }
+            }
+          } catch (err) {
+            // ignore
+          }
+        };
+
+        ws.onclose = () => {
+          if (unmounted) return;
+          reconnectTimer = setTimeout(connect, 3000);
+        };
+      } catch (err) {
+        if (!unmounted) reconnectTimer = setTimeout(connect, 5000);
+      }
+    };
+
+    connect();
+    return () => {
+      unmounted = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (ws) ws.close();
+    };
+  }, []);
 
   // Scroll to bottom of chat on load
   useEffect(() => {

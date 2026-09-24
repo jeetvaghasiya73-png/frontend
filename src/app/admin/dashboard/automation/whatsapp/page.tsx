@@ -549,20 +549,16 @@ export default function WhatsAppOutreachPage() {
     }
   }, [selectedConv?.lead_id, fetchChatMessages]);
 
-  // Real-time background sync every 3 seconds for active conversation
+  const selectedConvRef = useRef(selectedConv);
   useEffect(() => {
-    if (!selectedConv?.lead_id) return;
-    const interval = setInterval(() => {
-      fetchChatMessages(selectedConv.lead_id, showAllMessages, true);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [selectedConv?.lead_id, showAllMessages, fetchChatMessages]);
+    selectedConvRef.current = selectedConv;
+  }, [selectedConv]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [convMessages, isTyping]);
 
-  // WebSocket connection for real-time updates
+  // WebSocket connection for real-time updates (pure event-driven, zero polling)
   useEffect(() => {
     let ws: WebSocket | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -585,31 +581,39 @@ export default function WhatsAppOutreachPage() {
             const data = JSON.parse(event.data);
 
             if (data.type === "new_chat_message" && data.chat) {
-              const chatMsg: ChatMessage = {
-                id: data.chat.id,
-                lead_id: data.chat.lead_id,
-                direction: data.chat.direction,
-                message_text: data.chat.message_text,
-                button_id: data.chat.button_id,
-                created_at: data.chat.created_at,
-                msg_type: data.chat.button_id ? "interactive_cta" : "text",
-                cta_buttons: [
-                  { id: "call_cta", label: "📞 Call Now", action_type: "call" as const, payload: "" },
-                  ...(isValidWebsite(selectedConv?.website)
-                    ? [{ id: "site_cta", label: "🌐 Visit Website", action_type: "url" as const, payload: formatWebsiteUrl(selectedConv?.website)! }]
-                    : []),
-                  { id: "demo_cta", label: "📅 Book Demo", action_type: "quick_reply" as const, payload: "Book Demo" }
-                ]
-              };
+              const currentLead = selectedConvRef.current;
+              const matchesActive = currentLead && (
+                currentLead.lead_id === data.chat.lead_id ||
+                (data.chat.phone_number && currentLead.phone_number && data.chat.phone_number.includes(currentLead.phone_number.slice(-10)))
+              );
 
-              setConvMessages((prev) => {
-                if (prev.some((m) => m.id === chatMsg.id)) return prev;
-                return [...prev, chatMsg];
-              });
+              if (matchesActive) {
+                const chatMsg: ChatMessage = {
+                  id: data.chat.id,
+                  lead_id: data.chat.lead_id,
+                  direction: data.chat.direction,
+                  message_text: data.chat.message_text,
+                  button_id: data.chat.button_id,
+                  created_at: data.chat.created_at,
+                  msg_type: data.chat.button_id ? "interactive_cta" : "text",
+                  cta_buttons: [
+                    { id: "call_cta", label: "📞 Call Now", action_type: "call" as const, payload: "" },
+                    ...(isValidWebsite(currentLead?.website)
+                      ? [{ id: "site_cta", label: "🌐 Visit Website", action_type: "url" as const, payload: formatWebsiteUrl(currentLead?.website)! }]
+                      : []),
+                    { id: "demo_cta", label: "📅 Book Demo", action_type: "quick_reply" as const, payload: "Book Demo" }
+                  ]
+                };
+
+                setConvMessages((prev) => {
+                  if (prev.some((m) => m.id === chatMsg.id || (m.message_text === chatMsg.message_text && m.direction === chatMsg.direction && m.created_at === chatMsg.created_at))) return prev;
+                  return [...prev, chatMsg];
+                });
+              }
 
               setConversations((prev) =>
                 prev.map((c) =>
-                  c.lead_id === data.chat.lead_id
+                  c.lead_id === data.chat.lead_id || (data.chat.phone_number && c.phone_number && data.chat.phone_number.includes(c.phone_number.slice(-10)))
                     ? {
                         ...c,
                         latest_message: data.chat.message_text,
