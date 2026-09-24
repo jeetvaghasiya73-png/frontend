@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/authStore";
-import {  Loader2, Plus, Edit2, Trash2, X, Check, Eye  } from "lucide-react";
+import { Loader2, Plus, Edit2, Trash2, X, Check, Eye, ExternalLink } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
 
 export default function BlogsManager() {
@@ -504,16 +504,41 @@ export default function BlogsManager() {
                   </span>
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  {blog.title}
+                  <a
+                    href={`/blogs/${blog.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-accent-custom hover:underline transition-all flex items-center gap-1.5"
+                  >
+                    {blog.title}
+                    <ExternalLink className="w-3.5 h-3.5 text-gray-400 group-hover:text-accent-custom" />
+                  </a>
                 </h3>
                 <p className="text-xs text-gray-600 dark:text-[#B0B0B0] leading-relaxed max-w-2xl">{blog.summary}</p>
-                <div className="text-[10px] font-mono text-accent-custom">
-                  slug: /{blog.slug}
+                <div className="text-[10px] font-mono text-accent-custom flex items-center gap-1">
+                  <span>URL:</span>
+                  <a
+                    href={`/blogs/${blog.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline font-semibold"
+                  >
+                    /blogs/{blog.slug}
+                  </a>
                 </div>
               </div>
 
               {/* Actions */}
               <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={`/blogs/${blog.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-500 dark:text-[#B0B0B0] hover:bg-blue-50 hover:border-blue-200 hover:text-accent-custom dark:hover:bg-accent-custom/10 dark:hover:border-accent-custom/20 dark:hover:text-accent-custom transition-all"
+                  title="View Live Article"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                </a>
                 <button
                   onClick={() => handleEditClick(blog)}
                   className="w-8 h-8 rounded border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-500 dark:text-[#B0B0B0] hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer transition-all"
