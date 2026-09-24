@@ -18,7 +18,11 @@ import {
   ShieldAlert,
   Send,
   Cpu,
-  Layers
+  Layers,
+  Plus,
+  Trash2,
+  Users,
+  Check
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
 
@@ -126,9 +130,81 @@ export default function SettingsPage() {
     }
   }, []);
 
+  // Admin Notification Email Recipients (Multi-Admin Alert Broadcast)
+  const [adminEmails, setAdminEmails] = useState<string[]>(["meetvaghasiya166@gmail.com"]);
+  const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [addingEmail, setAddingEmail] = useState(false);
+  const [removingEmail, setRemovingEmail] = useState<string | null>(null);
+
+  const fetchAdminEmails = useCallback(async () => {
+    try {
+      const res = await authFetch(`${API}/api/v1/settings/admin-emails`);
+      if (res.ok) {
+        const data = await res.json();
+        setAdminEmails(data.emails || ["meetvaghasiya166@gmail.com"]);
+      }
+    } catch (e) {
+      console.error("Failed to load admin emails:", e);
+    }
+  }, []);
+
   useEffect(() => {
     fetchOverview();
-  }, [fetchOverview]);
+    fetchAdminEmails();
+  }, [fetchOverview, fetchAdminEmails]);
+
+  const handleAddAdminEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAdminEmail.trim() || !newAdminEmail.includes("@")) return;
+    setAddingEmail(true);
+    try {
+      const res = await authFetch(`${API}/api/v1/settings/admin-emails`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newAdminEmail.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAdminEmails(data.emails || []);
+        setNewAdminEmail("");
+        showToast("success", `Added ${newAdminEmail.trim()} to admin alert recipients!`);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast("error", err.detail || "Failed to add admin email.");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("error", "Network error adding admin email.");
+    } finally {
+      setAddingEmail(false);
+    }
+  };
+
+  const handleRemoveAdminEmail = async (emailToRemove: string) => {
+    if (emailToRemove === "meetvaghasiya166@gmail.com") {
+      showToast("error", "Primary admin email cannot be removed.");
+      return;
+    }
+    setRemovingEmail(emailToRemove);
+    try {
+      const res = await authFetch(`${API}/api/v1/settings/admin-emails/${encodeURIComponent(emailToRemove)}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAdminEmails(data.emails || []);
+        showToast("success", `Removed ${emailToRemove} from admin notifications.`);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast("error", err.detail || "Failed to remove admin email.");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("error", "Network error removing admin email.");
+    } finally {
+      setRemovingEmail(null);
+    }
+  };
 
   // Run Database Test
   const handleTestDatabase = async () => {
@@ -689,6 +765,118 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          7. DEDICATED ADMIN NOTIFICATION EMAIL RECIPIENTS (MULTI-ADMIN)
+      ───────────────────────────────────────────────────────────── */}
+      <div className="crm-card p-6 border border-[var(--dash-border)] rounded-lg space-y-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--dash-border)] pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center border border-indigo-500/20 shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-[var(--dash-text)] flex items-center gap-2">
+                <span>Admin Alert Email Broadcast Network</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  {adminEmails.length} Active {adminEmails.length === 1 ? "Recipient" : "Recipients"}
+                </span>
+              </h2>
+              <p className="text-xs text-[var(--dash-text-muted)] mt-0.5">
+                Whenever a client submits an inbound inquiry or clicks &quot;Interested&quot; on WhatsApp, instant alert notifications are dispatched to all emails below via Google Email Service (<code>thechinfinix1@gmail.com</code>).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Dual Email Flow Explanation Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div className="p-3.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20 space-y-1.5">
+            <div className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+              <Check className="w-4 h-4 shrink-0" />
+              <span>User / Client Emails (Brevo API)</span>
+            </div>
+            <p className="text-[11px] text-[var(--dash-text-muted)] leading-relaxed">
+              All website subscriber welcome briefings, contact thank-you confirmations, and proposals go directly to the client via <strong>Brevo API</strong> (Sender: <code>contact@techinfinix.com</code>).
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-lg bg-indigo-500/5 border border-indigo-500/20 space-y-1.5">
+            <div className="font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 shrink-0" />
+              <span>Admin Alerts (Google Email Service)</span>
+            </div>
+            <p className="text-[11px] text-[var(--dash-text-muted)] leading-relaxed">
+              All internal alerts (Hot WhatsApp leads, Inbound website leads, Newsletter alerts) are sent from <strong>thechinfinix1@gmail.com</strong> concurrently to every admin listed below.
+            </p>
+          </div>
+        </div>
+
+        {/* Registered Admin Emails List */}
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-[var(--dash-text)] block">
+            Registered Admin Email Addresses:
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            {adminEmails.map((email) => {
+              const isPrimary = email.toLowerCase() === "meetvaghasiya166@gmail.com";
+              return (
+                <div
+                  key={email}
+                  className="flex items-center justify-between p-3 rounded-md bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] text-xs font-mono"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Mail className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                    <span className="truncate text-[var(--dash-text)] font-semibold">{email}</span>
+                  </div>
+                  {isPrimary ? (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shrink-0">
+                      Primary
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAdminEmail(email)}
+                      disabled={removingEmail === email}
+                      className="p-1 rounded text-rose-500 hover:bg-rose-500/10 transition cursor-pointer shrink-0"
+                      title={`Remove ${email}`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Add New Admin Email Form */}
+        <form onSubmit={handleAddAdminEmail} className="pt-2 border-t border-[var(--dash-border)] flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          <div className="flex-1">
+            <input
+              type="email"
+              required
+              placeholder="Add another admin email (e.g. partner@techinfinix.com)..."
+              value={newAdminEmail}
+              onChange={(e) => setNewAdminEmail(e.target.value)}
+              className="crm-input w-full text-xs font-mono py-2 px-3"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={addingEmail || !newAdminEmail.trim()}
+            className="crm-btn-primary px-4 py-2 text-xs font-bold inline-flex items-center justify-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+          >
+            {addingEmail ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Plus className="w-3.5 h-3.5" />
+            )}
+            <span>{addingEmail ? "Adding Admin..." : "Add Admin Email"}</span>
+          </button>
+        </form>
+      </div>
+
     </div>
   );
 }
