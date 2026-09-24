@@ -145,6 +145,7 @@ export default function LeadsManager() {
   const [waPreviewLead, setWaPreviewLead] = useState<NormalizedLead | null>(null);
   const [waPreviewData, setWaPreviewData] = useState<any>(null);
   const [waCustomMessage, setWaCustomMessage] = useState("");
+  const [waCustomPhone, setWaCustomPhone] = useState("");
   const [loadingWaPreview, setLoadingWaPreview] = useState(false);
   const [sendingWaMessage, setSendingWaMessage] = useState(false);
 
@@ -155,6 +156,7 @@ export default function LeadsManager() {
 
   const openWaModalForLead = async (lead: NormalizedLead) => {
     setWaPreviewLead(lead);
+    setWaCustomPhone(lead.phone || "");
     setShowWaModal(true);
     setLoadingWaPreview(true);
     setWaPreviewData(null);
@@ -164,6 +166,9 @@ export default function LeadsManager() {
         const data = await res.json();
         setWaPreviewData(data);
         setWaCustomMessage(data.preview_message || "");
+        if (data.recipient_phone && !lead.phone) {
+          setWaCustomPhone(data.recipient_phone);
+        }
       } else {
         setWaCustomMessage(
           lead.source === "inquiry"
@@ -185,6 +190,11 @@ export default function LeadsManager() {
 
   const handleSendWaOutreach = async () => {
     if (!waPreviewLead) return;
+    const recipientPhone = waCustomPhone.trim() || waPreviewLead.phone;
+    if (!recipientPhone) {
+      triggerToast("Please provide a recipient phone number.");
+      return;
+    }
     setSendingWaMessage(true);
     try {
       const res = await authFetch(`${API}/api/v1/whatsapp/send-custom/${waPreviewLead.rawId}`, {
@@ -193,7 +203,7 @@ export default function LeadsManager() {
         body: JSON.stringify({
           custom_message: waCustomMessage,
           source: waPreviewLead.source,
-          phone_number: waPreviewLead.phone
+          phone_number: recipientPhone
         }),
       });
       if (res.ok) {
@@ -517,9 +527,12 @@ export default function LeadsManager() {
       return;
     }
     const cleanPhone = selectedLead.phone.replace(/[^0-9+]/g, "");
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(cleanPhone).catch(() => {});
+    }
     logActivity(selectedLead.rawId || selectedLead.id, "Outgoing Phone Call", `Initiated call to ${selectedLead.phone}`, "call");
     window.location.href = `tel:${cleanPhone}`;
-    triggerToast(`Calling ${selectedLead.phone}...`);
+    triggerToast(`Phone ${cleanPhone} copied to clipboard & launching dialer!`);
   };
 
   const handleEmailClick = () => {
@@ -595,8 +608,10 @@ export default function LeadsManager() {
       return;
     }
     const cleanPhone = selectedLead.phone.replace(/[^0-9]/g, "");
-    logActivity(selectedLead.rawId || selectedLead.id, "WhatsApp Chat Initiated", `Opened direct WhatsApp Web chat with ${selectedLead.phone}`, "whatsapp");
-    window.open(`https://wa.me/${cleanPhone}`, "_blank");
+    const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+    logActivity(selectedLead.rawId || selectedLead.id, "WhatsApp Chat Initiated", `Opened direct WhatsApp Web chat with +${formattedPhone}`, "whatsapp");
+    window.open(`https://wa.me/${formattedPhone}`, "_blank");
+    triggerToast("WhatsApp chat opened");
   };
 
   const logActivity = (leadKey: string | number, title: string, desc: string, type: "call" | "email" | "whatsapp" | "note" | "status" | "followup") => {
@@ -2844,6 +2859,21 @@ export default function LeadsManager() {
                   }`}>
                     {waPreviewLead.source === "inquiry" ? "Website Lead" : isValidWebsite(waPreviewLead.website) ? "Website Active" : "No Website (Hot Lead!)"}
                   </span>
+                </div>
+
+                {/* Recipient Phone Input (Editable) */}
+                <div>
+                  <label className="block font-semibold text-[var(--dash-text-primary)] mb-1 flex items-center justify-between">
+                    <span>Recipient WhatsApp Phone:</span>
+                    <span className="text-[10px] text-[var(--dash-text-muted)] font-normal">Include country code (e.g. 91...)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={waCustomPhone}
+                    onChange={(e) => setWaCustomPhone(e.target.value)}
+                    placeholder="916352743015"
+                    className="crm-input w-full font-mono text-xs"
+                  />
                 </div>
 
                 {/* Editable Proposal Message Textarea */}

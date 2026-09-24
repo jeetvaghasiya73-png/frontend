@@ -47,10 +47,11 @@ import {
   FileSpreadsheet,
   Check,
   Edit3,
-  AlertCircle
+  AlertCircle,
+  ShieldCheck
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
-import { formatServiceText } from "@/lib/formatters";
+import { formatServiceText, isValidWebsite, formatWebsiteUrl } from "@/lib/formatters";
 import {
   ResponsiveContainer,
   BarChart,
@@ -96,9 +97,14 @@ export default function SuperAdminDashboard() {
   const [schedulingFollowup, setSchedulingFollowup] = useState(false);
   const [showAddEmailModal, setShowAddEmailModal] = useState(false);
   const [newEmailAddress, setNewEmailAddress] = useState("");
-  const [savingNewEmail, setSavingNewEmail] = useState(false);
-  const [sendingWaProposal, setSendingWaProposal] = useState(false);
-  
+  // WhatsApp Outreach Preview & Customize Modal states
+  const [showWaModal, setShowWaModal] = useState(false);
+  const [waPreviewLead, setWaPreviewLead] = useState<any | null>(null);
+  const [waPreviewData, setWaPreviewData] = useState<any>(null);
+  const [waCustomMessage, setWaCustomMessage] = useState("");
+  const [waCustomPhone, setWaCustomPhone] = useState("");
+  const [loadingWaPreview, setLoadingWaPreview] = useState(false);
+  const [sendingWaMessage, setSendingWaMessage] = useState(false);
   // Interactive Form Inputs
   const [newNoteText, setNewNoteText] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
@@ -684,9 +690,12 @@ export default function SuperAdminDashboard() {
       return;
     }
     const cleanPhone = selectedLead.phone.replace(/[^0-9+]/g, "");
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(cleanPhone).catch(() => {});
+    }
     logActivity(selectedLead.rawId || selectedLead.id, "Outgoing Phone Call", `Initiated call to ${selectedLead.phone}`, "call");
     window.location.href = `tel:${cleanPhone}`;
-    triggerToast(`Calling ${selectedLead.phone}...`);
+    triggerToast(`Phone ${cleanPhone} copied to clipboard & launching dialer!`);
   };
 
   // 2. Email Action Handler
@@ -735,37 +744,95 @@ export default function SuperAdminDashboard() {
       return;
     }
     const cleanPhone = selectedLead.phone.replace(/[^0-9]/g, "");
-    logActivity(selectedLead.rawId || selectedLead.id, "WhatsApp Chat Initiated", `Opened direct WhatsApp chat with ${selectedLead.title} (+${cleanPhone})`, "whatsapp");
-    window.open(`https://wa.me/${cleanPhone}?text=Hi%20${encodeURIComponent(selectedLead.title)},%20reaching%20out%20from%20Tech%20Infinix`, "_blank");
+    const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+    logActivity(selectedLead.rawId || selectedLead.id, "WhatsApp Chat Initiated", `Opened direct WhatsApp chat with ${selectedLead.title} (+${formattedPhone})`, "whatsapp");
+    window.open(`https://wa.me/${formattedPhone}?text=Hi%20${encodeURIComponent(selectedLead.title)},%20reaching%20out%20from%20Tech%20Infinix`, "_blank");
     triggerToast("WhatsApp chat opened");
   };
 
-  // 3b. Send Instant WhatsApp Outreach Proposal
-  const handleSendWhatsAppProposal = async () => {
-    if (!selectedLead) return;
-    if (!selectedLead.phone) {
-      triggerToast("No phone number available for WhatsApp proposal");
+  // 3b. Open Interactive WhatsApp Proposal Preview Modal
+  const openWaModalForLead = async (lead: any) => {
+    if (!lead) return;
+    setWaPreviewLead(lead);
+    setWaCustomPhone(lead.phone || "");
+    setShowWaModal(true);
+    setLoadingWaPreview(true);
+    setWaPreviewData(null);
+    try {
+      const rawId = lead.rawId || lead.id;
+      const source = lead.source || (lead.raw?.email ? "inquiry" : "scraped");
+      const res = await authFetch(`${API}/api/v1/whatsapp/preview-message/${rawId}?source=${source}`);
+      if (res.ok) {
+        const data = await res.json();
+        setWaPreviewData(data);
+        setWaCustomMessage(data.preview_message || "");
+        if (data.recipient_phone && !lead.phone) {
+          setWaCustomPhone(data.recipient_phone);
+        }
+      } else {
+        setWaCustomMessage(
+          source === "inquiry"
+            ? `Hi *${lead.title || lead.name}* 🙏\n\nThank you so much for reaching out to *Tech Infinix*! We have received your inquiry and our team is already reviewing your requirements.\n\nWe will get back to you shortly with tailored solutions. If you have any urgent questions, feel free to reply directly to this message! 🚀`
+            : `Hi *${lead.title || lead.name}* team 👋\n\nWe noticed your business listing under *${lead.service || lead.category || "Business"}* in *${lead.location || lead.city || "your area"}*.\n\nAt *Tech Infinix*, we specialize in Google Maps SEO rankings 📈 & Web Development 🌐.\n\nTo get custom growth ideas for your business, click *'Interested'* below or contact our team! 🚀`
+        );
+      }
+    } catch (err) {
+      console.error("Failed to fetch WA preview:", err);
+      setWaCustomMessage(
+        lead.source === "inquiry"
+          ? `Hi *${lead.title || lead.name}* 🙏\n\nThank you so much for reaching out to *Tech Infinix*! We have received your inquiry and our team is already reviewing your requirements.\n\nWe will get back to you shortly with tailored solutions. If you have any urgent questions, feel free to reply directly to this message! 🚀`
+          : `Hi *${lead.title || lead.name}* team 👋\n\nWe noticed your business listing under *${lead.service || lead.category || "Business"}* in *${lead.location || lead.city || "your area"}*.\n\nAt *Tech Infinix*, we specialize in Google Maps SEO rankings 📈 & Web Development 🌐.\n\nTo get custom growth ideas for your business, click *'Interested'* below or contact our team! 🚀`
+      );
+    } finally {
+      setLoadingWaPreview(false);
+    }
+  };
+
+  // 3c. Dispatch WhatsApp Proposal to Lead
+  const handleSendWaOutreach = async () => {
+    if (!waPreviewLead) return;
+    const recipientPhone = waCustomPhone.trim() || waPreviewLead.phone;
+    if (!recipientPhone) {
+      triggerToast("Please provide a recipient phone number.");
       return;
     }
-    setSendingWaProposal(true);
+    setSendingWaMessage(true);
     try {
-      const leadKey = selectedLead.rawId || selectedLead.id;
-      const res = await authFetch(`${API}/api/v1/scraped-leads/${leadKey}/send-whatsapp`, {
-        method: "POST"
+      const rawId = waPreviewLead.rawId || waPreviewLead.id;
+      const source = waPreviewLead.source || (waPreviewLead.raw?.email ? "inquiry" : "scraped");
+      const res = await authFetch(`${API}/api/v1/whatsapp/send-custom/${rawId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          custom_message: waCustomMessage,
+          source: source,
+          phone_number: recipientPhone
+        }),
       });
       if (res.ok) {
-        logActivity(leadKey, "WhatsApp Proposal Dispatched", "Dispatched interactive proposal card with CTAs", "whatsapp");
+        const data = await res.json();
+        const dest = data.is_test_mode
+          ? `Test Sandbox (+${data.test_number || "919173739080"})`
+          : (data.recipient_used || recipientPhone);
+        triggerToast(`WhatsApp proposal delivered to ${dest}! 🚀`);
+        logActivity(
+          rawId,
+          "WhatsApp Proposal Dispatched",
+          `Proposal sent: "${waCustomMessage.slice(0, 80)}..."`,
+          "whatsapp"
+        );
         setSelectedLead((prev: any) => prev ? { ...prev, status: "Sent" } : null);
-        triggerToast("WhatsApp Proposal sent successfully 🚀");
+        setShowWaModal(false);
+        fetchData();
       } else {
-        const err = await res.json().catch(() => ({}));
-        triggerToast(`WhatsApp notice: ${err.detail || "Proposal dispatched"}`);
+        const err = await res.json().catch(() => ({ detail: "Failed to send WhatsApp outreach message." }));
+        triggerToast(err.detail || "Failed to send WhatsApp outreach message.");
       }
     } catch (err) {
       console.error(err);
-      triggerToast("Error sending WhatsApp proposal");
+      triggerToast("Error sending WhatsApp outreach.");
     } finally {
-      setSendingWaProposal(false);
+      setSendingWaMessage(false);
     }
   };
 
@@ -2055,16 +2122,13 @@ export default function SuperAdminDashboard() {
 
                 {/* Action 4: Send WA Proposal */}
                 <button
-                  onClick={handleSendWhatsAppProposal}
-                  disabled={sendingWaProposal || !selectedLead.phone}
-                  className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 sm:px-3 text-xs font-bold shrink-0 transition hover:border-emerald-500 disabled:opacity-50"
+                  type="button"
+                  onClick={() => openWaModalForLead(selectedLead)}
+                  disabled={!selectedLead.phone}
+                  className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 sm:px-3 text-xs font-bold shrink-0 transition hover:border-emerald-500 disabled:opacity-50 cursor-pointer"
                   title="Dispatch interactive WhatsApp proposal card"
                 >
-                  {sendingWaProposal ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />
-                  ) : (
-                    <Zap className="w-3.5 h-3.5 text-emerald-500" />
-                  )}
+                  <Zap className="w-3.5 h-3.5 text-emerald-500" />
                   <span>WA Proposal</span>
                 </button>
 
@@ -2398,12 +2462,12 @@ export default function SuperAdminDashboard() {
               <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 justify-end">
                 <button
                   type="button"
-                  onClick={handleSendWhatsAppProposal}
-                  disabled={sendingWaProposal || !selectedLead.phone}
+                  onClick={() => openWaModalForLead(selectedLead)}
+                  disabled={!selectedLead.phone}
                   className="flex-1 min-w-0 px-2 sm:px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center justify-center gap-1 shrink-0 disabled:opacity-50 active:scale-[0.98]"
                   title="Send WhatsApp proposal"
                 >
-                  {sendingWaProposal ? <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" /> : <Zap className="w-3.5 h-3.5 shrink-0" />}
+                  <Zap className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate">Proposal 🚀</span>
                 </button>
                 <button
@@ -2898,6 +2962,194 @@ export default function SuperAdminDashboard() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* ── WhatsApp Outreach Preview & Customize Modal (Portal at z-[10005]) ── */}
+      {mounted && typeof document !== "undefined" && showWaModal && waPreviewLead && createPortal(
+        <div
+          onClick={() => setShowWaModal(false)}
+          className="fixed inset-0 z-[10005] overflow-y-auto bg-black/80 flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg crm-card p-6 space-y-4 cursor-default relative text-left shadow-2xl"
+            style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[var(--dash-text-primary)]">
+                    {waPreviewLead.source === "inquiry" ? "Inbound Inquiry WhatsApp Proposal" : "Google Maps WhatsApp Outreach"}
+                  </h3>
+                  <p className="text-xs text-[var(--dash-text-muted)]">Target: {waPreviewLead.title || waPreviewLead.name} ({waPreviewLead.location || waPreviewLead.city || "Client Profile"})</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowWaModal(false)}
+                className="p-1.5 rounded-md text-[var(--dash-text-muted)] hover:text-[var(--dash-text-primary)] hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Test Mode / Direct Delivery Banner */}
+            {waPreviewLead.source === "inquiry" ? (
+              <div className="p-3 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-xs">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>DIRECT INBOUND CLIENT DELIVERY</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                    Direct • No Buttons
+                  </span>
+                </div>
+                <div className="text-[11px] leading-relaxed text-slate-700 dark:text-emerald-200/90">
+                  This user submitted a website inquiry and is actively waiting for our response. Message will be dispatched directly to their phone (<strong className="font-mono text-emerald-600 dark:text-emerald-300">{waCustomPhone || waPreviewLead.phone || "No phone"}</strong>) as clean conversational text without &quot;Interested&quot; buttons.
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-500 space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-xs">
+                    <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span>TEST MODE SAFEGUARD ACTIVE</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded bg-amber-500/20 text-[10px] font-mono font-bold text-amber-600 dark:text-amber-300">
+                    Protected Sandbox
+                  </span>
+                </div>
+                <div className="text-[11px] leading-relaxed text-slate-700 dark:text-amber-200/90">
+                  All messages are strictly redirected to your test phone: <strong className="text-amber-600 dark:text-amber-300 font-mono">+{waPreviewData?.test_number || "919173739080"}</strong>. Real customer number ({waCustomPhone || waPreviewLead.phone || "client"}) will not receive unsolicited messages while test mode is on.
+                </div>
+              </div>
+            )}
+
+            {loadingWaPreview ? (
+              <div className="py-12 flex flex-col items-center justify-center gap-3 text-[var(--dash-text-muted)]">
+                <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+                <span className="text-xs font-mono">Generating personalized AI outreach proposal...</span>
+              </div>
+            ) : (
+              <div className="space-y-4 text-xs">
+                {/* Lead Summary Badge */}
+                <div className="p-3 rounded-md bg-[var(--dash-table-header)] border border-[var(--dash-border)] flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-[var(--dash-text-primary)] block">{waPreviewLead.title || waPreviewLead.name}</span>
+                    <span className="text-[var(--dash-text-muted)] font-mono text-[11px]">
+                      {waCustomPhone || waPreviewLead.phone || "No Phone"} • {waPreviewLead.source === "inquiry" ? "Direct Inbound" : (waPreviewLead.category || waPreviewLead.service || "Business")}
+                    </span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                    waPreviewLead.source === "inquiry"
+                      ? "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20"
+                      : isValidWebsite(waPreviewLead.website)
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
+                      : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20"
+                  }`}>
+                    {waPreviewLead.source === "inquiry" ? "Website Lead" : isValidWebsite(waPreviewLead.website) ? "Website Active" : "No Website (Hot Lead!)"}
+                  </span>
+                </div>
+
+                {/* Recipient Phone Input (Editable) */}
+                <div>
+                  <label className="block font-semibold text-[var(--dash-text-primary)] mb-1 flex items-center justify-between">
+                    <span>Recipient WhatsApp Phone:</span>
+                    <span className="text-[10px] text-[var(--dash-text-muted)] font-normal">Include country code (e.g. 91...)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={waCustomPhone}
+                    onChange={(e) => setWaCustomPhone(e.target.value)}
+                    placeholder="916352743015"
+                    className="crm-input w-full font-mono text-xs"
+                  />
+                </div>
+
+                {/* Editable Proposal Message Textarea */}
+                <div>
+                  <label className="block font-semibold text-[var(--dash-text-primary)] mb-1 flex items-center justify-between">
+                    <span>Personalized WhatsApp Proposal Text:</span>
+                    <span className="text-[10px] text-[var(--dash-text-muted)] font-normal">Editable</span>
+                  </label>
+                  <textarea
+                    rows={6}
+                    value={waCustomMessage}
+                    onChange={(e) => setWaCustomMessage(e.target.value)}
+                    className="crm-input w-full font-sans leading-relaxed text-xs"
+                  />
+                </div>
+
+                {/* Quick Reply Buttons Card Preview */}
+                {waPreviewLead.source === "inquiry" ? (
+                  <div className="p-3 bg-indigo-500/5 border border-indigo-500/20 rounded-md space-y-2">
+                    <span className="font-bold text-indigo-800 dark:text-indigo-300 text-[11px] flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+                      Inbound Website Lead — 2 Native CTA Redirect Buttons:
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="py-1.5 px-2 rounded-md bg-[var(--dash-card-bg)] text-center text-[var(--dash-text-primary)] font-semibold border border-[var(--dash-border)] shadow-xs flex items-center justify-center gap-1.5 text-[11px]">
+                        🌐 1. Visit Website (Direct Link)
+                      </div>
+                      <div className="py-1.5 px-2 rounded-md bg-[var(--dash-card-bg)] text-center text-[var(--dash-text-primary)] font-semibold border border-[var(--dash-border)] shadow-xs flex items-center justify-center gap-1.5 text-[11px]">
+                        📞 2. Call Us (Direct Dial)
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-md space-y-2">
+                    <span className="font-bold text-emerald-800 dark:text-emerald-300 text-[11px] block">Attached Interactive Buttons Card:</span>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="py-1.5 px-2 rounded-md bg-[var(--dash-card-bg)] text-center text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-500/30 shadow-xs">
+                        1. Interested
+                      </div>
+                      <div className="py-1.5 px-2 rounded-md bg-[var(--dash-card-bg)] text-center text-[var(--dash-text-primary)] font-semibold border border-[var(--dash-border)] shadow-xs">
+                        {isValidWebsite(waPreviewLead.website) ? "2. Visit Website" : "2. Book Demo"}
+                      </div>
+                      <div className="py-1.5 px-2 rounded-md bg-[var(--dash-card-bg)] text-center text-[var(--dash-text-primary)] font-semibold border border-[var(--dash-border)] shadow-xs">
+                        3. Call Us
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer Buttons */}
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowWaModal(false)}
+                    className="crm-btn-secondary text-xs"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendWaOutreach}
+                    disabled={sendingWaMessage || !waCustomMessage.trim() || !waCustomPhone.trim()}
+                    className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold text-xs shadow-md shadow-emerald-600/30 transition cursor-pointer flex items-center gap-2"
+                  >
+                    {sendingWaMessage ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Dispatching...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        <span>Send WhatsApp Proposal</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
       )}
 
     </div>
