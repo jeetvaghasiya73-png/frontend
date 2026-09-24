@@ -459,12 +459,18 @@ export default function WhatsAppOutreachPage() {
     }
   }, [convFilter, convSearch]);
 
+  const selectedConvRef = useRef(selectedConv);
+  useEffect(() => {
+    selectedConvRef.current = selectedConv;
+  }, [selectedConv]);
+
   const fetchChatMessages = useCallback(async (leadId: number, loadAll: boolean = false, isBackground: boolean = false) => {
     if (!isBackground) {
       if (loadAll) setLoadingMoreMessages(true);
       else setLoadingConvMessages(true);
     }
     try {
+      const activeConv = selectedConvRef.current;
       const url = `${API}/api/v1/whatsapp/chats/${leadId}${loadAll ? "" : "?limit=5"}`;
       const res = await authFetch(url);
       if (res.ok) {
@@ -477,11 +483,11 @@ export default function WhatsAppOutreachPage() {
           let ctaButtons: any[] = [];
 
           if (hasCta || m.direction === "outbound") {
-            const hasValidSite = isValidWebsite(selectedConv?.website);
+            const hasValidSite = isValidWebsite(activeConv?.website);
             ctaButtons = [
-              { id: "call_cta", label: "📞 Call Direct", action_type: "call", payload: selectedConv?.phone_number || "" },
+              { id: "call_cta", label: "📞 Call Direct", action_type: "call", payload: activeConv?.phone_number || "" },
               ...(hasValidSite
-                ? [{ id: "site_cta", label: "🌐 Visit Website", action_type: "url", payload: formatWebsiteUrl(selectedConv?.website)! }]
+                ? [{ id: "site_cta", label: "🌐 Visit Website", action_type: "url", payload: formatWebsiteUrl(activeConv?.website)! }]
                 : []),
               { id: "demo_cta", label: "📅 Book Demo", action_type: "quick_reply", payload: "I want to schedule a live demo" },
               { id: "agent_cta", label: "💬 Speak to Agent", action_type: "quick_reply", payload: "Please connect me to an executive" }
@@ -502,7 +508,7 @@ export default function WhatsAppOutreachPage() {
       setLoadingConvMessages(false);
       setLoadingMoreMessages(false);
     }
-  }, [selectedConv?.phone_number, selectedConv?.website]);
+  }, []);
 
   const fetchLeadsTable = useCallback(async () => {
     try {
@@ -534,25 +540,29 @@ export default function WhatsAppOutreachPage() {
     }
   }, []);
 
+  // Initial mount: load overview metrics ONCE
   useEffect(() => {
     fetchOverview();
     fetchAnalytics();
-    fetchConversations();
-    fetchLeadsTable();
-  }, [fetchOverview, fetchAnalytics, fetchConversations, fetchLeadsTable]);
+  }, [fetchOverview, fetchAnalytics]);
 
-  // When switching conversation, reset to 5 messages and fetch
+  // Load conversations when convFilter or convSearch changes
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
+
+  // Load leads table when statusFilter, searchTerm, or currentPage changes
+  useEffect(() => {
+    fetchLeadsTable();
+  }, [fetchLeadsTable]);
+
+  // When switching conversation, fetch chat history
   useEffect(() => {
     if (selectedConv?.lead_id) {
       setShowAllMessages(false);
       fetchChatMessages(selectedConv.lead_id, false);
     }
   }, [selectedConv?.lead_id, fetchChatMessages]);
-
-  const selectedConvRef = useRef(selectedConv);
-  useEffect(() => {
-    selectedConvRef.current = selectedConv;
-  }, [selectedConv]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
