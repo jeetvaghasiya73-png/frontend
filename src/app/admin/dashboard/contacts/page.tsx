@@ -158,6 +158,8 @@ export default function ContactMessagesManager() {
   const [waConversations, setWaConversations] = useState<any[]>([]);
   const [websiteInquiries, setWebsiteInquiries] = useState<any[]>([]);
   const [emailConversations, setEmailConversations] = useState<any[]>([]);
+  const [inboundLeads, setInboundLeads] = useState<any[]>([]);
+  const [generatingFollowup, setGeneratingFollowup] = useState(false);
 
   // Selected Message in CRM 2-pane view
   const [selectedMessage, setSelectedMessage] = useState<UnifiedMessage | null>(null);
@@ -213,15 +215,17 @@ export default function ContactMessagesManager() {
   const fetchAllData = useCallback(async () => {
     try {
       setRefreshing(true);
-      const [waRes, contactRes, emailRes] = await Promise.allSettled([
+      const [waRes, contactRes, emailRes, leadsRes] = await Promise.allSettled([
         authFetch(`${API}/api/v1/whatsapp/conversations?limit=100`),
         authFetch(`${API}/api/v1/contacts/`),
-        authFetch(`${API}/api/v1/email/conversations`)
+        authFetch(`${API}/api/v1/email/conversations`),
+        authFetch(`${API}/api/v1/leads/`)
       ]);
 
       let waData: any[] = [];
       let contData: any[] = [];
       let emData: any[] = [];
+      let leadsData: any[] = [];
 
       if (waRes.status === "fulfilled" && waRes.value.ok) {
         const d = await waRes.value.json();
@@ -239,6 +243,12 @@ export default function ContactMessagesManager() {
         const d = await emailRes.value.json();
         emData = Array.isArray(d) ? d : [];
         setEmailConversations(emData);
+      }
+
+      if (leadsRes.status === "fulfilled" && leadsRes.value.ok) {
+        const d = await leadsRes.value.json();
+        leadsData = Array.isArray(d) ? d : [];
+        setInboundLeads(leadsData);
       }
     } catch (err) {
       console.error("Omni-channel inbox fetch error:", err);
@@ -276,10 +286,13 @@ export default function ContactMessagesManager() {
       });
     });
 
-    // 2. Website contact inquiries
+    // 2. Website contact inquiries (from both contact_messages and leads table)
+    const addedWebEmails = new Set<string>();
+
     websiteInquiries.forEach((cont) => {
+      if (cont.email) addedWebEmails.add(cont.email.toLowerCase());
       list.push({
-        id: `web-${cont.id}`,
+        id: `web-contact-${cont.id}`,
         channel: "website",
         sourceId: cont.id,
         senderName: cont.name || "Website Visitor",
@@ -292,6 +305,30 @@ export default function ContactMessagesManager() {
         status: cont.status || "unread",
         raw: cont
       });
+    });
+
+    inboundLeads.forEach((lead) => {
+      const leadEmail = (lead.email || "").toLowerCase();
+      const isAlreadyIn = leadEmail && addedWebEmails.has(leadEmail);
+      if (!isAlreadyIn) {
+        if (leadEmail) addedWebEmails.add(leadEmail);
+        const servText = (lead.services && Array.isArray(lead.services) && lead.services.length > 0) ? lead.services.join(", ") : (lead.category || "Website Inquiry");
+        list.push({
+          id: `web-lead-${lead.id}`,
+          channel: "website",
+          sourceId: lead.id,
+          senderName: lead.name || lead.business_name || lead.company || "Website Prospect",
+          senderContact: lead.email || lead.phone || "No Email",
+          city: lead.company || lead.business_name || undefined,
+          category: lead.category || "Website Inquiry Form",
+          subject: servText,
+          snippet: lead.message || "Website project inquiry submitted.",
+          timestamp: lead.created_at || new Date().toISOString(),
+          status: lead.status || "unread",
+          isInterested: true,
+          raw: lead
+        });
+      }
     });
 
     // 3. Email outreach replies
@@ -319,7 +356,7 @@ export default function ContactMessagesManager() {
     // Sort by timestamp descending (newest first)
     list.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     return list;
-  }, [waConversations, websiteInquiries, emailConversations]);
+  }, [waConversations, websiteInquiries, emailConversations, inboundLeads]);
 
   // Filter messages based on active channel tab, search query, and status
   const filteredMessages = useMemo(() => {
@@ -534,6 +571,73 @@ export default function ContactMessagesManager() {
       showToast("Error updating AI status.", "error");
     } finally {
       setTogglingWaAi(false);
+    }
+  };
+
+  const handleGenerateAiFollowup = async () => {
+    if (!selectedMessage) return;
+    setGeneratingFollowup(true);
+    try {
+      const res = await authFetch(`${API}/api/v1/whatsapp/chats/${selectedMessage.sourceId}/generate-followup`, {
+        method: "POST"
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.followup_message) {
+          setWaReplyText(data.followup_message);
+          setManualReplyText(data.followup_message);
+          showToast("⚡ AI Follow-Up message generated! Review and send below.", "success");
+        }
+      } else {
+        showToast("Failed to generate AI follow-up message.", "error");
+      }
+    } catch (err) {
+      console.error("AI Follow-up error:", err);
+      showToast("Error generating AI follow-up.", "error");
+    } finally {
+      setGeneratingFollowup(false);
+    }
+  };
+
+  const handleDeleteLeadChats = async () => {
+    if (!selectedMessage) return;
+    if (!confirm(`Are you sure you want to delete all recorded chat history for ${selectedMessage.senderName}?`)) return;
+    try {
+      const res = await authFetch(`${API}/api/v1/whatsapp/chats/${selectedMessage.sourceId}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        showToast("Lead chat history deleted successfully.", "success");
+        setWaChatMessages([]);
+        setWaTotalCount(0);
+        fetchAllData();
+      } else {
+        showToast("Failed to delete chat history.", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Error deleting chat history.", "error");
+    }
+  };
+
+  const handleDeleteAllChats = async () => {
+    if (!confirm("⚠️ CRITICAL WARNING: Are you sure you want to CLEAR ALL CHAT HISTORY across ALL contacts & leads?")) return;
+    if (!confirm("Please confirm a second time: Delete ALL recorded message history permanently?")) return;
+    try {
+      const res = await authFetch(`${API}/api/v1/whatsapp/chats/all`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        showToast("All chat history cleared successfully.", "success");
+        setWaChatMessages([]);
+        setWaTotalCount(0);
+        fetchAllData();
+      } else {
+        showToast("Failed to clear chat history.", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Error clearing chat history.", "error");
     }
   };
 
@@ -754,6 +858,15 @@ export default function ContactMessagesManager() {
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-indigo-500" : ""}`} />
             <span>Sync</span>
+          </button>
+
+          <button
+            onClick={handleDeleteAllChats}
+            className="px-3 py-1.5 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+            title="Clear all chat history across all contacts"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Clear All History</span>
           </button>
         </div>
       </header>
@@ -1009,6 +1122,15 @@ export default function ContactMessagesManager() {
                         <ExternalLink className="w-3.5 h-3.5" />
                         <span>Open Web</span>
                       </a>
+
+                      <button
+                        onClick={handleDeleteLeadChats}
+                        className="px-3 py-1.5 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                        title="Delete chat history for this lead"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Clear Chat</span>
+                      </button>
                     </>
                   )}
 
@@ -1276,6 +1398,21 @@ export default function ContactMessagesManager() {
                         className="crm-input flex-1 text-xs"
                       />
                       <button
+                        type="button"
+                        onClick={handleGenerateAiFollowup}
+                        disabled={generatingFollowup}
+                        className="px-3 py-2 rounded-md bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+                        title="Generate fast context-aware AI follow-up message"
+                      >
+                        {generatingFollowup ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Zap className="w-3.5 h-3.5 fill-current" />
+                        )}
+                        <span>⚡ AI Follow-Up</span>
+                      </button>
+
+                      <button
                         type="submit"
                         disabled={sendingWaReply || !waReplyText.trim()}
                         className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 shrink-0"
@@ -1309,6 +1446,21 @@ export default function ContactMessagesManager() {
                     />
 
                     <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={handleGenerateAiFollowup}
+                        disabled={generatingFollowup}
+                        className="px-3 py-1.5 rounded-md bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                        title="Generate fast context-aware AI follow-up message"
+                      >
+                        {generatingFollowup ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Zap className="w-3.5 h-3.5 fill-current" />
+                        )}
+                        <span>⚡ AI Follow-Up</span>
+                      </button>
+
                       <button
                         type="submit"
                         disabled={sendingManualReply || !manualReplyText.trim()}

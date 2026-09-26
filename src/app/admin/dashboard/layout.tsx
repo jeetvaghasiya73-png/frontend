@@ -58,37 +58,56 @@ function formatRelativeTime(dateStr: string) {
   return `${days}d ago`;
 }
 
-// Web Audio API Sound Chime Synthesizer
+// Web Audio API Sound Chime Synthesizer with Persistent User Unlock Engine
+let globalAudioCtx: AudioContext | null = null;
+
+const getUnlockedAudioContext = (): AudioContext | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return null;
+    if (!globalAudioCtx || globalAudioCtx.state === "closed") {
+      globalAudioCtx = new AudioCtx();
+    }
+    if (globalAudioCtx.state === "suspended") {
+      globalAudioCtx.resume().catch(() => {});
+    }
+    return globalAudioCtx;
+  } catch (e) {
+    return null;
+  }
+};
+
 const playNotificationSound = () => {
   if (typeof window === "undefined") return;
   try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    
+    const ctx = getUnlockedAudioContext();
+    if (!ctx) return;
+
+    // Dual-tone high clarity bell chime (E5 659.25Hz -> A5 880Hz)
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
     osc1.type = "sine";
-    osc1.frequency.setValueAtTime(587.33, ctx.currentTime);
-    gain1.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    osc1.frequency.setValueAtTime(659.25, ctx.currentTime);
+    gain1.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
     osc1.connect(gain1);
     gain1.connect(ctx.destination);
     osc1.start();
-    osc1.stop(ctx.currentTime + 0.15);
+    osc1.stop(ctx.currentTime + 0.22);
 
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
     osc2.type = "sine";
-    osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
-    gain2.gain.setValueAtTime(0.12, ctx.currentTime + 0.1);
-    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.12);
+    gain2.gain.setValueAtTime(0.22, ctx.currentTime + 0.12);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
     osc2.connect(gain2);
     gain2.connect(ctx.destination);
-    osc2.start(ctx.currentTime + 0.1);
-    osc2.stop(ctx.currentTime + 0.35);
+    osc2.start(ctx.currentTime + 0.12);
+    osc2.stop(ctx.currentTime + 0.5);
   } catch (e) {
-    // Autoplay restrictions may require initial user click
+    console.warn("Notification sound playback error:", e);
   }
 };
 
@@ -247,6 +266,23 @@ export default function DashboardLayout({
   }, [isAuthenticated]);
 
   useEffect(() => {
+    const handleUserInteraction = () => {
+      getUnlockedAudioContext();
+      if (typeof window !== "undefined" && "Notification" in window) {
+        if (Notification.permission === "default") {
+          Notification.requestPermission().catch(() => {});
+        }
+      }
+    };
+    window.addEventListener("click", handleUserInteraction, { once: true });
+    window.addEventListener("touchstart", handleUserInteraction, { once: true });
+    return () => {
+      window.removeEventListener("click", handleUserInteraction);
+      window.removeEventListener("touchstart", handleUserInteraction);
+    };
+  }, []);
+
+  useEffect(() => {
     loadCountsAndNotifications(false);
     let ws: WebSocket | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -263,7 +299,16 @@ export default function DashboardLayout({
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            if ((data.type === "whatsapp_update" && data.event === "inbound_message") || data.type === "notification_added") {
+            if ((data.type === "whatsapp_update" && data.event === "inbound_message") || data.type === "notification_added" || data.event === "new_contact_message") {
+              playNotificationSound();
+              if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+                try {
+                  new Notification(data.title || "New LeadFlow Alert 🔔", {
+                    body: data.message || "You received a new incoming message/inquiry.",
+                    icon: "/favicon.ico"
+                  });
+                } catch (e) {}
+              }
               loadCountsAndNotifications(true);
             }
           } catch (err) {}
