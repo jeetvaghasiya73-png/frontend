@@ -2501,12 +2501,15 @@ export default function WhatsAppOutreachPage() {
 
               <button
                 onClick={() => setSelectedLeadModal(null)}
-                className="crm-btn-secondary text-xs"
+                className="crm-btn-secondary text-xs cursor-pointer"
               >
                 Close
               </button>
             </div>
           </div>
+        </div>
+      )}
+
       {/* ── 9. Test Mode Password Authorization Modal ── */}
       {toggleModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
