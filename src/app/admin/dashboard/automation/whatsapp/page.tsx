@@ -227,7 +227,7 @@ interface Lead {
 }
 
 interface ConversationItem {
-  lead_id: number;
+  lead_id: number | string;
   bussiness_name: string;
   phone_number: string;
   clean_phone: string;
@@ -249,8 +249,8 @@ interface ConversationItem {
 }
 
 interface ChatMessage {
-  id: number;
-  lead_id: number | null;
+  id: number | string;
+  lead_id: number | string | null;
   direction: string;
   message_text: string;
   button_id: string | null;
@@ -505,7 +505,7 @@ export default function WhatsAppOutreachPage() {
     selectedConvRef.current = selectedConv;
   }, [selectedConv]);
 
-  const fetchChatMessages = useCallback(async (leadId: number, loadAll: boolean = false, isBackground: boolean = false) => {
+  const fetchChatMessages = useCallback(async (leadId: number | string, loadAll: boolean = false, isBackground: boolean = false) => {
     if (!isBackground) {
       if (loadAll) setLoadingMoreMessages(true);
       else setLoadingConvMessages(true);
