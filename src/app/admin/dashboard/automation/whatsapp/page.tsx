@@ -71,7 +71,7 @@ import {
   UserMinus
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
-import { isValidWebsite, formatWebsiteUrl } from "@/lib/formatters";
+import { isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl } from "@/lib/formatters";
 import {
   ResponsiveContainer,
   BarChart,
@@ -754,8 +754,10 @@ export default function WhatsAppOutreachPage() {
     if (!selectedConv) return;
 
     if (cta.action_type === "call") {
-      window.open(`tel:${selectedConv.clean_phone || selectedConv.phone_number}`, "_self");
-      showAlert("success", `Initiated Direct Call CTA to ${selectedConv.phone_number}`);
+      const rawNumber = selectedConv.clean_phone || selectedConv.phone_number || "";
+      const dialerPhone = format10DigitPhone(rawNumber);
+      window.open(formatDialerUrl(dialerPhone), "_self");
+      showAlert("success", `Initiated Direct Call CTA to ${dialerPhone}`);
     } else if (cta.action_type === "url") {
       const rawUrl = cta.payload || selectedConv.website;
       if (isValidWebsite(rawUrl)) {

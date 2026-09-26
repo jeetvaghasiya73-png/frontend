@@ -38,7 +38,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
-import { formatServiceText, isValidWebsite, formatWebsiteUrl } from "@/lib/formatters";
+import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl } from "@/lib/formatters";
 
 type SourceFilter = "all" | "inquiry" | "scraped";
 
@@ -526,12 +526,12 @@ export default function LeadsManager() {
       triggerToast("No phone number available for this lead");
       return;
     }
-    const cleanPhone = selectedLead.phone.replace(/[^0-9+]/g, "");
+    const cleanPhone = format10DigitPhone(selectedLead.phone);
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(cleanPhone).catch(() => {});
     }
-    logActivity(selectedLead.rawId || selectedLead.id, "Outgoing Phone Call", `Initiated call to ${selectedLead.phone}`, "call");
-    window.location.href = `tel:${cleanPhone}`;
+    logActivity(selectedLead.rawId || selectedLead.id, "Outgoing Phone Call", `Initiated call to ${cleanPhone}`, "call");
+    window.location.href = formatDialerUrl(cleanPhone);
     triggerToast(`Phone ${cleanPhone} copied to clipboard & launching dialer!`);
   };
 
@@ -1405,7 +1405,7 @@ export default function LeadsManager() {
         <div className="md:hidden p-3 space-y-3">
           {paginatedLeads.map((lead) => {
             const isSelected = selectedLeadIds.has(lead.rawId);
-            const cleanPhone = lead.phone ? lead.phone.replace(/[^0-9+]/g, "") : "";
+            const cleanPhone = format10DigitPhone(lead.phone);
             return (
               <div
                 key={lead.id}
@@ -1469,7 +1469,7 @@ export default function LeadsManager() {
                   {lead.phone && (
                     <div className="flex items-center gap-2 text-[var(--dash-text-secondary)]">
                       <Phone className="w-3.5 h-3.5 shrink-0 text-[var(--dash-text-muted)]" />
-                      <span className="truncate">{lead.phone}</span>
+                      <span className="truncate">{format10DigitPhone(lead.phone)}</span>
                     </div>
                   )}
                   {lead.email ? (
@@ -1497,9 +1497,9 @@ export default function LeadsManager() {
                   <div className="flex items-center gap-1.5">
                     {lead.phone && (
                       <a
-                        href={`tel:${cleanPhone}`}
+                        href={formatDialerUrl(cleanPhone)}
                         className="p-1.5 rounded-md border border-[var(--dash-border)] text-xs flex items-center justify-center hover:opacity-80 transition text-indigo-500 bg-[var(--dash-card-bg)]"
-                        title={`Call ${lead.phone}`}
+                        title={`Call ${cleanPhone}`}
                       >
                         <Phone className="w-3.5 h-3.5" />
                       </a>
@@ -1927,7 +1927,7 @@ export default function LeadsManager() {
                   </div>
                   <div className="flex items-center gap-2.5 sm:gap-3" style={{ color: "var(--dash-text)" }}>
                     <Phone className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
-                    <span className="font-semibold">{selectedLead.phone || "No Phone"}</span>
+                    <span className="font-semibold">{selectedLead.phone ? format10DigitPhone(selectedLead.phone) : "No Phone"}</span>
                   </div>
 
                   {/* Scraped Physical Address & Landmark */}

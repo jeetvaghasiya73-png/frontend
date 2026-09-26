@@ -51,7 +51,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
-import { formatServiceText, isValidWebsite, formatWebsiteUrl } from "@/lib/formatters";
+import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl } from "@/lib/formatters";
 import {
   ResponsiveContainer,
   BarChart,
@@ -689,12 +689,12 @@ export default function SuperAdminDashboard() {
       triggerToast("No phone number available for this lead");
       return;
     }
-    const cleanPhone = selectedLead.phone.replace(/[^0-9+]/g, "");
+    const cleanPhone = format10DigitPhone(selectedLead.phone);
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(cleanPhone).catch(() => {});
     }
-    logActivity(selectedLead.rawId || selectedLead.id, "Outgoing Phone Call", `Initiated call to ${selectedLead.phone}`, "call");
-    window.location.href = `tel:${cleanPhone}`;
+    logActivity(selectedLead.rawId || selectedLead.id, "Outgoing Phone Call", `Initiated call to ${cleanPhone}`, "call");
+    window.location.href = formatDialerUrl(cleanPhone);
     triggerToast(`Phone ${cleanPhone} copied to clipboard & launching dialer!`);
   };
 
@@ -743,8 +743,8 @@ export default function SuperAdminDashboard() {
       triggerToast("No phone number available for WhatsApp");
       return;
     }
-    const cleanPhone = selectedLead.phone.replace(/[^0-9]/g, "");
-    const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+    const cleanPhone = format10DigitPhone(selectedLead.phone);
+    const formattedPhone = cleanPhone ? `91${cleanPhone}` : "";
     logActivity(selectedLead.rawId || selectedLead.id, "WhatsApp Chat Initiated", `Opened direct WhatsApp chat with ${selectedLead.title} (+${formattedPhone})`, "whatsapp");
     window.open(`https://wa.me/${formattedPhone}?text=Hi%20${encodeURIComponent(selectedLead.title)},%20reaching%20out%20from%20Tech%20Infinix`, "_blank");
     triggerToast("WhatsApp chat opened");
@@ -1808,7 +1808,7 @@ export default function SuperAdminDashboard() {
         <div className="md:hidden p-3 space-y-3">
           {paginatedTable.map((item) => {
             const isSelected = selectedRows.has(item.id);
-            const cleanPhone = item.phone ? item.phone.replace(/[^0-9+]/g, "") : "";
+            const cleanPhone = format10DigitPhone(item.phone);
             return (
               <div
                 key={item.id}
@@ -1909,17 +1909,17 @@ export default function SuperAdminDashboard() {
                   <div className="flex items-center gap-1.5">
                     {item.phone && (
                       <a
-                        href={`tel:${cleanPhone}`}
+                        href={formatDialerUrl(cleanPhone)}
                         className="p-1.5 rounded-md border text-xs flex items-center justify-center hover:opacity-80 transition"
                         style={{ borderColor: "var(--dash-border)", background: "var(--dash-surface)", color: "var(--dash-primary)" }}
-                        title={`Call ${item.phone}`}
+                        title={`Call ${cleanPhone}`}
                       >
                         <Phone className="w-3.5 h-3.5" />
                       </a>
                     )}
                     {item.phone && (
                       <a
-                        href={`https://wa.me/${cleanPhone.replace(/[^0-9]/g, "")}`}
+                        href={`https://wa.me/91${cleanPhone}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-1.5 rounded-md border text-xs flex items-center justify-center hover:opacity-80 transition text-emerald-500"
@@ -2236,7 +2236,7 @@ export default function SuperAdminDashboard() {
                   </div>
                   <div className="flex items-center gap-2.5 sm:gap-3" style={{ color: "var(--dash-text)" }}>
                     <Phone className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
-                    <span>{selectedLead.phone || "No Phone"}</span>
+                    <span>{selectedLead.phone ? format10DigitPhone(selectedLead.phone) : "No Phone"}</span>
                   </div>
                   <div className="flex items-center gap-2.5 sm:gap-3" style={{ color: "var(--dash-text)" }}>
                     <MapPin className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />

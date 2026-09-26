@@ -121,3 +121,30 @@ export function formatWebsiteUrl(url?: string | null): string | null {
   return `https://${trimmed}`;
 }
 
+/**
+ * Formats any phone number string into a clean 10-digit mobile number.
+ * Strips leading zeros ('0'), country codes ('91'), spaces, and non-digit characters.
+ * Example: '076228 76422' -> '7622876422', '09173739080' -> '9173739080', '919173739080' -> '9173739080'
+ */
+export function format10DigitPhone(phone?: string | null): string {
+  if (!phone || typeof phone !== "string") return "";
+  let digits = phone.trim().replace(/\D/g, "");
+  if (!digits) return "";
+  while (digits.startsWith("0")) {
+    digits = digits.slice(1);
+  }
+  if (digits.length > 10) {
+    digits = digits.slice(-10);
+  }
+  return digits;
+}
+
+/**
+ * Returns a tel: dialer link for a phone number using strictly 10 digits without leading 0.
+ * Example: '076228 76422' -> 'tel:7622876422'
+ */
+export function formatDialerUrl(phone?: string | null): string {
+  const clean = format10DigitPhone(phone);
+  return clean ? `tel:${clean}` : "tel:";
+}
+
