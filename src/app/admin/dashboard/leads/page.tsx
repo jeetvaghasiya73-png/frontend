@@ -94,6 +94,16 @@ export default function LeadsManager() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Helper to accurately classify organic WhatsApp inbound leads vs cold outreach scraped leads
+  const isOrganicInbound = (l: { source?: string; scraped_service?: string; scraped_city?: string; name?: string; bussiness_name?: string } | null) => {
+    if (!l) return false;
+    if (l.source === "inquiry") return true;
+    const service = String(l.scraped_service || "").toLowerCase();
+    const city = String(l.scraped_city || "").toLowerCase();
+    const name = String(l.name || l.bussiness_name || "").toLowerCase();
+    return service.includes("whatsapp inbound") || city.includes("inbound whatsapp") || name.includes("inbound client") || name.includes("inbound lead");
+  };
+
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<number>>(new Set());
   const [showDeleteMenu, setShowDeleteMenu] = useState(false);
 
@@ -1006,7 +1016,10 @@ export default function LeadsManager() {
     let result = allLeads;
 
     if (sourceFilter !== "all") {
-      result = result.filter((l) => l.source === sourceFilter);
+      result = result.filter((l) => {
+        if (sourceFilter === "inquiry") return isOrganicInbound(l);
+        return !isOrganicInbound(l);
+      });
     }
 
     if (statusFilter !== "all") {
@@ -1193,7 +1206,7 @@ export default function LeadsManager() {
                   : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
               }`}
             >
-              Outbound Scraped ({allLeads.filter(l => l.source === "scraped").length})
+              Outbound Scraped ({allLeads.filter(l => !isOrganicInbound(l)).length})
             </button>
             <button
               onClick={() => setSourceFilter("inquiry")}
@@ -1203,7 +1216,7 @@ export default function LeadsManager() {
                   : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
               }`}
             >
-              Website Inquiries ({allLeads.filter(l => l.source === "inquiry").length})
+              Inbound Inquiries ({allLeads.filter(l => isOrganicInbound(l)).length})
             </button>
           </div>
 
@@ -1263,108 +1276,111 @@ export default function LeadsManager() {
                   <ChevronDown className="w-3.5 h-3.5 opacity-80 shrink-0 ml-1" />
                 </button>
 
-              {showDeleteMenu && (
-                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-neutral-900 rounded-xl border border-slate-200 dark:border-neutral-800 shadow-2xl z-50 overflow-hidden py-1 text-xs animate-fadeIn">
-                  {/* Clear Selected Chats */}
-                  <button
-                    type="button"
-                    disabled={selectedLeadIds.size === 0}
-                    onClick={() => {
-                      setShowDeleteMenu(false);
-                      handleClearSelectedChats();
-                    }}
-                    className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-slate-800 dark:text-neutral-200"
-                  >
-                    <span className="flex items-center gap-2">
-                      <MessageSquareOff className="w-3.5 h-3.5 text-indigo-500" />
-                      <span>Clear Selected Chats & Reset</span>
-                    </span>
-                    <span className="font-bold font-mono text-[10px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
-                      {selectedLeadIds.size}
-                    </span>
-                  </button>
+                {showDeleteMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowDeleteMenu(false)} />
+                    <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-xl shadow-2xl z-50 overflow-hidden py-1 text-xs animate-fadeIn">
+                      {/* Clear Selected Chats */}
+                      <button
+                        type="button"
+                        disabled={selectedLeadIds.size === 0}
+                        onClick={() => {
+                          setShowDeleteMenu(false);
+                          handleClearSelectedChats();
+                        }}
+                        className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between hover:bg-[var(--dash-surface-alt)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-[var(--dash-text)] transition"
+                      >
+                        <span className="flex items-center gap-2 truncate">
+                          <MessageSquareOff className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                          <span className="truncate">Clear Selected Chats & Reset</span>
+                        </span>
+                        <span className="font-bold font-mono text-[10px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/20 shrink-0 ml-2">
+                          {selectedLeadIds.size}
+                        </span>
+                      </button>
 
-                  {/* Clear ALL WhatsApp Chats */}
-                  <button
-                    type="button"
-                    disabled={allLeads.length === 0}
-                    onClick={() => {
-                      setShowDeleteMenu(false);
-                      handleClearAllChats();
-                    }}
-                    className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-slate-800 dark:text-neutral-200 border-t border-slate-100 dark:border-neutral-800"
-                  >
-                    <span className="flex items-center gap-2">
-                      <RefreshCw className="w-3.5 h-3.5 text-amber-500" />
-                      <span>Clear ALL Chats & Reset</span>
-                    </span>
-                    <span className="font-bold font-mono text-[10px] bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
-                      ALL
-                    </span>
-                  </button>
+                      {/* Clear ALL WhatsApp Chats */}
+                      <button
+                        type="button"
+                        disabled={allLeads.length === 0}
+                        onClick={() => {
+                          setShowDeleteMenu(false);
+                          handleClearAllChats();
+                        }}
+                        className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between hover:bg-[var(--dash-surface-alt)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-[var(--dash-text)] border-t border-[var(--dash-border)] transition"
+                      >
+                        <span className="flex items-center gap-2 truncate">
+                          <RefreshCw className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                          <span className="truncate">Clear ALL Chats & Reset</span>
+                        </span>
+                        <span className="font-bold font-mono text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20 shrink-0 ml-2">
+                          ALL
+                        </span>
+                      </button>
 
-                  {/* Remove Selected */}
-                  <button
-                    type="button"
-                    disabled={selectedLeadIds.size === 0}
-                    onClick={() => {
-                      setShowDeleteMenu(false);
-                      handleDeleteSelected();
-                    }}
-                    className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-slate-800 dark:text-neutral-200 border-t border-slate-100 dark:border-neutral-800"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                      <span>Remove Selected Leads</span>
-                    </span>
-                    <span className="font-bold font-mono text-[10px] bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-800">
-                      {selectedLeadIds.size}
-                    </span>
-                  </button>
+                      {/* Remove Selected */}
+                      <button
+                        type="button"
+                        disabled={selectedLeadIds.size === 0}
+                        onClick={() => {
+                          setShowDeleteMenu(false);
+                          handleDeleteSelected();
+                        }}
+                        className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between hover:bg-[var(--dash-surface-alt)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-[var(--dash-text)] border-t border-[var(--dash-border)] transition"
+                      >
+                        <span className="flex items-center gap-2 truncate">
+                          <Trash2 className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                          <span className="truncate">Remove Selected Leads</span>
+                        </span>
+                        <span className="font-bold font-mono text-[10px] bg-rose-500/10 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded border border-rose-500/20 shrink-0 ml-2">
+                          {selectedLeadIds.size}
+                        </span>
+                      </button>
 
-                  {/* Remove Current Page */}
-                  <button
-                    type="button"
-                    disabled={paginatedLeads.length === 0}
-                    onClick={() => {
-                      setShowDeleteMenu(false);
-                      handleDeleteCurrentPage();
-                    }}
-                    className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-slate-800 dark:text-neutral-200 border-t border-slate-100 dark:border-neutral-800"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Trash2 className="w-3.5 h-3.5 text-amber-500" />
-                      <span>Remove Current Page</span>
-                    </span>
-                    <span className="font-bold font-mono text-[10px] bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
-                      Page {currentPage} ({paginatedLeads.length})
-                    </span>
-                  </button>
+                      {/* Remove Current Page */}
+                      <button
+                        type="button"
+                        disabled={paginatedLeads.length === 0}
+                        onClick={() => {
+                          setShowDeleteMenu(false);
+                          handleDeleteCurrentPage();
+                        }}
+                        className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between hover:bg-[var(--dash-surface-alt)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-[var(--dash-text)] border-t border-[var(--dash-border)] transition"
+                      >
+                        <span className="flex items-center gap-2 truncate">
+                          <Trash2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                          <span className="truncate">Remove Current Page</span>
+                        </span>
+                        <span className="font-bold font-mono text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20 shrink-0 ml-2">
+                          Pg {currentPage} ({paginatedLeads.length})
+                        </span>
+                      </button>
 
-                  {/* Delete ALL Leads */}
-                  <button
-                    type="button"
-                    disabled={allLeads.length === 0}
-                    onClick={() => {
-                      setShowDeleteMenu(false);
-                      handleDeleteAllLeads();
-                    }}
-                    className="w-full text-left px-3.5 py-2.5 font-bold flex items-center justify-between bg-rose-50/60 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/70 text-rose-600 dark:text-rose-400 cursor-pointer border-t border-rose-200/80 dark:border-rose-900/50"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                      <span>Delete ALL Leads</span>
-                    </span>
-                    <span className="font-bold font-mono text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded shadow-xs">
-                      ALL ({allLeads.length})
-                    </span>
-                  </button>
-                </div>
-              )}
+                      {/* Delete ALL Leads */}
+                      <button
+                        type="button"
+                        disabled={allLeads.length === 0}
+                        onClick={() => {
+                          setShowDeleteMenu(false);
+                          handleDeleteAllLeads();
+                        }}
+                        className="w-full text-left px-3.5 py-2.5 font-bold flex items-center justify-between bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 cursor-pointer border-t border-rose-500/20 transition"
+                      >
+                        <span className="flex items-center gap-2 truncate">
+                          <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
+                          <span className="truncate">Delete ALL Leads</span>
+                        </span>
+                        <span className="font-bold font-mono text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded shadow-xs shrink-0 ml-2">
+                          ALL ({allLeads.length})
+                        </span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
         {/* Lead Table (Desktop / Tablet) */}
         <div className="hidden md:block w-full overflow-x-auto">
@@ -1454,11 +1470,11 @@ export default function LeadsManager() {
 
                   <td className="py-3.5 px-3">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                      lead.source === "scraped"
-                        ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
-                        : "bg-purple-500/10 text-purple-600 border-purple-500/20"
+                      isOrganicInbound(lead)
+                        ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                        : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
                     }`}>
-                      {lead.source === "scraped" ? "Outbound" : "Inbound"}
+                      {isOrganicInbound(lead) ? "Inbound" : "Outbound"}
                     </span>
                   </td>
 
@@ -1559,11 +1575,11 @@ export default function LeadsManager() {
                     Score: {lead.score}
                   </span>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                    lead.source === "scraped"
-                      ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
-                      : "bg-purple-500/10 text-purple-600 border-purple-500/20"
+                    isOrganicInbound(lead)
+                      ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                      : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
                   }`}>
-                    {lead.source === "scraped" ? "Outbound" : "Inbound"}
+                    {isOrganicInbound(lead) ? "Inbound" : "Outbound"}
                   </span>
                 </div>
 
@@ -1775,11 +1791,11 @@ export default function LeadsManager() {
                   Score: {selectedLead.score}
                 </span>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                  selectedLead.source === "scraped"
-                    ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
-                    : "bg-purple-500/10 text-purple-600 border-purple-500/20"
+                  isOrganicInbound(selectedLead)
+                    ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                    : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
                 }`}>
-                  {selectedLead.source === "scraped" ? "Outbound" : "Inbound"}
+                  {isOrganicInbound(selectedLead) ? "Inbound" : "Outbound"}
                 </span>
               </div>
               
@@ -1828,7 +1844,7 @@ export default function LeadsManager() {
                 {/* Dynamic Badges */}
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                   <span className="crm-badge badge-primary text-[10px]">
-                    Source: {selectedLead.source === "scraped" ? "Outbound Scraping" : "Direct Inquiry"}
+                    Source: {isOrganicInbound(selectedLead) ? "Direct Inbound" : "Outbound Scraping"}
                   </span>
                   {selectedLead.email && (
                     <span className="crm-badge badge-success text-[10px]">
