@@ -1364,14 +1364,14 @@ export default function WhatsAppOutreachPage() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
                               <span className="font-semibold text-xs text-[var(--dash-text)] truncate max-w-[130px]">
-                                {c.bussiness_name || c.phone_number}
+                                {c.bussiness_name || format10DigitPhone(c.phone_number)}
                               </span>
                               {c.is_interested && (
                                 <Star className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
                               )}
                             </div>
                             <div className="text-[10px] text-[var(--dash-text-muted)] flex items-center gap-1 truncate font-mono mt-0.5">
-                              <span>{c.phone_number}</span>
+                              <span>{format10DigitPhone(c.phone_number)}</span>
                               {c.scraped_city && <span>• {c.scraped_city}</span>}
                             </div>
                           </div>
@@ -1437,7 +1437,7 @@ export default function WhatsAppOutreachPage() {
                         )}
                       </div>
                       <p className="text-[10px] text-[var(--dash-text-muted)] truncate flex items-center gap-1 font-mono">
-                        <span>{selectedConv.phone_number}</span>
+                        <span>{format10DigitPhone(selectedConv.phone_number)}</span>
                         <span>•</span>
                         <span className="text-emerald-500 font-sans">Active Thread</span>
                       </p>
@@ -1771,7 +1771,7 @@ export default function WhatsAppOutreachPage() {
                   className="w-full crm-btn-secondary text-xs flex items-center justify-between"
                 >
                   <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-emerald-500" /> Call Phone</span>
-                  <span className="font-mono text-[10px] text-[var(--dash-text-muted)]">{selectedConv.phone_number}</span>
+                  <span className="font-mono text-[10px] text-[var(--dash-text-muted)]">{format10DigitPhone(selectedConv.phone_number)}</span>
                 </button>
 
                 {isValidWebsite(selectedConv.website) ? (

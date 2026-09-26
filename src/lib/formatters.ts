@@ -133,6 +133,9 @@ export function format10DigitPhone(phone?: string | null): string {
   while (digits.startsWith("0")) {
     digits = digits.slice(1);
   }
+  if (digits.length === 12 && digits.startsWith("9191")) {
+    digits = digits.slice(2);
+  }
   if (digits.length > 10) {
     digits = digits.slice(-10);
   }
