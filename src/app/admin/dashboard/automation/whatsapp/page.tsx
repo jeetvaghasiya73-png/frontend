@@ -49,6 +49,8 @@ import {
   UserCheck,
   Settings2,
   Lock,
+  KeyRound,
+  EyeOff,
   PauseCircle,
   CheckCheck,
   Info,
@@ -676,7 +678,11 @@ export default function WhatsAppOutreachPage() {
               );
             }
 
-            if (data.type === "whatsapp_update" && data.event === "inbound_message") {
+            if (
+              (data.type === "whatsapp_update" && data.event === "inbound_message") ||
+              data.type === "lead_updated" ||
+              (data.type === "new_chat_message" && data.chat && (!selectedConvRef.current || !conversations.some(c => c.lead_id === data.chat?.lead_id)))
+            ) {
               fetchConversations();
               fetchOverview();
               fetchAnalytics();
@@ -818,7 +824,7 @@ export default function WhatsAppOutreachPage() {
     }
   };
 
-  const handleMarkInterested = async (leadId: number) => {
+  const handleMarkInterested = async (leadId: number | string) => {
     try {
       const res = await authFetch(`${API}/api/v1/whatsapp/mark-interested/${leadId}`, { method: "POST" });
       const d = await res.json();
