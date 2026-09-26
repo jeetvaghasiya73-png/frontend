@@ -754,6 +754,8 @@ export default function LeadsManager() {
           setIsDrawerOpen(false);
           setSelectedLead(null);
         }
+        triggerToast(`Lead "${lead.name}" deleted successfully`);
+        await fetchLeads();
       }
     } catch (err) {
       console.error("Failed to delete lead:", err);
@@ -788,6 +790,7 @@ export default function LeadsManager() {
       setAllLeads(prev => prev.filter(l => !selectedLeadIds.has(l.id)));
       setSelectedLeadIds(new Set());
       triggerToast(`Successfully deleted selected lead(s)`);
+      await fetchLeads();
     } catch (err) {
       console.error("Failed selected delete:", err);
     }
@@ -822,6 +825,7 @@ export default function LeadsManager() {
       setAllLeads(prev => prev.filter(l => !pageIdsToRemove.has(l.id)));
       setSelectedLeadIds(new Set());
       triggerToast(`Deleted ${paginatedLeads.length} lead(s) from Page ${currentPage}`);
+      await fetchLeads();
     } catch (err) {
       console.error("Failed page delete:", err);
     }
@@ -841,6 +845,7 @@ export default function LeadsManager() {
       setAllLeads([]);
       setSelectedLeadIds(new Set());
       triggerToast("Entire leads database cleared successfully");
+      await fetchLeads();
     } catch (err) {
       console.error("Failed to delete all leads:", err);
     }
