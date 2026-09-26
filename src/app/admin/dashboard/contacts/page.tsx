@@ -632,17 +632,40 @@ export default function ContactMessagesManager() {
     }
   };
 
-  const handleDeleteAllChats = async () => {
-    if (!confirm("⚠️ CRITICAL WARNING: Are you sure you want to CLEAR ALL CHAT HISTORY across ALL contacts & leads?")) return;
-    if (!confirm("Please confirm a second time: Delete ALL recorded message history permanently?")) return;
+  const handleDeleteContact = async () => {
+    if (!selectedMessage) return;
+    if (!confirm(`Are you sure you want to delete inquiry "${selectedMessage.senderName}"?`)) return;
     try {
-      const res = await authFetch(`${API}/api/v1/whatsapp/chats/all`, {
+      const res = await authFetch(`${API}/api/v1/contacts/${selectedMessage.sourceId}`, {
         method: "DELETE"
       });
       if (res.ok) {
-        showToast("All chat history cleared successfully.", "success");
+        showToast("Inquiry deleted successfully.", "success");
+        setSelectedMessage(null);
+        fetchAllData();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Failed to delete inquiry: ${formatErrorDetail(err.detail)}`, "error");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("Error deleting inquiry.", "error");
+    }
+  };
+
+  const handleDeleteAllChats = async () => {
+    if (!confirm("⚠️ CRITICAL WARNING: Are you sure you want to CLEAR ALL CHAT & INQUIRY HISTORY across ALL channels?")) return;
+    if (!confirm("Please confirm a second time: Delete ALL recorded message history permanently?")) return;
+    try {
+      const [waRes, contRes] = await Promise.allSettled([
+        authFetch(`${API}/api/v1/whatsapp/chats/all`, { method: "DELETE" }),
+        authFetch(`${API}/api/v1/contacts/chats/all`, { method: "DELETE" })
+      ]);
+      if (waRes.status === "fulfilled" || contRes.status === "fulfilled") {
+        showToast("All chat & inquiry history cleared successfully.", "success");
         setWaChatMessages([]);
         setWaTotalCount(0);
+        setSelectedMessage(null);
         fetchAllData();
       } else {
         showToast("Failed to clear chat history.", "error");
@@ -650,39 +673,6 @@ export default function ContactMessagesManager() {
     } catch (err) {
       console.error(err);
       showToast("Error clearing chat history.", "error");
-    }
-  };
-
-  // ── Website Contact Status & Delete Actions ──
-  const handleUpdateContactStatus = async (status: string) => {
-    if (!selectedMessage || selectedMessage.channel !== "website") return;
-    try {
-      const res = await authFetch(`${API}/api/v1/contacts/${selectedMessage.sourceId}/status?status=${status}`, {
-        method: "PUT"
-      });
-      if (res.ok) {
-        showToast(`Status updated to ${status}.`, "success");
-        fetchAllData();
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const handleDeleteContact = async () => {
-    if (!selectedMessage || selectedMessage.channel !== "website") return;
-    if (!confirm("Are you sure you want to delete this website inquiry?")) return;
-    try {
-      const res = await authFetch(`${API}/api/v1/contacts/${selectedMessage.sourceId}`, {
-        method: "DELETE"
-      });
-      if (res.ok) {
-        showToast("Inquiry deleted.", "info");
-        setSelectedMessage(null);
-        fetchAllData();
-      }
-    } catch (e) {
-      console.error(e);
     }
   };
 
