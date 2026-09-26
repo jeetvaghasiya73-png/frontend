@@ -514,15 +514,27 @@ export default function ContactMessagesManager() {
   // ── WhatsApp Actions ──
   const handleSendWaReply = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!selectedMessage || selectedMessage.channel !== "whatsapp" || !waReplyText.trim()) return;
+    if (!selectedMessage || !waReplyText.trim()) return;
 
     setSendingWaReply(true);
     try {
-      const res = await authFetch(`${API}/api/v1/whatsapp/chats/${selectedMessage.sourceId}/send`, {
+      let res = await authFetch(`${API}/api/v1/whatsapp/chats/${selectedMessage.sourceId}/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message_text: waReplyText.trim() })
       });
+
+      if (!res.ok && selectedMessage.channel === "website") {
+        res = await authFetch(`${API}/api/v1/whatsapp/send-custom/${selectedMessage.sourceId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            custom_message: waReplyText.trim(),
+            source: "inquiry",
+            phone_number: selectedMessage.senderContact.includes("@") ? undefined : selectedMessage.senderContact
+          })
+        });
+      }
 
       if (res.ok) {
         // Optimistic UI push
@@ -536,7 +548,7 @@ export default function ContactMessagesManager() {
         };
         setWaChatMessages((prev) => [...prev, newMsg]);
         setWaReplyText("");
-        showToast("WhatsApp message sent successfully 🚀", "success");
+        showToast("WhatsApp message dispatched successfully 🚀", "success");
         fetchAllData();
       } else {
         const err = await res.json().catch(() => ({}));
@@ -1369,7 +1381,7 @@ export default function ContactMessagesManager() {
               {/* ── Bottom: Channel Reply Composer Desk ── */}
               <div className="p-4 border-t border-[var(--dash-border)] bg-[var(--dash-table-header)] shrink-0">
                 {/* WhatsApp Reply Composer */}
-                {selectedMessage.channel === "whatsapp" && (
+                {(selectedMessage.channel === "whatsapp" || selectedMessage.channel === "website") && (
                   <form onSubmit={handleSendWaReply} className="space-y-2">
                     {/* Quick Reply Presets */}
                     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-[10px]">
