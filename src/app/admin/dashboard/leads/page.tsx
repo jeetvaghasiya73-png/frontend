@@ -32,6 +32,8 @@ import {
   Users,
   FileSpreadsheet,
   MessageSquare,
+  MessageSquareOff,
+  RefreshCw,
   Clock,
   Check,
   Send,
@@ -844,6 +846,54 @@ export default function LeadsManager() {
     }
   };
 
+  // 4. Clear Selected WhatsApp Chats & Reset Status
+  const handleClearSelectedChats = async () => {
+    if (selectedLeadIds.size === 0) return;
+    if (!confirm(`Clear chat history & reset status for ${selectedLeadIds.size} selected lead(s)?`)) return;
+
+    try {
+      const scrapedRawIds = allLeads.filter(l => selectedLeadIds.has(l.id) && l.source === "scraped").map(l => l.rawId);
+      const inquiryRawIds = allLeads.filter(l => selectedLeadIds.has(l.id) && l.source === "inquiry").map(l => l.rawId);
+      const targetIds = [...scrapedRawIds, ...inquiryRawIds];
+
+      const res = await authFetch(`${API}/api/v1/whatsapp/chats/clear-selected`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lead_ids: targetIds, reset_status: true }),
+      });
+
+      if (res.ok) {
+        setAllLeads(prev => prev.map(l => selectedLeadIds.has(l.id) ? { ...l, whatsapp_status: "pending", is_interested: false } : l));
+        triggerToast(`Cleared chats & reset status for ${selectedLeadIds.size} lead(s)`);
+        setSelectedLeadIds(new Set());
+      } else {
+        triggerToast("Failed to clear selected chats");
+      }
+    } catch (err) {
+      console.error("Failed to clear selected chats:", err);
+    }
+  };
+
+  // 5. Clear ALL WhatsApp Chats & Reset All Lead Statuses
+  const handleClearAllChats = async () => {
+    if (!confirm("🚨 Are you sure you want to CLEAR ALL WhatsApp chat records & reset ALL lead statuses back to pending?")) return;
+
+    try {
+      const res = await authFetch(`${API}/api/v1/whatsapp/chats/clear-all`, {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        setAllLeads(prev => prev.map(l => ({ ...l, whatsapp_status: "pending", is_interested: false })));
+        triggerToast("Cleared all chat history and reset lead statuses to pending!");
+      } else {
+        triggerToast("Failed to clear all chats");
+      }
+    } catch (err) {
+      console.error("Failed to clear all chats:", err);
+    }
+  };
+
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!importFile) return;
@@ -1025,14 +1075,24 @@ export default function LeadsManager() {
         {/* Action Controls */}
         <div className="grid grid-cols-3 sm:flex items-center gap-2 w-full sm:w-auto">
           {selectedLeadIds.size > 0 && (
-            <button
-              type="button"
-              onClick={handleBulkSendWaOutreach}
-              className="crm-btn-primary bg-emerald-600 hover:bg-emerald-500 text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center col-span-3 sm:col-span-1"
-            >
-              <Zap className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">Send WhatsApp ({selectedLeadIds.size})</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={handleBulkSendWaOutreach}
+                className="crm-btn-primary bg-emerald-600 hover:bg-emerald-500 text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center cursor-pointer"
+              >
+                <Zap className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Send WhatsApp ({selectedLeadIds.size})</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleClearSelectedChats}
+                className="crm-btn-secondary bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center cursor-pointer font-bold"
+              >
+                <RefreshCw className="w-3.5 h-3.5 shrink-0 text-indigo-500" />
+                <span className="truncate">Clear Chats ({selectedLeadIds.size})</span>
+              </button>
+            </>
           )}
           <button
             type="button"
@@ -1199,7 +1259,45 @@ export default function LeadsManager() {
                 </button>
 
               {showDeleteMenu && (
-                <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-neutral-900 rounded-xl border border-slate-200 dark:border-neutral-800 shadow-2xl z-50 overflow-hidden py-1 text-xs animate-fadeIn">
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-neutral-900 rounded-xl border border-slate-200 dark:border-neutral-800 shadow-2xl z-50 overflow-hidden py-1 text-xs animate-fadeIn">
+                  {/* Clear Selected Chats */}
+                  <button
+                    type="button"
+                    disabled={selectedLeadIds.size === 0}
+                    onClick={() => {
+                      setShowDeleteMenu(false);
+                      handleClearSelectedChats();
+                    }}
+                    className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-slate-800 dark:text-neutral-200"
+                  >
+                    <span className="flex items-center gap-2">
+                      <MessageSquareOff className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>Clear Selected Chats & Reset</span>
+                    </span>
+                    <span className="font-bold font-mono text-[10px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+                      {selectedLeadIds.size}
+                    </span>
+                  </button>
+
+                  {/* Clear ALL WhatsApp Chats */}
+                  <button
+                    type="button"
+                    disabled={allLeads.length === 0}
+                    onClick={() => {
+                      setShowDeleteMenu(false);
+                      handleClearAllChats();
+                    }}
+                    className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-slate-800 dark:text-neutral-200 border-t border-slate-100 dark:border-neutral-800"
+                  >
+                    <span className="flex items-center gap-2">
+                      <RefreshCw className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Clear ALL Chats & Reset</span>
+                    </span>
+                    <span className="font-bold font-mono text-[10px] bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+                      ALL
+                    </span>
+                  </button>
+
                   {/* Remove Selected */}
                   <button
                     type="button"
@@ -1208,11 +1306,11 @@ export default function LeadsManager() {
                       setShowDeleteMenu(false);
                       handleDeleteSelected();
                     }}
-                    className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-slate-800 dark:text-neutral-200"
+                    className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-slate-800 dark:text-neutral-200 border-t border-slate-100 dark:border-neutral-800"
                   >
                     <span className="flex items-center gap-2">
                       <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                      <span>Remove Selected</span>
+                      <span>Remove Selected Leads</span>
                     </span>
                     <span className="font-bold font-mono text-[10px] bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-800">
                       {selectedLeadIds.size}
