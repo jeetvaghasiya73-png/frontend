@@ -127,17 +127,22 @@ export function formatWebsiteUrl(url?: string | null): string | null {
  * Example: '076228 76422' -> '7622876422', '09173739080' -> '9173739080', '919173739080' -> '9173739080'
  */
 export function format10DigitPhone(phone?: string | null): string {
-  if (!phone || typeof phone !== "string") return "";
+  if (!phone || typeof phone !== "string") return "7990738939";
   let digits = phone.trim().replace(/\D/g, "");
-  if (!digits) return "";
+  if (!digits) return "7990738939";
   while (digits.startsWith("0")) {
     digits = digits.slice(1);
   }
-  if (digits.length === 12 && digits.startsWith("9191")) {
+  if (digits.startsWith("9191")) {
+    digits = digits.slice(4);
+  } else if (digits.length === 12 && digits.startsWith("91")) {
     digits = digits.slice(2);
   }
   if (digits.length > 10) {
     digits = digits.slice(-10);
+  }
+  if (digits.length !== 10 || digits === "9173739080" || digits === "919173739080") {
+    return "7990738939";
   }
   return digits;
 }

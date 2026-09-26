@@ -391,7 +391,7 @@ export default function WhatsAppOutreachPage() {
   const [savingLimit, setSavingLimit] = useState(false);
 
   const [testModalOpen, setTestModalOpen] = useState(false);
-  const [testNumber, setTestNumber] = useState("9173739080");
+  const [testNumber, setTestNumber] = useState("7990738939");
   const [testMessage, setTestMessage] = useState("");
   const [sendingTest, setSendingTest] = useState(false);
 
@@ -2383,7 +2383,7 @@ export default function WhatsAppOutreachPage() {
                   type="text"
                   value={testNumber}
                   onChange={(e) => setTestNumber(e.target.value)}
-                  placeholder="e.g. 9173739080"
+                  placeholder="e.g. 7990738939"
                   className="crm-input w-full"
                 />
               </div>
@@ -2547,7 +2547,7 @@ export default function WhatsAppOutreachPage() {
               </div>
               <p className="text-[11px] opacity-90 pl-5">
                 {targetTestMode
-                  ? "100% of outgoing WhatsApp messages will be strictly redirected to test number (+919173739080)."
+                  ? "100% of outgoing WhatsApp messages will be strictly redirected to test number (+7990738939)."
                   : "All outgoing WhatsApp messages will be sent to REAL client numbers."}
               </p>
             </div>
