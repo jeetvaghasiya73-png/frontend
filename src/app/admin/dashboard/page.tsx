@@ -1499,10 +1499,10 @@ export default function SuperAdminDashboard() {
       </section>
 
       {/* ── Database Explorer Data Table ── */}
-      <section className="crm-card-flat flex flex-col w-full max-w-full overflow-hidden">
+      <section className="crm-card-flat flex flex-col w-full max-w-full overflow-visible relative">
         
         {/* Toolbar & Segmented Tabs */}
-        <div className="p-3.5 sm:p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-3 max-w-full" style={{ borderBottom: "1px solid var(--dash-border)" }}>
+        <div className="p-3.5 sm:p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-3 max-w-full relative z-20" style={{ borderBottom: "1px solid var(--dash-border)" }}>
           
           {/* Segmented View Tabs - ALWAYS IN ONE ROW */}
           <div className="flex flex-nowrap items-center gap-1 p-1 max-w-full overflow-x-auto scrollbar-none shrink-0" style={{ background: "var(--dash-surface-alt)", border: "1px solid var(--dash-border)", borderRadius: "var(--dash-btn-radius)" }}>
@@ -1600,7 +1600,7 @@ export default function SuperAdminDashboard() {
               </button>
 
               {/* Multi-Option Deletion Menu */}
-              <div className="relative flex-1 sm:flex-none">
+              <div className="relative flex-1 sm:flex-none z-30">
                 <button
                   type="button"
                   onClick={() => setShowDeleteMenu(!showDeleteMenu)}
@@ -1617,7 +1617,9 @@ export default function SuperAdminDashboard() {
                 </button>
 
               {showDeleteMenu && (
-                <div className="absolute right-0 mt-2 w-60 z-50 overflow-hidden py-1 text-xs animate-scaleIn crm-card" style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}>
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowDeleteMenu(false)} />
+                  <div className="absolute right-0 top-full mt-1.5 w-64 z-50 overflow-y-auto max-h-[85vh] py-1 text-xs animate-scaleIn crm-card shadow-2xl" style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}>
                   {/* Remove Selected */}
                   <button
                     type="button"
@@ -1682,7 +1684,8 @@ export default function SuperAdminDashboard() {
                     </span>
                   </button>
                 </div>
-              )}
+              </>
+            )}
             </div>
           </div>
         </div>

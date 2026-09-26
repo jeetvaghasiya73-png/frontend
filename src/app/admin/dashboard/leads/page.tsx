@@ -1181,10 +1181,10 @@ export default function LeadsManager() {
       </section>
 
       {/* Segmented Filter Bar & Lead Table Container */}
-      <section className="crm-card p-0 flex flex-col w-full max-w-full overflow-hidden">
+      <section className="crm-card p-0 flex flex-col w-full max-w-full overflow-visible relative">
         
         {/* Controls Deck */}
-        <div className="p-3 sm:p-4 border-b border-[var(--dash-border)] flex flex-col xl:flex-row xl:items-center justify-between gap-3 w-full max-w-full">
+        <div className="p-3 sm:p-4 border-b border-[var(--dash-border)] flex flex-col xl:flex-row xl:items-center justify-between gap-3 w-full max-w-full relative z-20">
           
           {/* Segmented View Tabs */}
           <div className="flex flex-nowrap items-center gap-1 p-1 rounded-md bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] max-w-full overflow-x-auto scrollbar-none shrink-0">
@@ -1258,7 +1258,7 @@ export default function LeadsManager() {
               </div>
 
               {/* Multi-Option Deletion Menu */}
-              <div className="relative flex-1 sm:flex-none sm:w-auto">
+              <div className="relative flex-1 sm:flex-none sm:w-auto z-30">
                 <button
                   type="button"
                   onClick={() => setShowDeleteMenu(!showDeleteMenu)}
@@ -1279,7 +1279,7 @@ export default function LeadsManager() {
                 {showDeleteMenu && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setShowDeleteMenu(false)} />
-                    <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-xl shadow-2xl z-50 overflow-hidden py-1 text-xs animate-fadeIn">
+                    <div className="absolute right-0 top-full mt-1.5 w-72 sm:w-80 bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-xl shadow-2xl z-50 overflow-y-auto max-h-[85vh] py-1 text-xs animate-fadeIn">
                       {/* Clear Selected Chats */}
                       <button
                         type="button"
