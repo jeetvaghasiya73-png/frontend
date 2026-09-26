@@ -299,16 +299,30 @@ export default function DashboardLayout({
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            if ((data.type === "whatsapp_update" && data.event === "inbound_message") || data.type === "notification_added" || data.event === "new_contact_message") {
+            const isImportantEvent = (
+              data.type === "notification_added" ||
+              (data.type === "whatsapp_update" && (data.event === "intake_completed" || data.event === "interested_lead")) ||
+              (data.type === "lead_updated" && (data.event === "intake_completed" || data.is_interested === true))
+            );
+            const isAnyUpdate = (
+              isImportantEvent ||
+              (data.type === "whatsapp_update" && (data.event === "inbound_message" || data.event === "chat_message_received")) ||
+              data.type === "new_chat_message" ||
+              data.type === "lead_updated" ||
+              data.event === "new_contact_message"
+            );
+            if (isImportantEvent) {
               playNotificationSound();
               if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
                 try {
                   new Notification(data.title || "New LeadFlow Alert 🔔", {
-                    body: data.message || "You received a new incoming message/inquiry.",
+                    body: data.message || data.bussiness_name || "You received a new hot lead inquiry!",
                     icon: "/favicon.ico"
                   });
                 } catch (e) {}
               }
+            }
+            if (isAnyUpdate) {
               loadCountsAndNotifications(true);
             }
           } catch (err) {}

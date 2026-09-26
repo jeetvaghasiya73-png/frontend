@@ -141,7 +141,7 @@ export function format10DigitPhone(phone?: string | null): string {
   if (digits.length > 10) {
     digits = digits.slice(-10);
   }
-  if (digits.length !== 10 || digits === "9173739080" || digits === "919173739080") {
+  if (digits.length !== 10) {
     return "7990738939";
   }
   return digits;
