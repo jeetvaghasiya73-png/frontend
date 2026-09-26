@@ -22,7 +22,12 @@ import {
   Plus,
   Trash2,
   Users,
-  Check
+  Check,
+  Eye,
+  EyeOff,
+  Lock,
+  X,
+  KeyRound
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
 
@@ -112,6 +117,48 @@ export default function SettingsPage() {
   const showToast = (type: "success" | "error", message: string) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
+  };
+
+  // Test Mode Toggle Password Modal State
+  const [toggleModalOpen, setToggleModalOpen] = useState(false);
+  const [targetTestMode, setTargetTestMode] = useState<boolean>(true);
+  const [targetService, setTargetService] = useState<"whatsapp" | "email" | "all">("all");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [toggling, setToggling] = useState(false);
+  const [toggleError, setToggleError] = useState<string | null>(null);
+
+  const handleConfirmToggleTestMode = async () => {
+    if (!adminPassword.trim()) {
+      setToggleError("Super Admin password is required.");
+      return;
+    }
+    setToggling(true);
+    setToggleError(null);
+    try {
+      const res = await authFetch(`${API}/api/v1/settings/toggle-test-mode`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          service: targetService,
+          enabled: targetTestMode,
+          admin_password: adminPassword,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast("success", data.message || `Test mode successfully ${targetTestMode ? "enabled" : "disabled"}.`);
+        setToggleModalOpen(false);
+        setAdminPassword("");
+        fetchOverview();
+      } else {
+        setToggleError(data.detail || data.message || "Invalid Super Admin password.");
+      }
+    } catch (err: any) {
+      setToggleError(err?.message || "Connection error verifying password.");
+    } finally {
+      setToggling(false);
+    }
   };
 
   // Fetch read-only system overview
@@ -409,6 +456,82 @@ export default function SettingsPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
+          MASTER TEST MODE SAFETY CONTROL CARD
+      ───────────────────────────────────────────────────────────── */}
+      <div className="crm-card p-5 rounded-xl border border-[var(--dash-border)] bg-gradient-to-r from-[var(--dash-surface-alt)] to-[var(--dash-surface)] shadow-md space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center border shrink-0 ${
+              overview?.services?.whatsapp?.test_mode || overview?.services?.smtp?.test_mode
+                ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30"
+                : "bg-amber-500/15 text-amber-500 border-amber-500/30"
+            }`}>
+              {overview?.services?.whatsapp?.test_mode || overview?.services?.smtp?.test_mode ? (
+                <ShieldCheck className="w-6 h-6" />
+              ) : (
+                <ShieldAlert className="w-6 h-6" />
+              )}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold" style={{ color: "var(--dash-text)" }}>
+                  Global Outreach Test Mode Shield
+                </h3>
+                <span className={`px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-full border ${
+                  overview?.services?.whatsapp?.test_mode || overview?.services?.smtp?.test_mode
+                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/40"
+                    : "bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40"
+                }`}>
+                  {overview?.services?.whatsapp?.test_mode || overview?.services?.smtp?.test_mode
+                    ? "SAFE TEST MODE ACTIVE"
+                    : "LIVE PRODUCTION ACTIVE"}
+                </span>
+              </div>
+              <p className="text-xs mt-1 leading-relaxed max-w-2xl" style={{ color: "var(--dash-text-muted)" }}>
+                When <strong>Test Mode is ON</strong>, 100% of outgoing WhatsApp messages and Emails across all lead conditions are strictly redirected to your test targets (<strong>WhatsApp: +{overview?.services?.whatsapp?.test_number || '919173739080'}</strong> | <strong>Email: {overview?.services?.smtp?.account || 'test recipient'}</strong>). Requires Super Admin password authorization to toggle.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="text-right hidden sm:block">
+              <div className="text-[11px] font-bold" style={{ color: "var(--dash-text-muted)" }}>
+                Outreach Sandbox
+              </div>
+              <div className="text-xs font-mono font-bold" style={{ color: "var(--dash-text)" }}>
+                {overview?.services?.whatsapp?.test_mode ? "100% Protected" : "Live Client Dispatch"}
+              </div>
+            </div>
+
+            {/* Toggle Button for All Services */}
+            <button
+              onClick={() => {
+                const currentStatus = !!(overview?.services?.whatsapp?.test_mode || overview?.services?.smtp?.test_mode);
+                setTargetTestMode(!currentStatus);
+                setTargetService("all");
+                setAdminPassword("");
+                setToggleError(null);
+                setToggleModalOpen(true);
+              }}
+              className={`relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                overview?.services?.whatsapp?.test_mode || overview?.services?.smtp?.test_mode
+                  ? "bg-emerald-500"
+                  : "bg-amber-600"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                  overview?.services?.whatsapp?.test_mode || overview?.services?.smtp?.test_mode
+                    ? "translate-x-8"
+                    : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
           SYSTEM OVERVIEW SUMMARY BAR
       ───────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -452,49 +575,77 @@ export default function SettingsPage() {
         </div>
 
         {/* WhatsApp Routing Card */}
-        <div className="crm-card p-4 rounded-lg border border-[var(--dash-border)] flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20 shrink-0">
-            <MessageSquare className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-[11px] font-semibold" style={{ color: "var(--dash-text-muted)" }}>
-              WhatsApp Safety Shield
+        <div className="crm-card p-4 rounded-lg border border-[var(--dash-border)] flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20 shrink-0">
+              <MessageSquare className="w-5 h-5" />
             </div>
-            <div className="text-xs font-bold flex items-center gap-1.5" style={{ color: "var(--dash-text)" }}>
-              {overview?.services?.whatsapp?.test_mode ? (
-                <span className="text-emerald-500 flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5" /> Test Sandbox ({overview.services.whatsapp.test_number})
-                </span>
-              ) : (
-                <span className="text-amber-500 flex items-center gap-1">
-                  <ShieldAlert className="w-3.5 h-3.5" /> Live Recipients Active
-                </span>
-              )}
+            <div>
+              <div className="text-[11px] font-semibold" style={{ color: "var(--dash-text-muted)" }}>
+                WhatsApp Safety Shield
+              </div>
+              <div className="text-xs font-bold flex items-center gap-1.5" style={{ color: "var(--dash-text)" }}>
+                {overview?.services?.whatsapp?.test_mode ? (
+                  <span className="text-emerald-500 flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" /> Test Sandbox ({overview.services.whatsapp.test_number})
+                  </span>
+                ) : (
+                  <span className="text-amber-500 flex items-center gap-1">
+                    <ShieldAlert className="w-3.5 h-3.5" /> Live Recipients Active
+                  </span>
+                )}
+              </div>
             </div>
           </div>
+          <button
+            onClick={() => {
+              setTargetTestMode(!overview?.services?.whatsapp?.test_mode);
+              setTargetService("whatsapp");
+              setAdminPassword("");
+              setToggleError(null);
+              setToggleModalOpen(true);
+            }}
+            className="crm-btn-secondary text-[11px] py-1 px-2.5 font-bold cursor-pointer"
+          >
+            Toggle
+          </button>
         </div>
 
         {/* Email Outreach Status Card */}
-        <div className="crm-card p-4 rounded-lg border border-[var(--dash-border)] flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center border border-purple-500/20 shrink-0">
-            <Mail className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-[11px] font-semibold" style={{ color: "var(--dash-text-muted)" }}>
-              Email Routing Mode
+        <div className="crm-card p-4 rounded-lg border border-[var(--dash-border)] flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center border border-purple-500/20 shrink-0">
+              <Mail className="w-5 h-5" />
             </div>
-            <div className="text-xs font-bold flex items-center gap-1.5" style={{ color: "var(--dash-text)" }}>
-              {overview?.services?.smtp?.test_mode ? (
-                <span className="text-purple-500 flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5" /> Test Sandbox Active
-                </span>
-              ) : (
-                <span className="text-blue-500 flex items-center gap-1">
-                  <Send className="w-3.5 h-3.5" /> Live Client Dispatch
-                </span>
-              )}
+            <div>
+              <div className="text-[11px] font-semibold" style={{ color: "var(--dash-text-muted)" }}>
+                Email Routing Mode
+              </div>
+              <div className="text-xs font-bold flex items-center gap-1.5" style={{ color: "var(--dash-text)" }}>
+                {overview?.services?.smtp?.test_mode ? (
+                  <span className="text-purple-500 flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" /> Test Sandbox Active
+                  </span>
+                ) : (
+                  <span className="text-blue-500 flex items-center gap-1">
+                    <Send className="w-3.5 h-3.5" /> Live Client Dispatch
+                  </span>
+                )}
+              </div>
             </div>
           </div>
+          <button
+            onClick={() => {
+              setTargetTestMode(!overview?.services?.smtp?.test_mode);
+              setTargetService("email");
+              setAdminPassword("");
+              setToggleError(null);
+              setToggleModalOpen(true);
+            }}
+            className="crm-btn-secondary text-[11px] py-1 px-2.5 font-bold cursor-pointer"
+          >
+            Toggle
+          </button>
         </div>
       </div>
 
@@ -876,6 +1027,113 @@ export default function SettingsPage() {
           </button>
         </form>
       </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          SUPER ADMIN PASSWORD AUTHENTICATION MODAL
+      ───────────────────────────────────────────────────────────── */}
+      {toggleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="crm-card w-full max-w-md p-6 rounded-2xl border border-[var(--dash-border)] bg-[var(--dash-surface)] shadow-2xl space-y-5 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--dash-border)]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center border border-indigo-500/20">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[var(--dash-text)]">
+                    Admin Authorization Required
+                  </h3>
+                  <p className="text-[11px] text-[var(--dash-text-muted)]">
+                    Confirm Super Admin Password to toggle Test Mode
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setToggleModalOpen(false)}
+                className="text-gray-400 hover:text-gray-200 p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs leading-relaxed text-amber-700 dark:text-amber-300 space-y-1">
+              <div className="font-bold flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>
+                  Switching to: {targetTestMode ? "🛡️ SAFE TEST MODE (Sandbox Protection)" : "⚠️ LIVE PRODUCTION MODE (Real Clients)"}
+                </span>
+              </div>
+              <p className="text-[11px] opacity-90 pl-5">
+                {targetTestMode
+                  ? "100% of WhatsApp messages and Emails will be strictly routed to test sandbox targets."
+                  : "All WhatsApp messages and Emails will be dispatched to REAL client numbers and emails."}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-[var(--dash-text)] block">
+                Super Admin Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter Super Admin password..."
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleConfirmToggleTestMode();
+                  }}
+                  className="crm-input w-full text-sm py-2.5 px-3 pr-10 font-mono"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {toggleError && (
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2 font-medium">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{toggleError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[var(--dash-border)]">
+              <button
+                type="button"
+                onClick={() => setToggleModalOpen(false)}
+                className="crm-btn-secondary px-4 py-2 text-xs font-semibold cursor-pointer"
+                disabled={toggling}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmToggleTestMode}
+                disabled={toggling || !adminPassword.trim()}
+                className="crm-btn-primary px-5 py-2 text-xs font-bold inline-flex items-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
+              >
+                {toggling ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Authorizing...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Confirm & Toggle Mode</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

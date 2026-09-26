@@ -299,6 +299,47 @@ export default function WhatsAppOutreachPage() {
   const [sentToday, setSentToday] = useState<number>(0);
   const [isLimitReached, setIsLimitReached] = useState<boolean>(false);
 
+  // Test Mode Toggle Password Modal State
+  const [toggleModalOpen, setToggleModalOpen] = useState(false);
+  const [targetTestMode, setTargetTestMode] = useState<boolean>(true);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [togglingTestMode, setTogglingTestMode] = useState(false);
+  const [toggleError, setToggleError] = useState<string | null>(null);
+
+  const handleConfirmToggleTestMode = async () => {
+    if (!adminPassword.trim()) {
+      setToggleError("Super Admin password is required.");
+      return;
+    }
+    setTogglingTestMode(true);
+    setToggleError(null);
+    try {
+      const res = await authFetch(`${API}/api/v1/settings/toggle-test-mode`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          service: "whatsapp",
+          enabled: targetTestMode,
+          admin_password: adminPassword,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showAlert("success", data.message || `WhatsApp Test mode updated to ${targetTestMode ? "ON" : "OFF"}.`);
+        setToggleModalOpen(false);
+        setAdminPassword("");
+        fetchOverview();
+      } else {
+        setToggleError(data.detail || data.message || "Invalid Super Admin password.");
+      }
+    } catch (err: any) {
+      setToggleError(err?.message || "Connection error verifying password.");
+    } finally {
+      setTogglingTestMode(false);
+    }
+  };
+
   // Conversations State (WhatsApp Chat Workspace)
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [totalConversations, setTotalConversations] = useState<number>(0);
@@ -996,6 +1037,25 @@ export default function WhatsAppOutreachPage() {
           >
             <QrCode className="w-3.5 h-3.5" />
             <span>Pair QR</span>
+          </button>
+
+          {/* Test Mode Password Authorization Toggle Button */}
+          <button
+            onClick={() => {
+              setTargetTestMode(!stats?.test_mode);
+              setAdminPassword("");
+              setToggleError(null);
+              setToggleModalOpen(true);
+            }}
+            className={`crm-btn-secondary text-xs flex items-center gap-1.5 font-bold cursor-pointer border ${
+              stats?.test_mode
+                ? "text-emerald-500 border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20"
+                : "text-amber-500 border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20"
+            }`}
+            title="Toggle Test Mode (Requires Super Admin Password)"
+          >
+            {stats?.test_mode ? <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> : <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />}
+            <span>{stats?.test_mode ? "Test Mode: ON" : "Test Mode: OFF"}</span>
           </button>
 
           <button
@@ -2444,6 +2504,108 @@ export default function WhatsAppOutreachPage() {
                 className="crm-btn-secondary text-xs"
               >
                 Close
+              </button>
+            </div>
+          </div>
+      {/* ── 9. Test Mode Password Authorization Modal ── */}
+      {toggleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="crm-card w-full max-w-md p-6 rounded-2xl border border-[var(--dash-border)] bg-[var(--dash-surface)] shadow-2xl space-y-5 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--dash-border)]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[var(--dash-text)]">
+                    Admin Authorization Required
+                  </h3>
+                  <p className="text-[11px] text-[var(--dash-text-muted)]">
+                    Confirm Super Admin Password to toggle WhatsApp Test Mode
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setToggleModalOpen(false)}
+                className="text-gray-400 hover:text-gray-200 p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs leading-relaxed text-amber-700 dark:text-amber-300 space-y-1">
+              <div className="font-bold flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>
+                  Switching to: {targetTestMode ? "🛡️ SAFE TEST MODE (Sandbox Redirection)" : "⚠️ LIVE PRODUCTION MODE (Real Recipients)"}
+                </span>
+              </div>
+              <p className="text-[11px] opacity-90 pl-5">
+                {targetTestMode
+                  ? "100% of outgoing WhatsApp messages will be strictly redirected to test number (+919173739080)."
+                  : "All outgoing WhatsApp messages will be sent to REAL client numbers."}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-[var(--dash-text)] block">
+                Super Admin Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter Super Admin password..."
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleConfirmToggleTestMode();
+                  }}
+                  className="crm-input w-full text-sm py-2.5 px-3 pr-10 font-mono"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {toggleError && (
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2 font-medium">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{toggleError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[var(--dash-border)]">
+              <button
+                type="button"
+                onClick={() => setToggleModalOpen(false)}
+                className="crm-btn-secondary px-4 py-2 text-xs font-semibold cursor-pointer"
+                disabled={togglingTestMode}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmToggleTestMode}
+                disabled={togglingTestMode || !adminPassword.trim()}
+                className="crm-btn-primary px-5 py-2 text-xs font-bold inline-flex items-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
+              >
+                {togglingTestMode ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Authorizing...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Confirm & Toggle Mode</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
