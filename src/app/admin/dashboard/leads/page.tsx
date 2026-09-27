@@ -469,7 +469,7 @@ export default function LeadsManager() {
       }
 
       setAllLeads(uniqueLeads);
-      setTotalLeadsFromAPI(Math.max(uniqueLeads.length, scrapedTotal + inquiryData.length));
+      setTotalLeadsFromAPI(uniqueLeads.length);
     } catch (err) {
       console.error("Failed to load leads:", err);
     } finally {

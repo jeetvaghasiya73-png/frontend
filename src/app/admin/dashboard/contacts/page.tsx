@@ -267,37 +267,60 @@ export default function ContactMessagesManager() {
   const unifiedMessages: UnifiedMessage[] = useMemo(() => {
     const list: UnifiedMessage[] = [];
 
+    // Collect all WhatsApp contact identifiers (phones & emails) to prevent duplicate website boxes
+    const waPhoneSet = new Set<string>();
+    const waEmailSet = new Set<string>();
+
     // 1. WhatsApp conversations
     waConversations.forEach((wa) => {
+      const waPhone = (wa.phone_number || wa.clean_phone || "").replace(/\D/g, "").slice(-10);
+      if (waPhone) waPhoneSet.add(waPhone);
+      const waEmail = (wa.bussiness_email || wa.email || "").trim().toLowerCase();
+      if (waEmail && waEmail.includes("@")) waEmailSet.add(waEmail);
+
+      // Check if CRM has additional email for this contact
+      const matchingCrm = inboundLeads.find(l => {
+        const lp = (l.phone || "").replace(/\D/g, "").slice(-10);
+        return (lp && lp === waPhone) || (waEmail && (l.email || "").toLowerCase() === waEmail);
+      });
+      if (matchingCrm?.email) waEmailSet.add(matchingCrm.email.toLowerCase());
+
       list.push({
         id: `wa-${wa.lead_id}`,
         channel: "whatsapp",
         sourceId: wa.lead_id,
-        senderName: wa.bussiness_name || "WhatsApp Contact",
-        senderContact: wa.phone_number || wa.clean_phone || "No Phone",
-        city: wa.scraped_city,
-        category: wa.category,
+        senderName: wa.bussiness_name || matchingCrm?.name || matchingCrm?.business_name || "WhatsApp Contact",
+        senderContact: wa.phone_number || wa.clean_phone || matchingCrm?.phone || "No Phone",
+        phone: wa.phone_number || wa.clean_phone || matchingCrm?.phone,
+        city: wa.scraped_city || matchingCrm?.company || matchingCrm?.city,
+        category: wa.category || matchingCrm?.category,
         subject: wa.category ? `WhatsApp Outreach: ${wa.category}` : "WhatsApp Chat",
         snippet: wa.latest_message || wa.last_reply || "No messages yet",
         timestamp: wa.latest_timestamp || wa.reply_at || new Date().toISOString(),
         status: wa.is_interested ? "interested" : (wa.whatsapp_status || "pending"),
-        isInterested: wa.is_interested,
+        isInterested: wa.is_interested || matchingCrm?.status?.toLowerCase() === "interested",
         aiEnabled: wa.whatsapp_ai_enabled,
-        raw: wa
+        raw: { ...wa, email: wa.bussiness_email || wa.email || matchingCrm?.email }
       });
     });
 
-    // 2. Website contact inquiries (from both contact_messages and leads table)
+    // 2. Website contact inquiries (from contact_messages table)
     const addedWebEmails = new Set<string>();
+    const addedWebPhones = new Set<string>();
 
     websiteInquiries.forEach((cont) => {
-      if (cont.email) addedWebEmails.add(cont.email.toLowerCase());
+      const cEmail = (cont.email || "").trim().toLowerCase();
+      const cPhone = (cont.phone || "").replace(/\D/g, "").slice(-10);
+      if (cEmail) addedWebEmails.add(cEmail);
+      if (cPhone) addedWebPhones.add(cPhone);
+
       list.push({
         id: `web-contact-${cont.id}`,
         channel: "website",
         sourceId: cont.id,
         senderName: cont.name || "Website Visitor",
-        senderContact: cont.email || "No Email",
+        senderContact: cont.email || cont.phone || "No Email",
+        phone: cont.phone,
         city: cont.city || undefined,
         category: "Website Form",
         subject: cont.subject || "Website Inquiry",
@@ -308,18 +331,42 @@ export default function ContactMessagesManager() {
       });
     });
 
+    // Only add CRM inbound leads if they did NOT originate from WhatsApp and are not duplicates
     inboundLeads.forEach((lead) => {
-      const leadEmail = (lead.email || "").toLowerCase();
-      const isAlreadyIn = leadEmail && addedWebEmails.has(leadEmail);
-      if (!isAlreadyIn) {
+      const leadPhone = (lead.phone || "").replace(/\D/g, "").slice(-10);
+      const leadEmail = (lead.email || "").trim().toLowerCase();
+      const leadMsg = (lead.message || "").toLowerCase();
+      const leadCategory = (lead.category || "").toLowerCase();
+      const leadService = (Array.isArray(lead.services) ? lead.services.join(" ") : String(lead.services || "")).toLowerCase();
+
+      // Skip if this lead came from WhatsApp bot (outreach graduation or direct WhatsApp intake)
+      const isWhatsAppOrigin =
+        leadMsg.includes("whatsapp") ||
+        leadCategory.includes("whatsapp") ||
+        leadService.includes("whatsapp") ||
+        (leadPhone && waPhoneSet.has(leadPhone)) ||
+        (leadEmail && waEmailSet.has(leadEmail));
+
+      if (isWhatsAppOrigin) return;
+
+      const isDuplicate =
+        (leadEmail && addedWebEmails.has(leadEmail)) ||
+        (leadPhone && addedWebPhones.has(leadPhone));
+
+      if (!isDuplicate) {
         if (leadEmail) addedWebEmails.add(leadEmail);
-        const servText = (lead.services && Array.isArray(lead.services) && lead.services.length > 0) ? lead.services.join(", ") : (lead.category || "Website Inquiry");
+        if (leadPhone) addedWebPhones.add(leadPhone);
+        const servText = (lead.services && Array.isArray(lead.services) && lead.services.length > 0)
+          ? lead.services.join(", ")
+          : (lead.category || "Website Inquiry");
+
         list.push({
           id: `web-lead-${lead.id}`,
           channel: "website",
           sourceId: lead.id,
           senderName: lead.name || lead.business_name || lead.company || "Website Prospect",
           senderContact: lead.email || lead.phone || "No Email",
+          phone: lead.phone,
           city: lead.company || lead.business_name || undefined,
           category: lead.category || "Website Inquiry Form",
           subject: servText,
