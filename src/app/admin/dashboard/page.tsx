@@ -179,7 +179,12 @@ export default function SuperAdminDashboard() {
       }
       if (scrapedRes.status === "fulfilled" && scrapedRes.value.ok) {
         const scrapedJson = await scrapedRes.value.json();
-        setScrapedLeads(scrapedJson.leads || []);
+        const rawList = scrapedJson.leads || [];
+        setScrapedLeads(rawList.filter((lead: any) => {
+          if (!lead) return false;
+          const p = String(lead.bussiness_number || "").trim().toLowerCase();
+          return p && p !== "n/a" && p !== "na" && p !== "none" && p !== "null" && p !== "nan" && p !== "undefined" && p !== "-" && p !== "--";
+        }));
       }
       if (leadsRes.status === "fulfilled" && leadsRes.value.ok) {
         setInquiryLeads(await leadsRes.value.json());
@@ -1161,8 +1166,27 @@ export default function SuperAdminDashboard() {
           setUploadResult(null);
         }, 1500);
       } else {
-        const err = await res.json();
-        setUploadResult(`Error: ${err.detail || "Failed to process spreadsheet."}`);
+        let errorDetail = "Failed to process spreadsheet.";
+        if (res.status === 413) {
+          errorDetail = "File size exceeds server upload limit (413 Request Entity Too Large). Nginx client_max_body_size needs to be 100M.";
+        } else {
+          try {
+            const err = await res.json();
+            errorDetail = err.detail || errorDetail;
+          } catch {
+            try {
+              const text = await res.text();
+              if (text.includes("413") || text.includes("Too Large")) {
+                errorDetail = "File size exceeds server upload limit (413 Request Entity Too Large). Nginx client_max_body_size needs to be 100M.";
+              } else {
+                errorDetail = text.slice(0, 120) || errorDetail;
+              }
+            } catch {
+              // fallback
+            }
+          }
+        }
+        setUploadResult(`Error: ${errorDetail}`);
       }
     } catch (err: any) {
       setUploadResult(`Error: ${err.message || "Failed to upload file."}`);
