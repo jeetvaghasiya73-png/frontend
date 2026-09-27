@@ -276,20 +276,61 @@ export default function LeadsManager() {
 
   const fetchLeads = async () => {
     try {
-      const inquiryRes = await authFetch(`${API}/api/v1/leads/`);
-      const inquiryData: any[] = inquiryRes.ok ? await inquiryRes.json() : [];
+      setLoading(true);
+      const [inquiryRes, scrapedRes] = await Promise.allSettled([
+        authFetch(`${API}/api/v1/leads/`),
+        authFetch(`${API}/api/v1/scraped-leads/?page=1&limit=1000`)
+      ]);
 
-      const scrapedRes = await authFetch(`${API}/api/v1/scraped-leads/?page=1&limit=10000`);
+      let inquiryData: any[] = [];
+      if (inquiryRes.status === "fulfilled" && inquiryRes.value.ok) {
+        try {
+          inquiryData = await inquiryRes.value.json();
+        } catch (e) {
+          console.error("Error parsing inquiry data:", e);
+        }
+      }
+
       let scrapedData: any[] = [];
       let scrapedTotal = 0;
-      if (scrapedRes.ok) {
-        const scrapedJson = await scrapedRes.json();
-        if (Array.isArray(scrapedJson)) {
-          scrapedData = scrapedJson;
-          scrapedTotal = scrapedJson.length;
-        } else if (scrapedJson && Array.isArray(scrapedJson.leads)) {
-          scrapedData = scrapedJson.leads;
-          scrapedTotal = scrapedJson.total || scrapedJson.leads.length;
+      let scrapedOk = false;
+      if (scrapedRes.status === "fulfilled" && scrapedRes.value.ok) {
+        try {
+          const scrapedJson = await scrapedRes.value.json();
+          if (Array.isArray(scrapedJson)) {
+            scrapedData = scrapedJson;
+            scrapedTotal = scrapedJson.length;
+            scrapedOk = true;
+          } else if (scrapedJson && Array.isArray(scrapedJson.leads)) {
+            scrapedData = scrapedJson.leads;
+            scrapedTotal = scrapedJson.total || scrapedJson.leads.length;
+            scrapedOk = true;
+          }
+        } catch (e) {
+          console.error("Error parsing scraped data:", e);
+        }
+      }
+
+      // Resilient fallback in case a server validator enforces smaller limit
+      if (!scrapedOk) {
+        for (const fallbackLimit of [500, 100, 20]) {
+          try {
+            const fallbackRes = await authFetch(`${API}/api/v1/scraped-leads/?page=1&limit=${fallbackLimit}`);
+            if (fallbackRes.ok) {
+              const fbJson = await fallbackRes.json();
+              if (Array.isArray(fbJson)) {
+                scrapedData = fbJson;
+                scrapedTotal = fbJson.length;
+                break;
+              } else if (fbJson && Array.isArray(fbJson.leads)) {
+                scrapedData = fbJson.leads;
+                scrapedTotal = fbJson.total || fbJson.leads.length;
+                break;
+              }
+            }
+          } catch (fbErr) {
+            // continue fallback attempts
+          }
         }
       }
 
