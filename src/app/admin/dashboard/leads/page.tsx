@@ -337,6 +337,23 @@ export default function LeadsManager() {
         const savedFollowup = typeof window !== "undefined" ? localStorage.getItem(`crm_lead_followup_${lead.id}`) : null;
         const rawFollowup = lead.next_followup_at ? new Date(lead.next_followup_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
 
+        // For inbound WhatsApp leads, derive status from whatsapp_status instead of email_status
+        const isInboundWa = String(lead.scraped_service || "").toLowerCase().includes("whatsapp inbound") ||
+          String(lead.scraped_city || "").toLowerCase().includes("inbound whatsapp") ||
+          String(lead.bussiness_name || "").toLowerCase().includes("inbound client") ||
+          String(lead.bussiness_name || "").toLowerCase().includes("inbound lead");
+        let displayStatus = lead.email_status ? (lead.email_status.charAt(0).toUpperCase() + lead.email_status.slice(1)) : "Contacted";
+        if (isInboundWa) {
+          const waStatus = String(lead.whatsapp_status || "pending").toLowerCase();
+          if (lead.is_interested || waStatus === "interested") {
+            displayStatus = "Interested";
+          } else if (waStatus === "replied") {
+            displayStatus = "Pending";
+          } else {
+            displayStatus = waStatus.charAt(0).toUpperCase() + waStatus.slice(1);
+          }
+        }
+
         return {
           id: lead.id + 100000,
           rawId: lead.id,
@@ -347,7 +364,7 @@ export default function LeadsManager() {
           company: lead.scraped_city || "Outreach",
           services: cleanService ? [cleanService] : [],
           message: "",
-          status: lead.email_status ? (lead.email_status.charAt(0).toUpperCase() + lead.email_status.slice(1)) : "Contacted",
+          status: displayStatus,
           created_at: lead.created_at || new Date().toISOString(),
           source: "scraped" as const,
           rating: lead.rating || "",
@@ -376,16 +393,36 @@ export default function LeadsManager() {
       const merged = [...normalizedInquiries, ...normalizedScraped];
       merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      // Retain all distinct lead entries from database by unique source & id
+      // Retain all distinct lead entries from database by unique source & id,
+      // AND deduplicate by phone number across tables (same phone = same lead)
       const seenKeys = new Set<string>();
+      const seenPhones = new Map<string, NormalizedLead>();
       const uniqueLeads: NormalizedLead[] = [];
 
       for (const lead of merged) {
         const key = `${lead.source}_${lead.rawId}`;
-        if (!seenKeys.has(key)) {
-          seenKeys.add(key);
-          uniqueLeads.push(lead);
+        if (seenKeys.has(key)) continue;
+        seenKeys.add(key);
+
+        // Phone-based dedup: same phone across inquiry + scraped = 1 row
+        const phone10 = (lead.phone || "").replace(/\D/g, "").slice(-10);
+        if (phone10 && phone10.length >= 10) {
+          const existing = seenPhones.get(phone10);
+          if (existing) {
+            // Keep the entry with "Interested" status or more complete data
+            const existingScore = (existing.status.toLowerCase() === "interested" ? 100 : 0) + (existing.email ? 10 : 0) + (existing.company && existing.company !== "Direct Inbound" ? 5 : 0);
+            const newScore = (lead.status.toLowerCase() === "interested" ? 100 : 0) + (lead.email ? 10 : 0) + (lead.company && lead.company !== "Direct Inbound" ? 5 : 0);
+            if (newScore > existingScore) {
+              // Replace existing with this better entry
+              const idx = uniqueLeads.indexOf(existing);
+              if (idx !== -1) uniqueLeads[idx] = lead;
+              seenPhones.set(phone10, lead);
+            }
+            continue;
+          }
+          seenPhones.set(phone10, lead);
         }
+        uniqueLeads.push(lead);
       }
 
       setAllLeads(uniqueLeads);
@@ -1479,8 +1516,24 @@ export default function LeadsManager() {
                   </td>
 
                   <td className="py-3.5 px-3">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
+                      lead.status.toLowerCase() === "interested"
+                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                        : lead.status.toLowerCase() === "pending"
+                        ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                        : lead.status.toLowerCase() === "opted_out" || lead.status.toLowerCase() === "opted out"
+                        ? "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                        : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        lead.status.toLowerCase() === "interested"
+                          ? "bg-emerald-500"
+                          : lead.status.toLowerCase() === "pending"
+                          ? "bg-rose-500"
+                          : lead.status.toLowerCase() === "opted_out" || lead.status.toLowerCase() === "opted out"
+                          ? "bg-slate-400"
+                          : "bg-emerald-500"
+                      }`} />
                       {lead.status}
                     </span>
                   </td>
