@@ -337,21 +337,16 @@ export default function LeadsManager() {
         const savedFollowup = typeof window !== "undefined" ? localStorage.getItem(`crm_lead_followup_${lead.id}`) : null;
         const rawFollowup = lead.next_followup_at ? new Date(lead.next_followup_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
 
-        // For inbound WhatsApp leads, derive status from whatsapp_status instead of email_status
-        const isInboundWa = String(lead.scraped_service || "").toLowerCase().includes("whatsapp inbound") ||
-          String(lead.scraped_city || "").toLowerCase().includes("inbound whatsapp") ||
-          String(lead.bussiness_name || "").toLowerCase().includes("inbound client") ||
-          String(lead.bussiness_name || "").toLowerCase().includes("inbound lead");
+        // For WhatsApp leads, derive status from whatsapp_status whenever user engaged/replied
+        const waStatus = String(lead.whatsapp_status || "").toLowerCase();
+        const isInterested = Boolean(lead.is_interested) || waStatus === "interested";
         let displayStatus = lead.email_status ? (lead.email_status.charAt(0).toUpperCase() + lead.email_status.slice(1)) : "Contacted";
-        if (isInboundWa) {
-          const waStatus = String(lead.whatsapp_status || "pending").toLowerCase();
-          if (lead.is_interested || waStatus === "interested") {
-            displayStatus = "Interested";
-          } else if (waStatus === "replied") {
-            displayStatus = "Pending";
-          } else {
-            displayStatus = waStatus.charAt(0).toUpperCase() + waStatus.slice(1);
-          }
+        if (isInterested) {
+          displayStatus = "Interested";
+        } else if (waStatus === "replied") {
+          displayStatus = "Pending";
+        } else if (isInboundWa) {
+          displayStatus = waStatus ? (waStatus.charAt(0).toUpperCase() + waStatus.slice(1)) : "Contacted";
         }
 
         return {
@@ -384,7 +379,7 @@ export default function LeadsManager() {
           whatsapp_last_reply: lead.whatsapp_last_reply || null,
           whatsapp_reply_at: lead.whatsapp_reply_at || null,
           whatsapp_ai_enabled: lead.whatsapp_ai_enabled !== false,
-          is_interested: Boolean(lead.is_interested),
+          is_interested: isInterested,
           score,
           followupDate: savedFollowup || rawFollowup || null,
         };
@@ -393,10 +388,10 @@ export default function LeadsManager() {
       const merged = [...normalizedInquiries, ...normalizedScraped];
       merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      // Retain all distinct lead entries from database by unique source & id,
-      // AND deduplicate by phone number across tables (same phone = same lead)
+      // Deduplicate by phone and email across tables so 1 contact = exactly 1 row
       const seenKeys = new Set<string>();
-      const seenPhones = new Map<string, NormalizedLead>();
+      const seenPhoneMap = new Map<string, NormalizedLead>();
+      const seenEmailMap = new Map<string, NormalizedLead>();
       const uniqueLeads: NormalizedLead[] = [];
 
       for (const lead of merged) {
@@ -404,24 +399,30 @@ export default function LeadsManager() {
         if (seenKeys.has(key)) continue;
         seenKeys.add(key);
 
-        // Phone-based dedup: same phone across inquiry + scraped = 1 row
         const phone10 = (lead.phone || "").replace(/\D/g, "").slice(-10);
-        if (phone10 && phone10.length >= 10) {
-          const existing = seenPhones.get(phone10);
-          if (existing) {
-            // Keep the entry with "Interested" status or more complete data
-            const existingScore = (existing.status.toLowerCase() === "interested" ? 100 : 0) + (existing.email ? 10 : 0) + (existing.company && existing.company !== "Direct Inbound" ? 5 : 0);
-            const newScore = (lead.status.toLowerCase() === "interested" ? 100 : 0) + (lead.email ? 10 : 0) + (lead.company && lead.company !== "Direct Inbound" ? 5 : 0);
-            if (newScore > existingScore) {
-              // Replace existing with this better entry
-              const idx = uniqueLeads.indexOf(existing);
-              if (idx !== -1) uniqueLeads[idx] = lead;
-              seenPhones.set(phone10, lead);
-            }
-            continue;
+        const emailLower = (lead.email || "").trim().toLowerCase();
+        const hasRealEmail = emailLower && emailLower.includes("@") && !emailLower.includes("techinfinix.com") && !emailLower.includes("example.com");
+
+        const existingByPhone = phone10 && phone10.length >= 10 ? seenPhoneMap.get(phone10) : null;
+        const existingByEmail = hasRealEmail ? seenEmailMap.get(emailLower) : null;
+        const existing = existingByPhone || existingByEmail;
+
+        if (existing) {
+          // If we found an existing match, prefer the graduated "inquiry" lead (which has full 5 details)
+          // or whichever has more complete information
+          const existingScore = (existing.source === "inquiry" ? 200 : 0) + (existing.status.toLowerCase() === "interested" ? 50 : 0) + (existing.email ? 10 : 0);
+          const newScore = (lead.source === "inquiry" ? 200 : 0) + (lead.status.toLowerCase() === "interested" ? 50 : 0) + (lead.email ? 10 : 0);
+          if (newScore > existingScore) {
+            const idx = uniqueLeads.indexOf(existing);
+            if (idx !== -1) uniqueLeads[idx] = lead;
+            if (phone10 && phone10.length >= 10) seenPhoneMap.set(phone10, lead);
+            if (hasRealEmail) seenEmailMap.set(emailLower, lead);
           }
-          seenPhones.set(phone10, lead);
+          continue;
         }
+
+        if (phone10 && phone10.length >= 10) seenPhoneMap.set(phone10, lead);
+        if (hasRealEmail) seenEmailMap.set(emailLower, lead);
         uniqueLeads.push(lead);
       }
 
@@ -1516,26 +1517,37 @@ export default function LeadsManager() {
                   </td>
 
                   <td className="py-3.5 px-3">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
-                      lead.status.toLowerCase() === "interested"
-                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                        : lead.status.toLowerCase() === "pending"
-                        ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
-                        : lead.status.toLowerCase() === "opted_out" || lead.status.toLowerCase() === "opted out"
-                        ? "bg-slate-500/10 text-slate-400 border-slate-500/20"
-                        : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${
+                    <div className="flex flex-col gap-1 items-start">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
                         lead.status.toLowerCase() === "interested"
-                          ? "bg-emerald-500"
+                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                           : lead.status.toLowerCase() === "pending"
-                          ? "bg-rose-500"
+                          ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
                           : lead.status.toLowerCase() === "opted_out" || lead.status.toLowerCase() === "opted out"
-                          ? "bg-slate-400"
-                          : "bg-emerald-500"
-                      }`} />
-                      {lead.status}
-                    </span>
+                          ? "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                          : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          lead.status.toLowerCase() === "interested"
+                            ? "bg-emerald-500"
+                            : lead.status.toLowerCase() === "pending"
+                            ? "bg-rose-500"
+                            : lead.status.toLowerCase() === "opted_out" || lead.status.toLowerCase() === "opted out"
+                            ? "bg-slate-400"
+                            : "bg-emerald-500"
+                        }`} />
+                        {lead.status}
+                      </span>
+                      {lead.status.toLowerCase() === "interested" && (
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border ${
+                          lead.source === "inquiry"
+                            ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                            : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                        }`}>
+                          {lead.source === "inquiry" ? "✓ Details: Done" : "⏳ Details: Pending"}
+                        </span>
+                      )}
+                    </div>
                   </td>
 
                   <td className="py-3.5 px-3 text-center">
@@ -1850,6 +1862,15 @@ export default function LeadsManager() {
                 }`}>
                   {isOrganicInbound(selectedLead) ? "Inbound" : "Outbound"}
                 </span>
+                {selectedLead.status.toLowerCase() === "interested" && (
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                    selectedLead.source === "inquiry"
+                      ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                      : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                  }`}>
+                    {selectedLead.source === "inquiry" ? "✓ Details: Done" : "⏳ Details: Pending"}
+                  </span>
+                )}
               </div>
               
               {/* Mobile-Friendly High-Contrast Close Button */}
