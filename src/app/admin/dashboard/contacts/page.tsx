@@ -126,6 +126,7 @@ interface UnifiedMessage {
   sourceId: number;
   senderName: string;
   senderContact: string; // phone or email
+  phone?: string;
   city?: string;
   category?: string;
   subject?: string;
@@ -469,8 +470,9 @@ export default function ContactMessagesManager() {
                   (data.chat.phone_number && currentActive.phone && data.chat.phone_number.includes(currentActive.phone.replace(/\D/g, "").slice(-10)))
                 )
               ) {
-                const newMsg = {
+                const newMsg: WhatsAppChatMessage = {
                   id: data.chat.id,
+                  lead_id: data.chat.lead_id || Number(currentActive.sourceId),
                   direction: data.chat.direction,
                   message_text: data.chat.message_text,
                   button_id: data.chat.button_id,
@@ -652,6 +654,26 @@ export default function ContactMessagesManager() {
       showToast("Error deleting inquiry.", "error");
     }
   };
+
+  const handleUpdateContactStatus = async (newStatus: string) => {
+    if (!selectedMessage) return;
+    try {
+      const res = await authFetch(`${API}/api/v1/contacts/${selectedMessage.sourceId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        setSelectedMessage(prev => prev ? { ...prev, status: newStatus } : null);
+        fetchAllData();
+        showToast(`Status updated to ${newStatus}`, "success");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("Failed to update status", "error");
+    }
+  };
+
 
   const handleDeleteAllChats = async () => {
     if (!confirm("⚠️ CRITICAL WARNING: Are you sure you want to CLEAR ALL CHAT & INQUIRY HISTORY across ALL channels?")) return;

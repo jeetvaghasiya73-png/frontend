@@ -69,9 +69,9 @@ interface NormalizedLead {
   scraped_service?: string;
   email_status?: string;
   whatsapp_status?: string;
-  whatsapp_sent_at?: string;
-  whatsapp_last_reply?: string;
-  whatsapp_reply_at?: string;
+  whatsapp_sent_at?: string | null;
+  whatsapp_last_reply?: string | null;
+  whatsapp_reply_at?: string | null;
   whatsapp_ai_enabled?: boolean;
   is_interested?: boolean;
   score: number;
@@ -381,6 +381,7 @@ export default function LeadsManager() {
         // For WhatsApp leads, derive status from whatsapp_status whenever user engaged/replied
         const waStatus = String(lead.whatsapp_status || "").toLowerCase();
         const isInterested = Boolean(lead.is_interested) || waStatus === "interested";
+        const isInboundWa = isOrganicInbound(lead);
         let displayStatus = lead.email_status ? (lead.email_status.charAt(0).toUpperCase() + lead.email_status.slice(1)) : "Contacted";
         if (isInterested) {
           displayStatus = "Interested";
@@ -1102,11 +1103,12 @@ export default function LeadsManager() {
     }
 
     if (statusFilter !== "all") {
+      const sf = statusFilter.toLowerCase();
       result = result.filter((l) => {
-        if (sourceFilter === "scraped" || l.source === "scraped") {
-          return l.email_status?.toLowerCase() === statusFilter.toLowerCase();
-        }
-        return l.status.toLowerCase() === statusFilter.toLowerCase();
+        const leadStatus = (l.status || "").toLowerCase();
+        const emailStatus = (l.email_status || "").toLowerCase();
+        const waStatus = (l.whatsapp_status || "").toLowerCase();
+        return leadStatus === sf || emailStatus === sf || waStatus === sf;
       });
     }
 
@@ -1232,7 +1234,7 @@ export default function LeadsManager() {
           <span className="text-[11px] sm:text-xs font-semibold text-[var(--dash-text-muted)] uppercase tracking-wider truncate">Outbound Scraped</span>
           <div className="mt-1 sm:mt-2 flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">
-              {allLeads.filter(l => l.source === "scraped").length}
+              {allLeads.filter(l => !isOrganicInbound(l)).length}
             </span>
             <span className="text-[10px] sm:text-xs font-bold text-indigo-500 bg-indigo-500/10 px-1.5 sm:px-2 py-0.5 rounded-md border border-indigo-500/20 shrink-0 truncate">Google Maps</span>
           </div>
@@ -1242,7 +1244,7 @@ export default function LeadsManager() {
           <span className="text-[11px] sm:text-xs font-semibold text-[var(--dash-text-muted)] uppercase tracking-wider truncate">Inbound Inquiries</span>
           <div className="mt-1 sm:mt-2 flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">
-              {allLeads.filter(l => l.source === "inquiry").length}
+              {allLeads.filter(l => isOrganicInbound(l)).length}
             </span>
             <span className="text-[10px] sm:text-xs font-bold text-purple-500 bg-purple-500/10 px-1.5 sm:px-2 py-0.5 rounded-md border border-purple-500/20 shrink-0 truncate">Web Forms</span>
           </div>

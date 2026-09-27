@@ -97,6 +97,7 @@ export default function SuperAdminDashboard() {
   const [schedulingFollowup, setSchedulingFollowup] = useState(false);
   const [showAddEmailModal, setShowAddEmailModal] = useState(false);
   const [newEmailAddress, setNewEmailAddress] = useState("");
+  const [savingNewEmail, setSavingNewEmail] = useState(false);
   // WhatsApp Outreach Preview & Customize Modal states
   const [showWaModal, setShowWaModal] = useState(false);
   const [waPreviewLead, setWaPreviewLead] = useState<any | null>(null);
