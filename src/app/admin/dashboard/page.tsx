@@ -308,8 +308,10 @@ export default function SuperAdminDashboard() {
       });
 
       currentInquiriesRaw = currentInquiriesRaw.filter(l => {
-        const st = (l.status || "pending").toLowerCase();
-        if (s === "pending") return st === "pending" || st === "new";
+        const rawSt = (l.status || "").toLowerCase();
+        const st = (rawSt === "pending" || rawSt === "new" || !rawSt || rawSt === "interested") ? "interested" : rawSt;
+        if (s === "interested") return st === "interested";
+        if (s === "pending") return rawSt === "pending" || rawSt === "new";
         if (s === "contacted") return st === "contacted" || st === "sent";
         if (s === "qualified") return st === "qualified";
         if (s === "converted" || s === "closed") return st === "converted" || st === "closed";
@@ -1354,7 +1356,7 @@ export default function SuperAdminDashboard() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="crm-input !pl-9 !pr-8 py-2 text-xs font-semibold cursor-pointer appearance-none w-full"
               >
-                {["All Status", "Pending", "Contacted", "Qualified", "Closed"].map(s => (
+                {["All Status", "Interested", "Pending", "Contacted", "Qualified", "Closed"].map(s => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>

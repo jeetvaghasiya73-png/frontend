@@ -347,7 +347,9 @@ export default function LeadsManager() {
           company: bizName,
           services: lead.services || [],
           message: lead.message || "",
-          status: lead.status ? (lead.status.charAt(0).toUpperCase() + lead.status.slice(1)) : "Qualified",
+          status: (!lead.status || lead.status.toLowerCase() === "pending" || lead.status.toLowerCase() === "new" || lead.status.toLowerCase() === "interested")
+            ? "Interested"
+            : (lead.status.charAt(0).toUpperCase() + lead.status.slice(1)),
           created_at: lead.created_at || new Date().toISOString(),
           source: "inquiry" as const,
           score: 94,
