@@ -846,18 +846,31 @@ export default function LeadsManager() {
         ? `${API}/api/v1/leads/${lead.rawId}`
         : `${API}/api/v1/scraped-leads/${lead.rawId}`;
 
-      const res = await authFetch(endpoint, { method: "DELETE" });
+      const phoneParam = lead.phone ? `?phone=${encodeURIComponent(lead.phone)}` : "";
+      let res = await authFetch(`${endpoint}${phoneParam}`, { method: "DELETE" });
+
+      // Fallback: If 404 or failed on primary endpoint, try the alternate endpoint with phone param
+      if (!res.ok && res.status === 404) {
+        const altEndpoint = lead.source === "inquiry"
+          ? `${API}/api/v1/scraped-leads/${lead.rawId}`
+          : `${API}/api/v1/leads/${lead.rawId}`;
+        res = await authFetch(`${altEndpoint}${phoneParam}`, { method: "DELETE" });
+      }
+
       if (res.ok) {
-        setAllLeads((prev) => prev.filter((l) => l.id !== lead.id));
-        if (selectedLead?.id === lead.id) {
+        setAllLeads((prev) => prev.filter((l) => l.id !== lead.id && l.rawId !== lead.rawId));
+        if (selectedLead?.id === lead.id || selectedLead?.rawId === lead.rawId) {
           setIsDrawerOpen(false);
           setSelectedLead(null);
         }
         triggerToast(`Lead "${lead.name}" deleted successfully`);
         await fetchLeads();
+      } else {
+        triggerToast("Failed to delete lead from server.");
       }
     } catch (err) {
       console.error("Failed to delete lead:", err);
+      triggerToast("Error deleting lead.");
     }
   };
 
@@ -867,8 +880,9 @@ export default function LeadsManager() {
     if (!confirm(`Are you sure you want to permanently delete ${selectedLeadIds.size} selected lead(s)?`)) return;
 
     try {
-      const scrapedRawIds = allLeads.filter(l => selectedLeadIds.has(l.id) && l.source === "scraped").map(l => l.rawId);
-      const inquiryRawIds = allLeads.filter(l => selectedLeadIds.has(l.id) && l.source === "inquiry").map(l => l.rawId);
+      const isLeadSelected = (l: NormalizedLead) => selectedLeadIds.has(l.id) || selectedLeadIds.has(l.rawId);
+      const scrapedRawIds = allLeads.filter(l => isLeadSelected(l) && l.source === "scraped").map(l => l.rawId);
+      const inquiryRawIds = allLeads.filter(l => isLeadSelected(l) && l.source === "inquiry").map(l => l.rawId);
 
       if (scrapedRawIds.length > 0) {
         await authFetch(`${API}/api/v1/scraped-leads/bulk-delete`, {
@@ -886,7 +900,7 @@ export default function LeadsManager() {
         });
       }
 
-      setAllLeads(prev => prev.filter(l => !selectedLeadIds.has(l.id)));
+      setAllLeads(prev => prev.filter(l => !isLeadSelected(l)));
       setSelectedLeadIds(new Set());
       triggerToast(`Successfully deleted selected lead(s)`);
       await fetchLeads();
@@ -904,6 +918,7 @@ export default function LeadsManager() {
       const scrapedRawIds = paginatedLeads.filter(l => l.source === "scraped").map(l => l.rawId);
       const inquiryRawIds = paginatedLeads.filter(l => l.source === "inquiry").map(l => l.rawId);
       const pageIdsToRemove = new Set(paginatedLeads.map(l => l.id));
+      const pageRawIdsToRemove = new Set(paginatedLeads.map(l => l.rawId));
 
       if (scrapedRawIds.length > 0) {
         await authFetch(`${API}/api/v1/scraped-leads/bulk-delete`, {
@@ -921,7 +936,7 @@ export default function LeadsManager() {
         });
       }
 
-      setAllLeads(prev => prev.filter(l => !pageIdsToRemove.has(l.id)));
+      setAllLeads(prev => prev.filter(l => !pageIdsToRemove.has(l.id) && !pageRawIdsToRemove.has(l.rawId)));
       setSelectedLeadIds(new Set());
       triggerToast(`Deleted ${paginatedLeads.length} lead(s) from Page ${currentPage}`);
       await fetchLeads();
@@ -956,8 +971,9 @@ export default function LeadsManager() {
     if (!confirm(`Clear chat history & reset status for ${selectedLeadIds.size} selected lead(s)?`)) return;
 
     try {
-      const scrapedRawIds = allLeads.filter(l => selectedLeadIds.has(l.id) && l.source === "scraped").map(l => l.rawId);
-      const inquiryRawIds = allLeads.filter(l => selectedLeadIds.has(l.id) && l.source === "inquiry").map(l => l.rawId);
+      const isLeadSelected = (l: NormalizedLead) => selectedLeadIds.has(l.id) || selectedLeadIds.has(l.rawId);
+      const scrapedRawIds = allLeads.filter(l => isLeadSelected(l) && l.source === "scraped").map(l => l.rawId);
+      const inquiryRawIds = allLeads.filter(l => isLeadSelected(l) && l.source === "inquiry").map(l => l.rawId);
       const targetIds = [...scrapedRawIds, ...inquiryRawIds];
 
       const res = await authFetch(`${API}/api/v1/whatsapp/chats/clear-selected`, {
@@ -967,7 +983,7 @@ export default function LeadsManager() {
       });
 
       if (res.ok) {
-        setAllLeads(prev => prev.map(l => selectedLeadIds.has(l.id) ? { ...l, whatsapp_status: "pending", is_interested: false } : l));
+        setAllLeads(prev => prev.map(l => isLeadSelected(l) ? { ...l, whatsapp_status: "pending", is_interested: false } : l));
         triggerToast(`Cleared chats & reset status for ${selectedLeadIds.size} lead(s)`);
         setSelectedLeadIds(new Set());
       } else {
