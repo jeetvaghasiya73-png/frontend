@@ -486,14 +486,33 @@ export default function WhatsAppOutreachPage() {
       );
       if (res.ok) {
         const data = await res.json();
-        setConversations(data.conversations || []);
-        setTotalConversations(data.total || 0);
+        const rawList: ConversationItem[] = data.conversations || [];
+        const seen = new Set<string>();
+        const deduped: ConversationItem[] = [];
 
-        if (data.conversations && data.conversations.length > 0) {
+        for (const c of rawList) {
+          const digits = (c.clean_phone || c.phone_number || "").replace(/\D/g, "");
+          const key = digits.length >= 10 ? digits.slice(-10) : (c.clean_phone || c.phone_number || String(c.lead_id));
+          if (!seen.has(key)) {
+            seen.add(key);
+            deduped.push(c);
+          }
+        }
+
+        setConversations(deduped);
+        setTotalConversations(deduped.length);
+
+        if (deduped.length > 0) {
           setSelectedConv((prev) => {
-            if (!prev) return data.conversations[0];
-            const updated = data.conversations.find((c: ConversationItem) => c.lead_id === prev.lead_id);
-            return updated || prev;
+            if (!prev) return deduped[0];
+            const prevDigits = (prev.clean_phone || prev.phone_number || "").replace(/\D/g, "");
+            const prevKey = prevDigits.length >= 10 ? prevDigits.slice(-10) : String(prev.lead_id);
+            const updated = deduped.find((c: ConversationItem) => {
+              const cDigits = (c.clean_phone || c.phone_number || "").replace(/\D/g, "");
+              const cKey = cDigits.length >= 10 ? cDigits.slice(-10) : String(c.lead_id);
+              return cKey === prevKey || c.lead_id === prev.lead_id;
+            });
+            return updated || deduped[0];
           });
         }
       }
