@@ -253,15 +253,17 @@ export default function DashboardLayout({
         setNotifications(mappedList);
       }
 
-      try {
-        const meRes = await authFetch(`${API_URL}/api/v1/auth/me`);
-        if (meRes.ok) {
-          const userData = await meRes.json();
-          useAuthStore.setState({
-            user: { id: userData.id, username: userData.username, is_superadmin: Boolean(userData.is_superadmin) }
-          });
-        }
-      } catch (meErr) { console.error("Failed to load user profile:", meErr); }
+      if (!useAuthStore.getState().user) {
+        try {
+          const meRes = await authFetch(`${API_URL}/api/v1/auth/me`);
+          if (meRes.ok) {
+            const userData = await meRes.json();
+            useAuthStore.setState({
+              user: { id: userData.id, username: userData.username, is_superadmin: Boolean(userData.is_superadmin) }
+            });
+          }
+        } catch (meErr) { console.error("Failed to load user profile:", meErr); }
+      }
     } catch (e) { console.error("Failed to load badge counts & notifications:", e); }
   }, [isAuthenticated]);
 

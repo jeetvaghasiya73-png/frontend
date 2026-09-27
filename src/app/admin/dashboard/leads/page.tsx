@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useAuthStore } from "@/lib/authStore";
 import {
@@ -83,6 +83,8 @@ interface NormalizedLead {
 
 export default function LeadsManager() {
   const { accessToken } = useAuthStore();
+  const isFetchingRef = useRef(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [mounted, setMounted] = useState(false);
   const [allLeads, setAllLeads] = useState<NormalizedLead[]>([]);
   const [totalLeadsFromAPI, setTotalLeadsFromAPI] = useState<number>(0);
@@ -274,7 +276,9 @@ export default function LeadsManager() {
     }
   };
 
-  const fetchLeads = async () => {
+  const fetchLeads = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     try {
       setLoading(true);
       const [inquiryRes, scrapedRes] = await Promise.allSettled([
@@ -483,8 +487,18 @@ export default function LeadsManager() {
       console.error("Failed to load leads:", err);
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
-  };
+  }, []);
+
+  const debouncedFetchLeads = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      fetchLeads();
+    }, 350);
+  }, [fetchLeads]);
 
   useEffect(() => {
     setMounted(true);
@@ -499,7 +513,7 @@ export default function LeadsManager() {
         try {
           const data = JSON.parse(event.data);
           if (data.type === "whatsapp_update" || data.type === "lead_updated") {
-            fetchLeads();
+            debouncedFetchLeads();
           }
         } catch (err) {
           // ignore
@@ -510,9 +524,10 @@ export default function LeadsManager() {
     }
 
     return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       if (ws) ws.close();
     };
-  }, [accessToken]);
+  }, [fetchLeads, debouncedFetchLeads]);
 
   useEffect(() => {
     setCurrentPage(1);
