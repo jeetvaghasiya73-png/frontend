@@ -15,6 +15,15 @@ export default function BlogsPage() {
 
   const fallbackBlogs = [
     {
+      id: 3,
+      title: "Will AI Replace Humans? The Truth Behind Autonomous Agents & the Future of Work",
+      summary: "Will artificial intelligence render human workers obsolete? Explore the realistic frontier between automated task execution and irreplaceable human intuition, creativity, and strategic judgment in the era of autonomous agent swarms.",
+      author: "Tech Infinix Research Team",
+      created_at: new Date().toISOString(),
+      slug: "will-ai-replace-humans",
+      published: true
+    },
+    {
       id: 1,
       title: "Scaling Outbound Lead Pipelines with LangGraph Agents",
       summary: "Explore how we design autonomous agents that coordinate tasks, validate lead profiles, and reduce duplicate entry latency.",
