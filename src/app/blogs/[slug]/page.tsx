@@ -40,7 +40,6 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
   const [activeSection, setActiveSection] = useState<string>("panic-vs-reality");
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [readingProgress, setReadingProgress] = useState(0);
-  const [isPastArticle, setIsPastArticle] = useState(false);
 
   const tocItems = [
     { id: "panic-vs-reality", label: "1. The Panic vs. Reality" },
@@ -429,7 +428,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
     fetchBlog();
   }, [slug]);
 
-  // Scroll spy observer for reading progress, active TOC highlight, and past-article detection
+  // Scroll spy observer for reading progress and active TOC highlight
   useEffect(() => {
     const handleScroll = () => {
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
@@ -439,23 +438,12 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
       }
 
       // Check section offsets for active TOC item
-      const scrollPos = window.scrollY + 220;
+      const scrollPos = window.scrollY + 240;
       for (let i = tocItems.length - 1; i >= 0; i--) {
         const el = document.getElementById(tocItems[i].id);
         if (el && el.offsetTop <= scrollPos) {
           setActiveSection(tocItems[i].id);
           break;
-        }
-      }
-
-      // Check if scrolled into related articles / contact area
-      const bottomEl = document.getElementById("related-articles-section");
-      if (bottomEl) {
-        const rect = bottomEl.getBoundingClientRect();
-        if (rect.top <= 260) {
-          setIsPastArticle(true);
-        } else {
-          setIsPastArticle(false);
         }
       }
     };
@@ -526,10 +514,10 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           </div>
         </div>
 
-        {/* Article Title & Metadata Hero */}
-        <div id="article-top" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
+        {/* ═══════ ARTICLE TITLE & HERO METADATA (Full Spacious Width, Never Squished) ═══════ */}
+        <div id="article-top" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
           <div className="max-w-4xl space-y-4">
-            <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold tracking-tight text-foreground leading-[1.18]">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-[1.2]">
               {blog.title}
             </h1>
 
@@ -559,12 +547,12 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           </div>
         </div>
 
-        {/* ═══════ 2-COLUMN LAYOUT: MAIN ARTICLE (Left) + TRULY FIXED RIGHT SIDEBAR (Desktop) ═══════ */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start relative">
+        {/* ═══════ 2-COLUMN ARTICLE + STICKY SIDEBAR (Contained Grid, Never Collides) ═══════ */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             
-            {/* ─── LEFT: MAIN ARTICLE COLUMN (Takes full width minus fixed sidebar on desktop) ─── */}
-            <article className="w-full lg:w-[calc(100%-360px)] xl:w-[calc(100%-400px)] min-w-0">
+            {/* ─── LEFT: MAIN ARTICLE (8 Cols) ─── */}
+            <article className="lg:col-span-8 min-w-0">
               
               {/* Mobile-Only Collapsible Table of Contents */}
               <div className="lg:hidden mb-8 border border-border-custom bg-surface rounded-[3px] overflow-hidden shadow-xs">
@@ -698,15 +686,32 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                 </div>
               </div>
 
+              {/* Mobile-Only Consultation Prompt */}
+              <div className="lg:hidden mt-8 p-6 rounded-[3px] bg-surface border border-border-custom space-y-3">
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 text-[10px] font-mono uppercase tracking-wider font-bold">
+                  <Sparkles className="w-3 h-3 text-accent-custom" />
+                  Free Strategy Audit
+                </span>
+                <h3 className="text-base font-bold leading-snug text-foreground">
+                  Automate Your Workflows with Custom AI
+                </h3>
+                <p className="text-xs text-secondary-custom leading-relaxed">
+                  Deploy autonomous agents, 24/7 WhatsApp CRM pipelines, and Google Maps SEO designed for your enterprise.
+                </p>
+                <a
+                  href="#contact"
+                  className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-[2px] bg-accent-custom text-white hover:opacity-95 font-bold text-xs transition-colors shadow-md shadow-accent-custom/20"
+                >
+                  <span>Claim Free Proposal</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+
             </article>
 
-            {/* ─── RIGHT: TRULY POSITION-FIXED SIDEBAR (Desktop) ─── */}
-            <aside className="w-full lg:w-[330px] xl:w-[360px] shrink-0">
-              <div
-                className={`lg:fixed lg:top-28 lg:w-[330px] xl:w-[360px] lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto pr-1 space-y-5 z-20 scrollbar-none transition-all duration-300 ${
-                  isPastArticle ? "lg:opacity-0 lg:pointer-events-none lg:translate-y-2" : "lg:opacity-100 lg:translate-y-0"
-                }`}
-              >
+            {/* ─── RIGHT: STICKY SIDEBAR (4 Cols - Fixed in view during article scroll, Stops at article bottom) ─── */}
+            <aside className="hidden lg:block lg:col-span-4 self-start sticky top-28 space-y-5">
+              <div className="max-h-[calc(100vh-8.5rem)] overflow-y-auto pr-1.5 space-y-5 scrollbar-none">
 
                 {/* Table of Contents ("On This Page") with live active section indicator */}
                 <div className="p-5 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-3">
@@ -854,12 +859,12 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                     </Link>
                   </div>
 
-                  <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-none lg:flex-col lg:space-y-3 lg:overflow-visible lg:pb-0">
+                  <div className="space-y-3">
                     {relatedArticles.filter(a => a.slug !== slug).slice(0, 3).map((article, idx) => (
                       <Link
                         key={idx}
                         href={`/blogs/${article.slug}`}
-                        className="w-[220px] lg:w-auto shrink-0 group flex items-start gap-3 p-1.5 rounded-[2px] hover:bg-background transition-colors"
+                        className="group flex items-start gap-3 p-1.5 rounded-[2px] hover:bg-background transition-colors"
                       >
                         <div className="w-14 h-14 rounded-[2px] overflow-hidden border border-border-custom shrink-0 bg-surface">
                           <img
@@ -890,7 +895,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           </div>
         </div>
 
-        {/* ═══════ BOTTOM SECTION: "Read also..." (HORIZONTAL ON MOBILE / RESPONSIVE) ═══════ */}
+        {/* ═══════ BOTTOM SECTION: "Read also..." (HORIZONTAL ON MOBILE / 4-COL ON DESKTOP) ═══════ */}
         <div id="related-articles-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 pt-16 border-t border-border-custom">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -915,7 +920,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
             </div>
           </div>
 
-          {/* Mobile: HORIZONTALLY scrollable row with snap points | Desktop: 4-Column Grid */}
+          {/* Responsive: HORIZONTALLY scrollable row with snap points on mobile | 4-Column Grid on desktop */}
           <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 overflow-x-auto sm:overflow-visible pb-4 sm:pb-0 scrollbar-none snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
             {relatedArticles.map((item, idx) => (
               <Link
