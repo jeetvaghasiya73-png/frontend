@@ -2,6 +2,7 @@
 
 import React, { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { Poppins } from "next/font/google";
 import { API_URL } from "@/lib/config";
 import Navbar from "@/components/layout/Navbar";
 import FooterSection from "@/components/layout/FooterSection";
@@ -21,6 +22,13 @@ import {
   ChevronDown
 } from "lucide-react";
 import { formatISTDate } from "@/lib/formatters";
+
+const poppins = Poppins({
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-poppins",
+});
 
 export default function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
@@ -100,8 +108,8 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
 <div class="blog-highlight-box">
   <div class="blog-badge mb-3">🔥 Executive Summary</div>
-  <p class="font-semibold text-foreground text-lg mb-2">The Short Answer: AI will not replace humans—but humans who master AI will inevitably replace those who don't.</p>
-  <p class="text-sm text-secondary-custom m-0">The narrative that artificial intelligence will create a jobless future misunderstands the fundamental nature of technology. Every industrial revolution automates cognitive or physical friction while unlocking higher-order human ingenuity. Here is an evidence-based roadmap of what is changing, what remains strictly human, and how to thrive.</p>
+  <p class="font-bold text-foreground text-lg sm:text-xl mb-2.5 leading-snug">The Short Answer: AI will not replace humans—but humans who master AI will inevitably replace those who don't.</p>
+  <p class="text-sm sm:text-base text-secondary-custom leading-relaxed m-0">The narrative that artificial intelligence will create a jobless future misunderstands the fundamental nature of technology. Every industrial revolution automates cognitive or physical friction while unlocking higher-order human ingenuity. Here is an evidence-based roadmap of what is changing, what remains strictly human, and how to thrive.</p>
 </div>
 
 <div class="blog-stat-grid">
@@ -121,7 +129,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
 <h2 id="panic-vs-reality">1. The Panic vs. The Historical Reality</h2>
 <p>Every transformative breakthrough in human history sparked an existential panic about the obsolescence of human labor:</p>
-<ul class="space-y-2 my-4">
+<ul class="space-y-2.5 my-4">
   <li>When the <strong>printing press</strong> arrived in the 15th century, scribes protested that human memory and scholarship would degrade into ruin. Instead, it catalyzed the Renaissance and the Scientific Revolution.</li>
   <li>When the <strong>steam engine and spinning jenny</strong> emerged in the 18th century, the Luddite movement feared universal unemployment. In reality, global productivity and living standards skyrocketed by orders of magnitude.</li>
   <li>When <strong>spreadsheets (VisiCalc, Lotus 1-2-3, Excel)</strong> debuted in the 1980s, analysts predicted the death of the accounting industry. Instead, demand for financial analysts, business consultants, and planners grew by over 400%.</li>
@@ -132,8 +140,8 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 <p>To understand what is vulnerable, we must dissect the type of work computers excel at. AI thrives in domains characterized by <strong>high volume, explicit patterns, and low contextual ambiguity</strong>:</p>
 
 <div class="blog-callout">
-  <h3 class="text-foreground font-bold text-base mb-2">⚡ Tasks Already Handed Over to Autonomous AI:</h3>
-  <ul class="text-sm space-y-2">
+  <h3 class="text-foreground font-bold text-base mb-3">⚡ Tasks Already Handed Over to Autonomous AI:</h3>
+  <ul class="text-sm sm:text-base space-y-2.5">
     <li><strong>Boilerplate Code & Unit Tests:</strong> Generating repetitive CRUD endpoints, migrations, and standard API boilerplate.</li>
     <li><strong>Data Extraction & Web Scraping:</strong> Parsing thousands of unstructured directories, Google Maps business leads, and cataloging records without manual copy-pasting.</li>
     <li><strong>Level-1 Customer & Prospect Triage:</strong> 24/7 intelligent WhatsApp/Chatbot assistants answering recurring FAQs and qualifying inbound inquiries.</li>
@@ -209,14 +217,14 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 <p>The professionals who will dominate the next decade are neither AI purists nor Luddites. They are <strong>Centaurs</strong>: individuals who blend human strategic intuition with algorithmic horse-power.</p>
 
 <p>Consider how modern high-performance software engineering works today at Tech Infinix:</p>
-<ul class="space-y-2 my-4">
+<ul class="space-y-2.5 my-4">
   <li>A senior engineer conceptualizes the data model, defines system boundaries, and anticipates edge-case security risks.</li>
   <li>They prompt an autonomous agent fleet (like LangGraph or Claude) to scaffold the FastAPI endpoints, database schemas, and unit test suites in 45 seconds.</li>
   <li>The engineer reviews, refactors, and deploys. A task that previously took 4 days now concludes before lunch.</li>
 </ul>
 
 <div class="blog-quote-box">
-  <p class="italic text-foreground font-medium text-base mb-2">"Technology does not replace people. It replaces tasks. Those who let go of low-leverage tasks first will command the future."</p>
+  <p class="italic text-foreground font-semibold text-base sm:text-lg mb-2">"Technology does not replace people. It replaces tasks. Those who let go of low-leverage tasks first will command the future."</p>
   <span class="text-xs font-mono text-secondary-custom uppercase tracking-wider">— Tech Infinix Engineering Principles</span>
 </div>
 
@@ -232,44 +240,57 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
       created_at: new Date().toISOString(),
       readTime: "5 min read",
       custom_css: `
+.blog-content {
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
+  line-height: 1.8;
+}
 .blog-content h2 {
-  font-size: 1.75rem;
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
+  font-size: 1.85rem;
   font-weight: 800;
-  margin-top: 2.5rem;
-  margin-bottom: 1rem;
+  margin-top: 3rem;
+  margin-bottom: 1.25rem;
   color: var(--foreground);
   letter-spacing: -0.02em;
+  line-height: 1.3;
 }
 .blog-content h3 {
-  font-size: 1.25rem;
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
+  font-size: 1.35rem;
   font-weight: 700;
-  margin-top: 1.75rem;
-  margin-bottom: 0.75rem;
+  margin-top: 2rem;
+  margin-bottom: 0.85rem;
   color: var(--foreground);
+  line-height: 1.35;
 }
 .blog-content p {
-  margin-bottom: 1.35rem;
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
+  font-size: 1.025rem;
+  margin-bottom: 1.5rem;
   color: var(--foreground);
-  opacity: 0.92;
+  opacity: 0.94;
+  line-height: 1.85;
 }
 .blog-callout {
-  padding: 1.5rem;
+  padding: 1.75rem;
   border-radius: 3px;
-  margin: 2rem 0;
+  margin: 2.25rem 0;
   background: var(--surface);
   border: 1px solid var(--border-custom);
+  border-left: 3px solid var(--accent-custom);
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
 }
 .blog-highlight-box {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(41, 98, 255, 0.04) 100%);
   border: 1px solid rgba(99, 102, 241, 0.25);
+  border-left: 4px solid var(--accent-custom);
   border-radius: 3px;
-  padding: 1.75rem;
-  margin: 2rem 0;
+  padding: 1.85rem;
+  margin: 2.25rem 0;
 }
 .blog-table-wrapper {
   overflow-x: auto;
-  margin: 2rem 0;
+  margin: 2.25rem 0;
   border-radius: 3px;
   border: 1px solid var(--border-custom);
 }
@@ -281,59 +302,64 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 }
 .blog-table th {
   background: var(--surface);
-  padding: 1rem;
+  padding: 1.1rem;
   font-weight: 700;
   border-bottom: 2px solid var(--border-custom);
   color: var(--foreground);
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
 }
 .blog-table td {
-  padding: 0.875rem 1rem;
+  padding: 1rem 1.1rem;
   border-bottom: 1px solid var(--border-custom);
   color: var(--foreground);
 }
 .blog-stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-  margin: 2rem 0;
+  gap: 1.25rem;
+  margin: 2.25rem 0;
 }
 .blog-stat-card {
-  padding: 1.25rem;
+  padding: 1.5rem 1.25rem;
   border-radius: 3px;
   background: var(--surface);
   border: 1px solid var(--border-custom);
   text-align: center;
+  box-shadow: 0 2px 10px -2px rgba(0,0,0,0.03);
 }
 .blog-stat-number {
-  font-size: 2.25rem;
+  font-size: 2.5rem;
   font-weight: 800;
   background: linear-gradient(135deg, #2962FF 0%, #6366F1 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  line-height: 1.2;
+  line-height: 1.15;
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
 }
 .blog-stat-label {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--secondary-custom);
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
+  line-height: 1.4;
 }
 .blog-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.75rem;
+  padding: 0.3rem 0.85rem;
   border-radius: 2px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   background: rgba(99, 102, 241, 0.12);
   color: #6366F1;
   border: 1px solid rgba(99, 102, 241, 0.25);
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
 }
 .blog-quote-box {
-  padding: 1.5rem;
+  padding: 1.75rem;
   border-left: 3px solid var(--accent-custom);
   background: var(--surface);
-  margin: 2rem 0;
+  margin: 2.25rem 0;
   border-radius: 3px;
 }`
     },
@@ -402,7 +428,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
     fetchBlog();
   }, [slug]);
 
-  // Scroll tracker for reading progress and active TOC highlight
+  // Scroll spy observer for reading progress and active TOC highlight
   useEffect(() => {
     const handleScroll = () => {
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
@@ -441,7 +467,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center flex-col gap-3">
+      <div className={`min-h-screen bg-background flex items-center justify-center flex-col gap-3 ${poppins.className}`}>
         <div className="w-8 h-8 rounded-[2px] border-2 border-accent-custom border-t-transparent animate-spin" />
         <span className="font-mono text-xs text-secondary-custom">Loading article...</span>
       </div>
@@ -454,8 +480,8 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
   const shareTitle = encodeURIComponent(blog.title || "Will AI Replace Humans?");
 
   return (
-    <>
-      {/* Top Reading Progress Bar (Fixed at very top) */}
+    <div className={`${poppins.className} font-sans min-h-screen bg-background text-foreground antialiased`}>
+      {/* Top Reading Progress Bar (Fixed at top of screen) */}
       <div
         className="fixed top-0 left-0 h-[3px] bg-accent-custom z-50 transition-all duration-150"
         style={{ width: `${readingProgress}%` }}
@@ -491,7 +517,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
         {/* Article Title & Metadata Hero */}
         <div id="article-top" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
           <div className="max-w-4xl space-y-4">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-[1.15]">
+            <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold tracking-tight text-foreground leading-[1.18]">
               {blog.title}
             </h1>
 
@@ -514,205 +540,22 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
             </div>
 
             {blog.summary && (
-              <p className="text-base sm:text-lg text-secondary-custom leading-relaxed font-medium pt-2 border-l-2 border-accent-custom pl-4 italic">
+              <p className="text-base sm:text-lg text-secondary-custom leading-relaxed font-medium pt-2 border-l-[3px] border-accent-custom pl-4 italic bg-surface/30 rounded-r-[3px] py-1">
                 "{blog.summary}"
               </p>
             )}
           </div>
         </div>
 
-        {/* ═══════ 2-COLUMN LAYOUT: STICKY LEFT SIDEBAR (Desktop) + MAIN ARTICLE (Right) ═══════ */}
+        {/* ═══════ 2-COLUMN LAYOUT: MAIN ARTICLE (Left) + STICKY RIGHT SIDEBAR (Right) ═══════ */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             
-            {/* ─── LEFT SIDEBAR (Sticky on Desktop, follows user scroll) ─── */}
-            <aside className="order-2 lg:order-1 lg:col-span-4 space-y-6">
-              <div className="lg:sticky lg:top-28 space-y-6 max-h-[calc(100vh-8rem)] lg:overflow-y-auto pr-1 scrollbar-none">
-
-                {/* Table of Contents ("On This Page") with active section indicator */}
-                <div className="p-5 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-border-custom">
-                    <h4 className="text-xs font-mono font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-[1px] bg-accent-custom animate-pulse" />
-                      <span>On This Page</span>
-                    </h4>
-                    <span className="text-[10px] font-mono text-secondary-custom">
-                      {Math.round(readingProgress)}% read
-                    </span>
-                  </div>
-
-                  <nav className="space-y-1 text-xs">
-                    {tocItems.map((item) => (
-                      <a
-                        key={item.id}
-                        href={`#${item.id}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const el = document.getElementById(item.id);
-                          if (el) {
-                            el.scrollIntoView({ behavior: "smooth", block: "start" });
-                            setActiveSection(item.id);
-                          }
-                        }}
-                        className={`block py-1.5 px-2.5 rounded-[2px] font-medium transition-all ${
-                          activeSection === item.id
-                            ? "bg-accent-custom/10 text-accent-custom font-semibold border-l-2 border-accent-custom pl-3"
-                            : "text-secondary-custom hover:text-foreground hover:bg-background/60"
-                        }`}
-                      >
-                        {item.label}
-                      </a>
-                    ))}
-                  </nav>
-                </div>
-
-                {/* Quick Social Share Box */}
-                <div className="p-4 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-2.5">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-secondary-custom font-bold block">
-                    Share Article
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={`https://twitter.com/intent/tweet?text=${shareTitle}&url=${encodeURIComponent(currentUrl)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 py-2 px-2.5 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom text-xs font-mono flex items-center justify-center gap-1.5 transition-all"
-                      title="Share on X / Twitter"
-                    >
-                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 23.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                      </svg>
-                      <span>Post</span>
-                    </a>
-                    <a
-                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 py-2 px-2.5 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom text-xs font-mono flex items-center justify-center gap-1.5 transition-all"
-                      title="Share on LinkedIn"
-                    >
-                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                        <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2m1.4 9.74v-8.37H5.06v8.37h2.8z" />
-                      </svg>
-                      <span>Share</span>
-                    </a>
-                    <a
-                      href={`https://api.whatsapp.com/send?text=${shareTitle}%20${encodeURIComponent(currentUrl)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-[2px] bg-background border border-border-custom hover:border-emerald-500 hover:text-emerald-500 text-secondary-custom transition-all"
-                      title="Share on WhatsApp"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                    </a>
-                    <button
-                      onClick={handleCopyLink}
-                      className="p-2 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all cursor-pointer"
-                      title="Copy Link"
-                    >
-                      {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Bookmark className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Promo Card: Free Strategy Proposal */}
-                <div className="p-5 rounded-[3px] bg-surface border border-border-custom text-foreground shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-accent-custom/10 rounded-[3px] blur-2xl pointer-events-none" />
-                  <div className="relative z-10 space-y-3">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 text-[10px] font-mono uppercase tracking-wider font-bold">
-                      <Sparkles className="w-3 h-3 text-accent-custom" />
-                      Free Strategy Audit
-                    </span>
-                    <h3 className="text-base font-bold leading-snug text-foreground">
-                      Automate Your Workflows with Custom AI
-                    </h3>
-                    <p className="text-xs text-secondary-custom leading-relaxed">
-                      Deploy autonomous agents, 24/7 WhatsApp CRM pipelines, and Google Maps SEO designed for your enterprise.
-                    </p>
-                    <a
-                      href="#contact"
-                      className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-[2px] bg-accent-custom text-white hover:opacity-95 font-bold text-xs transition-colors shadow-md shadow-accent-custom/20"
-                    >
-                      <span>Get Free Proposal</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-                </div>
-
-                {/* 24/7 WhatsApp AI Bot Card */}
-                <div className="p-4 rounded-[3px] bg-surface border border-border-custom shadow-sm hover:border-accent-custom/50 transition-all">
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-[2px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                      <MessageCircle className="w-4 h-4" />
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="text-xs font-bold text-foreground">
-                        24/7 WhatsApp AI Bot
-                      </h4>
-                      <p className="text-[11px] text-secondary-custom leading-relaxed">
-                        Capture inbound leads and answer customer inquiries without human delay.
-                      </p>
-                      <a
-                        href="#contact"
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent-custom hover:underline pt-0.5"
-                      >
-                        <span>Request Bot Demo</span>
-                        <ChevronRight className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Trending Articles Stack */}
-                <div className="p-5 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-4">
-                  <div className="flex items-center justify-between pb-2 border-b border-border-custom">
-                    <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase font-mono tracking-wider">
-                      <TrendingUp className="w-3.5 h-3.5 text-accent-custom" />
-                      <span>Trending</span>
-                    </h3>
-                    <Link href="/blogs" className="text-[10px] font-mono text-accent-custom hover:underline">
-                      View all
-                    </Link>
-                  </div>
-
-                  <div className="space-y-3">
-                    {relatedArticles.filter(a => a.slug !== slug).slice(0, 3).map((article, idx) => (
-                      <Link
-                        key={idx}
-                        href={`/blogs/${article.slug}`}
-                        className="group flex items-start gap-3 p-1.5 rounded-[2px] hover:bg-background transition-colors"
-                      >
-                        <div className="w-14 h-14 rounded-[2px] overflow-hidden border border-border-custom shrink-0 bg-surface">
-                          <img
-                            src={article.image}
-                            alt={article.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
-                        <div className="min-w-0 space-y-0.5">
-                          <span className={`inline-block px-1 py-0.2 rounded-[2px] text-[8px] font-mono font-bold border ${article.tagColor}`}>
-                            {article.tag}
-                          </span>
-                          <h4 className="text-xs font-bold text-foreground group-hover:text-accent-custom transition-colors line-clamp-2 leading-tight">
-                            {article.title}
-                          </h4>
-                          <span className="block text-[9px] font-mono text-secondary-custom">
-                            {article.readTime}
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-            </aside>
-
-            {/* ─── RIGHT / MAIN ARTICLE COLUMN ─── */}
-            <article className="order-1 lg:order-2 lg:col-span-8 min-w-0">
+            {/* ─── LEFT: MAIN ARTICLE COLUMN (8 Cols) ─── */}
+            <article className="lg:col-span-8 min-w-0">
               
               {/* Mobile-Only Collapsible Table of Contents */}
-              <div className="lg:hidden mb-8 border border-border-custom bg-surface rounded-[3px] overflow-hidden">
+              <div className="lg:hidden mb-8 border border-border-custom bg-surface rounded-[3px] overflow-hidden shadow-xs">
                 <button
                   onClick={() => setMobileTocOpen(!mobileTocOpen)}
                   className="w-full p-3.5 flex items-center justify-between text-left text-xs font-mono font-bold text-foreground hover:bg-background/50 transition-colors"
@@ -837,13 +680,196 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                       Author
                     </span>
                   </div>
-                  <p className="text-xs text-secondary-custom leading-relaxed">
+                  <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed">
                     Engineering autonomous AI multi-agent pipelines, 24/7 WhatsApp customer intelligence bots, and Google Maps local SEO dominance for fast-growing businesses.
                   </p>
                 </div>
               </div>
 
             </article>
+
+            {/* ─── RIGHT: STICKY SIDEBAR (4 Cols, fixed in place on desktop during scroll) ─── */}
+            <aside className="lg:col-span-4 space-y-6">
+              <div className="lg:sticky lg:top-28 space-y-6 max-h-[calc(100vh-8rem)] lg:overflow-y-auto pr-1.5 scrollbar-none">
+
+                {/* Table of Contents ("On This Page") with live active section indicator */}
+                <div className="p-5 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-border-custom">
+                    <h4 className="text-xs font-mono font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-[1px] bg-accent-custom animate-pulse" />
+                      <span>On This Page</span>
+                    </h4>
+                    <span className="text-[10px] font-mono text-secondary-custom font-semibold">
+                      {Math.round(readingProgress)}% read
+                    </span>
+                  </div>
+
+                  <nav className="space-y-1 text-xs">
+                    {tocItems.map((item) => (
+                      <a
+                        key={item.id}
+                        href={`#${item.id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const el = document.getElementById(item.id);
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                            setActiveSection(item.id);
+                          }
+                        }}
+                        className={`block py-1.5 px-2.5 rounded-[2px] font-medium transition-all ${
+                          activeSection === item.id
+                            ? "bg-accent-custom/10 text-accent-custom font-semibold border-l-2 border-accent-custom pl-3"
+                            : "text-secondary-custom hover:text-foreground hover:bg-background/60"
+                        }`}
+                      >
+                        {item.label}
+                      </a>
+                    ))}
+                  </nav>
+                </div>
+
+                {/* Quick Social Share Box */}
+                <div className="p-4 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-2.5">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-secondary-custom font-bold block">
+                    Share Article
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`https://twitter.com/intent/tweet?text=${shareTitle}&url=${encodeURIComponent(currentUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 px-2.5 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom text-xs font-mono flex items-center justify-center gap-1.5 transition-all"
+                      title="Share on X / Twitter"
+                    >
+                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 23.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                      </svg>
+                      <span>Post</span>
+                    </a>
+                    <a
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 px-2.5 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom text-xs font-mono flex items-center justify-center gap-1.5 transition-all"
+                      title="Share on LinkedIn"
+                    >
+                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                        <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2m1.4 9.74v-8.37H5.06v8.37h2.8z" />
+                      </svg>
+                      <span>Share</span>
+                    </a>
+                    <a
+                      href={`https://api.whatsapp.com/send?text=${shareTitle}%20${encodeURIComponent(currentUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 rounded-[2px] bg-background border border-border-custom hover:border-emerald-500 hover:text-emerald-500 text-secondary-custom transition-all"
+                      title="Share on WhatsApp"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </a>
+                    <button
+                      onClick={handleCopyLink}
+                      className="p-2 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all cursor-pointer"
+                      title="Copy Link"
+                    >
+                      {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Bookmark className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Promo Card: Free Strategy Proposal */}
+                <div className="p-5 rounded-[3px] bg-surface border border-border-custom text-foreground shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-accent-custom/10 rounded-[3px] blur-2xl pointer-events-none" />
+                  <div className="relative z-10 space-y-3">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 text-[10px] font-mono uppercase tracking-wider font-bold">
+                      <Sparkles className="w-3 h-3 text-accent-custom" />
+                      Free Strategy Audit
+                    </span>
+                    <h3 className="text-base font-bold leading-snug text-foreground">
+                      Automate Your Workflows with Custom AI
+                    </h3>
+                    <p className="text-xs text-secondary-custom leading-relaxed">
+                      Deploy autonomous agents, 24/7 WhatsApp CRM pipelines, and Google Maps SEO designed for your enterprise.
+                    </p>
+                    <a
+                      href="#contact"
+                      className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-[2px] bg-accent-custom text-white hover:opacity-95 font-bold text-xs transition-colors shadow-md shadow-accent-custom/20"
+                    >
+                      <span>Claim Free Proposal</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+
+                {/* 24/7 WhatsApp AI Bot Card */}
+                <div className="p-4 rounded-[3px] bg-surface border border-border-custom shadow-sm hover:border-accent-custom/50 transition-all">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-[2px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                      <MessageCircle className="w-4 h-4" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-foreground">
+                        24/7 WhatsApp AI Bot
+                      </h4>
+                      <p className="text-[11px] text-secondary-custom leading-relaxed">
+                        Capture inbound leads and answer customer inquiries without human delay.
+                      </p>
+                      <a
+                        href="#contact"
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent-custom hover:underline pt-0.5"
+                      >
+                        <span>Request Bot Demo</span>
+                        <ChevronRight className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Trending Articles Stack */}
+                <div className="p-5 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-border-custom">
+                    <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase font-mono tracking-wider">
+                      <TrendingUp className="w-3.5 h-3.5 text-accent-custom" />
+                      <span>Trending</span>
+                    </h3>
+                    <Link href="/blogs" className="text-[10px] font-mono text-accent-custom hover:underline">
+                      View all
+                    </Link>
+                  </div>
+
+                  <div className="space-y-3">
+                    {relatedArticles.filter(a => a.slug !== slug).slice(0, 3).map((article, idx) => (
+                      <Link
+                        key={idx}
+                        href={`/blogs/${article.slug}`}
+                        className="group flex items-start gap-3 p-1.5 rounded-[2px] hover:bg-background transition-colors"
+                      >
+                        <div className="w-14 h-14 rounded-[2px] overflow-hidden border border-border-custom shrink-0 bg-surface">
+                          <img
+                            src={article.image}
+                            alt={article.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                        <div className="min-w-0 space-y-0.5">
+                          <span className={`inline-block px-1 py-0.2 rounded-[2px] text-[8px] font-mono font-bold border ${article.tagColor}`}>
+                            {article.tag}
+                          </span>
+                          <h4 className="text-xs font-bold text-foreground group-hover:text-accent-custom transition-colors line-clamp-2 leading-tight">
+                            {article.title}
+                          </h4>
+                          <span className="block text-[9px] font-mono text-secondary-custom">
+                            {article.readTime}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            </aside>
 
           </div>
         </div>
@@ -891,7 +917,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                   <h4 className="text-sm font-bold text-foreground group-hover:text-accent-custom transition-colors line-clamp-2 leading-snug">
                     {item.title}
                   </h4>
-                  <p className="text-xs text-secondary-custom line-clamp-2">
+                  <p className="text-xs text-secondary-custom line-clamp-2 leading-relaxed">
                     {item.summary}
                   </p>
                   <div className="pt-2 flex items-center justify-between text-[11px] font-mono text-secondary-custom border-t border-border-custom/40">
@@ -955,6 +981,6 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
       </main>
 
       <FooterSection />
-    </>
+    </div>
   );
 }

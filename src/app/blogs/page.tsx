@@ -2,12 +2,20 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { Poppins } from "next/font/google";
 import { API_URL } from "@/lib/config";
 import Navbar from "@/components/layout/Navbar";
 import FooterSection from "@/components/layout/FooterSection";
 import SplitText from "@/components/animations/SplitText";
-import { ArrowRight, Search, Clock, Calendar, Sparkles } from "lucide-react";
+import { ArrowRight, Search, Clock, Calendar } from "lucide-react";
 import { formatISTDate } from "@/lib/formatters";
+
+const poppins = Poppins({
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-poppins",
+});
 
 export default function BlogsPage() {
   const [blogs, setBlogs] = useState<any[]>([]);
@@ -109,7 +117,7 @@ export default function BlogsPage() {
   });
 
   return (
-    <>
+    <div className={`${poppins.className} font-sans min-h-screen bg-background text-foreground antialiased`}>
       <Navbar />
       <main className="flex-1 bg-background pt-32 pb-24 text-left">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -275,6 +283,6 @@ export default function BlogsPage() {
         </div>
       </main>
       <FooterSection />
-    </>
+    </div>
   );
 }
