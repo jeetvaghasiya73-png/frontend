@@ -156,3 +156,81 @@ export function formatDialerUrl(phone?: string | null): string {
   return clean ? `tel:${clean}` : "tel:";
 }
 
+export const IST_TIMEZONE = "Asia/Kolkata";
+export const IST_LOCALE = "en-IN";
+
+/**
+ * Formats any date string/object into Indian Standard Time (IST - Asia/Kolkata).
+ * Output example: "28 Sep 2026" or "Sep 28, 2026"
+ */
+export function formatISTDate(
+  dateInput?: string | number | Date | null,
+  options?: Intl.DateTimeFormatOptions
+): string {
+  if (!dateInput) return "N/A";
+  try {
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return "N/A";
+    return d.toLocaleDateString("en-IN", {
+      timeZone: IST_TIMEZONE,
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      ...options,
+    });
+  } catch {
+    return String(dateInput);
+  }
+}
+
+/**
+ * Formats time into Indian Standard Time (IST - Asia/Kolkata).
+ * Output example: "10:30 PM"
+ */
+export function formatISTTime(
+  dateInput?: string | number | Date | null,
+  options?: Intl.DateTimeFormatOptions
+): string {
+  if (!dateInput) return "";
+  try {
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString("en-IN", {
+      timeZone: IST_TIMEZONE,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      ...options,
+    });
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Formats full date and time into Indian Standard Time (IST - Asia/Kolkata).
+ * Output example: "28 Sep 2026, 10:30 PM"
+ */
+export function formatISTDateTime(
+  dateInput?: string | number | Date | null,
+  options?: Intl.DateTimeFormatOptions
+): string {
+  if (!dateInput) return "N/A";
+  try {
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return "N/A";
+    return d.toLocaleString("en-IN", {
+      timeZone: IST_TIMEZONE,
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      ...options,
+    });
+  } catch {
+    return String(dateInput);
+  }
+}
+

@@ -51,7 +51,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
-import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl } from "@/lib/formatters";
+import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTDateTime, formatISTTime } from "@/lib/formatters";
 import {
   ResponsiveContainer,
   BarChart,
@@ -448,7 +448,7 @@ export default function SuperAdminDashboard() {
     const intervalMap: Record<string, number> = {};
     cLeads.forEach(l => {
       if (!l.created_at) return;
-      const day = new Date(l.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const day = formatISTDate(l.created_at, { month: "short", day: "numeric" });
       intervalMap[day] = (intervalMap[day] || 0) + 1;
     });
 
@@ -506,7 +506,7 @@ export default function SuperAdminDashboard() {
         const computedScore = Math.min(99, baseScore + ratingBonus);
 
         const savedFollowup = typeof window !== "undefined" ? localStorage.getItem(`crm_lead_followup_${l.id}`) : null;
-        const rawFollowup = l.next_followup_at ? new Date(l.next_followup_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
+        const rawFollowup = l.next_followup_at ? formatISTDate(l.next_followup_at) : null;
 
         return {
           raw: l,
@@ -631,7 +631,7 @@ export default function SuperAdminDashboard() {
     const entry = {
       title,
       desc,
-      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+      date: formatISTDateTime(new Date()),
       type
     };
     if (typeof window !== "undefined") {
@@ -673,7 +673,7 @@ export default function SuperAdminDashboard() {
       ? localStorage.getItem(`crm_lead_followup_${leadKey}`)
       : null;
     const rawFollowup = item.raw?.next_followup_at
-      ? new Date(item.raw.next_followup_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      ? formatISTDate(item.raw.next_followup_at)
       : null;
     const followupDate = savedFollowup || rawFollowup || item.followupDate || null;
 
@@ -851,7 +851,7 @@ export default function SuperAdminDashboard() {
     const noteEntry = {
       id: Date.now(),
       text: newNoteText.trim(),
-      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+      date: formatISTDateTime(new Date()),
       author: user?.username || "Admin"
     };
 
@@ -884,7 +884,7 @@ export default function SuperAdminDashboard() {
         targetDate.setDate(targetDate.getDate() + daysAhead);
       }
 
-      const dateDisplay = targetDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      const dateDisplay = formatISTDate(targetDate);
       const leadKey = selectedLead.rawId || selectedLead.id;
 
       if (typeof window !== "undefined") {
@@ -1812,7 +1812,7 @@ export default function SuperAdminDashboard() {
                       </span>
                     </td>
                     <td className="py-3.5 px-3 whitespace-nowrap" style={{ color: "var(--dash-text-muted)" }}>
-                      {new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      {formatISTDate(item.date, { month: "short", day: "numeric" })}
                     </td>
                     <td className="py-3.5 px-3">
                       <div className="flex items-center gap-1.5">
@@ -1930,7 +1930,7 @@ export default function SuperAdminDashboard() {
                       <MapPin className="w-3 h-3 shrink-0 opacity-60" />
                       {item.location}
                     </span>
-                    <span className="shrink-0">{new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                    <span className="shrink-0">{formatISTDate(item.date, { month: "short", day: "numeric" })}</span>
                   </div>
                 </div>
 
@@ -2315,7 +2315,7 @@ export default function SuperAdminDashboard() {
                       </div>
                       {selectedLead.raw?.whatsapp_reply_at && (
                         <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
-                          {new Date(selectedLead.raw.whatsapp_reply_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          {formatISTDateTime(selectedLead.raw.whatsapp_reply_at)}
                         </div>
                       )}
                     </div>
@@ -2333,7 +2333,7 @@ export default function SuperAdminDashboard() {
                       </div>
                       {selectedLead.raw?.whatsapp_sent_at && (
                         <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
-                          {new Date(selectedLead.raw.whatsapp_sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          {formatISTDateTime(selectedLead.raw.whatsapp_sent_at)}
                         </div>
                       )}
                     </div>
@@ -2351,7 +2351,7 @@ export default function SuperAdminDashboard() {
                       </div>
                       {selectedLead.raw?.email_sent_at && (
                         <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
-                          {new Date(selectedLead.raw.email_sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          {formatISTDateTime(selectedLead.raw.email_sent_at)}
                         </div>
                       )}
                     </div>
@@ -2424,7 +2424,7 @@ export default function SuperAdminDashboard() {
                         </div>
                       </div>
                       <div className="text-[10px] mt-1" style={{ color: "var(--dash-text-muted)" }}>
-                        {selectedLead.date || selectedLead.created_at ? new Date(selectedLead.date || selectedLead.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Recent"}
+                        {selectedLead.date || selectedLead.created_at ? formatISTDateTime(selectedLead.date || selectedLead.created_at) : "Recent"}
                       </div>
                     </div>
                   ) : (
@@ -2440,7 +2440,7 @@ export default function SuperAdminDashboard() {
                         <div><strong className="text-[var(--dash-text)]">AI Score:</strong> Priority score {selectedLead.score || "80"}/100</div>
                       </div>
                       <div className="text-[10px] mt-1" style={{ color: "var(--dash-text-muted)" }}>
-                        {selectedLead.date || selectedLead.created_at ? new Date(selectedLead.date || selectedLead.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Recent"}
+                        {selectedLead.date || selectedLead.created_at ? formatISTDate(selectedLead.date || selectedLead.created_at) : "Recent"}
                       </div>
                     </div>
                   )}

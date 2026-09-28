@@ -6,6 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import FooterSection from "@/components/layout/FooterSection";
 import SplitText from "@/components/animations/SplitText";
 import { ArrowRight, Search, Loader2 } from "lucide-react";
+import { formatISTDate } from "@/lib/formatters";
 
 export default function BlogsPage() {
   const [blogs, setBlogs] = useState<any[]>([]);
@@ -142,7 +143,7 @@ export default function BlogsPage() {
                       <div className="flex items-center gap-3 text-[10px] font-mono text-secondary-custom">
                         <span>By {blog.author}</span>
                         <span>&bull;</span>
-                        <span>{new Date(blog.created_at).toLocaleDateString()}</span>
+                        <span>{formatISTDate(blog.created_at)}</span>
                       </div>
                       <h3 className="text-lg font-bold text-white group-hover:text-accent-custom line-clamp-2">
                         {blog.title}

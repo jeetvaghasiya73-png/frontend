@@ -40,7 +40,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
-import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl } from "@/lib/formatters";
+import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTDateTime } from "@/lib/formatters";
 
 type SourceFilter = "all" | "inquiry" | "scraped";
 
@@ -389,7 +389,7 @@ export default function LeadsManager() {
 
         const cleanService = formatServiceText(lead.scraped_service || lead.category);
         const savedFollowup = typeof window !== "undefined" ? localStorage.getItem(`crm_lead_followup_${lead.id}`) : null;
-        const rawFollowup = lead.next_followup_at ? new Date(lead.next_followup_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
+        const rawFollowup = lead.next_followup_at ? formatISTDate(lead.next_followup_at) : null;
 
         // For WhatsApp leads, derive status from whatsapp_status whenever user engaged/replied
         const waStatus = String(lead.whatsapp_status || "").toLowerCase();
@@ -623,7 +623,7 @@ export default function LeadsManager() {
       ? localStorage.getItem(`crm_lead_followup_${leadKey}`)
       : null;
     const rawFollowup = lead.raw?.next_followup_at
-      ? new Date(lead.raw.next_followup_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      ? formatISTDate(lead.raw.next_followup_at)
       : null;
     const followupDate = savedFollowup || rawFollowup || lead.followupDate || null;
 
@@ -734,7 +734,7 @@ export default function LeadsManager() {
     const entry = {
       title,
       desc,
-      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+      date: formatISTDateTime(new Date()),
       type
     };
     if (typeof window !== "undefined") {
@@ -762,7 +762,7 @@ export default function LeadsManager() {
         targetDate.setDate(targetDate.getDate() + daysAhead);
       }
 
-      const dateDisplay = targetDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      const dateDisplay = formatISTDate(targetDate);
       const leadKey = selectedLead.rawId || selectedLead.id;
 
       if (typeof window !== "undefined") {
@@ -837,7 +837,7 @@ export default function LeadsManager() {
     const newNote = {
       id: Date.now(),
       text: newNoteText.trim(),
-      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      date: formatISTDate(new Date()),
       author: "Admin"
     };
     const updatedNotes = [newNote, ...(selectedLead.notes || [])];
@@ -1659,7 +1659,7 @@ export default function LeadsManager() {
                   </td>
 
                   <td className="py-3.5 px-3 text-[var(--dash-text-muted)] whitespace-nowrap font-mono text-[11px]">
-                    {new Date(lead.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    {formatISTDate(lead.created_at)}
                   </td>
 
                   <td className="py-3.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
@@ -1774,7 +1774,7 @@ export default function LeadsManager() {
                       <MapPin className="w-3 h-3 shrink-0" />
                       {lead.city || "India"}
                     </span>
-                    <span className="shrink-0">{new Date(lead.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                    <span className="shrink-0">{formatISTDate(lead.created_at, { month: "short", day: "numeric" })}</span>
                   </div>
                 </div>
 
@@ -2393,7 +2393,7 @@ export default function LeadsManager() {
                       </div>
                       {selectedLead.raw?.whatsapp_reply_at && (
                         <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
-                          {new Date(selectedLead.raw.whatsapp_reply_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          {formatISTDateTime(selectedLead.raw.whatsapp_reply_at)}
                         </div>
                       )}
                     </div>
@@ -2411,7 +2411,7 @@ export default function LeadsManager() {
                       </div>
                       {selectedLead.raw?.whatsapp_sent_at && (
                         <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
-                          {new Date(selectedLead.raw.whatsapp_sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          {formatISTDateTime(selectedLead.raw.whatsapp_sent_at)}
                         </div>
                       )}
                     </div>
@@ -2429,7 +2429,7 @@ export default function LeadsManager() {
                       </div>
                       {selectedLead.raw?.email_sent_at && (
                         <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
-                          {new Date(selectedLead.raw.email_sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          {formatISTDateTime(selectedLead.raw.email_sent_at)}
                         </div>
                       )}
                     </div>
@@ -2502,7 +2502,7 @@ export default function LeadsManager() {
                         </div>
                       </div>
                       <div className="text-[10px] mt-1" style={{ color: "var(--dash-text-muted)" }}>
-                        {new Date(selectedLead.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        {formatISTDateTime(selectedLead.created_at)}
                       </div>
                     </div>
                   ) : (
@@ -2518,7 +2518,7 @@ export default function LeadsManager() {
                         <div><strong className="text-[var(--dash-text)]">AI Score:</strong> Priority score {selectedLead.score}/100</div>
                       </div>
                       <div className="text-[10px] mt-1" style={{ color: "var(--dash-text-muted)" }}>
-                        {new Date(selectedLead.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        {formatISTDate(selectedLead.created_at)}
                       </div>
                     </div>
                   )}

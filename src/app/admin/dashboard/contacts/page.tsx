@@ -32,6 +32,7 @@ import {
   FileText
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
+import { formatISTDate, formatISTTime, formatISTDateTime } from "@/lib/formatters";
 
 // Helper to format any error object into a safe human-readable string
 const formatErrorDetail = (detail: any): string => {
@@ -1096,7 +1097,7 @@ export default function ContactMessagesManager() {
                   <div className="flex items-center justify-between text-[11px] text-[var(--dash-text-muted)] font-mono">
                     <span className="truncate max-w-[180px]">{item.senderContact}</span>
                     <span className="text-[10px] shrink-0">
-                      {new Date(item.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      {formatISTDate(item.timestamp, { month: "short", day: "numeric" })}
                     </span>
                   </div>
 
@@ -1317,7 +1318,7 @@ export default function ContactMessagesManager() {
                             >
                               <div className="flex items-center justify-between gap-3 text-[10px] opacity-75 font-mono mb-1">
                                 <span className="font-bold">{isOutbound ? "Tech Infinix Team / AI" : selectedMessage.senderName}</span>
-                                <span>{new Date(chat.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                                <span>{formatISTTime(chat.created_at)}</span>
                               </div>
                               <p className="whitespace-pre-wrap font-sans">{chat.message_text}</p>
                               {chat.button_id && (
@@ -1349,7 +1350,7 @@ export default function ContactMessagesManager() {
                           </h2>
                         </div>
                         <span className="text-xs text-[var(--dash-text-muted)] font-mono">
-                          {new Date(selectedMessage.timestamp).toLocaleString()}
+                          {formatISTDateTime(selectedMessage.timestamp)}
                         </span>
                       </div>
 
@@ -1401,7 +1402,7 @@ export default function ContactMessagesManager() {
                               </span>
                             </div>
                             <span className="text-[10px] text-[var(--dash-text-muted)] font-mono">
-                              {new Date(msg.received_at || selectedMessage.timestamp).toLocaleString()}
+                              {formatISTDateTime(msg.received_at || selectedMessage.timestamp)}
                             </span>
                           </div>
 

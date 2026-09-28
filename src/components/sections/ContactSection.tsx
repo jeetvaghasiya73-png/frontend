@@ -31,6 +31,7 @@ import {
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import SplitText from "@/components/animations/SplitText";
+import { formatISTDate } from "@/lib/formatters";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -459,7 +460,7 @@ export default function ContactSection() {
                     </div>
 
                     <span className="text-xs font-mono text-secondary-custom">
-                      Submitted: {new Date(submittedLead.submittedAt || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      Submitted: {formatISTDate(submittedLead.submittedAt || Date.now(), { month: "short", day: "numeric", year: "numeric" })}
                     </span>
                   </div>
 

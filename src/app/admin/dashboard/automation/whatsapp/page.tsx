@@ -73,7 +73,7 @@ import {
   UserMinus
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
-import { isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl } from "@/lib/formatters";
+import { isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTTime, formatISTDateTime } from "@/lib/formatters";
 import {
   ResponsiveContainer,
   BarChart,
@@ -864,9 +864,9 @@ export default function WhatsAppOutreachPage() {
       showAlert("error", "No chat history to export.");
       return;
     }
-    const header = `CRM WhatsApp Chat Transcript - ${selectedConv.bussiness_name} (${selectedConv.phone_number})\nDate: ${new Date().toLocaleString()}\n------------------------------------------------------------\n\n`;
+    const header = `CRM WhatsApp Chat Transcript - ${selectedConv.bussiness_name} (${selectedConv.phone_number})\nDate: ${formatISTDateTime(new Date())}\n------------------------------------------------------------\n\n`;
     const body = convMessages
-      .map((m) => `[${new Date(m.created_at).toLocaleString()}] ${m.direction.toUpperCase()}: ${m.message_text}`)
+      .map((m) => `[${formatISTDateTime(m.created_at)}] ${m.direction.toUpperCase()}: ${m.message_text}`)
       .join("\n");
 
     const blob = new Blob([header + body], { type: "text/plain;charset=utf-8" });
@@ -1405,7 +1405,7 @@ export default function WhatsAppOutreachPage() {
                         {/* Timestamp & Status Badge */}
                         <div className="flex flex-col items-end gap-1 shrink-0">
                           <span className="text-[10px] text-[var(--dash-text-muted)] font-mono">
-                            {c.latest_timestamp ? new Date(c.latest_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Recent"}
+                            {c.latest_timestamp ? formatISTTime(c.latest_timestamp) : "Recent"}
                           </span>
                           <span className={`text-[9px] px-1.5 py-0.2 rounded font-semibold uppercase border ${
                             c.whatsapp_ai_enabled
@@ -1610,7 +1610,7 @@ export default function WhatsAppOutreachPage() {
                                 )}
                               </span>
                               <span className="text-[9px] font-mono">
-                                {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                {m.created_at ? formatISTTime(m.created_at) : ''}
                               </span>
                             </div>
 
@@ -2148,7 +2148,7 @@ export default function WhatsAppOutreachPage() {
                           "{item.last_reply || "STOP / Unsubscribe requested"}"
                         </td>
                         <td className="p-3 text-[var(--dash-text-muted)] font-mono text-[10px]">
-                          {item.reply_at ? new Date(item.reply_at).toLocaleString() : "Recently"}
+                          {item.reply_at ? formatISTDateTime(item.reply_at) : "Recently"}
                         </td>
                         <td className="p-3 text-right">
                           <button
@@ -2464,7 +2464,7 @@ export default function WhatsAppOutreachPage() {
                 <p className="text-xs text-[var(--dash-text-muted)] flex items-center gap-2">
                   <span>ID: #{selectedLeadModal.id}</span>
                   <span>•</span>
-                  <span>Scraped: {new Date(selectedLeadModal.created_at).toLocaleDateString()}</span>
+                  <span>Scraped: {formatISTDate(selectedLeadModal.created_at)}</span>
                 </p>
               </div>
 

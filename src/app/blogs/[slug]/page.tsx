@@ -5,6 +5,7 @@ import { API_URL } from "@/lib/config";
 import Navbar from "@/components/layout/Navbar";
 import FooterSection from "@/components/layout/FooterSection";
 import { ArrowLeft, Calendar, User, Clock } from "lucide-react";
+import { formatISTDate } from "@/lib/formatters";
 
 import ContactSection from "@/components/sections/ContactSection";
 
@@ -179,7 +180,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-accent-custom" />
-                <span>Published: {new Date(blog.created_at).toLocaleDateString()}</span>
+                <span>Published: {formatISTDate(blog.created_at)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-accent-custom" />
