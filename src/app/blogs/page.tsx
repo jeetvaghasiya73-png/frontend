@@ -23,61 +23,6 @@ export default function BlogsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
 
-  const fallbackBlogs = [
-    {
-      id: 3,
-      title: "Will AI Replace Humans? The Truth Behind Autonomous Agents & the Future of Work",
-      summary: "Will artificial intelligence render human workers obsolete? Explore the realistic frontier between automated task execution and irreplaceable human intuition, creativity, and strategic judgment in the era of autonomous agent swarms.",
-      author: "Tech Infinix Research Team",
-      category: "TECH & AI FUTURE",
-      image: "/images/blogs/ai-human-hero.jpg",
-      cover_image: "/images/blogs/ai-human-hero.jpg",
-      readTime: "5 min read",
-      created_at: new Date().toISOString(),
-      slug: "will-ai-replace-humans",
-      published: true
-    },
-    {
-      id: 1,
-      title: "Scaling Outbound Lead Pipelines with LangGraph Agents",
-      summary: "Explore how we design autonomous agents that coordinate tasks, validate lead profiles, and reduce duplicate entry latency.",
-      author: "Tech Infinix Team",
-      category: "AI AGENTS",
-      image: "/images/blogs/lead-pipeline-thumb.jpg",
-      cover_image: "/images/blogs/lead-pipeline-thumb.jpg",
-      readTime: "4 min read",
-      created_at: new Date().toISOString(),
-      slug: "scaling-outbound-lead-pipelines",
-      published: true
-    },
-    {
-      id: 4,
-      title: "Enterprise SEO: Dominating Organic Google Search",
-      summary: "Automating authority signals, technical indexing, and keyword dominance for fast-growing enterprises.",
-      author: "SEO Engineering",
-      category: "SEO",
-      image: "/images/blogs/seo-maps-thumb.jpg",
-      cover_image: "/images/blogs/seo-maps-thumb.jpg",
-      readTime: "5 min read",
-      created_at: new Date().toISOString(),
-      slug: "google-maps-3pack-seo",
-      published: true
-    },
-    {
-      id: 2,
-      title: "The Shift to Edge-Computing Databases for AI Workflows",
-      summary: "Analyzing performance benchmarks of distributed databases like SQLite and Pinecone for RAG retrieval latency.",
-      author: "Engineering Lead",
-      category: "ARCHITECTURE",
-      image: "/images/blogs/centaur-ai-worker.jpg",
-      cover_image: "/images/blogs/centaur-ai-worker.jpg",
-      readTime: "6 min read",
-      created_at: new Date().toISOString(),
-      slug: "shift-to-edge-computing-databases",
-      published: true
-    }
-  ];
-
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
@@ -85,17 +30,13 @@ export default function BlogsPage() {
         if (response.ok) {
           const data = await response.json();
           const active = data.filter((b: any) => b.published);
-          if (active.length > 0) {
-            setBlogs(active);
-          } else {
-            setBlogs(fallbackBlogs);
-          }
+          setBlogs(active);
         } else {
-          setBlogs(fallbackBlogs);
+          setBlogs([]);
         }
       } catch (err) {
-        console.error("Fetch failed, loading fallback blogs", err);
-        setBlogs(fallbackBlogs);
+        console.error("Fetch failed:", err);
+        setBlogs([]);
       } finally {
         setLoading(false);
       }
