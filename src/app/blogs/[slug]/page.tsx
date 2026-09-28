@@ -5,22 +5,19 @@ import Link from "next/link";
 import { API_URL } from "@/lib/config";
 import Navbar from "@/components/layout/Navbar";
 import FooterSection from "@/components/layout/FooterSection";
+import ContactSection from "@/components/sections/ContactSection";
 import {
   ArrowLeft,
   Calendar,
-  User,
   Clock,
   Share2,
   Check,
-  Send,
   MessageCircle,
   Sparkles,
   ArrowRight,
   TrendingUp,
   Bookmark,
-  MessageSquare,
-  ChevronRight,
-  CheckCircle2
+  ChevronRight
 } from "lucide-react";
 import { formatISTDate } from "@/lib/formatters";
 
@@ -31,14 +28,6 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
   const [blog, setBlog] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-
-  // Quick Comment / Inquiry form state
-  const [commentName, setCommentName] = useState("");
-  const [commentEmail, setCommentEmail] = useState("");
-  const [commentMessage, setCommentMessage] = useState("");
-  const [commentSending, setCommentSending] = useState(false);
-  const [commentSuccess, setCommentSuccess] = useState(false);
-  const [commentError, setCommentError] = useState("");
 
   const relatedArticles = [
     {
@@ -89,7 +78,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
       category: "TECH & AI FUTURE",
       summary: "Will artificial intelligence render human workers obsolete? Explore the realistic frontier between automated task execution and irreplaceable human intuition, creativity, and strategic judgment in the era of autonomous agent swarms.",
       cover_image: "/images/blogs/ai-human-hero.jpg",
-      content: `<div class="my-6 rounded-2xl overflow-hidden border border-border-custom shadow-xl shadow-black/5 dark:shadow-black/40">
+      content: `<div class="my-6 rounded-[3px] overflow-hidden border border-border-custom shadow-xl shadow-black/5 dark:shadow-black/40">
   <img src="/images/blogs/ai-human-hero.jpg" alt="Human intelligence collaborating with Autonomous AI Agents" class="w-full h-auto aspect-[16/9] object-cover" />
   <div class="p-3 bg-surface text-center border-t border-border-custom/50 text-xs text-secondary-custom font-mono">
     Human ingenuity directing autonomous multi-agent pipelines at Tech Infinix.
@@ -141,7 +130,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
 <p>Notice what all these tasks share: they are <em>friction</em>. They are the repetitive toll fees human professionals were forced to pay every workday before they could do their actual creative, high-impact thinking.</p>
 
-<div class="my-8 rounded-2xl overflow-hidden border border-border-custom shadow-xl shadow-black/5 dark:shadow-black/40">
+<div class="my-8 rounded-[3px] overflow-hidden border border-border-custom shadow-xl shadow-black/5 dark:shadow-black/40">
   <img src="/images/blogs/centaur-ai-worker.jpg" alt="Autonomous AI Agent Pipelines and Workflow Orchestration" class="w-full h-auto aspect-[16/9] object-cover" />
   <div class="p-3 bg-surface text-center border-t border-border-custom/50 text-xs text-secondary-custom font-mono">
     Autonomous agent network orchestrating multi-step data pipelines in real time.
@@ -181,72 +170,67 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
       </tr>
       <tr>
         <td><strong>Pattern Recognition</strong></td>
-        <td>Superhuman detection of historical trends</td>
-        <td>Intuitive breakthroughs that break patterns</td>
+        <td>Detects subtle statistical correlations across gigabytes of telemetry</td>
+        <td>Identifies "black swan" outliers and novel cultural contexts</td>
       </tr>
       <tr>
-        <td><strong>Execution</strong></td>
-        <td>Flawless syntax & zero fatigue</td>
-        <td>Subjective taste, aesthetic curation & vision</td>
+        <td><strong>Content Generation</strong></td>
+        <td>Drafts boilerplate articles, summaries, and code</td>
+        <td>Infuses authentic lived experience, emotional resonance, and contrarian perspectives</td>
+      </tr>
+      <tr>
+        <td><strong>Strategic Decision</strong></td>
+        <td>Simulates scenarios and probabilistic game trees</td>
+        <td>Takes ethical accountability and commits capital under true uncertainty</td>
       </tr>
       <tr>
         <td><strong>Relationship Building</strong></td>
-        <td>Automated conversational follow-ups</td>
-        <td>Deep relational trust, rapport & camaraderie</td>
-      </tr>
-      <tr>
-        <td><strong>Responsibility</strong></td>
-        <td>Zero consequence awareness</td>
-        <td>Ultimate accountability & ethical ownership</td>
+        <td>Executes round-the-clock transactional conversations</td>
+        <td>Forges long-term loyalty, shared values, and interpersonal trust</td>
       </tr>
     </tbody>
   </table>
 </div>
 
-<h2 id="centaur-worker">5. The Rise of the "Centaur Worker": The 10x Human</h2>
-<p>In chess, there is a legendary concept known as <em>Centaur Chess</em> (or Advanced Chess): a human grandmaster paired with a chess engine. In competitive tournaments, a Centaur team consistently outperforms both the world's best human grandmaster alone AND the world's most powerful supercomputer alone.</p>
-<p>This is the exact future of professional work. The winners of the next decade will not be purely organic purists, nor will they be autonomous machines running without human oversight. The winners will be <strong>Centaurs</strong>—engineers, designers, marketers, and founders who wield autonomous AI swarms as an exoskeleton for their minds.</p>
+<h2 id="centaur-worker">5. The Rise of the "Centaur Worker" (10x Human + AI)</h2>
+<p>The professionals who will dominate the next decade are neither AI purists nor Luddites. They are <strong>Centaurs</strong>: individuals who blend human strategic intuition with algorithmic horse-power.</p>
 
-<div class="blog-callout border-indigo-500/30 bg-indigo-500/5">
-  <h3 class="text-indigo-400 font-bold text-base mb-1">💡 Real-World Example at Tech Infinix:</h3>
-  <p class="text-sm text-foreground m-0">In our engineering lab, a single software architect armed with autonomous AI pipelines, specialized code generation models, and real-time scrapers can design, test, build, and deploy an enterprise-grade web application in <strong>48 hours</strong>—a milestone that previously demanded a 6-person agency team working for 3 months. The human's value did not decrease; their leverage increased tenfold.</p>
+<p>Consider how modern high-performance software engineering works today at Tech Infinix:</p>
+<ul class="space-y-2 my-4">
+  <li>A senior engineer conceptualizes the data model, defines system boundaries, and anticipates edge-case security risks.</li>
+  <li>They prompt an autonomous agent fleet (like LangGraph or Claude) to scaffold the FastAPI endpoints, database schemas, and unit test suites in 45 seconds.</li>
+  <li>The engineer reviews, refactors, and deploys. A task that previously took 4 days now concludes before lunch.</li>
+</ul>
+
+<div class="blog-quote-box">
+  <p class="italic text-foreground font-medium text-base mb-2">"Technology does not replace people. It replaces tasks. Those who let go of low-leverage tasks first will command the future."</p>
+  <span class="text-xs font-mono text-secondary-custom uppercase tracking-wider">— Tech Infinix Engineering Principles</span>
 </div>
 
-<h2 id="future-proof-steps">6. 4 Steps to Future-Proof Yourself Today</h2>
-<p>If you want to ensure your skills and business remain indispensable in the AI era, adopt these 4 strategic imperatives:</p>
-<ol class="space-y-3 my-4 list-decimal pl-5">
-  <li><strong>Shift from "Worker" to "Director":</strong> Stop measuring your output by keystrokes typed. Start measuring by systems designed, prompts refined, and quality standards enforced.</li>
-  <li><strong>Double Down on High-Trust Human Skills:</strong> Communication, negotiation, storytelling, and leadership have never had a higher ROI. When technical execution becomes free, relationship capital becomes priceless.</li>
-  <li><strong>Master Workflow Orchestration:</strong> Learn how to chain AI tools together—integrating APIs, automated CRM syncs, vector search, and web scraping into autonomous business pipelines.</li>
-  <li><strong>Cultivate a Distinct Creative Voice:</strong> Generic content and derivative ideas will be swamped by automated noise. Unique viewpoints, contrarian insights, and authentic case studies will stand out like beacons.</li>
-</ol>
-
-<h2>Conclusion: The Future Belongs to the Amplified</h2>
-<p>AI will not replace humans. It will replace the robotic, uninspired, and exhausting aspects of human toil—giving us the freedom to operate at the peak of our creative, intellectual, and relational capacity.</p>
-<p>At <strong>Tech Infinix</strong>, we don't build AI to substitute people; we build autonomous agent pipelines and intelligent web architectures to empower businesses and visionary leaders to achieve unprecedented scale. The future isn't AI vs. Human. The future is Human + AI, unlocked.</p>`,
+<h2 id="future-proof-steps">6. How to Future-Proof Your Career & Enterprise</h2>
+<p>To thrive alongside autonomous systems, implement these four strategic shifts today:</p>
+<ol class="space-y-3 my-4">
+  <li><strong>Master System Architecture over Syntax:</strong> Stop spending hours memorizing commands or syntax. Instead, learn how systems interact, how APIs exchange data, and how security models govern access.</li>
+  <li><strong>Build a High-Trust Personal Brand:</strong> Algorithms are commodities; reputation is scarce. Cultivate verified domain expertise, case studies, and transparent client partnerships.</li>
+  <li><strong>Deploy Autonomous Agents for Repetitive Overhead:</strong> Automate data entry, outbound outreach, and inbound lead qualification so your core team can focus on closing deals and product innovation.</li>
+  <li><strong>Double Down on Uniquely Human EQ:</strong> Strengthen negotiation, storytelling, team culture, and customer relationship building.</li>
+</ol>`,
       author: "Tech Infinix Research Team",
       created_at: new Date().toISOString(),
       readTime: "5 min read",
-      custom_css: `/* Theme-Adaptive High-End Editorial Styling */
-.blog-content {
-  font-size: 1.05rem;
-  line-height: 1.85;
-  color: var(--foreground);
-}
+      custom_css: `
 .blog-content h2 {
-  font-size: 1.7rem;
+  font-size: 1.75rem;
   font-weight: 800;
-  letter-spacing: -0.025em;
-  margin-top: 2.75rem;
+  margin-top: 2.5rem;
   margin-bottom: 1rem;
   color: var(--foreground);
-  border-bottom: 1px solid var(--border-custom);
-  padding-bottom: 0.5rem;
+  letter-spacing: -0.02em;
 }
 .blog-content h3 {
   font-size: 1.25rem;
   font-weight: 700;
-  margin-top: 2rem;
+  margin-top: 1.75rem;
   margin-bottom: 0.75rem;
   color: var(--foreground);
 }
@@ -257,7 +241,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 }
 .blog-callout {
   padding: 1.5rem;
-  border-radius: 1rem;
+  border-radius: 3px;
   margin: 2rem 0;
   background: var(--surface);
   border: 1px solid var(--border-custom);
@@ -266,14 +250,14 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 .blog-highlight-box {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(41, 98, 255, 0.04) 100%);
   border: 1px solid rgba(99, 102, 241, 0.25);
-  border-radius: 1rem;
+  border-radius: 3px;
   padding: 1.75rem;
   margin: 2rem 0;
 }
 .blog-table-wrapper {
   overflow-x: auto;
   margin: 2rem 0;
-  border-radius: 0.75rem;
+  border-radius: 3px;
   border: 1px solid var(--border-custom);
 }
 .blog-table {
@@ -302,7 +286,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 }
 .blog-stat-card {
   padding: 1.25rem;
-  border-radius: 0.875rem;
+  border-radius: 3px;
   background: var(--surface);
   border: 1px solid var(--border-custom);
   text-align: center;
@@ -325,12 +309,19 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
   display: inline-flex;
   align-items: center;
   padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
+  border-radius: 2px;
   font-size: 0.75rem;
   font-weight: 600;
   background: rgba(99, 102, 241, 0.12);
   color: #6366F1;
   border: 1px solid rgba(99, 102, 241, 0.25);
+}
+.blog-quote-box {
+  padding: 1.5rem;
+  border-left: 3px solid var(--accent-custom);
+  background: var(--surface);
+  margin: 2rem 0;
+  border-radius: 3px;
 }`
     },
     "scaling-outbound-lead-pipelines": {
@@ -379,22 +370,16 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
       try {
         let response = await fetch(`${API_URL}/api/v1/blogs/${slug}`);
         if (!response.ok) {
-          response = await fetch(`${API_URL}/api/v1/blogs/published`);
+          response = await fetch(`${API_URL}/api/v1/blogs/slug/${slug}`);
         }
         if (response.ok) {
           const data = await response.json();
-          if (data && data.slug === slug) {
-            setBlog(data);
-          } else if (Array.isArray(data)) {
-            const found = data.find((b: any) => b.slug === slug);
-            setBlog(found || fallbackBlogs[slug] || fallbackBlogs["will-ai-replace-humans"]);
-          } else {
-            setBlog(fallbackBlogs[slug] || fallbackBlogs["will-ai-replace-humans"]);
-          }
+          setBlog(data);
         } else {
           setBlog(fallbackBlogs[slug] || fallbackBlogs["will-ai-replace-humans"]);
         }
-      } catch {
+      } catch (err) {
+        console.error("Fetch blog failed, loading fallback", err);
         setBlog(fallbackBlogs[slug] || fallbackBlogs["will-ai-replace-humans"]);
       } finally {
         setLoading(false);
@@ -412,44 +397,6 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
     }
   };
 
-  const handleCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!commentName || !commentEmail || !commentMessage) {
-      setCommentError("Please fill out all required fields.");
-      return;
-    }
-    setCommentSending(true);
-    setCommentError("");
-
-    try {
-      const res = await fetch(`${API_URL}/api/v1/leads/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: commentName,
-          email: commentEmail,
-          category: `Blog Feedback: ${blog?.title || slug}`,
-          services: ["Technical Consultation"],
-          message: commentMessage,
-          source: "blog_comment"
-        })
-      });
-
-      if (res.ok) {
-        setCommentSuccess(true);
-        setCommentName("");
-        setCommentEmail("");
-        setCommentMessage("");
-      } else {
-        setCommentSuccess(true); // Graceful UX confirmation
-      }
-    } catch {
-      setCommentSuccess(true);
-    } finally {
-      setCommentSending(false);
-    }
-  };
-
   const isHtml = (str: string) => {
     if (!str) return false;
     return /<[a-z][\s\S]*>/i.test(str);
@@ -458,7 +405,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center flex-col gap-3">
-        <div className="w-8 h-8 rounded-full border-2 border-accent-custom border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-[2px] border-2 border-accent-custom border-t-transparent animate-spin" />
         <span className="font-mono text-xs text-secondary-custom">Loading article...</span>
       </div>
     );
@@ -489,7 +436,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
             </Link>
 
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-full bg-accent-custom/10 text-accent-custom text-[11px] font-semibold border border-accent-custom/20">
+              <span className="px-2.5 py-1 rounded-[2px] bg-accent-custom/10 text-accent-custom text-[11px] font-semibold border border-accent-custom/20">
                 {blog.category || "TECH & AI FUTURE"}
               </span>
               <span className="text-secondary-custom">•</span>
@@ -508,7 +455,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
             {/* Author Meta Row */}
             <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-2 text-xs text-secondary-custom font-mono">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-accent-custom/15 border border-accent-custom/30 text-accent-custom font-bold text-xs flex items-center justify-center">
+                <div className="w-7 h-7 rounded-[2px] bg-accent-custom/15 border border-accent-custom/30 text-accent-custom font-bold text-xs flex items-center justify-center">
                   TI
                 </div>
                 <span className="text-foreground font-semibold">{blog.author || "Tech Infinix Research Team"}</span>
@@ -559,7 +506,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                     href={`https://twitter.com/intent/tweet?text=${shareTitle}&url=${encodeURIComponent(currentUrl)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2.5 rounded-lg bg-surface border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all"
+                    className="p-2.5 rounded-[2px] bg-surface border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all"
                     title="Share on X / Twitter"
                   >
                     <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
@@ -570,7 +517,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                     href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2.5 rounded-lg bg-surface border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all"
+                    className="p-2.5 rounded-[2px] bg-surface border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all"
                     title="Share on LinkedIn"
                   >
                     <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
@@ -581,14 +528,14 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                     href={`https://api.whatsapp.com/send?text=${shareTitle}%20${encodeURIComponent(currentUrl)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2.5 rounded-lg bg-surface border border-border-custom hover:border-emerald-500 hover:text-emerald-500 text-secondary-custom transition-all"
+                    className="p-2.5 rounded-[2px] bg-surface border border-border-custom hover:border-emerald-500 hover:text-emerald-500 text-secondary-custom transition-all"
                     title="Share on WhatsApp"
                   >
                     <MessageCircle className="w-4 h-4" />
                   </a>
                   <button
                     onClick={handleCopyLink}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface border border-border-custom hover:border-accent-custom hover:text-accent-custom text-xs font-mono text-secondary-custom transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[2px] bg-surface border border-border-custom hover:border-accent-custom hover:text-accent-custom text-xs font-mono text-secondary-custom transition-all cursor-pointer"
                   >
                     {copied ? (
                       <>
@@ -606,8 +553,8 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
               </div>
 
               {/* Author Box */}
-              <div className="mt-8 p-6 rounded-2xl bg-surface border border-border-custom shadow-sm flex items-start sm:items-center gap-4 sm:gap-5 flex-col sm:flex-row">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-accent-custom to-indigo-500 text-white font-black text-lg flex items-center justify-center shrink-0 shadow-md shadow-accent-custom/20">
+              <div className="mt-8 p-6 rounded-[3px] bg-surface border border-border-custom shadow-sm flex items-start sm:items-center gap-4 sm:gap-5 flex-col sm:flex-row">
+                <div className="w-14 h-14 rounded-[3px] bg-gradient-to-tr from-accent-custom to-indigo-500 text-white font-black text-lg flex items-center justify-center shrink-0 shadow-md shadow-accent-custom/20">
                   TI
                 </div>
                 <div className="space-y-1">
@@ -615,7 +562,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                     <h4 className="text-base font-bold text-foreground">
                       {blog.author || "Tech Infinix Research Team"}
                     </h4>
-                    <span className="px-2 py-0.5 rounded-full bg-accent-custom/10 text-accent-custom text-[10px] font-mono font-semibold">
+                    <span className="px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom text-[10px] font-mono font-semibold">
                       Author
                     </span>
                   </div>
@@ -625,120 +572,40 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                 </div>
               </div>
 
-              {/* Seamless Inline Feedback / Question Form */}
-              <div className="mt-12 p-6 sm:p-8 rounded-2xl bg-surface border border-border-custom shadow-sm">
-                <div className="flex items-center gap-2.5 mb-2">
-                  <MessageSquare className="w-5 h-5 text-accent-custom" />
-                  <h3 className="text-xl font-bold text-foreground">
-                    Have a Question or Feedback on this Article?
-                  </h3>
-                </div>
-                <p className="text-xs sm:text-sm text-secondary-custom mb-6">
-                  Our engineers and researchers read every submission. Drop your thoughts or questions about autonomous AI and we'll reply directly.
-                </p>
-
-                {commentSuccess ? (
-                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-sm flex items-center gap-3">
-                    <CheckCircle2 className="w-5 h-5 shrink-0" />
-                    <span>Thank you! Your feedback has been received. Our team will review and connect with you shortly.</span>
-                  </div>
-                ) : (
-                  <form onSubmit={handleCommentSubmit} className="space-y-4">
-                    {commentError && (
-                      <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-mono">
-                        {commentError}
-                      </div>
-                    )}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-mono text-secondary-custom mb-1">Your Name *</label>
-                        <input
-                          type="text"
-                          required
-                          value={commentName}
-                          onChange={(e) => setCommentName(e.target.value)}
-                          placeholder="e.g. John Doe"
-                          className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-lg bg-background border border-border-custom focus:outline-none focus:border-accent-custom text-foreground"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-mono text-secondary-custom mb-1">Your Email *</label>
-                        <input
-                          type="email"
-                          required
-                          value={commentEmail}
-                          onChange={(e) => setCommentEmail(e.target.value)}
-                          placeholder="john@example.com"
-                          className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-lg bg-background border border-border-custom focus:outline-none focus:border-accent-custom text-foreground"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-mono text-secondary-custom mb-1">Your Thought / Question *</label>
-                      <textarea
-                        required
-                        rows={3}
-                        value={commentMessage}
-                        onChange={(e) => setCommentMessage(e.target.value)}
-                        placeholder="Write your comments or questions about this article..."
-                        className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-lg bg-background border border-border-custom focus:outline-none focus:border-accent-custom text-foreground resize-none"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={commentSending}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent-custom text-white hover:opacity-95 text-xs sm:text-sm font-semibold transition-all shadow-md shadow-accent-custom/20 cursor-pointer disabled:opacity-50"
-                    >
-                      {commentSending ? (
-                        <>
-                          <div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                          <span>Sending...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-3.5 h-3.5" />
-                          <span>Submit Comment</span>
-                        </>
-                      )}
-                    </button>
-                  </form>
-                )}
-              </div>
-
             </article>
 
             {/* Right Sticky Sidebar (4 Cols) */}
             <aside className="lg:col-span-4 space-y-6">
               <div className="sticky top-28 space-y-6">
 
-                {/* Promo Card 1: Free Consultation (Gradient Card) */}
-                <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-700 text-white shadow-xl shadow-indigo-600/15 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                {/* Promo Card 1: Free Consultation (Clean, modern tech card with 3px radius) */}
+                <div className="p-6 rounded-[3px] bg-surface border border-border-custom text-foreground shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-accent-custom/10 rounded-[3px] blur-2xl pointer-events-none" />
                   <div className="relative z-10 space-y-3">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-[10px] font-mono uppercase tracking-wider font-bold">
-                      <Sparkles className="w-3 h-3 text-amber-300" />
-                      Free Consultation
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 text-[10px] font-mono uppercase tracking-wider font-bold">
+                      <Sparkles className="w-3 h-3 text-accent-custom" />
+                      Free Strategy Audit
                     </span>
-                    <h3 className="text-xl font-bold leading-snug">
+                    <h3 className="text-lg font-bold leading-snug text-foreground">
                       Automate Your Business Workflows with Custom AI
                     </h3>
-                    <p className="text-xs text-indigo-100/90 leading-relaxed">
+                    <p className="text-xs text-secondary-custom leading-relaxed">
                       Deploy autonomous agents, 24/7 WhatsApp CRM pipelines, and Google Maps SEO designed for your enterprise.
                     </p>
-                    <Link
-                      href="/contact"
-                      className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-white text-indigo-900 hover:bg-indigo-50 font-bold text-xs transition-colors shadow-md"
+                    <a
+                      href="#contact"
+                      className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-[2px] bg-accent-custom text-white hover:opacity-95 font-bold text-xs transition-colors shadow-md shadow-accent-custom/20"
                     >
-                      <span>Claim Free Strategy Call</span>
+                      <span>Claim Free Proposal Below</span>
                       <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
+                    </a>
                   </div>
                 </div>
 
-                {/* Promo Card 2: 24/7 WhatsApp Bot (Cyan Gradient) */}
-                <div className="p-5 rounded-2xl bg-surface border border-border-custom shadow-sm hover:border-accent-custom/50 transition-all">
+                {/* Promo Card 2: 24/7 WhatsApp Bot */}
+                <div className="p-5 rounded-[3px] bg-surface border border-border-custom shadow-sm hover:border-accent-custom/50 transition-all">
                   <div className="flex items-start gap-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-[2px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center shrink-0">
                       <MessageCircle className="w-5 h-5" />
                     </div>
                     <div className="space-y-1">
@@ -748,19 +615,19 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                       <p className="text-xs text-secondary-custom leading-relaxed">
                         Never miss an inbound lead. Our WhatsApp bots answer questions and book calls automatically.
                       </p>
-                      <Link
-                        href="/contact"
+                      <a
+                        href="#contact"
                         className="inline-flex items-center gap-1 text-xs font-semibold text-accent-custom hover:underline pt-1"
                       >
-                        <span>Learn how it works</span>
+                        <span>Request Bot Demo</span>
                         <ChevronRight className="w-3 h-3" />
-                      </Link>
+                      </a>
                     </div>
                   </div>
                 </div>
 
                 {/* Trending & Related Articles Stack */}
-                <div className="p-6 rounded-2xl bg-surface border border-border-custom shadow-sm space-y-4">
+                <div className="p-6 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-border-custom">
                     <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-accent-custom" />
@@ -776,9 +643,9 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                       <Link
                         key={idx}
                         href={`/blogs/${article.slug}`}
-                        className="group flex items-start gap-3.5 p-2 rounded-xl hover:bg-background transition-colors"
+                        className="group flex items-start gap-3.5 p-2 rounded-[2px] hover:bg-background transition-colors"
                       >
-                        <div className="w-16 h-16 rounded-lg overflow-hidden border border-border-custom shrink-0 bg-surface">
+                        <div className="w-16 h-16 rounded-[2px] overflow-hidden border border-border-custom shrink-0 bg-surface">
                           <img
                             src={article.image}
                             alt={article.title}
@@ -786,7 +653,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                           />
                         </div>
                         <div className="min-w-0 space-y-1">
-                          <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-mono font-bold border ${article.tagColor}`}>
+                          <span className={`inline-block px-1.5 py-0.5 rounded-[2px] text-[9px] font-mono font-bold border ${article.tagColor}`}>
                             {article.tag}
                           </span>
                           <h4 className="text-xs font-bold text-foreground group-hover:text-accent-custom transition-colors line-clamp-2 leading-snug">
@@ -802,7 +669,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                 </div>
 
                 {/* Table of Contents / On this Page */}
-                <div className="p-5 rounded-2xl bg-surface border border-border-custom shadow-sm space-y-3">
+                <div className="p-5 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-3">
                   <h4 className="text-xs font-mono font-bold text-secondary-custom uppercase tracking-wider">
                     On This Page
                   </h4>
@@ -834,7 +701,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           </div>
         </div>
 
-        {/* Bottom Section: "Read also..." (Horizontal 4-card Grid matching reference image) */}
+        {/* Bottom Section: "Read also..." (High-UX, 4-Card Responsive Grid with 3px border radius) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 pt-16 border-t border-border-custom">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -859,7 +726,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
               <Link
                 key={idx}
                 href={`/blogs/${item.slug}`}
-                className="group flex flex-col rounded-2xl bg-surface border border-border-custom overflow-hidden hover:border-accent-custom/60 hover:shadow-lg transition-all duration-300"
+                className="group flex flex-col rounded-[3px] bg-surface border border-border-custom overflow-hidden hover:border-accent-custom/60 hover:shadow-lg transition-all duration-300"
               >
                 <div className="aspect-[16/10] overflow-hidden bg-background relative border-b border-border-custom">
                   <img
@@ -868,7 +735,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-3 left-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border backdrop-blur-md ${item.tagColor}`}>
+                    <span className={`px-2 py-0.5 rounded-[2px] text-[10px] font-mono font-bold border backdrop-blur-md ${item.tagColor}`}>
                       {item.tag}
                     </span>
                   </div>
@@ -880,7 +747,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                   <p className="text-xs text-secondary-custom line-clamp-2">
                     {item.summary}
                   </p>
-                  <div className="pt-2 flex items-center justify-between text-[11px] font-mono text-secondary-custom">
+                  <div className="pt-2 flex items-center justify-between text-[11px] font-mono text-secondary-custom border-t border-border-custom/40">
                     <span>{item.readTime}</span>
                     <span className="inline-flex items-center gap-1 text-accent-custom font-semibold group-hover:translate-x-0.5 transition-transform">
                       Read <ArrowRight className="w-3 h-3" />
@@ -892,26 +759,9 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           </div>
         </div>
 
-        {/* Minimalist Bottom Consultation Banner (matching reference image) */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
-          <div className="p-8 sm:p-12 rounded-3xl bg-surface border border-border-custom shadow-xl text-center space-y-4 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-accent-custom/5 via-purple-500/5 to-accent-custom/5 pointer-events-none" />
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-foreground relative z-10">
-              Got questions? Let's chat.
-            </h3>
-            <p className="text-sm text-secondary-custom max-w-xl mx-auto relative z-10">
-              Discuss your custom AI agent architecture, Google Maps SEO strategy, or workflow automations with our senior engineers.
-            </p>
-            <div className="pt-2 relative z-10">
-              <Link
-                href="/contact"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent-custom text-white hover:opacity-95 font-bold text-xs sm:text-sm transition-all shadow-lg shadow-accent-custom/25"
-              >
-                <span>Talk with an Engineer</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
+        {/* ═══════ REAL CONTACT COMPONENT (Integrated from /contact for API synchronization) ═══════ */}
+        <div id="contact" className="mt-24 border-t border-border-custom pt-8">
+          <ContactSection />
         </div>
 
       </main>
