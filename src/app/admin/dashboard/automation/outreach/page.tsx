@@ -935,7 +935,7 @@ function OutreachManager() {
                       <li className="flex items-center gap-1.5"><span className="text-emerald-500 text-xs font-bold">✦</span> Custom Web Development</li>
                       <li className="flex items-center gap-1.5"><span className="text-emerald-500 text-xs font-bold">✦</span> Establishing local online search presence</li>
                       <li className="flex items-center gap-1.5"><span className="text-emerald-500 text-xs font-bold">✦</span> Free homepage mockup draft offer</li>
-                      <li className="flex items-center gap-1.5"><span className="text-emerald-500 text-xs font-bold">✦</span> Local SEO setup to capture organic leads</li>
+                      <li className="flex items-center gap-1.5"><span className="text-emerald-500 text-xs font-bold">✦</span> SEO setup to capture organic leads</li>
                     </ul>
                   </div>
                 </div>

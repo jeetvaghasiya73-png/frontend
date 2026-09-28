@@ -26,7 +26,7 @@ export default function TestimonialsSection() {
       num: "03",
       title: "Fast 14-Day Delivery Sprints",
       icon: Clock,
-      desc: "Local SEO setups, lead scraping pipelines, and WhatsApp bots launch within 7 to 14 days. Custom web platforms deploy in 3 to 4 weeks with full documentation.",
+      desc: "SEO setups, lead scraping pipelines, and WhatsApp bots launch within 7 to 14 days. Custom web platforms deploy in 3 to 4 weeks with full documentation.",
       badge: "Rapid Turnaround"
     },
     {

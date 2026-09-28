@@ -16,12 +16,12 @@ export default function CaseStudiesSection() {
   const blueprints = [
     {
       blueprintNum: "01",
-      title: "Google Maps Top 3 Pack Ranking Blueprint",
-      targetIndustry: "Local Medical Clinics & Service Businesses",
-      type: "Local SEO System",
+      title: "Google Page #1 Organic SEO Ranking Blueprint",
+      targetIndustry: "High-Growth B2B & Modern Enterprises",
+      type: "SEO System",
       description:
-        "Engineered to dominate local map searches. Incorporates comprehensive Google Business Profile keyword alignment, local citation distribution, and an automated 5-star customer review funnel.",
-      servicesList: ["Google Maps 3-Pack", "Competitor Geo-Grid", "Review Funnels"],
+        "Engineered to dominate organic Google search results. Incorporates comprehensive technical SEO audits, high-intent keyword alignment, content cluster architecture, and authority backlink syndication.",
+      servicesList: ["Organic Google SEO", "Competitor Keyword Gap", "Authority Backlinks"],
     },
     {
       blueprintNum: "02",

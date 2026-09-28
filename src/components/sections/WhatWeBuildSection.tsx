@@ -38,20 +38,20 @@ export default function WhatWeBuildSection() {
   const corePillars: ServiceCardData[] = [
     {
       num: "01",
-      title: "Google Maps & Local SEO Dominance",
-      badge: "Local SEO & 3-Pack",
+      title: "Search Engine Optimization (SEO) Dominance",
+      badge: "Organic SEO & Search",
       category: "seo",
       icon: TrendingUp,
-      desc: "We rank local businesses in the Google Maps Top 3 Pack to capture daily high-intent local searchers, divert competitor calls, and automate verified customer reviews.",
+      desc: "We rank businesses on Google Page #1 to capture high-intent commercial searchers, outperform industry competitors, and establish lasting organic market authority.",
       features: [
-        "Google Business Profile Audit & Overhaul",
-        "Competitor Keyword & Search Analysis",
-        "Automated 5-Star Customer Review Collection",
-        "Local Citation Sync & Geo-Grid Coverage"
+        "Comprehensive Technical & On-Page SEO Overhaul",
+        "Competitor Keyword Gap & Search Intent Analysis",
+        "High-Authority Backlink & Content Architecture",
+        "Core Web Vitals & Speed Index Optimization"
       ],
-      keyOutcomes: ["Maps Top 3 Placement", "Direct Inbound Calls", "Review Growth"],
+      keyOutcomes: ["Google Page #1 Rankings", "Organic Traffic Surge", "Sustainable Inbound Leads"],
       borderHover: "hover:border-emerald-500/50",
-      ctaText: "Inquire on Local SEO"
+      ctaText: "Inquire on SEO"
     },
     {
       num: "02",

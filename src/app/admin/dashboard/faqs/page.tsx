@@ -29,7 +29,7 @@ interface FAQItem {
 
 const CATEGORIES = [
   "General",
-  "Local SEO & Google Maps",
+  "Search Engine Optimization (SEO)",
   "Web Development",
   "Web Scraping & APIs",
   "Workflow & WhatsApp Automations",
@@ -294,7 +294,7 @@ export default function FaqsManager() {
         <div className="flex items-center gap-1 w-full md:w-auto overflow-x-auto scrollbar-none">
           {[
             { id: "all", label: "All Topics" },
-            { id: "seo", label: "Local SEO" },
+            { id: "seo", label: "SEO" },
             { id: "web", label: "Web Dev" },
             { id: "scrap", label: "Scraping" },
             { id: "auto", label: "Automations" },

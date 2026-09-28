@@ -6,7 +6,7 @@ import ContactSection from "@/components/sections/ContactSection";
 export const metadata = {
   title: "Contact Us | Tech Infinix — Get Your Custom Quote",
   description:
-    "Start your project with Tech Infinix. Request a custom quote for Local SEO, web development, data scraping, or WhatsApp automation services. We respond within 24 hours.",
+    "Start your project with Tech Infinix. Request a custom quote for SEO, web development, data scraping, or WhatsApp automation services. We respond within 24 hours.",
 };
 
 export default function ContactPage() {

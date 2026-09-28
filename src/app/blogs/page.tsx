@@ -52,10 +52,10 @@ export default function BlogsPage() {
     },
     {
       id: 4,
-      title: "Google Maps 3-Pack SEO: Dominating Local Business Search",
-      summary: "Automating local authority signals, citation consistency, and GeoGrid dominance for high-ticket service enterprises.",
+      title: "Enterprise SEO: Dominating Organic Google Search",
+      summary: "Automating authority signals, technical indexing, and keyword dominance for fast-growing enterprises.",
       author: "SEO Engineering",
-      category: "LOCAL SEO",
+      category: "SEO",
       image: "/images/blogs/seo-maps-thumb.jpg",
       cover_image: "/images/blogs/seo-maps-thumb.jpg",
       readTime: "5 min read",
@@ -104,7 +104,7 @@ export default function BlogsPage() {
     fetchBlogs();
   }, []);
 
-  const categories = ["ALL", "TECH & AI FUTURE", "AI AGENTS", "LOCAL SEO", "ARCHITECTURE"];
+  const categories = ["ALL", "TECH & AI FUTURE", "AI AGENTS", "SEO", "ARCHITECTURE"];
 
   const filtered = blogs.filter((b) => {
     const matchesQuery =

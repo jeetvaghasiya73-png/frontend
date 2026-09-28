@@ -57,7 +57,7 @@ const quoteSchema = z.object({
 type QuoteFormValues = z.infer<typeof quoteSchema>;
 
 const availableServices = [
-  { label: "Local SEO & Google Maps", icon: "📍", desc: "Rank #1 on Google 3-Pack & Maps" },
+  { label: "Search Engine Optimization (SEO)", icon: "📈", desc: "Rank #1 on Google & Organic Search" },
   { label: "High-Performance Web Development", icon: "🌐", desc: "Fast, converting modern website" },
   { label: "Web & Lead Scraping", icon: "📊", desc: "Verified business contact pipelines" },
   { label: "WhatsApp & CRM Automations", icon: "🤖", desc: "Automated instant customer replies" },

@@ -29,20 +29,20 @@ const blueprints = [
   {
     id: "seo",
     stepNum: "01",
-    tabLabel: "Local SEO & Maps",
+    tabLabel: "SEO & Search",
     badge: "Search Dominance",
-    title: "Google Maps Top 3 Pack Ranking",
-    subtitle: "Capture daily high-intent local customers actively searching in your city.",
+    title: "Google Page #1 SEO Dominance",
+    subtitle: "Capture daily high-intent customers actively searching for your services.",
     icon: TrendingUp,
     timeline: "2–3 weeks launch",
     accentColor: "emerald",
     deliverables: [
-      "Google Business Profile Comprehensive Audit & Keyword Overhaul",
-      "Local Citation Sync & Geo-Grid Coverage Optimization",
-      "Automated 5-Star Customer Review Collection Funnel",
-      "Monthly Local Search Visibility & Competitor Tracking"
+      "Comprehensive Technical & On-Page SEO Overhaul",
+      "High-Intent Keyword Research & Content Architecture",
+      "Authority Backlink Acquisition & Domain Health Sync",
+      "Monthly Organic Traffic & Keyword Position Tracking"
     ],
-    clientBenefit: "Consistently rank in top 3 map positions for high-intent searches."
+    clientBenefit: "Consistently rank on Google Page #1 for high-intent commercial keywords."
   },
   {
     id: "web",

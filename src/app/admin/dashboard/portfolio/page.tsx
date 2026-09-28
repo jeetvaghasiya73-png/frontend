@@ -344,7 +344,7 @@ export default function PortfolioManager() {
           {[
             { id: "all", label: "All Works" },
             { id: "featured", label: "Featured" },
-            { id: "seo", label: "Local SEO" },
+            { id: "seo", label: "SEO" },
             { id: "web", label: "Web Dev" },
             { id: "scrap", label: "Scraping" },
             { id: "auto", label: "Automations" },
@@ -581,7 +581,7 @@ export default function PortfolioManager() {
                     required
                     value={servicesUsed}
                     onChange={(e) => setServicesUsed(e.target.value)}
-                    placeholder="Local SEO, Google Maps 3-Pack, Review Engine"
+                    placeholder="SEO, Technical Audit, Backlink Engine"
                     className="w-full px-3 py-2 rounded-md bg-[var(--dash-bg)] border border-[var(--dash-border)] text-xs text-[var(--dash-text)] placeholder:text-[var(--dash-text-muted)] focus:outline-hidden focus:border-indigo-500 transition font-mono"
                   />
                   <p className="text-[10px] text-[var(--dash-text-muted)] font-mono">

@@ -62,9 +62,9 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
     },
     {
       slug: "google-maps-3pack-seo",
-      title: "Google Maps 3-Pack SEO: Dominating Local Business Search",
-      summary: "Automating local authority signals, citation consistency, and GeoGrid dominance for service enterprises.",
-      tag: "LOCAL SEO",
+      title: "Enterprise SEO: Dominating Organic Google Search",
+      summary: "Automating authority signals, technical indexing, and keyword dominance for fast-growing enterprises.",
+      tag: "SEO",
       tagColor: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
       image: "/images/blogs/seo-maps-thumb.jpg",
       readTime: "5 min read",
@@ -770,7 +770,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                     </span>
                   </div>
                   <p className="text-xs text-secondary-custom leading-relaxed">
-                    Engineering autonomous AI multi-agent pipelines, 24/7 WhatsApp customer intelligence bots, and Google Maps local SEO dominance for fast-growing businesses.
+                    Engineering autonomous AI multi-agent pipelines, 24/7 WhatsApp customer intelligence bots, and high-impact SEO search dominance for fast-growing businesses.
                   </p>
                 </div>
               </div>
@@ -785,7 +785,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                   Automate Your Workflows with Custom AI
                 </h3>
                 <p className="text-xs text-secondary-custom leading-relaxed">
-                  Deploy autonomous agents, 24/7 WhatsApp CRM pipelines, and Google Maps SEO designed for your enterprise.
+                  Deploy autonomous agents, 24/7 WhatsApp CRM pipelines, and organic SEO strategies designed for your enterprise.
                 </p>
                 <a
                   href="#contact"
@@ -866,7 +866,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                     Scale Workflows With Autonomous AI
                   </h3>
                   <p className="text-[10.5px] text-secondary-custom leading-relaxed">
-                    Custom LangGraph agents, 24/7 WhatsApp bots, and Google Maps SEO designed for your enterprise.
+                    Custom LangGraph agents, 24/7 WhatsApp bots, and organic SEO strategies designed for your enterprise.
                   </p>
                 </div>
 
@@ -1055,48 +1055,6 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
         <div id="contact" className="mt-24 border-t border-border-custom pt-8">
           <ContactSection />
         </div>
-
-        {/* ─── Mobile-Only Sticky Floating Quick Action Bar ─── */}
-        <div className="lg:hidden fixed bottom-3 left-3 right-3 z-40 flex items-center justify-between gap-2 p-2.5 bg-surface/95 border border-border-custom rounded-[3px] backdrop-blur-md shadow-2xl">
-          <button
-            onClick={() => {
-              const topEl = document.getElementById("article-top");
-              if (topEl) topEl.scrollIntoView({ behavior: "smooth" });
-              setMobileTocOpen(true);
-            }}
-            className="px-3 py-1.5 rounded-[2px] bg-background border border-border-custom text-xs font-mono text-secondary-custom hover:text-foreground flex items-center gap-1.5 shrink-0"
-          >
-            <span>📑 Contents</span>
-          </button>
-
-          <div className="flex items-center gap-1.5">
-            <a
-              href={`https://api.whatsapp.com/send?text=${shareTitle}%20${encodeURIComponent(currentUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-1.5 rounded-[2px] bg-background border border-border-custom text-emerald-500 hover:bg-emerald-500/10"
-              title="Share on WhatsApp"
-            >
-              <MessageCircle className="w-4 h-4" />
-            </a>
-            <button
-              onClick={handleCopyLink}
-              className="p-1.5 rounded-[2px] bg-background border border-border-custom text-secondary-custom hover:text-foreground"
-              title="Copy link"
-            >
-              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Bookmark className="w-4 h-4" />}
-            </button>
-          </div>
-
-          <a
-            href="#contact"
-            className="px-3 py-1.5 rounded-[2px] bg-accent-custom text-white text-xs font-mono font-bold flex items-center gap-1 shrink-0 shadow-sm shadow-accent-custom/20"
-          >
-            <span>Free Proposal</span>
-            <ArrowRight className="w-3 h-3" />
-          </a>
-        </div>
-
       </main>
 
       <FooterSection />

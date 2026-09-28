@@ -17,9 +17,9 @@ export default function FaqSection() {
 
   const fallbackFaqs: FAQItem[] = [
     {
-      category: "Local SEO & Google Maps",
-      q: "How does your Google Maps Top 3 ranking & Local SEO system work?",
-      a: "We audit and optimize your Google Business Profile, geo-target high-intent local search queries, build local citations, and deploy an automated review engine. This diverts searchers away from competitors directly to your phone number and official website within 30 to 60 days."
+      category: "Search Engine Optimization (SEO)",
+      q: "How does your Google ranking & organic SEO system work?",
+      a: "We audit and optimize your website architecture, target high-intent commercial search queries, build high-authority backlinks, and deploy technical SEO fixes. This elevates your domain to Google Page #1, driving high-converting inbound traffic within 30 to 60 days."
     },
     {
       category: "Web Development",
@@ -39,7 +39,7 @@ export default function FaqSection() {
     {
       category: "Delivery & Engagement",
       q: "What is your standard delivery timeline for custom systems?",
-      a: "Local SEO pipelines and automated WhatsApp bots are launched in 1 to 2 weeks. Custom Next.js web applications, scraping engines, and full CRM integrations typically deploy in 3 to 5 weeks with complete staging, documentation, and continuous support."
+      a: "SEO pipelines and automated WhatsApp bots are launched in 1 to 2 weeks. Custom Next.js web applications, scraping engines, and full CRM integrations typically deploy in 3 to 5 weeks with complete staging, documentation, and continuous support."
     }
   ];
 
@@ -110,7 +110,7 @@ export default function FaqSection() {
             <SplitText text="Clear Answers to Technical Questions." type="words" />
           </h2>
           <p className="text-sm md:text-base text-secondary-custom leading-relaxed">
-            Everything you need to know about our Local SEO, modern web development, high-volume scrapers, and WhatsApp automations.
+            Everything you need to know about our organic SEO, modern web development, high-volume scrapers, and WhatsApp automations.
           </p>
         </div>
 

@@ -34,12 +34,12 @@ export const metadata: Metadata = {
     template: "%s | Tech Infinix",
   },
   description:
-    "Tech Infinix engineers autonomous AI agent swarms, Google Maps Top 3 Pack SEO dominance, high-performance Next.js web applications, high-volume directory scrapers, and 24/7 WhatsApp automation pipelines.",
+    "Tech Infinix engineers autonomous AI agent swarms, Google Page #1 SEO dominance, high-performance Next.js web applications, high-volume directory scrapers, and 24/7 WhatsApp automation pipelines.",
   keywords: [
     "AI Automation Agency",
     "Autonomous AI Agents",
-    "Google Maps 3-Pack SEO",
-    "Local SEO Automation",
+    "Search Engine Optimization",
+    "SEO Automation",
     "Next.js Web Development",
     "Enterprise Web Scraping",
     "WhatsApp CRM Bot",
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     url: siteUrl,
     title: "Tech Infinix | Autonomous AI Automation, SEO & Modern Web Engineering",
     description:
-      "Enterprise systems engineered for growth: Local SEO Top 3 rankings, lightning-fast Next.js apps, 10M+ lead scraping pipelines, and 24/7 autonomous WhatsApp bots.",
+      "Enterprise systems engineered for growth: Google Page #1 SEO rankings, lightning-fast Next.js apps, 10M+ lead scraping pipelines, and 24/7 autonomous WhatsApp bots.",
     siteName: "Tech Infinix",
     images: [
       {
@@ -154,9 +154,9 @@ export default function RootLayout({
               "@type": "Offer",
               itemOffered: {
                 "@type": "Service",
-                name: "Google Maps & Local SEO Dominance",
+                name: "Search Engine Optimization (SEO) Dominance",
                 description:
-                  "Top 3-Pack placement, local keyword optimization, and automated customer review funnels.",
+                  "Google Page #1 placement, keyword gap optimization, and organic search authority.",
               },
             },
             {

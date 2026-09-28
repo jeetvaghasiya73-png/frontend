@@ -42,10 +42,10 @@ export default function HeroSection() {
   const servicePillars = [
     {
       id: "01",
-      title: "Local SEO & Google Maps",
-      desc: "Top 3 Pack dominance, local keywords & automated reviews.",
+      title: "SEO & Search Dominance",
+      desc: "Google Page #1 dominance, high-intent keywords & organic authority.",
       icon: TrendingUp,
-      badge: "Local SEO",
+      badge: "SEO",
       borderAccent: "hover:border-emerald-500/40"
     },
     {
@@ -141,20 +141,20 @@ export default function HeroSection() {
               <SplitText text="Engineered Systems for Growth." type="words" />
             </span>
             <span className="text-secondary-custom font-medium text-2xl sm:text-3xl md:text-4xl block mt-1">
-              Local SEO, high-performance web, data scraping & 24/7 automations.
+              SEO, high-performance web, data scraping &amp; 24/7 automations.
             </span>
           </h1>
 
           {/* Clean Description */}
           <p className="hero-smooth-reveal text-xs sm:text-sm text-secondary-custom max-w-lg mb-5 sm:mb-6 leading-relaxed">
-            We build Google Maps Top 3 ranking machines, mobile-first Next.js web applications, high-volume directory scrapers, and autonomous WhatsApp CRM pipelines.
+            We build Google Page #1 SEO ranking systems, mobile-first Next.js web applications, high-volume directory scrapers, and autonomous WhatsApp CRM pipelines.
           </p>
 
           {/* Service Pillar Micro-Badges */}
           <div className="hero-smooth-reveal flex flex-wrap gap-1.5 mb-5 sm:mb-7">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[11px] font-mono border border-border-custom bg-surface text-foreground">
               <span className="w-1 h-1 rounded-full bg-emerald-500" />
-              Local SEO 3-Pack
+              SEO Dominance
             </span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[11px] font-mono border border-border-custom bg-surface text-foreground">
               <span className="w-1 h-1 rounded-full bg-sky-500" />

@@ -90,7 +90,7 @@ export default function FooterSection() {
               </span>
             </Link>
             <p className="text-secondary-custom text-sm leading-relaxed max-w-sm">
-              We engineer enterprise-grade Local SEO dominance, full-stack Next.js web applications, automated web scrapers, and 24/7 WhatsApp workflow pipelines.
+              We engineer enterprise-grade SEO search dominance, full-stack Next.js web applications, automated web scrapers, and 24/7 WhatsApp workflow pipelines.
             </p>
             <div className="mt-4 flex items-center gap-2 text-xs text-foreground font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -169,7 +169,7 @@ export default function FooterSection() {
               Core Pillars
             </h5>
             <div className="flex flex-col gap-2.5 text-sm text-secondary-custom">
-              <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Local SEO 3-Pack</Link>
+              <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">SEO Dominance</Link>
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Next.js Web Dev</Link>
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Data Lead Scraping</Link>
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">WhatsApp AI Agents</Link>
