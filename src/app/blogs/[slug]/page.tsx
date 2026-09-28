@@ -708,15 +708,15 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
             </article>
 
-            {/* ─── RIGHT: STICKY SIDEBAR (4 Cols - Beautifully compact, 100% visible on any screen) ─── */}
-            <aside className="hidden lg:block lg:col-span-4 self-start sticky top-28 space-y-4">
+            {/* ─── RIGHT: STICKY SIDEBAR (4 Cols - Compact with balanced top & bottom breathing room) ─── */}
+            <aside className="hidden lg:block lg:col-span-4 self-start sticky top-[88px] pb-12 space-y-3">
               
               {/* Card 1: Table of Contents ("On This Page") with live active section indicator */}
-              <div className="p-4 sm:p-5 rounded-[3px] bg-surface border border-border-custom shadow-xs space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-border-custom">
+              <div className="p-3.5 rounded-[3px] bg-surface border border-border-custom shadow-xs space-y-2.5">
+                <div className="flex items-center justify-between pb-1.5 border-b border-border-custom">
                   <div className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-[1px] bg-accent-custom animate-pulse" />
-                    <span className="text-[11px] font-mono font-bold text-foreground uppercase tracking-wider">
+                    <span className="text-[10.5px] font-mono font-bold text-foreground uppercase tracking-wider">
                       On This Page
                     </span>
                   </div>
@@ -726,14 +726,14 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                 </div>
 
                 {/* Reading Progress Line */}
-                <div className="w-full bg-border-custom/50 h-[3px] rounded-[1px] overflow-hidden">
+                <div className="w-full bg-border-custom/50 h-[2px] rounded-[1px] overflow-hidden">
                   <div
                     className="bg-accent-custom h-full transition-all duration-150"
                     style={{ width: `${readingProgress}%` }}
                   />
                 </div>
 
-                <nav className="space-y-0.5 text-xs pt-1">
+                <nav className="space-y-0.5 text-xs pt-0.5">
                   {tocItems.map((item) => (
                     <a
                       key={item.id}
@@ -746,9 +746,9 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                           setActiveSection(item.id);
                         }
                       }}
-                      className={`block py-1.5 px-2.5 rounded-[2px] font-medium transition-all ${
+                      className={`block py-1 px-2 rounded-[2px] text-[11.5px] font-medium transition-all ${
                         activeSection === item.id
-                          ? "bg-accent-custom/10 text-accent-custom font-semibold border-l-2 border-accent-custom pl-2.5"
+                          ? "bg-accent-custom/10 text-accent-custom font-semibold border-l-2 border-accent-custom pl-2"
                           : "text-secondary-custom hover:text-foreground hover:bg-background/60"
                       }`}
                     >
@@ -759,31 +759,31 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
               </div>
 
               {/* Card 2: High-Converting Enterprise Automation Proposal + WhatsApp Quick Chat */}
-              <div className="p-4 sm:p-5 rounded-[3px] bg-surface border border-border-custom hover:border-accent-custom/40 transition-colors shadow-xs relative overflow-hidden space-y-3">
+              <div className="p-3.5 rounded-[3px] bg-surface border border-border-custom hover:border-accent-custom/40 transition-colors shadow-xs relative overflow-hidden space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 text-[10px] font-mono uppercase tracking-wider font-bold">
+                  <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 text-[9.5px] font-mono uppercase tracking-wider font-bold">
                     <Sparkles className="w-3 h-3 text-accent-custom" />
                     Custom AI &amp; SEO
                   </span>
-                  <span className="text-[10px] font-mono text-emerald-500 font-semibold flex items-center gap-1">
+                  <span className="text-[9.5px] font-mono text-emerald-500 font-semibold flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Available Now
                   </span>
                 </div>
 
-                <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-foreground leading-snug">
+                <div className="space-y-0.5">
+                  <h3 className="text-xs font-bold text-foreground leading-snug">
                     Scale Workflows With Autonomous AI
                   </h3>
-                  <p className="text-xs text-secondary-custom leading-relaxed">
+                  <p className="text-[10.5px] text-secondary-custom leading-relaxed">
                     Custom LangGraph agents, 24/7 WhatsApp bots, and Google Maps SEO designed for your enterprise.
                   </p>
                 </div>
 
-                <div className="pt-1 flex items-center gap-2">
+                <div className="pt-0.5 flex items-center gap-2">
                   <a
                     href="#contact"
-                    className="flex-1 py-2 px-3 rounded-[2px] bg-accent-custom text-white hover:opacity-95 text-xs font-semibold font-mono flex items-center justify-center gap-1.5 shadow-sm shadow-accent-custom/20 transition-all text-center"
+                    className="flex-1 py-1.5 px-2.5 rounded-[2px] bg-accent-custom text-white hover:opacity-95 text-[11px] font-semibold font-mono flex items-center justify-center gap-1 shadow-sm shadow-accent-custom/20 transition-all text-center"
                   >
                     <span>Claim Proposal</span>
                     <ArrowRight className="w-3 h-3" />
@@ -792,20 +792,20 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                     href={`https://api.whatsapp.com/send?text=${encodeURIComponent("Hi Tech Infinix, I'd like to discuss custom AI automation & SEO for my business.")}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="py-2 px-2.5 rounded-[2px] bg-background border border-border-custom hover:border-emerald-500 hover:text-emerald-500 text-secondary-custom text-xs font-mono font-medium flex items-center justify-center gap-1 transition-all"
+                    className="py-1.5 px-2.5 rounded-[2px] bg-background border border-border-custom hover:border-emerald-500 hover:text-emerald-500 text-secondary-custom text-[11px] font-mono font-medium flex items-center justify-center gap-1 transition-all"
                     title="Direct WhatsApp"
                   >
-                    <MessageCircle className="w-3.5 h-3.5 text-emerald-500" />
+                    <MessageCircle className="w-3 h-3 text-emerald-500" />
                     <span>WhatsApp</span>
                   </a>
                 </div>
               </div>
 
               {/* Card 3: Social Share + Trending Reads (Combined into a sleek, compact card) */}
-              <div className="p-4 sm:p-5 rounded-[3px] bg-surface border border-border-custom shadow-xs space-y-3.5">
+              <div className="p-3.5 rounded-[3px] bg-surface border border-border-custom shadow-xs space-y-2.5">
                 {/* 1-Line Social Share Row */}
-                <div className="flex items-center justify-between pb-3 border-b border-border-custom">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-secondary-custom font-bold">
+                <div className="flex items-center justify-between pb-2 border-b border-border-custom">
+                  <span className="text-[9.5px] font-mono uppercase tracking-wider text-secondary-custom font-bold">
                     Share
                   </span>
                   <div className="flex items-center gap-1.5">
@@ -813,7 +813,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                       href={`https://twitter.com/intent/tweet?text=${shareTitle}&url=${encodeURIComponent(currentUrl)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1.5 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all"
+                      className="p-1 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all"
                       title="Share on X"
                     >
                       <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
@@ -824,7 +824,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                       href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1.5 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all"
+                      className="p-1 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all"
                       title="Share on LinkedIn"
                     >
                       <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
@@ -835,14 +835,14 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                       href={`https://api.whatsapp.com/send?text=${shareTitle}%20${encodeURIComponent(currentUrl)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1.5 rounded-[2px] bg-background border border-border-custom hover:border-emerald-500 hover:text-emerald-500 text-secondary-custom transition-all"
+                      className="p-1 rounded-[2px] bg-background border border-border-custom hover:border-emerald-500 hover:text-emerald-500 text-secondary-custom transition-all"
                       title="Share on WhatsApp"
                     >
                       <MessageCircle className="w-3 h-3" />
                     </a>
                     <button
                       onClick={handleCopyLink}
-                      className="p-1.5 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all cursor-pointer"
+                      className="p-1 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all cursor-pointer"
                       title="Copy Link"
                     >
                       {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Bookmark className="w-3 h-3" />}
@@ -852,24 +852,24 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
                 {/* Trending Articles Header */}
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-secondary-custom font-bold flex items-center gap-1.5">
+                  <span className="text-[9.5px] font-mono uppercase tracking-wider text-secondary-custom font-bold flex items-center gap-1.5">
                     <TrendingUp className="w-3 h-3 text-accent-custom" />
                     <span>Trending Articles</span>
                   </span>
-                  <Link href="/blogs" className="text-[10px] font-mono text-accent-custom hover:underline">
+                  <Link href="/blogs" className="text-[9.5px] font-mono text-accent-custom hover:underline">
                     View all
                   </Link>
                 </div>
 
                 {/* 2 Top Trending Articles */}
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {relatedArticles.filter(a => a.slug !== slug).slice(0, 2).map((article, idx) => (
                     <Link
                       key={idx}
                       href={`/blogs/${article.slug}`}
                       className="group flex items-start gap-2.5 p-1 rounded-[2px] hover:bg-background transition-colors"
                     >
-                      <div className="w-12 h-12 rounded-[2px] overflow-hidden border border-border-custom shrink-0 bg-surface">
+                      <div className="w-10 h-10 rounded-[2px] overflow-hidden border border-border-custom shrink-0 bg-surface">
                         <img
                           src={article.image}
                           alt={article.title}
@@ -877,13 +877,13 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                         />
                       </div>
                       <div className="min-w-0 space-y-0.5">
-                        <span className={`inline-block px-1 py-0.2 rounded-[2px] text-[8px] font-mono font-bold border ${article.tagColor}`}>
+                        <span className={`inline-block px-1 py-0.2 rounded-[2px] text-[7.5px] font-mono font-bold border ${article.tagColor}`}>
                           {article.tag}
                         </span>
-                        <h4 className="text-xs font-bold text-foreground group-hover:text-accent-custom transition-colors line-clamp-1 leading-snug">
+                        <h4 className="text-[11px] font-bold text-foreground group-hover:text-accent-custom transition-colors line-clamp-1 leading-snug">
                           {article.title}
                         </h4>
-                        <span className="block text-[9px] font-mono text-secondary-custom">
+                        <span className="block text-[8.5px] font-mono text-secondary-custom">
                           {article.readTime}
                         </span>
                       </div>
