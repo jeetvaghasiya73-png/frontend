@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Script from "next/script";
 import { useTheme } from "next-themes";
 import {
   Sun,
@@ -137,6 +138,24 @@ export default function Navbar() {
 
   return (
     <>
+      {/* Google tag (gtag.js) */}
+      <Script
+        strategy="afterInteractive"
+        src="https://www.googletagmanager.com/gtag/js?id=G-9B67ZQFXL2"
+      />
+      <Script
+        id="google-analytics"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-9B67ZQFXL2');
+          `,
+        }}
+      />
+
       {/* Desktop & Collapsed Mobile Header */}
       <header className="fixed top-0 left-0 w-full z-50 py-3.5 px-4 sm:px-6 md:px-12 flex justify-center pointer-events-none transition-all duration-300">
         <div
