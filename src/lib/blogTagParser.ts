@@ -100,6 +100,35 @@ export function parseTaggedBlog(rawText: string): ParsedBlog {
   const toc: { id: string; label: string; level: number }[] = [];
   let sectionIndex = 0;
 
+  // Store self-contained HTML blocks in tokens to protect them from \n\n paragraph splitting
+  const blocksMap = new Map<string, string>();
+  let blockCounter = 0;
+
+  const registerBlock = (html: string): string => {
+    const token = `__TECH_INFINIX_BLOCK_${blockCounter++}__`;
+    blocksMap.set(token, html);
+    return token;
+  };
+
+  // Process [LINK] ... [/LINK] (Inline SEO Hyperlinks with flexible attribute ordering)
+  text = text.replace(
+    /\[LINK\s+([^\]]+?)\]([\s\S]*?)\[\/LINK\]/gi,
+    (match, attrsStr, linkText) => {
+      const getAttr = (name: string): string => {
+        const m = attrsStr.match(new RegExp(`${name}=["']([^"']*)["']`, "i"));
+        return m ? m[1] : "";
+      };
+      const href = getAttr("href");
+      if (!href) return linkText;
+      const titleAttr = getAttr("title");
+      const target = getAttr("target") || "_blank";
+      const rel = getAttr("rel") || (target === "_blank" ? "noopener noreferrer" : "");
+      const titleTag = titleAttr ? ` title="${titleAttr.replace(/"/g, "&quot;")}"` : "";
+      const relTag = rel ? ` rel="${rel}"` : "";
+      return `<a href="${href}" target="${target}"${relTag}${titleTag} class="text-accent-custom font-semibold underline underline-offset-2 hover:opacity-85 transition-opacity">${linkText}</a>`;
+    }
+  );
+
   // Process [HIGHLIGHT] ... [/HIGHLIGHT]
   text = text.replace(
     /\[HIGHLIGHT(?:\s+badge=["']([^"']*)["'])?\]([\s\S]*?)\[\/HIGHLIGHT\]/gi,
@@ -122,34 +151,75 @@ export function parseTaggedBlog(rawText: string): ParsedBlog {
         content = content.replace(/\[HEADLINE\][\s\S]*?\[\/HEADLINE\]/i, "");
       }
 
-      return `
-<div class="blog-highlight-box">
-  <div class="blog-badge mb-2.5">${badge}</div>
-  ${headlineHtml}
-  <div class="text-xs sm:text-[13.5px] text-secondary-custom leading-relaxed m-0">${content.trim()}</div>
-</div>`;
+      const html = `<div class="blog-highlight-box"><div class="blog-badge mb-2.5">${badge}</div>${headlineHtml}<div class="text-xs sm:text-[13.5px] text-secondary-custom leading-relaxed m-0">${content.trim()}</div></div>`;
+      return registerBlock(html);
     }
   );
 
-  // Process [STAT_GRID] ... [/STAT_GRID]
-  text = text.replace(/\[STAT_GRID\]([\s\S]*?)\[\/STAT_GRID\]/gi, (match, gridContent) => {
+  // Process [STAT_GRID] ... [/STAT_GRID] (Supports cols="2|3|4" and flexible attribute ordering)
+  text = text.replace(/\[STAT_GRID(?:\s+cols=["']([^"']*)["'])?\]([\s\S]*?)\[\/STAT_GRID\]/gi, (match, colsAttr, gridContent) => {
     const statCards: string[] = [];
-    const statRegex = /\[STAT\s+num=["']([^"']+)["']\s+label=["']([^"']+)["']\s*\/?\]/gi;
+    const statRegex = /\[STAT\s+([^\]]+?)\/?\]/gi;
     let sMatch;
     while ((sMatch = statRegex.exec(gridContent)) !== null) {
-      statCards.push(`
-  <div class="blog-stat-card">
-    <div class="blog-stat-number">${sMatch[1]}</div>
-    <div class="blog-stat-label">${sMatch[2]}</div>
-  </div>`);
+      const attrs = sMatch[1];
+      const numMatch = attrs.match(/num=["']([^"']*)["']/i);
+      const labelMatch = attrs.match(/label=["']([^"']*)["']/i);
+      
+      const numRaw = numMatch ? numMatch[1] : "";
+      const label = labelMatch ? labelMatch[1] : "";
+
+      if (!numRaw && !label) continue;
+
+      // Sanitize num for HTML so <3s or >90% renders cleanly without breaking DOM
+      const sanitizedNum = numRaw
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+      statCards.push(
+        `<div class="blog-stat-card"><div class="blog-stat-number">${sanitizedNum}</div><div class="blog-stat-label">${label}</div></div>`
+      );
     }
 
     if (statCards.length === 0) return "";
-    return `
-<div class="blog-stat-grid">
-  ${statCards.join("\n")}
-</div>`;
+    const cols = colsAttr ? ` data-cols="${colsAttr}"` : "";
+    const html = `<div class="blog-stat-grid"${cols}>\n${statCards.join("\n")}\n</div>`;
+    return registerBlock(html);
   });
+
+  // Process [SUBSECTION] ... [/SUBSECTION] (H3 Sub-headings)
+  text = text.replace(
+    /\[SUBSECTION(?:\s+id=["']([^"']*)["'])?(?:\s+title=["']([^"']*)["'])?\]([\s\S]*?)\[\/SUBSECTION\]/gi,
+    (match, idAttr, titleAttr, subBody) => {
+      const subTitle = titleAttr || "Sub-pillar";
+      const subId = idAttr || slugify(subTitle);
+
+      toc.push({
+        id: subId,
+        label: subTitle,
+        level: 3
+      });
+
+      const h3Html = registerBlock(`<h3 id="${subId}">${subTitle}</h3>`);
+      return `\n\n${h3Html}\n\n${subBody.trim()}\n\n`;
+    }
+  );
+
+  // Standalone / self-closing [SUBSECTION title="..." /]
+  text = text.replace(
+    /\[SUBSECTION\s+([^\]]+?)\/?\]/gi,
+    (match, attrsStr) => {
+      const getAttr = (name: string): string => {
+        const m = attrsStr.match(new RegExp(`${name}=["']([^"']*)["']`, "i"));
+        return m ? m[1] : "";
+      };
+      const subTitle = getAttr("title") || "Sub-pillar";
+      const subId = getAttr("id") || slugify(subTitle);
+      toc.push({ id: subId, label: subTitle, level: 3 });
+      const h3Html = registerBlock(`<h3 id="${subId}">${subTitle}</h3>`);
+      return `\n\n${h3Html}\n\n`;
+    }
+  );
 
   // Process [SECTION] ... [/SECTION] (H2 Chapter Headings)
   text = text.replace(
@@ -165,28 +235,25 @@ export function parseTaggedBlog(rawText: string): ParsedBlog {
         level: 2
       });
 
-      return `
-<h2 id="${secId}">${secTitle}</h2>
-${sectionBody.trim()}`;
+      const h2Html = registerBlock(`<h2 id="${secId}">${secTitle}</h2>`);
+      return `\n\n${h2Html}\n\n${sectionBody.trim()}\n\n`;
     }
   );
 
-  // Process [SUBSECTION] ... [/SUBSECTION] (H3 Sub-headings)
+  // Standalone / self-closing [SECTION title="..." /]
   text = text.replace(
-    /\[SUBSECTION(?:\s+id=["']([^"']*)["'])?(?:\s+title=["']([^"']*)["'])?\]([\s\S]*?)\[\/SUBSECTION\]/gi,
-    (match, idAttr, titleAttr, subBody) => {
-      const subTitle = titleAttr || "Sub-pillar";
-      const subId = idAttr || slugify(subTitle);
-
-      toc.push({
-        id: subId,
-        label: subTitle,
-        level: 3
-      });
-
-      return `
-<h3 id="${subId}">${subTitle}</h3>
-${subBody.trim()}`;
+    /\[SECTION\s+([^\]]+?)\/?\]/gi,
+    (match, attrsStr) => {
+      const getAttr = (name: string): string => {
+        const m = attrsStr.match(new RegExp(`${name}=["']([^"']*)["']`, "i"));
+        return m ? m[1] : "";
+      };
+      sectionIndex++;
+      const secTitle = getAttr("title") || `Chapter ${sectionIndex}`;
+      const secId = getAttr("id") || slugify(secTitle) || `section-${sectionIndex}`;
+      toc.push({ id: secId, label: secTitle, level: 2 });
+      const h2Html = registerBlock(`<h2 id="${secId}">${secTitle}</h2>`);
+      return `\n\n${h2Html}\n\n`;
     }
   );
 
@@ -195,75 +262,68 @@ ${subBody.trim()}`;
     /\[IMAGE_GRID(?:\s+cols=["']([^"']*)["'])?\]([\s\S]*?)\[\/IMAGE_GRID\]/gi,
     (match, colsAttr, innerBody) => {
       const cols = colsAttr === "3" ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2";
-      return `<div class="my-6 grid ${cols} gap-4 items-start blog-image-grid">\n${innerBody.trim()}\n</div>`;
+      const html = `<div class="my-6 grid ${cols} gap-4 items-start blog-image-grid">\n${innerBody.trim()}\n</div>`;
+      return registerBlock(html);
     }
   );
 
-  // Process [IMAGE] tags (Flexible attribute order: src, alt, caption, layout)
+  // Process [IMAGE] tags (Flexible attribute order: src, alt, caption, layout, text, headline, width)
   text = text.replace(/\[IMAGE\s+([^\]]+?)\/?\]/gi, (match, attrsStr) => {
     const getAttr = (name: string): string => {
       const m = attrsStr.match(new RegExp(`${name}=["']([^"']*)["']`, "i"));
       return m ? m[1] : "";
     };
 
-    const src = getAttr("src");
-    if (!src) return match; // Not a valid image tag without src
+    const rawSrc = getAttr("src");
+    if (!rawSrc) return match; // Not a valid image tag without src
+
+    // URL Normalization: handle relative paths like "images/blogs/..." -> "/images/blogs/..."
+    let cleanSrc = rawSrc.trim();
+    if (
+      !cleanSrc.startsWith("http://") &&
+      !cleanSrc.startsWith("https://") &&
+      !cleanSrc.startsWith("/") &&
+      !cleanSrc.startsWith("data:")
+    ) {
+      cleanSrc = "/" + cleanSrc;
+    }
 
     const alt = getAttr("alt");
     const caption = getAttr("caption");
-    const layoutMode = getAttr("layout").toLowerCase() || "full";
+    const headline = getAttr("headline");
+    const textContent = getAttr("text") || getAttr("content");
+    const layoutMode = (getAttr("layout") || "full").toLowerCase();
+    const customWidth = getAttr("width");
     const cleanAlt = alt ? alt.replace(/"/g, "&quot;") : "Tech Infinix Visual";
+
+    const widthStyle = customWidth ? ` style="max-width: ${customWidth}; margin-left: auto; margin-right: auto;"` : "";
+
+    // Sleek inline fallback displayed if image URL fails to load (no broken browser icons)
+    const fallbackHtml = `<div class="blog-img-fallback hidden" style="display: none;"><svg class="w-8 h-8 opacity-40 text-accent-custom" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg><span class="text-xs font-mono font-medium text-foreground">${cleanAlt}</span><span class="text-[10px] font-mono text-secondary-custom/60">Image verifying: ${cleanSrc}</span></div>`;
 
     const captionHtml = caption
       ? `<div class="p-2.5 bg-surface text-center border-t border-border-custom/50 text-[11px] text-secondary-custom font-mono">${caption}</div>`
       : "";
 
+    let html = "";
     if (layoutMode === "centered") {
-      return `
-<div class="my-6 max-w-2xl mx-auto rounded-[3px] overflow-hidden border border-border-custom shadow-xl shadow-black/5 dark:shadow-black/40 blog-image-wrapper layout-centered" data-layout="centered">
-  <img src="${src}" alt="${cleanAlt}" class="w-full h-auto object-cover" loading="lazy" />
-  ${captionHtml}
-</div>`;
+      html = `<div class="my-6 max-w-2xl mx-auto blog-image-wrapper layout-centered" data-layout="centered"${widthStyle}><img src="${cleanSrc}" alt="${cleanAlt}" class="w-full h-auto object-cover" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />${fallbackHtml}${captionHtml}</div>`;
     } else if (layoutMode === "split-left") {
-      return `
-<div class="my-6 grid grid-cols-1 md:grid-cols-2 gap-5 items-center rounded-[3px] border border-border-custom p-4 bg-surface blog-image-wrapper layout-split-left" data-layout="split-left">
-  <div class="rounded-[2px] overflow-hidden border border-border-custom shadow-md">
-    <img src="${src}" alt="${cleanAlt}" class="w-full h-auto object-cover aspect-[4/3]" loading="lazy" />
-  </div>
-  <div class="space-y-2 text-xs text-secondary-custom leading-relaxed">
-    ${caption ? `<p class="font-mono text-[11px] text-foreground font-semibold">${caption}</p>` : ""}
-  </div>
-</div>`;
+      html = `<div class="blog-image-wrapper layout-split-left" data-layout="split-left"${widthStyle}><div class="blog-split-image-pane"><img src="${cleanSrc}" alt="${cleanAlt}" class="w-full h-auto object-cover max-h-[380px]" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />${fallbackHtml}</div><div class="blog-split-text-pane">${headline ? `<h4 class="text-sm font-semibold text-foreground mb-1 leading-snug">${headline}</h4>` : ""}${textContent ? `<p class="text-xs text-secondary-custom leading-relaxed m-0">${textContent}</p>` : ""}${caption ? `<div class="font-mono text-[11px] text-secondary-custom/90 italic pt-1 border-t border-border-custom/30">${caption}</div>` : ""}</div></div>`;
     } else if (layoutMode === "split-right") {
-      return `
-<div class="my-6 grid grid-cols-1 md:grid-cols-2 gap-5 items-center rounded-[3px] border border-border-custom p-4 bg-surface blog-image-wrapper layout-split-right" data-layout="split-right">
-  <div class="space-y-2 text-xs text-secondary-custom leading-relaxed">
-    ${caption ? `<p class="font-mono text-[11px] text-foreground font-semibold">${caption}</p>` : ""}
-  </div>
-  <div class="rounded-[2px] overflow-hidden border border-border-custom shadow-md">
-    <img src="${src}" alt="${cleanAlt}" class="w-full h-auto object-cover aspect-[4/3]" loading="lazy" />
-  </div>
-</div>`;
+      html = `<div class="blog-image-wrapper layout-split-right" data-layout="split-right"${widthStyle}><div class="blog-split-text-pane">${headline ? `<h4 class="text-sm font-semibold text-foreground mb-1 leading-snug">${headline}</h4>` : ""}${textContent ? `<p class="text-xs text-secondary-custom leading-relaxed m-0">${textContent}</p>` : ""}${caption ? `<div class="font-mono text-[11px] text-secondary-custom/90 italic pt-1 border-t border-border-custom/30">${caption}</div>` : ""}</div><div class="blog-split-image-pane"><img src="${cleanSrc}" alt="${cleanAlt}" class="w-full h-auto object-cover max-h-[380px]" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />${fallbackHtml}</div></div>`;
+    } else if (layoutMode === "card") {
+      html = `<div class="blog-image-wrapper layout-card my-6"${widthStyle}><img src="${cleanSrc}" alt="${cleanAlt}" class="w-full h-auto aspect-[16/9] object-cover" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />${fallbackHtml}<div class="p-4 space-y-1.5 bg-surface border-t border-border-custom">${headline ? `<h4 class="text-sm font-semibold text-foreground">${headline}</h4>` : ""}${textContent ? `<p class="text-xs text-secondary-custom leading-relaxed m-0">${textContent}</p>` : ""}${caption ? `<div class="text-[11px] font-mono text-secondary-custom/80 italic pt-1">${caption}</div>` : ""}</div></div>`;
     } else if (layoutMode === "inline-left") {
-      return `
-<div class="my-4 md:float-left md:mr-6 md:mb-4 max-w-xs rounded-[3px] overflow-hidden border border-border-custom shadow-md blog-image-wrapper layout-inline-left" data-layout="inline-left">
-  <img src="${src}" alt="${cleanAlt}" class="w-full h-auto object-cover" loading="lazy" />
-  ${captionHtml}
-</div>`;
+      html = `<div class="my-4 md:float-left md:mr-6 md:mb-4 max-w-xs blog-image-wrapper layout-inline-left" data-layout="inline-left"><img src="${cleanSrc}" alt="${cleanAlt}" class="w-full h-auto object-cover" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />${fallbackHtml}${captionHtml}</div>`;
     } else if (layoutMode === "inline-right") {
-      return `
-<div class="my-4 md:float-right md:ml-6 md:mb-4 max-w-xs rounded-[3px] overflow-hidden border border-border-custom shadow-md blog-image-wrapper layout-inline-right" data-layout="inline-right">
-  <img src="${src}" alt="${cleanAlt}" class="w-full h-auto object-cover" loading="lazy" />
-  ${captionHtml}
-</div>`;
+      html = `<div class="my-4 md:float-right md:ml-6 md:mb-4 max-w-xs blog-image-wrapper layout-inline-right" data-layout="inline-right"><img src="${cleanSrc}" alt="${cleanAlt}" class="w-full h-auto object-cover" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />${fallbackHtml}${captionHtml}</div>`;
     } else {
       // Default: Full width 16:9 banner
-      return `
-<div class="my-6 rounded-[3px] overflow-hidden border border-border-custom shadow-xl shadow-black/5 dark:shadow-black/40 blog-image-wrapper layout-full" data-layout="full">
-  <img src="${src}" alt="${cleanAlt}" class="w-full h-auto aspect-[16/9] object-cover" loading="lazy" />
-  ${captionHtml}
-</div>`;
+      html = `<div class="my-6 blog-image-wrapper layout-full" data-layout="full"${widthStyle}><img src="${cleanSrc}" alt="${cleanAlt}" class="w-full h-auto aspect-[16/9] object-cover" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />${fallbackHtml}${captionHtml}</div>`;
     }
+
+    return registerBlock(html);
   });
 
   // Process [TABLE] ... [/TABLE] with automatic Mobile Card Conversion (data-label injection)
@@ -272,11 +332,10 @@ ${subBody.trim()}`;
       .trim()
       .split("\n")
       .map((l: string) => l.trim())
-      .filter((l: string) => l.length > 0 && !/^[\s|:-]+$/.test(l)); // filter out separator line
+      .filter((l: string) => l.length > 0 && !/^[\s|:-]+$/.test(l));
 
     if (rawLines.length === 0) return "";
 
-    // Parse header row
     const parsePipeRow = (line: string) =>
       line
         .replace(/^\||\|$/g, "")
@@ -287,7 +346,6 @@ ${subBody.trim()}`;
     const bodyRows = rawLines.slice(1).map(parsePipeRow);
 
     const theadHtml = `<thead><tr>${headers.map((h: string) => `<th>${h}</th>`).join("")}</tr></thead>`;
-
     const tbodyHtml = `<tbody>${bodyRows
       .map(
         (row: string[]) => `<tr>${row
@@ -300,7 +358,8 @@ ${subBody.trim()}`;
       )
       .join("")}</tbody>`;
 
-    return `<div class="blog-table-wrapper"><table class="blog-table">${theadHtml}${tbodyHtml}</table></div>`;
+    const html = `<div class="blog-table-wrapper"><table class="blog-table">${theadHtml}${tbodyHtml}</table></div>`;
+    return registerBlock(html);
   });
 
   // Process [QUOTE] ... [/QUOTE]
@@ -310,11 +369,8 @@ ${subBody.trim()}`;
       const attribution = authorAttr
         ? `<span class="text-[10px] font-mono text-secondary-custom uppercase tracking-wider">— ${authorAttr}</span>`
         : "";
-      return `
-<div class="blog-quote-box">
-  <p class="italic text-foreground font-medium text-xs sm:text-[13px] mb-1 leading-relaxed">${quoteBody.trim()}</p>
-  ${attribution}
-</div>`;
+      const html = `<div class="blog-quote-box"><p class="italic text-foreground font-medium text-xs sm:text-[13px] mb-1 leading-relaxed">${quoteBody.trim()}</p>${attribution}</div>`;
+      return registerBlock(html);
     }
   );
 
@@ -332,11 +388,8 @@ ${subBody.trim()}`;
         content = content.replace(/\[HEADLINE\][\s\S]*?\[\/HEADLINE\]/i, "");
       }
 
-      return `
-<div class="blog-callout blog-callout-${type}">
-  ${headlineHtml}
-  <div class="text-xs leading-relaxed text-secondary-custom">${content.trim()}</div>
-</div>`;
+      const html = `<div class="blog-callout blog-callout-${type}">${headlineHtml}<div class="text-xs leading-relaxed text-secondary-custom">${content.trim()}</div></div>`;
+      return registerBlock(html);
     }
   );
 
@@ -345,35 +398,75 @@ ${subBody.trim()}`;
     /\[CODE(?:\s+lang=["']([^"']*)["'])?\]([\s\S]*?)\[\/CODE\]/gi,
     (match, lang, codeBody) => {
       const language = lang ? ` class="language-${lang}"` : "";
-      return `
-<pre class="blog-code-block my-4 p-4 rounded-[3px] bg-surface border border-border-custom overflow-x-auto text-xs font-mono text-foreground leading-relaxed"><code${language}>${codeBody.trim()}</code></pre>`;
+      const html = `<pre class="blog-code-block my-4 p-4 rounded-[3px] bg-surface border border-border-custom overflow-x-auto text-xs font-mono text-foreground leading-relaxed"><code${language}>${codeBody.trim()}</code></pre>`;
+      return registerBlock(html);
     }
   );
 
-  // Process [LINK] ... [/LINK] (Inline SEO Hyperlinks)
+  // Process [SPLIT ratio="..."] ... [/SPLIT] (Side-by-side multi-column container)
   text = text.replace(
-    /\[LINK\s+href=["']([^"']+)["'](?:\s+title=["']([^"']*)["'])?(?:\s+target=["']([^"']*)["'])?(?:\s+rel=["']([^"']*)["'])?\]([\s\S]*?)\[\/LINK\]/gi,
-    (match, href, titleAttr, target, rel, linkText) => {
-      const t = target || "_blank";
-      const r = rel || "noopener noreferrer";
-      const titleTag = titleAttr ? ` title="${titleAttr.replace(/"/g, "&quot;")}"` : "";
-      return `<a href="${href}" target="${t}" rel="${r}"${titleTag} class="text-accent-custom font-semibold underline underline-offset-2 hover:opacity-85 transition-opacity">${linkText}</a>`;
+    /\[SPLIT(?:\s+ratio=["']([^"']*)["'])?\]([\s\S]*?)\[\/SPLIT\]/gi,
+    (match, ratioAttr, splitBody) => {
+      const ratio = ratioAttr || "50-50";
+      const colRegex = /\[COL\]([\s\S]*?)\[\/COL\]/gi;
+      const cols: string[] = [];
+      let cMatch;
+      while ((cMatch = colRegex.exec(splitBody)) !== null) {
+        const colInner = cMatch[1].trim();
+        const colBlocks = colInner.split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean);
+        const compiledCol = colBlocks.map((b) => {
+          if (b.startsWith("__TECH_INFINIX_BLOCK_") || b.startsWith("<")) return b;
+          if (b.startsWith("- ") || b.startsWith("* ")) {
+            const items = b
+              .split("\n")
+              .map((line) => line.replace(/^[-*]\s+/, "").trim())
+              .filter(Boolean)
+              .map((item) => `<li>${item}</li>`)
+              .join("\n  ");
+            return `<ul class="space-y-1.5 my-2.5">\n  ${items}\n</ul>`;
+          }
+          if (/\n\s*[-*]\s+/.test(b)) {
+            const lines = b.split("\n");
+            const textLines: string[] = [];
+            const listItems: string[] = [];
+            let inList = false;
+            for (const line of lines) {
+              if (/^[-*]\s+/.test(line.trim())) {
+                inList = true;
+                listItems.push(`<li>${line.trim().replace(/^[-*]\s+/, "")}</li>`);
+              } else if (!inList) {
+                textLines.push(line);
+              } else {
+                listItems.push(`<li>${line.trim()}</li>`);
+              }
+            }
+            const pPart = textLines.length > 0 ? `<p>${textLines.join(" ").trim()}</p>\n\n` : "";
+            const ulPart = `<ul class="space-y-1.5 my-2.5">\n  ${listItems.join("\n  ")}\n</ul>`;
+            return `${pPart}${ulPart}`;
+          }
+          if (/^\d+\.\s+/.test(b)) {
+            const items = b
+              .split("\n")
+              .map((line) => line.replace(/^\d+\.\s+/, "").trim())
+              .filter(Boolean)
+              .map((item) => `<li>${item}</li>`)
+              .join("\n  ");
+            return `<ol class="space-y-2 my-2.5">\n  ${items}\n</ol>`;
+          }
+          return `<p>${b}</p>`;
+        }).join("\n\n");
+        cols.push(`<div class="blog-split-col">\n${compiledCol}\n</div>`);
+      }
+      const html = `<div class="blog-split-container split-${ratio}">\n${cols.join("\n")}\n</div>`;
+      return registerBlock(html);
     }
   );
+
 
   // Split remaining loose paragraphs into <p> tags if not wrapped in HTML tags
   const blocks = text.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
   const compiledBlocks = blocks.map((b) => {
-    if (
-      b.startsWith("<div") ||
-      b.startsWith("<h2") ||
-      b.startsWith("<h3") ||
-      b.startsWith("<pre") ||
-      b.startsWith("<table") ||
-      b.startsWith("<ul") ||
-      b.startsWith("<ol") ||
-      b.startsWith("<p")
-    ) {
+    if (b.startsWith("__TECH_INFINIX_BLOCK_") || b.startsWith("<")) {
       return b;
     }
     // Markdown lists
@@ -385,6 +478,25 @@ ${subBody.trim()}`;
         .map((item) => `<li>${item}</li>`)
         .join("\n  ");
       return `<ul class="space-y-1.5 my-2.5">\n  ${items}\n</ul>`;
+    }
+    if (/\n\s*[-*]\s+/.test(b)) {
+      const lines = b.split("\n");
+      const textLines: string[] = [];
+      const listItems: string[] = [];
+      let inList = false;
+      for (const line of lines) {
+        if (/^[-*]\s+/.test(line.trim())) {
+          inList = true;
+          listItems.push(`<li>${line.trim().replace(/^[-*]\s+/, "")}</li>`);
+        } else if (!inList) {
+          textLines.push(line);
+        } else {
+          listItems.push(`<li>${line.trim()}</li>`);
+        }
+      }
+      const pPart = textLines.length > 0 ? `<p>${textLines.join(" ").trim()}</p>\n\n` : "";
+      const ulPart = `<ul class="space-y-1.5 my-2.5">\n  ${listItems.join("\n  ")}\n</ul>`;
+      return `${pPart}${ulPart}`;
     }
     if (/^\d+\.\s+/.test(b)) {
       const items = b
@@ -398,7 +510,17 @@ ${subBody.trim()}`;
     return `<p>${b}</p>`;
   });
 
-  const finalCompiledHtml = compiledBlocks.join("\n\n");
+  let finalCompiledHtml = compiledBlocks.join("\n\n");
+
+  // Recursively unpack registered blocks so nested blocks resolve perfectly
+  let safetyLimit = 6;
+  while (finalCompiledHtml.includes("__TECH_INFINIX_BLOCK_") && safetyLimit-- > 0) {
+    for (const [token, blockHtml] of blocksMap.entries()) {
+      if (finalCompiledHtml.includes(token)) {
+        finalCompiledHtml = finalCompiledHtml.split(token).join(blockHtml);
+      }
+    }
+  }
 
   return {
     title,
@@ -478,7 +600,33 @@ export function convertHtmlToTaggedText(blog: any): string {
       const alt = imgMatch[2] || "";
       const capMatch = inner.match(/<div class="[^"]*font-mono[^"]*">([\s\S]*?)<\/div>/i);
       const caption = capMatch ? capMatch[1].trim() : "";
-      return `[IMAGE src="${src}" alt="${alt}" caption="${caption}" layout="${layout || 'full'}" /]`;
+      const textMatch = inner.match(/<p class="[^"]*text-secondary-custom[^"]*">([\s\S]*?)<\/p>/i);
+      const text = textMatch ? textMatch[1].trim() : "";
+      const headMatch = inner.match(/<h4 class="[^"]*font-semibold[^"]*">([\s\S]*?)<\/h4>/i);
+      const headline = headMatch ? headMatch[1].trim() : "";
+
+      const extraAttrs: string[] = [];
+      if (alt) extraAttrs.push(`alt="${alt}"`);
+      if (headline) extraAttrs.push(`headline="${headline}"`);
+      if (text) extraAttrs.push(`text="${text}"`);
+      if (caption) extraAttrs.push(`caption="${caption}"`);
+      extraAttrs.push(`layout="${layout || 'full'}"`);
+
+      return `[IMAGE src="${src}" ${extraAttrs.join(" ")} /]`;
+    }
+  );
+
+  // Reverse convert split containers
+  content = content.replace(
+    /<div class="blog-split-container\s+split-([^"]*)">([\s\S]*?)<\/div>\s*<\/div>/gi,
+    (m: string, ratio: string, inner: string) => {
+      const colRegex = /<div class="blog-split-col[^"]*">([\s\S]*?)<\/div>/gi;
+      const cols: string[] = [];
+      let cMatch;
+      while ((cMatch = colRegex.exec(inner)) !== null) {
+        cols.push(`  [COL]\n  ${cMatch[1].trim()}\n  [/COL]`);
+      }
+      return `[SPLIT ratio="${ratio}"]\n${cols.join("\n")}\n[/SPLIT]`;
     }
   );
 

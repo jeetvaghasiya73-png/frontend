@@ -21,7 +21,8 @@ import {
   X,
   ExternalLink,
   BookOpen,
-  ArrowRight
+  ArrowRight,
+  Columns
 } from "lucide-react";
 import { API, authFetch } from "@/lib/authFetch";
 import {
@@ -63,7 +64,10 @@ export default function BlankCanvasBlogEditor({
   const [imgSrc, setImgSrc] = useState("");
   const [imgAlt, setImgAlt] = useState("");
   const [imgCaption, setImgCaption] = useState("");
-  const [imgLayout, setImgLayout] = useState<"full" | "centered" | "split-left" | "split-right">("full");
+  const [imgHeadline, setImgHeadline] = useState("");
+  const [imgText, setImgText] = useState("");
+  const [imgWidth, setImgWidth] = useState("");
+  const [imgLayout, setImgLayout] = useState<string>("full");
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -249,12 +253,18 @@ Explore our [LINK href="https://techinfinix.com/services" title="Enterprise Auto
     if (!imgSrc) return;
     const altAttr = imgAlt ? ` alt="${imgAlt.replace(/"/g, '')}"` : "";
     const capAttr = imgCaption ? ` caption="${imgCaption.replace(/"/g, '')}"` : "";
-    const snippet = `\n[IMAGE src="${imgSrc}"${altAttr}${capAttr} layout="${imgLayout}" /]\n`;
+    const headAttr = imgHeadline ? ` headline="${imgHeadline.replace(/"/g, '')}"` : "";
+    const textAttr = imgText ? ` text="${imgText.replace(/"/g, '')}"` : "";
+    const widthAttr = imgWidth ? ` width="${imgWidth}"` : "";
+    const snippet = `\n[IMAGE src="${imgSrc}"${altAttr}${headAttr}${textAttr}${capAttr} layout="${imgLayout}"${widthAttr} /]\n`;
     insertSnippet(snippet);
     setImageModalOpen(false);
     setImgSrc("");
     setImgAlt("");
     setImgCaption("");
+    setImgHeadline("");
+    setImgText("");
+    setImgWidth("");
   };
 
   // Form Checkbox Toggle Handler (keeps tag in sync)
@@ -430,6 +440,20 @@ Explore our [LINK href="https://techinfinix.com/services" title="Enterprise Auto
           >
             <BarChart2 className="w-3 h-3 text-amber-500" />
             <span>Stat Grid</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              insertSnippet(
+                `\n[SPLIT ratio="50-50"]\n  [COL]\n    [SUBSECTION title="Side-by-Side Content"]\n    Write descriptive analysis here with zero empty space. Perfect for balancing technical explanations with architectural diagrams.\n    - Seamless alignment\n    - Auto-scales on mobile\n  [/COL]\n  [COL]\n    [IMAGE src="/images/blogs/centaur-ai-worker.jpg" alt="Autonomous AI Agent Pipelines" layout="card" headline="Pipeline Telemetry" text="Real-time execution traces." /]\n  [/COL]\n[/SPLIT]\n`
+              )
+            }
+            className="px-2 py-1 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom flex items-center gap-1 transition-colors"
+            title="Insert Side-by-Side Split Section (Eliminates empty spacing)"
+          >
+            <Columns className="w-3 h-3 text-cyan-500" />
+            <span>Split Section</span>
           </button>
 
           <button
@@ -802,8 +826,8 @@ Explore our [LINK href="https://techinfinix.com/services" title="Enterprise Auto
 
       {/* ═══════ MODAL 2: IMAGE INSERTER MODAL ═══════ */}
       {imageModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-surface border border-border-custom rounded-[3px] shadow-2xl p-5 space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-lg bg-surface border border-border-custom rounded-[4px] shadow-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-2 border-b border-border-custom">
               <div className="flex items-center gap-2">
                 <ImageIcon className="w-4 h-4 text-emerald-500" />
@@ -817,17 +841,45 @@ Explore our [LINK href="https://techinfinix.com/services" title="Enterprise Auto
             </div>
 
             <div className="space-y-3 text-xs">
+              {/* Image Source Input & Live Preview */}
               <div className="space-y-1">
-                <label className="font-mono text-[11px] text-secondary-custom">Image Source URL</label>
+                <label className="font-mono text-[11px] text-secondary-custom flex items-center justify-between">
+                  <span>Image Source URL (Local path, uploaded URL, or external HTTPS)</span>
+                </label>
                 <input
                   type="text"
                   value={imgSrc}
                   onChange={(e) => setImgSrc(e.target.value)}
-                  placeholder="/images/blogs/centaur-ai-worker.jpg or external"
+                  placeholder="/images/blogs/centaur-ai-worker.jpg or https://..."
                   className="w-full px-3 py-1.5 font-mono bg-background border border-border-custom rounded-[2px] focus:outline-none focus:border-accent-custom"
                 />
               </div>
 
+              {/* Live URL Image Preview */}
+              {imgSrc && (
+                <div className="p-2.5 rounded-[3px] bg-background border border-border-custom flex items-center gap-3">
+                  <div className="w-16 h-12 rounded-[2px] overflow-hidden bg-surface shrink-0 border border-border-custom flex items-center justify-center relative">
+                    <img
+                      src={imgSrc}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                      onError={(e: any) => {
+                        e.target.style.display = "none";
+                        if (e.target.nextSibling) e.target.nextSibling.style.display = "flex";
+                      }}
+                    />
+                    <div className="hidden text-[8.5px] text-amber-500 font-mono text-center p-1 leading-tight flex-col items-center justify-center w-full h-full bg-amber-500/10">
+                      Unverified
+                    </div>
+                  </div>
+                  <div className="min-w-0 flex-1 text-[11px] font-mono text-secondary-custom">
+                    <span className="text-foreground font-semibold block truncate">{imgSrc}</span>
+                    <span className="text-[10px] text-emerald-500">Live URL preview connected</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Custom SEO Alt */}
               <div className="space-y-1">
                 <label className="font-mono text-[11px] text-accent-custom font-bold">
                   Custom SEO `alt` Attribute (Mandatory for Google/AEO)
@@ -841,6 +893,56 @@ Explore our [LINK href="https://techinfinix.com/services" title="Enterprise Auto
                 />
               </div>
 
+              {/* Layout Mode Selection */}
+              <div className="space-y-1 font-mono">
+                <label className="text-[11px] text-secondary-custom">Layout Mode</label>
+                <select
+                  value={imgLayout}
+                  onChange={(e: any) => setImgLayout(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-[2px] bg-background border border-border-custom text-xs font-mono"
+                >
+                  <option value="full">Full-Width Banner (16:9 Cinema)</option>
+                  <option value="centered">Centered Inset (Charts/Screenshots)</option>
+                  <option value="split-left">Side-by-Side (Image Left, Rich Content Right)</option>
+                  <option value="split-right">Side-by-Side (Rich Content Left, Image Right)</option>
+                  <option value="card">Media Card (Image with Header & Content)</option>
+                  <option value="inline-left">Inline Floated Left (Text wraps around)</option>
+                  <option value="inline-right">Inline Floated Right (Text wraps around)</option>
+                </select>
+              </div>
+
+              {/* Accompanying Content Fields (shown for split or card modes to prevent empty spacing) */}
+              {(imgLayout === "split-left" || imgLayout === "split-right" || imgLayout === "card") && (
+                <div className="p-3 rounded-[3px] bg-surface/50 border border-accent-custom/30 space-y-2.5">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-accent-custom block">
+                    Accompanying Content (Fills Side Column — Zero Empty Spacing)
+                  </span>
+
+                  <div className="space-y-1">
+                    <label className="font-mono text-[11px] text-secondary-custom">Section Sub-headline</label>
+                    <input
+                      type="text"
+                      value={imgHeadline}
+                      onChange={(e) => setImgHeadline(e.target.value)}
+                      placeholder="e.g. Real-Time Lead Escalation & Context Preservation"
+                      className="w-full px-3 py-1.5 bg-background border border-border-custom rounded-[2px] focus:outline-none focus:border-accent-custom"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-mono text-[11px] text-secondary-custom">Side Column Descriptive Text</label>
+                    <textarea
+                      rows={3}
+                      value={imgText}
+                      onChange={(e) => setImgText(e.target.value)}
+                      placeholder="Write descriptive paragraphs or technical explanation that aligns directly beside the image..."
+                      className="w-full px-3 py-1.5 bg-background border border-border-custom rounded-[2px] focus:outline-none focus:border-accent-custom resize-none"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Technical Caption */}
               <div className="space-y-1">
                 <label className="font-mono text-[11px] text-secondary-custom">Technical Monospace Caption</label>
                 <input
@@ -852,19 +954,19 @@ Explore our [LINK href="https://techinfinix.com/services" title="Enterprise Auto
                 />
               </div>
 
+              {/* Custom Width Selector */}
               <div className="space-y-1 font-mono">
-                <label className="text-[11px] text-secondary-custom">Layout Auto-Adjustment Mode</label>
+                <label className="text-[11px] text-secondary-custom">Max Width Restriction (Optional)</label>
                 <select
-                  value={imgLayout}
-                  onChange={(e: any) => setImgLayout(e.target.value)}
+                  value={imgWidth}
+                  onChange={(e: any) => setImgWidth(e.target.value)}
                   className="w-full px-2.5 py-1.5 rounded-[2px] bg-background border border-border-custom text-xs font-mono"
                 >
-                  <option value="full">Full-Width Banner (16:9)</option>
-                  <option value="centered">Centered Inset (Charts/Screenshots)</option>
-                  <option value="split-left">Side-by-Side (Image Left, Caption Right)</option>
-                  <option value="split-right">Side-by-Side (Caption Left, Image Right)</option>
-                  <option value="inline-left">Inline Floated Left (Text wraps right)</option>
-                  <option value="inline-right">Inline Floated Right (Text wraps left)</option>
+                  <option value="">Default (100% of container)</option>
+                  <option value="80%">80% Width</option>
+                  <option value="60%">60% Width</option>
+                  <option value="500px">Compact 500px</option>
+                  <option value="400px">Thumbnail 400px</option>
                 </select>
               </div>
             </div>
