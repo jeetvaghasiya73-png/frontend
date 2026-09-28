@@ -17,7 +17,8 @@ import {
   ArrowRight,
   TrendingUp,
   Bookmark,
-  ChevronRight
+  ChevronRight,
+  ChevronDown
 } from "lucide-react";
 import { formatISTDate } from "@/lib/formatters";
 
@@ -28,6 +29,18 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
   const [blog, setBlog] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("panic-vs-reality");
+  const [mobileTocOpen, setMobileTocOpen] = useState(false);
+  const [readingProgress, setReadingProgress] = useState(0);
+
+  const tocItems = [
+    { id: "panic-vs-reality", label: "1. The Panic vs. Reality" },
+    { id: "friction-economy", label: "2. The Friction Economy" },
+    { id: "human-moats", label: "3. Irreplaceable Human Moats" },
+    { id: "comparison-table", label: "4. AI vs. Human Superpowers" },
+    { id: "centaur-worker", label: "5. The 10x Centaur Worker" },
+    { id: "future-proof-steps", label: "6. 4 Steps to Future-Proof" },
+  ];
 
   const relatedArticles = [
     {
@@ -389,6 +402,30 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
     fetchBlog();
   }, [slug]);
 
+  // Scroll tracker for reading progress and active TOC highlight
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalHeight > 0) {
+        const progress = (window.scrollY / totalHeight) * 100;
+        setReadingProgress(Math.min(100, Math.max(0, progress)));
+      }
+
+      // Check section offsets for active TOC item
+      const scrollPos = window.scrollY + 220;
+      for (let i = tocItems.length - 1; i >= 0; i--) {
+        const el = document.getElementById(tocItems[i].id);
+        if (el && el.offsetTop <= scrollPos) {
+          setActiveSection(tocItems[i].id);
+          break;
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
       navigator.clipboard.writeText(window.location.href);
@@ -418,6 +455,12 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
   return (
     <>
+      {/* Top Reading Progress Bar (Fixed at very top) */}
+      <div
+        className="fixed top-0 left-0 h-[3px] bg-accent-custom z-50 transition-all duration-150"
+        style={{ width: `${readingProgress}%` }}
+      />
+
       {blog.custom_css && (
         <style dangerouslySetInnerHTML={{ __html: blog.custom_css }} />
       )}
@@ -446,7 +489,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
         </div>
 
         {/* Article Title & Metadata Hero */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
+        <div id="article-top" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
           <div className="max-w-4xl space-y-4">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-[1.15]">
               {blog.title}
@@ -478,13 +521,241 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           </div>
         </div>
 
-        {/* 2-Column Grid: Content (Left) + Sidebar (Right) */}
+        {/* ═══════ 2-COLUMN LAYOUT: STICKY LEFT SIDEBAR (Desktop) + MAIN ARTICLE (Right) ═══════ */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             
-            {/* Main Content Column (8 Cols) */}
-            <article className="lg:col-span-8 min-w-0">
+            {/* ─── LEFT SIDEBAR (Sticky on Desktop, follows user scroll) ─── */}
+            <aside className="order-2 lg:order-1 lg:col-span-4 space-y-6">
+              <div className="lg:sticky lg:top-28 space-y-6 max-h-[calc(100vh-8rem)] lg:overflow-y-auto pr-1 scrollbar-none">
+
+                {/* Table of Contents ("On This Page") with active section indicator */}
+                <div className="p-5 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-border-custom">
+                    <h4 className="text-xs font-mono font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-[1px] bg-accent-custom animate-pulse" />
+                      <span>On This Page</span>
+                    </h4>
+                    <span className="text-[10px] font-mono text-secondary-custom">
+                      {Math.round(readingProgress)}% read
+                    </span>
+                  </div>
+
+                  <nav className="space-y-1 text-xs">
+                    {tocItems.map((item) => (
+                      <a
+                        key={item.id}
+                        href={`#${item.id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const el = document.getElementById(item.id);
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                            setActiveSection(item.id);
+                          }
+                        }}
+                        className={`block py-1.5 px-2.5 rounded-[2px] font-medium transition-all ${
+                          activeSection === item.id
+                            ? "bg-accent-custom/10 text-accent-custom font-semibold border-l-2 border-accent-custom pl-3"
+                            : "text-secondary-custom hover:text-foreground hover:bg-background/60"
+                        }`}
+                      >
+                        {item.label}
+                      </a>
+                    ))}
+                  </nav>
+                </div>
+
+                {/* Quick Social Share Box */}
+                <div className="p-4 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-2.5">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-secondary-custom font-bold block">
+                    Share Article
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`https://twitter.com/intent/tweet?text=${shareTitle}&url=${encodeURIComponent(currentUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 px-2.5 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom text-xs font-mono flex items-center justify-center gap-1.5 transition-all"
+                      title="Share on X / Twitter"
+                    >
+                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 23.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                      </svg>
+                      <span>Post</span>
+                    </a>
+                    <a
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 px-2.5 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom text-xs font-mono flex items-center justify-center gap-1.5 transition-all"
+                      title="Share on LinkedIn"
+                    >
+                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                        <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2m1.4 9.74v-8.37H5.06v8.37h2.8z" />
+                      </svg>
+                      <span>Share</span>
+                    </a>
+                    <a
+                      href={`https://api.whatsapp.com/send?text=${shareTitle}%20${encodeURIComponent(currentUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 rounded-[2px] bg-background border border-border-custom hover:border-emerald-500 hover:text-emerald-500 text-secondary-custom transition-all"
+                      title="Share on WhatsApp"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </a>
+                    <button
+                      onClick={handleCopyLink}
+                      className="p-2 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all cursor-pointer"
+                      title="Copy Link"
+                    >
+                      {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Bookmark className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Promo Card: Free Strategy Proposal */}
+                <div className="p-5 rounded-[3px] bg-surface border border-border-custom text-foreground shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-accent-custom/10 rounded-[3px] blur-2xl pointer-events-none" />
+                  <div className="relative z-10 space-y-3">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 text-[10px] font-mono uppercase tracking-wider font-bold">
+                      <Sparkles className="w-3 h-3 text-accent-custom" />
+                      Free Strategy Audit
+                    </span>
+                    <h3 className="text-base font-bold leading-snug text-foreground">
+                      Automate Your Workflows with Custom AI
+                    </h3>
+                    <p className="text-xs text-secondary-custom leading-relaxed">
+                      Deploy autonomous agents, 24/7 WhatsApp CRM pipelines, and Google Maps SEO designed for your enterprise.
+                    </p>
+                    <a
+                      href="#contact"
+                      className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-[2px] bg-accent-custom text-white hover:opacity-95 font-bold text-xs transition-colors shadow-md shadow-accent-custom/20"
+                    >
+                      <span>Get Free Proposal</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+
+                {/* 24/7 WhatsApp AI Bot Card */}
+                <div className="p-4 rounded-[3px] bg-surface border border-border-custom shadow-sm hover:border-accent-custom/50 transition-all">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-[2px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                      <MessageCircle className="w-4 h-4" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-foreground">
+                        24/7 WhatsApp AI Bot
+                      </h4>
+                      <p className="text-[11px] text-secondary-custom leading-relaxed">
+                        Capture inbound leads and answer customer inquiries without human delay.
+                      </p>
+                      <a
+                        href="#contact"
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent-custom hover:underline pt-0.5"
+                      >
+                        <span>Request Bot Demo</span>
+                        <ChevronRight className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Trending Articles Stack */}
+                <div className="p-5 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-border-custom">
+                    <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase font-mono tracking-wider">
+                      <TrendingUp className="w-3.5 h-3.5 text-accent-custom" />
+                      <span>Trending</span>
+                    </h3>
+                    <Link href="/blogs" className="text-[10px] font-mono text-accent-custom hover:underline">
+                      View all
+                    </Link>
+                  </div>
+
+                  <div className="space-y-3">
+                    {relatedArticles.filter(a => a.slug !== slug).slice(0, 3).map((article, idx) => (
+                      <Link
+                        key={idx}
+                        href={`/blogs/${article.slug}`}
+                        className="group flex items-start gap-3 p-1.5 rounded-[2px] hover:bg-background transition-colors"
+                      >
+                        <div className="w-14 h-14 rounded-[2px] overflow-hidden border border-border-custom shrink-0 bg-surface">
+                          <img
+                            src={article.image}
+                            alt={article.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                        <div className="min-w-0 space-y-0.5">
+                          <span className={`inline-block px-1 py-0.2 rounded-[2px] text-[8px] font-mono font-bold border ${article.tagColor}`}>
+                            {article.tag}
+                          </span>
+                          <h4 className="text-xs font-bold text-foreground group-hover:text-accent-custom transition-colors line-clamp-2 leading-tight">
+                            {article.title}
+                          </h4>
+                          <span className="block text-[9px] font-mono text-secondary-custom">
+                            {article.readTime}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            </aside>
+
+            {/* ─── RIGHT / MAIN ARTICLE COLUMN ─── */}
+            <article className="order-1 lg:order-2 lg:col-span-8 min-w-0">
               
+              {/* Mobile-Only Collapsible Table of Contents */}
+              <div className="lg:hidden mb-8 border border-border-custom bg-surface rounded-[3px] overflow-hidden">
+                <button
+                  onClick={() => setMobileTocOpen(!mobileTocOpen)}
+                  className="w-full p-3.5 flex items-center justify-between text-left text-xs font-mono font-bold text-foreground hover:bg-background/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-[1px] bg-accent-custom" />
+                    <span>Table of Contents ({tocItems.length} sections)</span>
+                  </div>
+                  <ChevronDown
+                    className={`w-4 h-4 text-secondary-custom transition-transform duration-200 ${
+                      mobileTocOpen ? "rotate-180 text-accent-custom" : ""
+                    }`}
+                  />
+                </button>
+
+                {mobileTocOpen && (
+                  <div className="p-3 pt-0 border-t border-border-custom/50 space-y-1">
+                    {tocItems.map((item) => (
+                      <a
+                        key={item.id}
+                        href={`#${item.id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const el = document.getElementById(item.id);
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                            setActiveSection(item.id);
+                            setMobileTocOpen(false);
+                          }
+                        }}
+                        className={`block py-1.5 px-2 rounded-[2px] text-xs font-medium ${
+                          activeSection === item.id
+                            ? "bg-accent-custom/10 text-accent-custom font-semibold border-l-2 border-accent-custom pl-2.5"
+                            : "text-secondary-custom hover:text-foreground"
+                        }`}
+                      >
+                        {item.label}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Article Content */}
               <div className="blog-content prose dark:prose-invert max-w-none text-foreground">
                 {isHtml(blog.content) ? (
@@ -494,7 +765,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                 )}
               </div>
 
-              {/* Social Share Bar */}
+              {/* Bottom Social Share Bar */}
               <div className="mt-12 pt-6 border-t border-border-custom flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-2 text-xs font-mono font-semibold text-secondary-custom">
                   <Share2 className="w-4 h-4 text-accent-custom" />
@@ -574,130 +845,6 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
             </article>
 
-            {/* Right Sticky Sidebar (4 Cols) */}
-            <aside className="lg:col-span-4 space-y-6">
-              <div className="sticky top-28 space-y-6">
-
-                {/* Promo Card 1: Free Consultation (Clean, modern tech card with 3px radius) */}
-                <div className="p-6 rounded-[3px] bg-surface border border-border-custom text-foreground shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-accent-custom/10 rounded-[3px] blur-2xl pointer-events-none" />
-                  <div className="relative z-10 space-y-3">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 text-[10px] font-mono uppercase tracking-wider font-bold">
-                      <Sparkles className="w-3 h-3 text-accent-custom" />
-                      Free Strategy Audit
-                    </span>
-                    <h3 className="text-lg font-bold leading-snug text-foreground">
-                      Automate Your Business Workflows with Custom AI
-                    </h3>
-                    <p className="text-xs text-secondary-custom leading-relaxed">
-                      Deploy autonomous agents, 24/7 WhatsApp CRM pipelines, and Google Maps SEO designed for your enterprise.
-                    </p>
-                    <a
-                      href="#contact"
-                      className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-[2px] bg-accent-custom text-white hover:opacity-95 font-bold text-xs transition-colors shadow-md shadow-accent-custom/20"
-                    >
-                      <span>Claim Free Proposal Below</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-                </div>
-
-                {/* Promo Card 2: 24/7 WhatsApp Bot */}
-                <div className="p-5 rounded-[3px] bg-surface border border-border-custom shadow-sm hover:border-accent-custom/50 transition-all">
-                  <div className="flex items-start gap-3.5">
-                    <div className="w-10 h-10 rounded-[2px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                      <MessageCircle className="w-5 h-5" />
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="text-sm font-bold text-foreground">
-                        24/7 WhatsApp AI Bot
-                      </h4>
-                      <p className="text-xs text-secondary-custom leading-relaxed">
-                        Never miss an inbound lead. Our WhatsApp bots answer questions and book calls automatically.
-                      </p>
-                      <a
-                        href="#contact"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-accent-custom hover:underline pt-1"
-                      >
-                        <span>Request Bot Demo</span>
-                        <ChevronRight className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Trending & Related Articles Stack */}
-                <div className="p-6 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-border-custom">
-                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-accent-custom" />
-                      <span>Trending Articles</span>
-                    </h3>
-                    <Link href="/blogs" className="text-[11px] font-mono text-accent-custom hover:underline">
-                      View all
-                    </Link>
-                  </div>
-
-                  <div className="space-y-4">
-                    {relatedArticles.filter(a => a.slug !== slug).slice(0, 3).map((article, idx) => (
-                      <Link
-                        key={idx}
-                        href={`/blogs/${article.slug}`}
-                        className="group flex items-start gap-3.5 p-2 rounded-[2px] hover:bg-background transition-colors"
-                      >
-                        <div className="w-16 h-16 rounded-[2px] overflow-hidden border border-border-custom shrink-0 bg-surface">
-                          <img
-                            src={article.image}
-                            alt={article.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
-                        <div className="min-w-0 space-y-1">
-                          <span className={`inline-block px-1.5 py-0.5 rounded-[2px] text-[9px] font-mono font-bold border ${article.tagColor}`}>
-                            {article.tag}
-                          </span>
-                          <h4 className="text-xs font-bold text-foreground group-hover:text-accent-custom transition-colors line-clamp-2 leading-snug">
-                            {article.title}
-                          </h4>
-                          <span className="block text-[10px] font-mono text-secondary-custom">
-                            {article.readTime}
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Table of Contents / On this Page */}
-                <div className="p-5 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-3">
-                  <h4 className="text-xs font-mono font-bold text-secondary-custom uppercase tracking-wider">
-                    On This Page
-                  </h4>
-                  <nav className="space-y-2 text-xs">
-                    <a href="#panic-vs-reality" className="block text-secondary-custom hover:text-accent-custom transition-colors">
-                      1. The Panic vs. Reality
-                    </a>
-                    <a href="#friction-economy" className="block text-secondary-custom hover:text-accent-custom transition-colors">
-                      2. The Friction Economy
-                    </a>
-                    <a href="#human-moats" className="block text-secondary-custom hover:text-accent-custom transition-colors">
-                      3. Irreplaceable Human Moats
-                    </a>
-                    <a href="#comparison-table" className="block text-secondary-custom hover:text-accent-custom transition-colors">
-                      4. AI vs. Human Superpowers
-                    </a>
-                    <a href="#centaur-worker" className="block text-secondary-custom hover:text-accent-custom transition-colors">
-                      5. The 10x Centaur Worker
-                    </a>
-                    <a href="#future-proof-steps" className="block text-secondary-custom hover:text-accent-custom transition-colors">
-                      6. 4 Steps to Future-Proof
-                    </a>
-                  </nav>
-                </div>
-
-              </div>
-            </aside>
-
           </div>
         </div>
 
@@ -762,6 +909,47 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
         {/* ═══════ REAL CONTACT COMPONENT (Integrated from /contact for API synchronization) ═══════ */}
         <div id="contact" className="mt-24 border-t border-border-custom pt-8">
           <ContactSection />
+        </div>
+
+        {/* ─── Mobile-Only Sticky Floating Quick Action Bar ─── */}
+        <div className="lg:hidden fixed bottom-3 left-3 right-3 z-40 flex items-center justify-between gap-2 p-2.5 bg-surface/95 border border-border-custom rounded-[3px] backdrop-blur-md shadow-2xl">
+          <button
+            onClick={() => {
+              const topEl = document.getElementById("article-top");
+              if (topEl) topEl.scrollIntoView({ behavior: "smooth" });
+              setMobileTocOpen(true);
+            }}
+            className="px-3 py-1.5 rounded-[2px] bg-background border border-border-custom text-xs font-mono text-secondary-custom hover:text-foreground flex items-center gap-1.5 shrink-0"
+          >
+            <span>📑 Contents</span>
+          </button>
+
+          <div className="flex items-center gap-1.5">
+            <a
+              href={`https://api.whatsapp.com/send?text=${shareTitle}%20${encodeURIComponent(currentUrl)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 rounded-[2px] bg-background border border-border-custom text-emerald-500 hover:bg-emerald-500/10"
+              title="Share on WhatsApp"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </a>
+            <button
+              onClick={handleCopyLink}
+              className="p-1.5 rounded-[2px] bg-background border border-border-custom text-secondary-custom hover:text-foreground"
+              title="Copy link"
+            >
+              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Bookmark className="w-4 h-4" />}
+            </button>
+          </div>
+
+          <a
+            href="#contact"
+            className="px-3 py-1.5 rounded-[2px] bg-accent-custom text-white text-xs font-mono font-bold flex items-center gap-1 shrink-0 shadow-sm shadow-accent-custom/20"
+          >
+            <span>Free Proposal</span>
+            <ArrowRight className="w-3 h-3" />
+          </a>
         </div>
 
       </main>
