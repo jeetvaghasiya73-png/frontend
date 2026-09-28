@@ -44,7 +44,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
   const { processedContent, dynamicToc } = React.useMemo(() => {
     if (!blog?.content) return { processedContent: "", dynamicToc: [] };
 
-    const contentStr = String(blog.content);
+    const contentStr = String(blog.content).replace(/<!--[\s\S]*?-->/g, "").trim();
     const extracted: { id: string; label: string; level: number }[] = [];
     let headingCounter = 0;
 

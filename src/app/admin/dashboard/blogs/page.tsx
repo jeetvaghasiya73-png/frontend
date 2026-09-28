@@ -4,14 +4,14 @@ import React, { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/authStore";
 import { Loader2, Plus, Edit2, Trash2, Eye, ExternalLink, Sparkles } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
-import BlogVisualEditor from "@/components/admin/BlogVisualEditor";
+import BlankCanvasBlogEditor from "@/components/admin/BlankCanvasBlogEditor";
 
 export default function BlogsManager() {
   const { accessToken } = useAuthStore();
   const [blogs, setBlogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Visual Editor State
+  // Blank Canvas Tag Editor State
   const [showEditor, setShowEditor] = useState(false);
   const [editingBlog, setEditingBlog] = useState<any | null>(null);
 
@@ -113,10 +113,10 @@ export default function BlogsManager() {
     );
   }
 
-  // If in Visual Block Editor mode, render full-screen block canvas
+  // If in Blank Canvas Tag Editor mode, render full-screen canvas
   if (showEditor) {
     return (
-      <BlogVisualEditor
+      <BlankCanvasBlogEditor
         initialBlog={editingBlog}
         onSave={handleSaveBlog}
         onCancel={handleCloseEditor}
@@ -132,11 +132,11 @@ export default function BlogsManager() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
             <span>Blog Articles & Content Engine</span>
             <span className="px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom text-[11px] font-mono font-bold border border-accent-custom/20">
-              Visual Editor Active
+              Blank Canvas & tags.md Engine
             </span>
           </h1>
           <p className="text-xs text-secondary-custom mt-1 font-mono">
-            Compose high-ranking SEO & AEO articles with dynamic blocks, auto-adjusting media, and responsive card tables.
+            Paste or compose raw tagged text using tags.md reference. Instant compilation with dynamic tables, stat grids, and media layouts.
           </p>
         </div>
 
@@ -158,7 +158,7 @@ export default function BlogsManager() {
               onClick={handleCreateNew}
               className="px-4 py-2 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 font-semibold hover:bg-accent-custom/20 transition-colors cursor-pointer"
             >
-              Launch Visual Block Editor
+              Launch Blank Canvas Editor
             </button>
           </div>
         ) : (
