@@ -18,7 +18,9 @@ import {
   ArrowRight,
   TrendingUp,
   Bookmark,
-  ChevronDown
+  ChevronDown,
+  FileQuestion,
+  AlertCircle
 } from "lucide-react";
 import { formatISTDate } from "@/lib/formatters";
 
@@ -35,6 +37,8 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
   const [blog, setBlog] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [countdown, setCountdown] = useState(5);
   const [copied, setCopied] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("");
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
@@ -642,12 +646,20 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
         if (response.ok) {
           const data = await response.json();
           setBlog(data);
+        } else if (fallbackBlogs[slug]) {
+          // Standard reference blogs
+          setBlog(fallbackBlogs[slug]);
         } else {
-          setBlog(fallbackBlogs[slug] || fallbackBlogs["will-ai-replace-humans"]);
+          // Blog was deleted or not found
+          setNotFound(true);
         }
       } catch (err) {
-        console.error("Fetch blog failed, loading fallback", err);
-        setBlog(fallbackBlogs[slug] || fallbackBlogs["will-ai-replace-humans"]);
+        console.error("Fetch blog failed, checking fallback", err);
+        if (fallbackBlogs[slug]) {
+          setBlog(fallbackBlogs[slug]);
+        } else {
+          setNotFound(true);
+        }
       } finally {
         setLoading(false);
       }
@@ -655,6 +667,22 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
     fetchBlog();
   }, [slug]);
+
+  // Automatic countdown and redirect back to /blogs if article is deleted / unavailable
+  useEffect(() => {
+    if (!notFound) return;
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          window.location.href = "/blogs";
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [notFound]);
 
   // Guarantee user starts at top of article without auto-jumping to bottom form
   useEffect(() => {
@@ -714,6 +742,55 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
       <div className={`min-h-screen bg-background flex items-center justify-center flex-col gap-3 ${poppins.className}`}>
         <div className="w-8 h-8 rounded-[2px] border-2 border-accent-custom border-t-transparent animate-spin" />
         <span className="font-mono text-xs text-secondary-custom">Loading article...</span>
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className={`${poppins.className} font-sans min-h-screen bg-background text-foreground antialiased flex flex-col justify-between`}>
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center pt-32 pb-20 px-4">
+          <div className="max-w-xl w-full text-center space-y-6 p-8 sm:p-10 rounded-[4px] border border-border-custom bg-surface shadow-2xl">
+            <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-500 shadow-inner">
+              <FileQuestion className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2.5">
+              <span className="inline-block px-2.5 py-0.5 rounded-[2px] bg-red-500/10 text-red-500 border border-red-500/20 text-[10.5px] font-mono uppercase font-bold tracking-wider">
+                Article Unavailable or Removed
+              </span>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                This Article Is No Longer Published
+              </h1>
+              <p className="text-xs sm:text-sm text-secondary-custom font-mono leading-relaxed max-w-md mx-auto">
+                The article at <code className="text-accent-custom px-1.5 py-0.5 bg-background border border-border-custom rounded-[2px]">/blogs/{slug}</code> has been deleted, unpublished, or moved by our editorial team.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-[3px] bg-background border border-border-custom text-xs font-mono text-secondary-custom flex items-center justify-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-accent-custom animate-ping" />
+              <span>Redirecting to all articles in <strong className="text-foreground font-bold">{countdown}s</strong>...</span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Link
+                href="/blogs"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-[3px] bg-accent-custom text-white hover:opacity-95 text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-sm shadow-accent-custom/20 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Return to All Articles Now</span>
+              </Link>
+              <Link
+                href="/contact"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-[3px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom text-xs font-mono font-medium transition-all"
+              >
+                Contact Team
+              </Link>
+            </div>
+          </div>
+        </main>
+        <FooterSection />
       </div>
     );
   }

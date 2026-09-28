@@ -861,8 +861,10 @@ Explore our [LINK href="https://techinfinix.com/services" title="Enterprise Auto
                 >
                   <option value="full">Full-Width Banner (16:9)</option>
                   <option value="centered">Centered Inset (Charts/Screenshots)</option>
-                  <option value="split-left">Side-by-Side (Image Left)</option>
-                  <option value="split-right">Side-by-Side (Image Right)</option>
+                  <option value="split-left">Side-by-Side (Image Left, Caption Right)</option>
+                  <option value="split-right">Side-by-Side (Caption Left, Image Right)</option>
+                  <option value="inline-left">Inline Floated Left (Text wraps right)</option>
+                  <option value="inline-right">Inline Floated Right (Text wraps left)</option>
                 </select>
               </div>
             </div>

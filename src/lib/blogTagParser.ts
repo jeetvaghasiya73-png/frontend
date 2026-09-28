@@ -190,24 +190,42 @@ ${subBody.trim()}`;
     }
   );
 
-  // Process [IMAGE] tags
+  // Process [IMAGE_GRID] ... [/IMAGE_GRID] (2 or 3 images side-by-side)
   text = text.replace(
-    /\[IMAGE\s+src=["']([^"']+)["'](?:\s+alt=["']([^"']*)["'])?(?:\s+caption=["']([^"']*)["'])?(?:\s+layout=["']([^"']*)["'])?\s*\/?\]/gi,
-    (match, src, alt, caption, layout) => {
-      const cleanAlt = alt ? alt.replace(/"/g, "&quot;") : "Tech Infinix Architecture";
-      const layoutMode = layout || "full";
-      const captionHtml = caption
-        ? `<div class="p-2.5 bg-surface text-center border-t border-border-custom/50 text-[11px] text-secondary-custom font-mono">${caption}</div>`
-        : "";
+    /\[IMAGE_GRID(?:\s+cols=["']([^"']*)["'])?\]([\s\S]*?)\[\/IMAGE_GRID\]/gi,
+    (match, colsAttr, innerBody) => {
+      const cols = colsAttr === "3" ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2";
+      return `<div class="my-6 grid ${cols} gap-4 items-start blog-image-grid">\n${innerBody.trim()}\n</div>`;
+    }
+  );
 
-      if (layoutMode === "centered") {
-        return `
+  // Process [IMAGE] tags (Flexible attribute order: src, alt, caption, layout)
+  text = text.replace(/\[IMAGE\s+([^\]]+?)\/?\]/gi, (match, attrsStr) => {
+    const getAttr = (name: string): string => {
+      const m = attrsStr.match(new RegExp(`${name}=["']([^"']*)["']`, "i"));
+      return m ? m[1] : "";
+    };
+
+    const src = getAttr("src");
+    if (!src) return match; // Not a valid image tag without src
+
+    const alt = getAttr("alt");
+    const caption = getAttr("caption");
+    const layoutMode = getAttr("layout").toLowerCase() || "full";
+    const cleanAlt = alt ? alt.replace(/"/g, "&quot;") : "Tech Infinix Visual";
+
+    const captionHtml = caption
+      ? `<div class="p-2.5 bg-surface text-center border-t border-border-custom/50 text-[11px] text-secondary-custom font-mono">${caption}</div>`
+      : "";
+
+    if (layoutMode === "centered") {
+      return `
 <div class="my-6 max-w-2xl mx-auto rounded-[3px] overflow-hidden border border-border-custom shadow-xl shadow-black/5 dark:shadow-black/40 blog-image-wrapper layout-centered" data-layout="centered">
   <img src="${src}" alt="${cleanAlt}" class="w-full h-auto object-cover" loading="lazy" />
   ${captionHtml}
 </div>`;
-      } else if (layoutMode === "split-left") {
-        return `
+    } else if (layoutMode === "split-left") {
+      return `
 <div class="my-6 grid grid-cols-1 md:grid-cols-2 gap-5 items-center rounded-[3px] border border-border-custom p-4 bg-surface blog-image-wrapper layout-split-left" data-layout="split-left">
   <div class="rounded-[2px] overflow-hidden border border-border-custom shadow-md">
     <img src="${src}" alt="${cleanAlt}" class="w-full h-auto object-cover aspect-[4/3]" loading="lazy" />
@@ -216,8 +234,8 @@ ${subBody.trim()}`;
     ${caption ? `<p class="font-mono text-[11px] text-foreground font-semibold">${caption}</p>` : ""}
   </div>
 </div>`;
-      } else if (layoutMode === "split-right") {
-        return `
+    } else if (layoutMode === "split-right") {
+      return `
 <div class="my-6 grid grid-cols-1 md:grid-cols-2 gap-5 items-center rounded-[3px] border border-border-custom p-4 bg-surface blog-image-wrapper layout-split-right" data-layout="split-right">
   <div class="space-y-2 text-xs text-secondary-custom leading-relaxed">
     ${caption ? `<p class="font-mono text-[11px] text-foreground font-semibold">${caption}</p>` : ""}
@@ -226,16 +244,27 @@ ${subBody.trim()}`;
     <img src="${src}" alt="${cleanAlt}" class="w-full h-auto object-cover aspect-[4/3]" loading="lazy" />
   </div>
 </div>`;
-      } else {
-        // Full width 16:9 banner
-        return `
+    } else if (layoutMode === "inline-left") {
+      return `
+<div class="my-4 md:float-left md:mr-6 md:mb-4 max-w-xs rounded-[3px] overflow-hidden border border-border-custom shadow-md blog-image-wrapper layout-inline-left" data-layout="inline-left">
+  <img src="${src}" alt="${cleanAlt}" class="w-full h-auto object-cover" loading="lazy" />
+  ${captionHtml}
+</div>`;
+    } else if (layoutMode === "inline-right") {
+      return `
+<div class="my-4 md:float-right md:ml-6 md:mb-4 max-w-xs rounded-[3px] overflow-hidden border border-border-custom shadow-md blog-image-wrapper layout-inline-right" data-layout="inline-right">
+  <img src="${src}" alt="${cleanAlt}" class="w-full h-auto object-cover" loading="lazy" />
+  ${captionHtml}
+</div>`;
+    } else {
+      // Default: Full width 16:9 banner
+      return `
 <div class="my-6 rounded-[3px] overflow-hidden border border-border-custom shadow-xl shadow-black/5 dark:shadow-black/40 blog-image-wrapper layout-full" data-layout="full">
   <img src="${src}" alt="${cleanAlt}" class="w-full h-auto aspect-[16/9] object-cover" loading="lazy" />
   ${captionHtml}
 </div>`;
-      }
     }
-  );
+  });
 
   // Process [TABLE] ... [/TABLE] with automatic Mobile Card Conversion (data-label injection)
   text = text.replace(/\[TABLE\]([\s\S]*?)\[\/TABLE\]/gi, (match, tableContent) => {

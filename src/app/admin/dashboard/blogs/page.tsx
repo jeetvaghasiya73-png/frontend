@@ -90,17 +90,22 @@ export default function BlogsManager() {
     }
   };
 
-  const handleDelete = async (blogId: number) => {
-    if (!confirm("Are you sure you want to delete this blog post?")) return;
+  const handleDelete = async (blog: any) => {
+    const target = blog.id || blog.slug;
+    if (!confirm(`Are you sure you want to delete "${blog.title}"?`)) return;
     try {
-      const response = await authFetch(`${API}/api/v1/blogs/${blogId}`, {
+      const response = await authFetch(`${API}/api/v1/blogs/${target}`, {
         method: "DELETE",
       });
       if (response.ok) {
-        setBlogs(blogs.filter((b) => b.id !== blogId));
+        setBlogs((prev) => prev.filter((b) => b.id !== blog.id && b.slug !== blog.slug));
+      } else {
+        const err = await response.json().catch(() => ({}));
+        alert(err.detail || "Failed to delete article");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to delete blog:", err);
+      alert("Delete failed: " + err.message);
     }
   };
 
@@ -239,7 +244,7 @@ export default function BlogsManager() {
                 </button>
 
                 <button
-                  onClick={() => handleDelete(blog.id)}
+                  onClick={() => handleDelete(blog)}
                   className="w-8 h-8 rounded-[2px] border border-border-custom bg-background flex items-center justify-center text-secondary-custom hover:text-red-500 hover:border-red-500/30 cursor-pointer transition-all"
                   title="Delete Article"
                   aria-label="Delete blog"
