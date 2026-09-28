@@ -184,29 +184,29 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
     </thead>
     <tbody>
       <tr>
-        <td><strong>Speed & Scale</strong></td>
-        <td>Processes billions of tokens in milliseconds</td>
-        <td>Discerns which questions are worth asking</td>
+        <td class="domain-cell"><strong>Speed &amp; Scale</strong></td>
+        <td data-label="AI Capabilities 🤖">Processes billions of tokens in milliseconds</td>
+        <td data-label="Human Superpower 🧠">Discerns which questions are worth asking</td>
       </tr>
       <tr>
-        <td><strong>Pattern Recognition</strong></td>
-        <td>Detects subtle statistical correlations across gigabytes of telemetry</td>
-        <td>Identifies "black swan" outliers and novel cultural contexts</td>
+        <td class="domain-cell"><strong>Pattern Recognition</strong></td>
+        <td data-label="AI Capabilities 🤖">Detects subtle statistical correlations across gigabytes of telemetry</td>
+        <td data-label="Human Superpower 🧠">Identifies "black swan" outliers and novel cultural contexts</td>
       </tr>
       <tr>
-        <td><strong>Content Generation</strong></td>
-        <td>Drafts boilerplate articles, summaries, and code</td>
-        <td>Infuses authentic lived experience, emotional resonance, and contrarian perspectives</td>
+        <td class="domain-cell"><strong>Content Generation</strong></td>
+        <td data-label="AI Capabilities 🤖">Drafts boilerplate articles, summaries, and code</td>
+        <td data-label="Human Superpower 🧠">Infuses authentic lived experience, emotional resonance, and contrarian perspectives</td>
       </tr>
       <tr>
-        <td><strong>Strategic Decision</strong></td>
-        <td>Simulates scenarios and probabilistic game trees</td>
-        <td>Takes ethical accountability and commits capital under true uncertainty</td>
+        <td class="domain-cell"><strong>Strategic Decision</strong></td>
+        <td data-label="AI Capabilities 🤖">Simulates scenarios and probabilistic game trees</td>
+        <td data-label="Human Superpower 🧠">Takes ethical accountability and commits capital under true uncertainty</td>
       </tr>
       <tr>
-        <td><strong>Relationship Building</strong></td>
-        <td>Executes round-the-clock transactional conversations</td>
-        <td>Forges long-term loyalty, shared values, and interpersonal trust</td>
+        <td class="domain-cell"><strong>Relationship Building</strong></td>
+        <td data-label="AI Capabilities 🤖">Executes round-the-clock transactional conversations</td>
+        <td data-label="Human Superpower 🧠">Forges long-term loyalty, shared values, and interpersonal trust</td>
       </tr>
     </tbody>
   </table>
@@ -216,20 +216,20 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 <p>The professionals who will dominate the next decade are neither AI purists nor Luddites. They are <strong>Centaurs</strong>: individuals who blend human strategic intuition with algorithmic horse-power.</p>
 
 <p>Consider how modern high-performance software engineering works today at Tech Infinix:</p>
-<ul class="space-y-2 my-3">
+<ul class="space-y-1.5 my-2.5">
   <li>A senior engineer conceptualizes the data model, defines system boundaries, and anticipates edge-case security risks.</li>
   <li>They prompt an autonomous agent fleet (like LangGraph or Claude) to scaffold the FastAPI endpoints, database schemas, and unit test suites in 45 seconds.</li>
   <li>The engineer reviews, refactors, and deploys. A task that previously took 4 days now concludes before lunch.</li>
 </ul>
 
 <div class="blog-quote-box">
-  <p class="italic text-foreground font-medium text-sm sm:text-[15px] mb-1.5 leading-relaxed">"Technology does not replace people. It replaces tasks. Those who let go of low-leverage tasks first will command the future."</p>
-  <span class="text-[11px] font-mono text-secondary-custom uppercase tracking-wider">— Tech Infinix Engineering Principles</span>
+  <p class="italic text-foreground font-medium text-xs sm:text-[13px] mb-1 leading-relaxed">"Technology does not replace people. It replaces tasks. Those who let go of low-leverage tasks first will command the future."</p>
+  <span class="text-[10px] font-mono text-secondary-custom uppercase tracking-wider">— Tech Infinix Engineering Principles</span>
 </div>
 
 <h2 id="future-proof-steps">6. How to Future-Proof Your Career & Enterprise</h2>
 <p>To thrive alongside autonomous systems, implement these four strategic shifts today:</p>
-<ol class="space-y-2.5 my-3">
+<ol class="space-y-2 my-2.5">
   <li><strong>Master System Architecture over Syntax:</strong> Stop spending hours memorizing commands or syntax. Instead, learn how systems interact, how APIs exchange data, and how security models govern access.</li>
   <li><strong>Build a High-Trust Personal Brand:</strong> Algorithms are commodities; reputation is scarce. Cultivate verified domain expertise, case studies, and transparent client partnerships.</li>
   <li><strong>Deploy Autonomous Agents for Repetitive Overhead:</strong> Automate data entry, outbound outreach, and inbound lead qualification so your core team can focus on closing deals and product innovation.</li>
@@ -241,104 +241,183 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
       custom_css: `
 .blog-content {
   font-family: 'Poppins', var(--font-poppins), sans-serif;
-  font-size: 0.9375rem;
-  line-height: 1.75;
+  font-size: 0.8125rem !important;
+  line-height: 1.68 !important;
   letter-spacing: -0.005em;
 }
 .blog-content h2 {
   font-family: 'Poppins', var(--font-poppins), sans-serif;
-  font-size: 1.375rem;
-  font-weight: 700;
-  margin-top: 2.25rem;
-  margin-bottom: 0.75rem;
-  color: var(--foreground);
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  margin-top: 1.6rem !important;
+  margin-bottom: 0.45rem !important;
+  color: var(--foreground) !important;
   letter-spacing: -0.015em;
-  line-height: 1.35;
+  line-height: 1.35 !important;
 }
 .blog-content h3 {
   font-family: 'Poppins', var(--font-poppins), sans-serif;
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: var(--foreground);
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  margin-top: 1.2rem !important;
+  margin-bottom: 0.35rem !important;
+  color: var(--foreground) !important;
   letter-spacing: -0.01em;
-  line-height: 1.4;
+  line-height: 1.4 !important;
 }
 .blog-content p {
   font-family: 'Poppins', var(--font-poppins), sans-serif;
-  font-size: 0.9375rem;
-  margin-bottom: 1.25rem;
-  color: var(--foreground);
-  opacity: 0.90;
-  line-height: 1.78;
+  font-size: 0.8125rem !important;
+  margin-bottom: 0.95rem !important;
+  color: var(--foreground) !important;
+  opacity: 0.88;
+  line-height: 1.68 !important;
 }
 .blog-content ul, .blog-content ol {
   font-family: 'Poppins', var(--font-poppins), sans-serif;
-  font-size: 0.9375rem;
-  line-height: 1.72;
-  color: var(--foreground);
-  opacity: 0.90;
+  font-size: 0.8125rem !important;
+  line-height: 1.65 !important;
+  color: var(--foreground) !important;
+  opacity: 0.88;
+}
+.blog-content li {
+  font-size: 0.8125rem !important;
+  line-height: 1.65 !important;
 }
 .blog-callout {
-  padding: 1.25rem 1.5rem;
+  padding: 1.15rem 1.25rem;
   border-radius: 3px;
-  margin: 1.75rem 0;
+  margin: 1.5rem 0;
   background: var(--surface);
   border: 1px solid var(--border-custom);
   border-left: 3px solid var(--accent-custom);
-  box-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 6px -1px rgba(0, 0, 0, 0.02);
 }
 .blog-highlight-box {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.07) 0%, rgba(41, 98, 255, 0.03) 100%);
   border: 1px solid rgba(99, 102, 241, 0.20);
   border-left: 3px solid var(--accent-custom);
   border-radius: 3px;
-  padding: 1.35rem 1.5rem;
-  margin: 1.75rem 0;
+  padding: 1.15rem 1.25rem;
+  margin: 1.5rem 0;
 }
 .blog-table-wrapper {
   overflow-x: auto;
-  margin: 1.75rem 0;
+  margin: 1.5rem 0;
   border-radius: 3px;
   border: 1px solid var(--border-custom);
+  background: var(--surface);
 }
 .blog-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.825rem;
+  font-size: 0.775rem;
   text-align: left;
 }
 .blog-table th {
   background: var(--surface);
-  padding: 0.75rem 0.9rem;
+  padding: 0.65rem 0.75rem;
   font-weight: 600;
+  font-size: 0.72rem;
   border-bottom: 1px solid var(--border-custom);
   color: var(--foreground);
   font-family: 'Poppins', var(--font-poppins), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 .blog-table td {
-  padding: 0.75rem 0.9rem;
+  padding: 0.65rem 0.75rem;
   border-bottom: 1px solid var(--border-custom);
   color: var(--foreground);
-  line-height: 1.55;
+  font-size: 0.775rem;
+  line-height: 1.5;
 }
+.blog-table tr:last-child td {
+  border-bottom: none;
+}
+.blog-table tr:nth-child(even) td {
+  background: rgba(125, 125, 125, 0.02);
+}
+
+/* Responsive Card Layout on Mobile (< 640px) */
+@media (max-width: 640px) {
+  .blog-table-wrapper {
+    border: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+    margin: 1rem 0 !important;
+  }
+  .blog-table {
+    display: block !important;
+    width: 100% !important;
+  }
+  .blog-table thead {
+    display: none !important;
+  }
+  .blog-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+  }
+  .blog-table tr {
+    display: block !important;
+    width: 100% !important;
+    background: var(--surface) !important;
+    border: 1px solid var(--border-custom) !important;
+    border-radius: 3px !important;
+    padding: 0.75rem 0.85rem !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02) !important;
+  }
+  .blog-table td {
+    display: block !important;
+    width: 100% !important;
+    padding: 0.35rem 0 !important;
+    border-bottom: 1px solid var(--border-custom) !important;
+    font-size: 0.75rem !important;
+    line-height: 1.45 !important;
+  }
+  .blog-table td:last-child {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+  }
+  .blog-table td.domain-cell,
+  .blog-table td:first-child {
+    padding-top: 0 !important;
+    padding-bottom: 0.35rem !important;
+    font-size: 0.8rem !important;
+    color: var(--accent-custom) !important;
+    font-weight: 700 !important;
+    border-bottom: 1px solid var(--border-custom) !important;
+  }
+  .blog-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--secondary-custom);
+    margin-bottom: 0.15rem;
+  }
+}
+
 .blog-stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 1rem;
-  margin: 1.75rem 0;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin: 1.5rem 0;
 }
 .blog-stat-card {
-  padding: 1.15rem 1rem;
+  padding: 0.9rem 0.75rem;
   border-radius: 3px;
   background: var(--surface);
   border: 1px solid var(--border-custom);
   text-align: center;
-  box-shadow: 0 1px 6px -1px rgba(0,0,0,0.02);
+  box-shadow: 0 1px 5px -1px rgba(0,0,0,0.02);
 }
 .blog-stat-number {
-  font-size: 1.75rem;
+  font-size: 1.4rem;
   font-weight: 700;
   background: linear-gradient(135deg, #2962FF 0%, #6366F1 100%);
   -webkit-background-clip: text;
@@ -347,18 +426,18 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
   font-family: 'Poppins', var(--font-poppins), sans-serif;
 }
 .blog-stat-label {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   font-weight: 500;
   color: var(--secondary-custom);
-  margin-top: 0.35rem;
+  margin-top: 0.25rem;
   line-height: 1.35;
 }
 .blog-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.65rem;
+  padding: 0.2rem 0.55rem;
   border-radius: 2px;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
   background: rgba(99, 102, 241, 0.10);
   color: #6366F1;
@@ -366,10 +445,10 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
   font-family: 'Poppins', var(--font-poppins), sans-serif;
 }
 .blog-quote-box {
-  padding: 1.25rem 1.5rem;
+  padding: 1.15rem 1.25rem;
   border-left: 3px solid var(--accent-custom);
   background: var(--surface);
-  margin: 1.75rem 0;
+  margin: 1.5rem 0;
   border-radius: 3px;
 }`
     },
@@ -525,32 +604,32 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
         </div>
 
         {/* ═══════ ARTICLE TITLE & HERO METADATA (Full Spacious Width) ═══════ */}
-        <div id="article-top" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
-          <div className="max-w-4xl space-y-3.5">
-            <h1 className="text-2xl sm:text-3xl lg:text-[38px] font-bold tracking-tight text-foreground leading-[1.25]">
+        <div id="article-top" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+          <div className="max-w-4xl space-y-2.5">
+            <h1 className="text-lg sm:text-xl lg:text-[26px] font-bold tracking-tight text-foreground leading-[1.3]">
               {blog.title}
             </h1>
 
             {/* Author Meta Row */}
-            <div className="flex flex-wrap items-center gap-4 sm:gap-5 pt-1 text-[11px] sm:text-xs text-secondary-custom font-mono">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-[2px] bg-accent-custom/15 border border-accent-custom/30 text-accent-custom font-bold text-[11px] flex items-center justify-center">
+            <div className="flex flex-wrap items-center gap-3.5 sm:gap-4 pt-0.5 text-[11px] text-secondary-custom font-mono">
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-5 rounded-[2px] bg-accent-custom/15 border border-accent-custom/30 text-accent-custom font-bold text-[10px] flex items-center justify-center">
                   TI
                 </div>
                 <span className="text-foreground font-semibold">{blog.author || "Tech Infinix Research Team"}</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-accent-custom" />
+              <div className="flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-accent-custom" />
                 <span>{formatISTDate(blog.created_at)}</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-accent-custom" />
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-accent-custom" />
                 <span>{blog.readTime || "5 min read"}</span>
               </div>
             </div>
 
             {blog.summary && (
-              <p className="text-sm sm:text-[15px] text-secondary-custom/90 leading-relaxed font-normal pt-1.5 border-l-2 border-accent-custom pl-3.5 italic bg-surface/20 rounded-r-[2px] py-1.5">
+              <p className="text-[12px] sm:text-[13px] text-secondary-custom/90 leading-relaxed font-normal pt-1 border-l-2 border-accent-custom pl-3 italic bg-surface/20 rounded-r-[2px] py-1">
                 "{blog.summary}"
               </p>
             )}
@@ -610,7 +689,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
               </div>
 
               {/* Article Content */}
-              <div className="blog-content prose dark:prose-invert max-w-none text-foreground">
+              <div className="blog-content max-w-none text-foreground">
                 {isHtml(blog.content) ? (
                   <div dangerouslySetInnerHTML={{ __html: blog.content }} />
                 ) : (
@@ -934,7 +1013,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           </div>
 
           {/* Responsive: HORIZONTALLY scrollable row with snap points on mobile | 4-Column Grid on desktop */}
-          <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 overflow-x-auto sm:overflow-visible pb-4 sm:pb-0 scrollbar-none snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 overflow-x-auto sm:overflow-visible pb-4 sm:pb-0 scrollbar-none snap-x snap-mandatory pl-3 sm:pl-0 pr-4 sm:pr-0">
             {relatedArticles.map((item, idx) => (
               <Link
                 key={idx}

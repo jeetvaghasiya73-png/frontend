@@ -627,3 +627,169 @@ body[data-dash-theme="dark"],
   color: var(--dash-text-secondary);
   border: 1px solid var(--dash-border);
 }
+
+/* ═══════════════════════════════════════════════════════════
+   BLOG EDITORIAL TYPOGRAPHY & RESPONSIVE COMPARISON TABLES
+   ═══════════════════════════════════════════════════════════ */
+.blog-content {
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
+  font-size: 0.8125rem;
+  line-height: 1.68;
+  letter-spacing: -0.005em;
+}
+.blog-content h2 {
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-top: 1.6rem;
+  margin-bottom: 0.45rem;
+  color: var(--foreground);
+  letter-spacing: -0.015em;
+  line-height: 1.35;
+}
+.blog-content h3 {
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-top: 1.2rem;
+  margin-bottom: 0.35rem;
+  color: var(--foreground);
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+}
+.blog-content p {
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
+  font-size: 0.8125rem;
+  margin-bottom: 0.95rem;
+  color: var(--foreground);
+  opacity: 0.88;
+  line-height: 1.68;
+}
+.blog-content ul, .blog-content ol {
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--foreground);
+  opacity: 0.88;
+}
+.blog-content li {
+  font-size: 0.8125rem;
+  line-height: 1.65;
+}
+.blog-callout {
+  padding: 1.15rem 1.25rem;
+  border-radius: 3px;
+  margin: 1.5rem 0;
+  background: var(--surface);
+  border: 1px solid var(--border-custom);
+  border-left: 3px solid var(--accent-custom);
+  box-shadow: 0 1px 6px -1px rgba(0, 0, 0, 0.02);
+}
+.blog-highlight-box {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.07) 0%, rgba(41, 98, 255, 0.03) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.20);
+  border-left: 3px solid var(--accent-custom);
+  border-radius: 3px;
+  padding: 1.15rem 1.25rem;
+  margin: 1.5rem 0;
+}
+.blog-table-wrapper {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  border-radius: 3px;
+  border: 1px solid var(--border-custom);
+  background: var(--surface);
+}
+.blog-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.775rem;
+  text-align: left;
+}
+.blog-table th {
+  background: var(--surface);
+  padding: 0.65rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.72rem;
+  border-bottom: 1px solid var(--border-custom);
+  color: var(--foreground);
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.blog-table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--border-custom);
+  color: var(--foreground);
+  font-size: 0.775rem;
+  line-height: 1.5;
+}
+.blog-table tr:last-child td {
+  border-bottom: none;
+}
+.blog-table tr:nth-child(even) td {
+  background: rgba(125, 125, 125, 0.02);
+}
+
+/* Responsive Card Layout on Mobile (< 640px) */
+@media (max-width: 640px) {
+  .blog-table-wrapper {
+    border: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+    margin: 1rem 0 !important;
+  }
+  .blog-table {
+    display: block !important;
+    width: 100% !important;
+  }
+  .blog-table thead {
+    display: none !important;
+  }
+  .blog-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+  }
+  .blog-table tr {
+    display: block !important;
+    width: 100% !important;
+    background: var(--surface) !important;
+    border: 1px solid var(--border-custom) !important;
+    border-radius: 3px !important;
+    padding: 0.75rem 0.85rem !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02) !important;
+  }
+  .blog-table td {
+    display: block !important;
+    width: 100% !important;
+    padding: 0.35rem 0 !important;
+    border-bottom: 1px solid var(--border-custom) !important;
+    font-size: 0.75rem !important;
+    line-height: 1.45 !important;
+  }
+  .blog-table td:last-child {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+  }
+  .blog-table td.domain-cell,
+  .blog-table td:first-child {
+    padding-top: 0 !important;
+    padding-bottom: 0.35rem !important;
+    font-size: 0.8rem !important;
+    color: var(--accent-custom) !important;
+    font-weight: 700 !important;
+    border-bottom: 1px solid var(--border-custom) !important;
+  }
+  .blog-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--secondary-custom);
+    margin-bottom: 0.15rem;
+  }
+}
