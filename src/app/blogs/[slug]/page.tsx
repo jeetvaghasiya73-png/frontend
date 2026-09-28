@@ -18,7 +18,6 @@ import {
   ArrowRight,
   TrendingUp,
   Bookmark,
-  ChevronRight,
   ChevronDown
 } from "lucide-react";
 import { formatISTDate } from "@/lib/formatters";
@@ -514,7 +513,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           </div>
         </div>
 
-        {/* ═══════ ARTICLE TITLE & HERO METADATA (Full Spacious Width, Never Squished) ═══════ */}
+        {/* ═══════ ARTICLE TITLE & HERO METADATA (Full Spacious Width) ═══════ */}
         <div id="article-top" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
           <div className="max-w-4xl space-y-4">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-[1.2]">
@@ -547,7 +546,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           </div>
         </div>
 
-        {/* ═══════ 2-COLUMN ARTICLE + STICKY SIDEBAR (Contained Grid, Never Collides) ═══════ */}
+        {/* ═══════ 2-COLUMN ARTICLE + STICKY SIDEBAR (Never Cut-Off, Fits 100% On Screen) ═══════ */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             
@@ -709,187 +708,190 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
             </article>
 
-            {/* ─── RIGHT: STICKY SIDEBAR (4 Cols - Fixed in view during article scroll, Stops at article bottom) ─── */}
-            <aside className="hidden lg:block lg:col-span-4 self-start sticky top-28 space-y-5">
-              <div className="max-h-[calc(100vh-8.5rem)] overflow-y-auto pr-1.5 space-y-5 scrollbar-none">
-
-                {/* Table of Contents ("On This Page") with live active section indicator */}
-                <div className="p-5 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-border-custom">
-                    <h4 className="text-xs font-mono font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-[1px] bg-accent-custom animate-pulse" />
-                      <span>On This Page</span>
-                    </h4>
-                    <span className="text-[10px] font-mono text-secondary-custom font-semibold">
-                      {Math.round(readingProgress)}% read
+            {/* ─── RIGHT: STICKY SIDEBAR (4 Cols - Beautifully compact, 100% visible on any screen) ─── */}
+            <aside className="hidden lg:block lg:col-span-4 self-start sticky top-28 space-y-4">
+              
+              {/* Card 1: Table of Contents ("On This Page") with live active section indicator */}
+              <div className="p-4 sm:p-5 rounded-[3px] bg-surface border border-border-custom shadow-xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-border-custom">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-[1px] bg-accent-custom animate-pulse" />
+                    <span className="text-[11px] font-mono font-bold text-foreground uppercase tracking-wider">
+                      On This Page
                     </span>
                   </div>
-
-                  <nav className="space-y-1 text-xs">
-                    {tocItems.map((item) => (
-                      <a
-                        key={item.id}
-                        href={`#${item.id}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const el = document.getElementById(item.id);
-                          if (el) {
-                            el.scrollIntoView({ behavior: "smooth", block: "start" });
-                            setActiveSection(item.id);
-                          }
-                        }}
-                        className={`block py-1.5 px-2.5 rounded-[2px] font-medium transition-all ${
-                          activeSection === item.id
-                            ? "bg-accent-custom/10 text-accent-custom font-semibold border-l-2 border-accent-custom pl-3"
-                            : "text-secondary-custom hover:text-foreground hover:bg-background/60"
-                        }`}
-                      >
-                        {item.label}
-                      </a>
-                    ))}
-                  </nav>
+                  <span className="text-[10px] font-mono text-secondary-custom font-semibold">
+                    {Math.round(readingProgress)}% read
+                  </span>
                 </div>
 
-                {/* Quick Social Share Box */}
-                <div className="p-4 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-2.5">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-secondary-custom font-bold block">
-                    Share Article
+                {/* Reading Progress Line */}
+                <div className="w-full bg-border-custom/50 h-[3px] rounded-[1px] overflow-hidden">
+                  <div
+                    className="bg-accent-custom h-full transition-all duration-150"
+                    style={{ width: `${readingProgress}%` }}
+                  />
+                </div>
+
+                <nav className="space-y-0.5 text-xs pt-1">
+                  {tocItems.map((item) => (
+                    <a
+                      key={item.id}
+                      href={`#${item.id}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const el = document.getElementById(item.id);
+                        if (el) {
+                          el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          setActiveSection(item.id);
+                        }
+                      }}
+                      className={`block py-1.5 px-2.5 rounded-[2px] font-medium transition-all ${
+                        activeSection === item.id
+                          ? "bg-accent-custom/10 text-accent-custom font-semibold border-l-2 border-accent-custom pl-2.5"
+                          : "text-secondary-custom hover:text-foreground hover:bg-background/60"
+                      }`}
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                </nav>
+              </div>
+
+              {/* Card 2: High-Converting Enterprise Automation Proposal + WhatsApp Quick Chat */}
+              <div className="p-4 sm:p-5 rounded-[3px] bg-surface border border-border-custom hover:border-accent-custom/40 transition-colors shadow-xs relative overflow-hidden space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 text-[10px] font-mono uppercase tracking-wider font-bold">
+                    <Sparkles className="w-3 h-3 text-accent-custom" />
+                    Custom AI &amp; SEO
                   </span>
-                  <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono text-emerald-500 font-semibold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Available Now
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  <h3 className="text-sm font-bold text-foreground leading-snug">
+                    Scale Workflows With Autonomous AI
+                  </h3>
+                  <p className="text-xs text-secondary-custom leading-relaxed">
+                    Custom LangGraph agents, 24/7 WhatsApp bots, and Google Maps SEO designed for your enterprise.
+                  </p>
+                </div>
+
+                <div className="pt-1 flex items-center gap-2">
+                  <a
+                    href="#contact"
+                    className="flex-1 py-2 px-3 rounded-[2px] bg-accent-custom text-white hover:opacity-95 text-xs font-semibold font-mono flex items-center justify-center gap-1.5 shadow-sm shadow-accent-custom/20 transition-all text-center"
+                  >
+                    <span>Claim Proposal</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </a>
+                  <a
+                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent("Hi Tech Infinix, I'd like to discuss custom AI automation & SEO for my business.")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-2 px-2.5 rounded-[2px] bg-background border border-border-custom hover:border-emerald-500 hover:text-emerald-500 text-secondary-custom text-xs font-mono font-medium flex items-center justify-center gap-1 transition-all"
+                    title="Direct WhatsApp"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>WhatsApp</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Card 3: Social Share + Trending Reads (Combined into a sleek, compact card) */}
+              <div className="p-4 sm:p-5 rounded-[3px] bg-surface border border-border-custom shadow-xs space-y-3.5">
+                {/* 1-Line Social Share Row */}
+                <div className="flex items-center justify-between pb-3 border-b border-border-custom">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-secondary-custom font-bold">
+                    Share
+                  </span>
+                  <div className="flex items-center gap-1.5">
                     <a
                       href={`https://twitter.com/intent/tweet?text=${shareTitle}&url=${encodeURIComponent(currentUrl)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 py-2 px-2.5 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom text-xs font-mono flex items-center justify-center gap-1.5 transition-all"
-                      title="Share on X / Twitter"
+                      className="p-1.5 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all"
+                      title="Share on X"
                     >
-                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 23.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                       </svg>
-                      <span>Post</span>
                     </a>
                     <a
                       href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 py-2 px-2.5 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom text-xs font-mono flex items-center justify-center gap-1.5 transition-all"
+                      className="p-1.5 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all"
                       title="Share on LinkedIn"
                     >
-                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
                         <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2m1.4 9.74v-8.37H5.06v8.37h2.8z" />
                       </svg>
-                      <span>Share</span>
                     </a>
                     <a
                       href={`https://api.whatsapp.com/send?text=${shareTitle}%20${encodeURIComponent(currentUrl)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 rounded-[2px] bg-background border border-border-custom hover:border-emerald-500 hover:text-emerald-500 text-secondary-custom transition-all"
+                      className="p-1.5 rounded-[2px] bg-background border border-border-custom hover:border-emerald-500 hover:text-emerald-500 text-secondary-custom transition-all"
                       title="Share on WhatsApp"
                     >
-                      <MessageCircle className="w-4 h-4" />
+                      <MessageCircle className="w-3 h-3" />
                     </a>
                     <button
                       onClick={handleCopyLink}
-                      className="p-2 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all cursor-pointer"
+                      className="p-1.5 rounded-[2px] bg-background border border-border-custom hover:border-accent-custom hover:text-accent-custom text-secondary-custom transition-all cursor-pointer"
                       title="Copy Link"
                     >
-                      {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Bookmark className="w-4 h-4" />}
+                      {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Bookmark className="w-3 h-3" />}
                     </button>
                   </div>
                 </div>
 
-                {/* Promo Card: Free Strategy Proposal */}
-                <div className="p-5 rounded-[3px] bg-surface border border-border-custom text-foreground shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-accent-custom/10 rounded-[3px] blur-2xl pointer-events-none" />
-                  <div className="relative z-10 space-y-3">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 text-[10px] font-mono uppercase tracking-wider font-bold">
-                      <Sparkles className="w-3 h-3 text-accent-custom" />
-                      Free Strategy Audit
-                    </span>
-                    <h3 className="text-base font-bold leading-snug text-foreground">
-                      Automate Your Workflows with Custom AI
-                    </h3>
-                    <p className="text-xs text-secondary-custom leading-relaxed">
-                      Deploy autonomous agents, 24/7 WhatsApp CRM pipelines, and Google Maps SEO designed for your enterprise.
-                    </p>
-                    <a
-                      href="#contact"
-                      className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-[2px] bg-accent-custom text-white hover:opacity-95 font-bold text-xs transition-colors shadow-md shadow-accent-custom/20"
+                {/* Trending Articles Header */}
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-secondary-custom font-bold flex items-center gap-1.5">
+                    <TrendingUp className="w-3 h-3 text-accent-custom" />
+                    <span>Trending Articles</span>
+                  </span>
+                  <Link href="/blogs" className="text-[10px] font-mono text-accent-custom hover:underline">
+                    View all
+                  </Link>
+                </div>
+
+                {/* 2 Top Trending Articles */}
+                <div className="space-y-2.5">
+                  {relatedArticles.filter(a => a.slug !== slug).slice(0, 2).map((article, idx) => (
+                    <Link
+                      key={idx}
+                      href={`/blogs/${article.slug}`}
+                      className="group flex items-start gap-2.5 p-1 rounded-[2px] hover:bg-background transition-colors"
                     >
-                      <span>Claim Free Proposal</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-                </div>
-
-                {/* 24/7 WhatsApp AI Bot Card */}
-                <div className="p-4 rounded-[3px] bg-surface border border-border-custom shadow-sm hover:border-accent-custom/50 transition-all">
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-[2px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                      <MessageCircle className="w-4 h-4" />
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="text-xs font-bold text-foreground">
-                        24/7 WhatsApp AI Bot
-                      </h4>
-                      <p className="text-[11px] text-secondary-custom leading-relaxed">
-                        Capture inbound leads and answer customer inquiries without human delay.
-                      </p>
-                      <a
-                        href="#contact"
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent-custom hover:underline pt-0.5"
-                      >
-                        <span>Request Bot Demo</span>
-                        <ChevronRight className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Trending Articles Stack */}
-                <div className="p-5 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-4">
-                  <div className="flex items-center justify-between pb-2 border-b border-border-custom">
-                    <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase font-mono tracking-wider">
-                      <TrendingUp className="w-3.5 h-3.5 text-accent-custom" />
-                      <span>Trending</span>
-                    </h3>
-                    <Link href="/blogs" className="text-[10px] font-mono text-accent-custom hover:underline">
-                      View all
+                      <div className="w-12 h-12 rounded-[2px] overflow-hidden border border-border-custom shrink-0 bg-surface">
+                        <img
+                          src={article.image}
+                          alt={article.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      <div className="min-w-0 space-y-0.5">
+                        <span className={`inline-block px-1 py-0.2 rounded-[2px] text-[8px] font-mono font-bold border ${article.tagColor}`}>
+                          {article.tag}
+                        </span>
+                        <h4 className="text-xs font-bold text-foreground group-hover:text-accent-custom transition-colors line-clamp-1 leading-snug">
+                          {article.title}
+                        </h4>
+                        <span className="block text-[9px] font-mono text-secondary-custom">
+                          {article.readTime}
+                        </span>
+                      </div>
                     </Link>
-                  </div>
-
-                  <div className="space-y-3">
-                    {relatedArticles.filter(a => a.slug !== slug).slice(0, 3).map((article, idx) => (
-                      <Link
-                        key={idx}
-                        href={`/blogs/${article.slug}`}
-                        className="group flex items-start gap-3 p-1.5 rounded-[2px] hover:bg-background transition-colors"
-                      >
-                        <div className="w-14 h-14 rounded-[2px] overflow-hidden border border-border-custom shrink-0 bg-surface">
-                          <img
-                            src={article.image}
-                            alt={article.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
-                        <div className="min-w-0 space-y-0.5">
-                          <span className={`inline-block px-1 py-0.2 rounded-[2px] text-[8px] font-mono font-bold border ${article.tagColor}`}>
-                            {article.tag}
-                          </span>
-                          <h4 className="text-xs font-bold text-foreground group-hover:text-accent-custom transition-colors line-clamp-2 leading-tight">
-                            {article.title}
-                          </h4>
-                          <span className="block text-[9px] font-mono text-secondary-custom">
-                            {article.readTime}
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+                  ))}
                 </div>
-
               </div>
+
             </aside>
 
           </div>
