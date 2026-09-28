@@ -36,18 +36,53 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
   const [blog, setBlog] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [activeSection, setActiveSection] = useState<string>("panic-vs-reality");
+  const [activeSection, setActiveSection] = useState<string>("");
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [readingProgress, setReadingProgress] = useState(0);
 
-  const tocItems = [
-    { id: "panic-vs-reality", label: "1. The Panic vs. Reality" },
-    { id: "friction-economy", label: "2. The Friction Economy" },
-    { id: "human-moats", label: "3. Irreplaceable Human Moats" },
-    { id: "comparison-table", label: "4. AI vs. Human Superpowers" },
-    { id: "centaur-worker", label: "5. The 10x Centaur Worker" },
-    { id: "future-proof-steps", label: "6. 4 Steps to Future-Proof" },
-  ];
+  // Dynamic TOC Extraction and Heading ID Processing
+  const { processedContent, dynamicToc } = React.useMemo(() => {
+    if (!blog?.content) return { processedContent: "", dynamicToc: [] };
+
+    const contentStr = String(blog.content);
+    const extracted: { id: string; label: string; level: number }[] = [];
+    let headingCounter = 0;
+
+    // Replace <h2> and <h3> with IDs if missing, and collect TOC items
+    const modifiedContent = contentStr.replace(
+      /<(h[23])(\s+[^>]*)?>(.*?)<\/\1>/gi,
+      (match: string, tag: string, attrs: string = "", innerText: string) => {
+        headingCounter++;
+        const plainText = innerText.replace(/<[^>]+>/g, "").trim();
+        if (!plainText) return match;
+
+        // Extract or generate slug ID
+        const idMatch = attrs.match(/id=["']([^"']+)["']/i);
+        let id = idMatch ? idMatch[1] : "";
+        if (!id) {
+          id = plainText
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, "")
+            .replace(/[\s_-]+/g, "-")
+            .trim() || `section-${headingCounter}`;
+          attrs = `${attrs} id="${id}"`;
+        }
+
+        extracted.push({
+          id,
+          label: plainText,
+          level: tag.toLowerCase() === "h2" ? 2 : 3
+        });
+
+        return `<${tag}${attrs}>${innerText}</${tag}>`;
+      }
+    );
+
+    return {
+      processedContent: modifiedContent,
+      dynamicToc: extracted
+    };
+  }, [blog?.content]);
 
   const relatedArticles = [
     {
@@ -452,6 +487,110 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
   border-radius: 3px;
 }`
     },
+    "whatsapp-crm-bots": {
+      title: "Building 24/7 Autonomous WhatsApp AI Bots with Evolution API",
+      category: "AUTOMATION & AI CRM",
+      summary: "Deploying high-reliability, stateful WhatsApp conversational engines that qualify inbound leads, sync to enterprise CRMs, and answer customer queries in real-time.",
+      cover_image: "/images/blogs/ai-human-hero.jpg",
+      author: "Tech Infinix Automation Labs",
+      created_at: new Date().toISOString(),
+      readTime: "5 min read",
+      content: `<div class="my-6 rounded-[3px] overflow-hidden border border-border-custom shadow-xl shadow-black/5 dark:shadow-black/40">
+  <img src="/images/blogs/ai-human-hero.jpg" alt="Autonomous 24/7 WhatsApp AI Bot Architecture and CRM Integration" class="w-full h-auto aspect-[16/9] object-cover" />
+  <div class="p-2.5 bg-surface text-center border-t border-border-custom/50 text-[11px] text-secondary-custom font-mono">
+    High-concurrency stateful WhatsApp conversational pipeline powered by Evolution API & FastAPI.
+  </div>
+</div>
+
+<div class="blog-highlight-box">
+  <div class="blog-badge mb-2.5">🚀 Core Insight</div>
+  <p class="font-semibold text-foreground text-base sm:text-[17px] mb-2 leading-snug">Speed-to-lead is the single highest predictor of digital sales conversion.</p>
+  <p class="text-xs sm:text-[13.5px] text-secondary-custom leading-relaxed m-0">Studies show that contacting an inbound lead within 60 seconds increases conversion likelihood by over 391%. By coupling Evolution API with asynchronous FastAPI webhooks and intelligent LLM debouncing, enterprises can qualify buyers 24/7 before competitors even open an email.</p>
+</div>
+
+<h2 id="autonomous-inbound">1. The Inbound Speed-to-Lead Challenge</h2>
+<p>Modern B2B and direct-to-consumer businesses lose up to 45% of potential revenue due to delayed response times. When a prospect reaches out on WhatsApp after business hours, sending a generic "We are currently away" notice results in immediate customer drop-off.</p>
+
+<div class="blog-stat-grid">
+  <div class="blog-stat-card">
+    <div class="blog-stat-number">&lt;3s</div>
+    <div class="blog-stat-label">Average AI Lead Response Latency</div>
+  </div>
+  <div class="blog-stat-card">
+    <div class="blog-stat-number">99.8%</div>
+    <div class="blog-stat-label">Message Delivery &amp; Webhook Reliability</div>
+  </div>
+  <div class="blog-stat-card">
+    <div class="blog-stat-number">10x</div>
+    <div class="blog-stat-label">Higher Qualification Throughput</div>
+  </div>
+</div>
+
+<h2 id="architecture-pipeline">2. The Technical Pipeline: Evolution API + FastAPI</h2>
+<p>At Tech Infinix, our autonomous WhatsApp conversational architecture isolates webhook ingestion, natural language classification, and state persistence into dedicated stages:</p>
+
+<div class="my-6 rounded-[3px] overflow-hidden border border-border-custom shadow-xl shadow-black/5 dark:shadow-black/40">
+  <img src="/images/blogs/centaur-ai-worker.jpg" alt="Multi-stage WhatsApp Bot decision trees and CRM event synchronization" class="w-full h-auto aspect-[16/9] object-cover" />
+  <div class="p-2.5 bg-surface text-center border-t border-border-custom/50 text-[11px] text-secondary-custom font-mono">
+    Event-driven Baileys session management with asynchronous state debouncing.
+  </div>
+</div>
+
+<ul class="space-y-1.5 my-2.5">
+  <li><strong>Webhook Ingestion:</strong> Evolution API dispatches raw Baileys events (message upsert, presence updates, and read receipts) to FastAPI endpoints with zero dropped frames.</li>
+  <li><strong>Stateful Token Debouncer:</strong> Customers frequently send multiple rapid messages ("Hi", "I want to ask", "about your service"). Our Redis debouncer aggregates consecutive messages into a single prompt, preventing redundant LLM token expenditures.</li>
+  <li><strong>Human Handoff Sentinel:</strong> When complex procurement negotiations or sensitive questions emerge, the bot flags the lead for human takeover without interrupting user trust.</li>
+</ul>
+
+<h2 id="performance-comparison">3. Comparative Breakdown: Manual Triage vs. Autonomous Bot</h2>
+<div class="blog-table-wrapper">
+  <table class="blog-table">
+    <thead>
+      <tr>
+        <th>Operational Metric</th>
+        <th>Manual Sales Rep 👤</th>
+        <th>Autonomous WhatsApp AI 🤖</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="domain-cell"><strong>Response Time</strong></td>
+        <td data-label="Manual Sales Rep 👤">2 to 8 hours delayed</td>
+        <td data-label="Autonomous WhatsApp AI 🤖">Sub-second immediate reply</td>
+      </tr>
+      <tr>
+        <td class="domain-cell"><strong>Availability</strong></td>
+        <td data-label="Manual Sales Rep 👤">8 hours/day, weekdays only</td>
+        <td data-label="Autonomous WhatsApp AI 🤖">24 hours / 365 days non-stop</td>
+      </tr>
+      <tr>
+        <td class="domain-cell"><strong>Data Accuracy</strong></td>
+        <td data-label="Manual Sales Rep 👤">Prone to manual CRM entry errors</td>
+        <td data-label="Autonomous WhatsApp AI 🤖">Direct schema validation &amp; instant sync</td>
+      </tr>
+      <tr>
+        <td class="domain-cell"><strong>Concurrent Chats</strong></td>
+        <td data-label="Manual Sales Rep 👤">3 to 5 simultaneous conversations</td>
+        <td data-label="Autonomous WhatsApp AI 🤖">1,000+ simultaneous conversations</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 id="enterprise-best-practices">4. Engineering Best Practices for High Conversion</h2>
+<p>To maximize return on investment, ensure your deployment follows these three architectural axioms:</p>
+
+<ol class="space-y-2 my-2.5">
+  <li><strong>Never Ask for Known Data:</strong> If outreach originated from existing directory intelligence, greet the user by company name and present tailored proposals immediately.</li>
+  <li><strong>Preserve Instant WhatsApp CTAs:</strong> Always provide interactive buttons for quick routing ('[ Interested ]', '[ Visit Website ]', '[ Call Us ]').</li>
+  <li><strong>Trigger Real-Time Sales Alerts:</strong> When a hot lead confirms interest, immediately dispatch structured email notifications to executive sales reps with summarized token telemetry.</li>
+</ol>
+
+<div class="blog-quote-box">
+  <p class="italic text-foreground font-medium text-xs sm:text-[13px] mb-1 leading-relaxed">"The best sales system is not the one with the biggest pitch—it is the one that responds first with absolute clarity."</p>
+  <span class="text-[10px] font-mono text-secondary-custom uppercase tracking-wider">— Tech Infinix Systems Architecture</span>
+</div>`,
+    },
     "scaling-outbound-lead-pipelines": {
       title: "Scaling Outbound Lead Pipelines with LangGraph Agents",
       category: "AI AGENTS",
@@ -517,6 +656,20 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
     fetchBlog();
   }, [slug]);
 
+  // Guarantee user starts at top of article without auto-jumping to bottom form
+  useEffect(() => {
+    if (typeof window !== "undefined" && !window.location.hash) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+  }, [slug]);
+
+  // Set initial active section when dynamic TOC loads
+  useEffect(() => {
+    if (dynamicToc.length > 0 && !activeSection) {
+      setActiveSection(dynamicToc[0].id);
+    }
+  }, [dynamicToc]);
+
   // Scroll spy observer for reading progress and active TOC highlight
   useEffect(() => {
     const handleScroll = () => {
@@ -527,19 +680,21 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
       }
 
       // Check section offsets for active TOC item
-      const scrollPos = window.scrollY + 240;
-      for (let i = tocItems.length - 1; i >= 0; i--) {
-        const el = document.getElementById(tocItems[i].id);
-        if (el && el.offsetTop <= scrollPos) {
-          setActiveSection(tocItems[i].id);
-          break;
+      if (dynamicToc.length > 0) {
+        const scrollPos = window.scrollY + 240;
+        for (let i = dynamicToc.length - 1; i >= 0; i--) {
+          const el = document.getElementById(dynamicToc[i].id);
+          if (el && el.offsetTop <= scrollPos) {
+            setActiveSection(dynamicToc[i].id);
+            break;
+          }
         }
       }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [dynamicToc]);
 
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
@@ -644,56 +799,58 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
             <article className="lg:col-span-8 min-w-0">
               
               {/* Mobile-Only Collapsible Table of Contents */}
-              <div className="lg:hidden mb-8 border border-border-custom bg-surface rounded-[3px] overflow-hidden shadow-xs">
-                <button
-                  onClick={() => setMobileTocOpen(!mobileTocOpen)}
-                  className="w-full p-3.5 flex items-center justify-between text-left text-xs font-mono font-bold text-foreground hover:bg-background/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-[1px] bg-accent-custom" />
-                    <span>Table of Contents ({tocItems.length} sections)</span>
-                  </div>
-                  <ChevronDown
-                    className={`w-4 h-4 text-secondary-custom transition-transform duration-200 ${
-                      mobileTocOpen ? "rotate-180 text-accent-custom" : ""
-                    }`}
-                  />
-                </button>
+              {dynamicToc.length > 0 && (
+                <div className="lg:hidden mb-8 border border-border-custom bg-surface rounded-[3px] overflow-hidden shadow-xs">
+                  <button
+                    onClick={() => setMobileTocOpen(!mobileTocOpen)}
+                    className="w-full p-3.5 flex items-center justify-between text-left text-xs font-mono font-bold text-foreground hover:bg-background/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-[1px] bg-accent-custom" />
+                      <span>Table of Contents ({dynamicToc.length} sections)</span>
+                    </div>
+                    <ChevronDown
+                      className={`w-4 h-4 text-secondary-custom transition-transform duration-200 ${
+                        mobileTocOpen ? "rotate-180 text-accent-custom" : ""
+                      }`}
+                    />
+                  </button>
 
-                {mobileTocOpen && (
-                  <div className="p-3 pt-0 border-t border-border-custom/50 space-y-1">
-                    {tocItems.map((item) => (
-                      <a
-                        key={item.id}
-                        href={`#${item.id}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const el = document.getElementById(item.id);
-                          if (el) {
-                            el.scrollIntoView({ behavior: "smooth", block: "start" });
-                            setActiveSection(item.id);
-                            setMobileTocOpen(false);
-                          }
-                        }}
-                        className={`block py-1.5 px-2 rounded-[2px] text-xs font-medium ${
-                          activeSection === item.id
-                            ? "bg-accent-custom/10 text-accent-custom font-semibold border-l-2 border-accent-custom pl-2.5"
-                            : "text-secondary-custom hover:text-foreground"
-                        }`}
-                      >
-                        {item.label}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
+                  {mobileTocOpen && (
+                    <div className="p-3 pt-0 border-t border-border-custom/50 space-y-1">
+                      {dynamicToc.map((item) => (
+                        <a
+                          key={item.id}
+                          href={`#${item.id}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const el = document.getElementById(item.id);
+                            if (el) {
+                              el.scrollIntoView({ behavior: "smooth", block: "start" });
+                              setActiveSection(item.id);
+                              setMobileTocOpen(false);
+                            }
+                          }}
+                          className={`block py-1.5 px-2 rounded-[2px] text-xs font-medium ${
+                            activeSection === item.id
+                              ? "bg-accent-custom/10 text-accent-custom font-semibold border-l-2 border-accent-custom pl-2.5"
+                              : "text-secondary-custom hover:text-foreground"
+                          }`}
+                        >
+                          {item.label}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Article Content */}
               <div className="blog-content max-w-none text-foreground">
-                {isHtml(blog.content) ? (
-                  <div dangerouslySetInnerHTML={{ __html: blog.content }} />
+                {isHtml(processedContent) ? (
+                  <div dangerouslySetInnerHTML={{ __html: processedContent }} />
                 ) : (
-                  <p className="whitespace-pre-line">{blog.content}</p>
+                  <p className="whitespace-pre-line">{processedContent}</p>
                 )}
               </div>
 
@@ -802,51 +959,53 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
             <aside className="hidden lg:block lg:col-span-4 self-start sticky top-[88px] pb-12 space-y-3">
               
               {/* Card 1: Table of Contents ("On This Page") with live active section indicator */}
-              <div className="p-3.5 rounded-[3px] bg-surface border border-border-custom shadow-xs space-y-2.5">
-                <div className="flex items-center justify-between pb-1.5 border-b border-border-custom">
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-[1px] bg-accent-custom animate-pulse" />
-                    <span className="text-[10.5px] font-mono font-bold text-foreground uppercase tracking-wider">
-                      On This Page
+              {dynamicToc.length > 0 && (
+                <div className="p-3.5 rounded-[3px] bg-surface border border-border-custom shadow-xs space-y-2.5">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-border-custom">
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-[1px] bg-accent-custom animate-pulse" />
+                      <span className="text-[10.5px] font-mono font-bold text-foreground uppercase tracking-wider">
+                        On This Page
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono text-secondary-custom font-semibold">
+                      {Math.round(readingProgress)}% read
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono text-secondary-custom font-semibold">
-                    {Math.round(readingProgress)}% read
-                  </span>
-                </div>
 
-                {/* Reading Progress Line */}
-                <div className="w-full bg-border-custom/50 h-[2px] rounded-[1px] overflow-hidden">
-                  <div
-                    className="bg-accent-custom h-full transition-all duration-150"
-                    style={{ width: `${readingProgress}%` }}
-                  />
-                </div>
+                  {/* Reading Progress Line */}
+                  <div className="w-full bg-border-custom/50 h-[2px] rounded-[1px] overflow-hidden">
+                    <div
+                      className="bg-accent-custom h-full transition-all duration-150"
+                      style={{ width: `${readingProgress}%` }}
+                    />
+                  </div>
 
-                <nav className="space-y-0.5 text-xs pt-0.5">
-                  {tocItems.map((item) => (
-                    <a
-                      key={item.id}
-                      href={`#${item.id}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        const el = document.getElementById(item.id);
-                        if (el) {
-                          el.scrollIntoView({ behavior: "smooth", block: "start" });
-                          setActiveSection(item.id);
-                        }
-                      }}
-                      className={`block py-1 px-2 rounded-[2px] text-[11.5px] font-medium transition-all ${
-                        activeSection === item.id
-                          ? "bg-accent-custom/10 text-accent-custom font-semibold border-l-2 border-accent-custom pl-2"
-                          : "text-secondary-custom hover:text-foreground hover:bg-background/60"
-                      }`}
-                    >
-                      {item.label}
-                    </a>
-                  ))}
-                </nav>
-              </div>
+                  <nav className="space-y-0.5 text-xs pt-0.5">
+                    {dynamicToc.map((item) => (
+                      <a
+                        key={item.id}
+                        href={`#${item.id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const el = document.getElementById(item.id);
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                            setActiveSection(item.id);
+                          }
+                        }}
+                        className={`block py-1 px-2 rounded-[2px] text-[11.5px] font-medium transition-all ${
+                          activeSection === item.id
+                            ? "bg-accent-custom/10 text-accent-custom font-semibold border-l-2 border-accent-custom pl-2"
+                            : "text-secondary-custom hover:text-foreground hover:bg-background/60"
+                        }`}
+                      >
+                        {item.label}
+                      </a>
+                    ))}
+                  </nav>
+                </div>
+              )}
 
               {/* Card 2: High-Converting Enterprise Automation Proposal + WhatsApp Quick Chat */}
               <div className="p-3.5 rounded-[3px] bg-surface border border-border-custom hover:border-accent-custom/40 transition-colors shadow-xs relative overflow-hidden space-y-2.5">
@@ -872,7 +1031,14 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
                 <div className="pt-0.5 flex items-center gap-2">
                   <a
-                    href="#contact"
+                    href={blog.include_contact_form !== false ? "#contact-section" : "/contact"}
+                    onClick={(e) => {
+                      if (blog.include_contact_form !== false) {
+                        e.preventDefault();
+                        const el = document.getElementById("contact-section");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                      }
+                    }}
                     className="flex-1 py-1.5 px-2.5 rounded-[2px] bg-accent-custom text-white hover:opacity-95 text-[11px] font-semibold font-mono flex items-center justify-center gap-1 shadow-sm shadow-accent-custom/20 transition-all text-center"
                   >
                     <span>Claim Proposal</span>
@@ -1052,9 +1218,11 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
         </div>
 
         {/* ═══════ REAL CONTACT COMPONENT (Integrated from /contact for API synchronization) ═══════ */}
-        <div id="contact" className="mt-24 border-t border-border-custom pt-8">
-          <ContactSection />
-        </div>
+        {blog.include_contact_form !== false && (
+          <div id="contact-section" className="mt-24 border-t border-border-custom pt-8">
+            <ContactSection />
+          </div>
+        )}
       </main>
 
       <FooterSection />
