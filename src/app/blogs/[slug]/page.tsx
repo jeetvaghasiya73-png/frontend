@@ -40,6 +40,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
   const [activeSection, setActiveSection] = useState<string>("panic-vs-reality");
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [readingProgress, setReadingProgress] = useState(0);
+  const [isPastArticle, setIsPastArticle] = useState(false);
 
   const tocItems = [
     { id: "panic-vs-reality", label: "1. The Panic vs. Reality" },
@@ -428,7 +429,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
     fetchBlog();
   }, [slug]);
 
-  // Scroll spy observer for reading progress and active TOC highlight
+  // Scroll spy observer for reading progress, active TOC highlight, and past-article detection
   useEffect(() => {
     const handleScroll = () => {
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
@@ -444,6 +445,17 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
         if (el && el.offsetTop <= scrollPos) {
           setActiveSection(tocItems[i].id);
           break;
+        }
+      }
+
+      // Check if scrolled into related articles / contact area
+      const bottomEl = document.getElementById("related-articles-section");
+      if (bottomEl) {
+        const rect = bottomEl.getBoundingClientRect();
+        if (rect.top <= 260) {
+          setIsPastArticle(true);
+        } else {
+          setIsPastArticle(false);
         }
       }
     };
@@ -547,12 +559,12 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           </div>
         </div>
 
-        {/* ═══════ 2-COLUMN LAYOUT: MAIN ARTICLE (Left) + STICKY RIGHT SIDEBAR (Right) ═══════ */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        {/* ═══════ 2-COLUMN LAYOUT: MAIN ARTICLE (Left) + TRULY FIXED RIGHT SIDEBAR (Desktop) ═══════ */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start relative">
             
-            {/* ─── LEFT: MAIN ARTICLE COLUMN (8 Cols) ─── */}
-            <article className="lg:col-span-8 min-w-0">
+            {/* ─── LEFT: MAIN ARTICLE COLUMN (Takes full width minus fixed sidebar on desktop) ─── */}
+            <article className="w-full lg:w-[calc(100%-360px)] xl:w-[calc(100%-400px)] min-w-0">
               
               {/* Mobile-Only Collapsible Table of Contents */}
               <div className="lg:hidden mb-8 border border-border-custom bg-surface rounded-[3px] overflow-hidden shadow-xs">
@@ -688,9 +700,13 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
             </article>
 
-            {/* ─── RIGHT: STICKY SIDEBAR (4 Cols, fixed in place on desktop during scroll) ─── */}
-            <aside className="lg:col-span-4 space-y-6">
-              <div className="lg:sticky lg:top-28 space-y-6 max-h-[calc(100vh-8rem)] lg:overflow-y-auto pr-1.5 scrollbar-none">
+            {/* ─── RIGHT: TRULY POSITION-FIXED SIDEBAR (Desktop) ─── */}
+            <aside className="w-full lg:w-[330px] xl:w-[360px] shrink-0">
+              <div
+                className={`lg:fixed lg:top-28 lg:w-[330px] xl:w-[360px] lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto pr-1 space-y-5 z-20 scrollbar-none transition-all duration-300 ${
+                  isPastArticle ? "lg:opacity-0 lg:pointer-events-none lg:translate-y-2" : "lg:opacity-100 lg:translate-y-0"
+                }`}
+              >
 
                 {/* Table of Contents ("On This Page") with live active section indicator */}
                 <div className="p-5 rounded-[3px] bg-surface border border-border-custom shadow-sm space-y-3">
@@ -838,12 +854,12 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                     </Link>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-none lg:flex-col lg:space-y-3 lg:overflow-visible lg:pb-0">
                     {relatedArticles.filter(a => a.slug !== slug).slice(0, 3).map((article, idx) => (
                       <Link
                         key={idx}
                         href={`/blogs/${article.slug}`}
-                        className="group flex items-start gap-3 p-1.5 rounded-[2px] hover:bg-background transition-colors"
+                        className="w-[220px] lg:w-auto shrink-0 group flex items-start gap-3 p-1.5 rounded-[2px] hover:bg-background transition-colors"
                       >
                         <div className="w-14 h-14 rounded-[2px] overflow-hidden border border-border-custom shrink-0 bg-surface">
                           <img
@@ -874,8 +890,8 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           </div>
         </div>
 
-        {/* Bottom Section: "Read also..." (High-UX, 4-Card Responsive Grid with 3px border radius) */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 pt-16 border-t border-border-custom">
+        {/* ═══════ BOTTOM SECTION: "Read also..." (HORIZONTAL ON MOBILE / RESPONSIVE) ═══════ */}
+        <div id="related-articles-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 pt-16 border-t border-border-custom">
           <div className="flex items-center justify-between mb-8">
             <div>
               <span className="text-xs font-mono text-accent-custom uppercase tracking-wider font-semibold">
@@ -885,21 +901,27 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                 Read also...
               </h3>
             </div>
-            <Link
-              href="/blogs"
-              className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-secondary-custom hover:text-accent-custom transition-colors"
-            >
-              <span>Explore all articles</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] font-mono text-secondary-custom sm:hidden">
+                Swipe &rarr;
+              </span>
+              <Link
+                href="/blogs"
+                className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-secondary-custom hover:text-accent-custom transition-colors"
+              >
+                <span>Explore all</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Mobile: HORIZONTALLY scrollable row with snap points | Desktop: 4-Column Grid */}
+          <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 overflow-x-auto sm:overflow-visible pb-4 sm:pb-0 scrollbar-none snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
             {relatedArticles.map((item, idx) => (
               <Link
                 key={idx}
                 href={`/blogs/${item.slug}`}
-                className="group flex flex-col rounded-[3px] bg-surface border border-border-custom overflow-hidden hover:border-accent-custom/60 hover:shadow-lg transition-all duration-300"
+                className="w-[280px] sm:w-auto shrink-0 snap-start group flex flex-col rounded-[3px] bg-surface border border-border-custom overflow-hidden hover:border-accent-custom/60 hover:shadow-lg transition-all duration-300"
               >
                 <div className="aspect-[16/10] overflow-hidden bg-background relative border-b border-border-custom">
                   <img
