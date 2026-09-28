@@ -100,15 +100,15 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
       cover_image: "/images/blogs/ai-human-hero.jpg",
       content: `<div class="my-6 rounded-[3px] overflow-hidden border border-border-custom shadow-xl shadow-black/5 dark:shadow-black/40">
   <img src="/images/blogs/ai-human-hero.jpg" alt="Human intelligence collaborating with Autonomous AI Agents" class="w-full h-auto aspect-[16/9] object-cover" />
-  <div class="p-3 bg-surface text-center border-t border-border-custom/50 text-xs text-secondary-custom font-mono">
+  <div class="p-2.5 bg-surface text-center border-t border-border-custom/50 text-[11px] text-secondary-custom font-mono">
     Human ingenuity directing autonomous multi-agent pipelines at Tech Infinix.
   </div>
 </div>
 
 <div class="blog-highlight-box">
-  <div class="blog-badge mb-3">🔥 Executive Summary</div>
-  <p class="font-bold text-foreground text-lg sm:text-xl mb-2.5 leading-snug">The Short Answer: AI will not replace humans—but humans who master AI will inevitably replace those who don't.</p>
-  <p class="text-sm sm:text-base text-secondary-custom leading-relaxed m-0">The narrative that artificial intelligence will create a jobless future misunderstands the fundamental nature of technology. Every industrial revolution automates cognitive or physical friction while unlocking higher-order human ingenuity. Here is an evidence-based roadmap of what is changing, what remains strictly human, and how to thrive.</p>
+  <div class="blog-badge mb-2.5">🔥 Executive Summary</div>
+  <p class="font-semibold text-foreground text-base sm:text-[17px] mb-2 leading-snug">The Short Answer: AI will not replace humans—but humans who master AI will inevitably replace those who don't.</p>
+  <p class="text-xs sm:text-[13.5px] text-secondary-custom leading-relaxed m-0">The narrative that artificial intelligence will create a jobless future misunderstands the fundamental nature of technology. Every industrial revolution automates cognitive or physical friction while unlocking higher-order human ingenuity. Here is an evidence-based roadmap of what is changing, what remains strictly human, and how to thrive.</p>
 </div>
 
 <div class="blog-stat-grid">
@@ -128,7 +128,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
 <h2 id="panic-vs-reality">1. The Panic vs. The Historical Reality</h2>
 <p>Every transformative breakthrough in human history sparked an existential panic about the obsolescence of human labor:</p>
-<ul class="space-y-2.5 my-4">
+<ul class="space-y-2 my-3">
   <li>When the <strong>printing press</strong> arrived in the 15th century, scribes protested that human memory and scholarship would degrade into ruin. Instead, it catalyzed the Renaissance and the Scientific Revolution.</li>
   <li>When the <strong>steam engine and spinning jenny</strong> emerged in the 18th century, the Luddite movement feared universal unemployment. In reality, global productivity and living standards skyrocketed by orders of magnitude.</li>
   <li>When <strong>spreadsheets (VisiCalc, Lotus 1-2-3, Excel)</strong> debuted in the 1980s, analysts predicted the death of the accounting industry. Instead, demand for financial analysts, business consultants, and planners grew by over 400%.</li>
@@ -139,20 +139,20 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 <p>To understand what is vulnerable, we must dissect the type of work computers excel at. AI thrives in domains characterized by <strong>high volume, explicit patterns, and low contextual ambiguity</strong>:</p>
 
 <div class="blog-callout">
-  <h3 class="text-foreground font-bold text-base mb-3">⚡ Tasks Already Handed Over to Autonomous AI:</h3>
-  <ul class="text-sm sm:text-base space-y-2.5">
-    <li><strong>Boilerplate Code & Unit Tests:</strong> Generating repetitive CRUD endpoints, migrations, and standard API boilerplate.</li>
-    <li><strong>Data Extraction & Web Scraping:</strong> Parsing thousands of unstructured directories, Google Maps business leads, and cataloging records without manual copy-pasting.</li>
-    <li><strong>Level-1 Customer & Prospect Triage:</strong> 24/7 intelligent WhatsApp/Chatbot assistants answering recurring FAQs and qualifying inbound inquiries.</li>
-    <li><strong>Content Summarization & Syntax Translation:</strong> Converting legal clauses, documentation, or transcribing multilingual meetings into structured bullet points.</li>
+  <h3 class="text-foreground font-semibold text-sm mb-2.5">⚡ Tasks Already Handed Over to Autonomous AI:</h3>
+  <ul class="text-xs sm:text-[13.5px] space-y-2 text-secondary-custom/90">
+    <li><strong>Boilerplate Code &amp; Unit Tests:</strong> Generating repetitive CRUD endpoints, migrations, and standard API boilerplate.</li>
+    <li><strong>Data Extraction &amp; Web Scraping:</strong> Parsing thousands of unstructured directories, Google Maps business leads, and cataloging records without manual copy-pasting.</li>
+    <li><strong>Level-1 Customer &amp; Prospect Triage:</strong> 24/7 intelligent WhatsApp/Chatbot assistants answering recurring FAQs and qualifying inbound inquiries.</li>
+    <li><strong>Content Summarization &amp; Syntax Translation:</strong> Converting legal clauses, documentation, or transcribing multilingual meetings into structured bullet points.</li>
   </ul>
 </div>
 
 <p>Notice what all these tasks share: they are <em>friction</em>. They are the repetitive toll fees human professionals were forced to pay every workday before they could do their actual creative, high-impact thinking.</p>
 
-<div class="my-8 rounded-[3px] overflow-hidden border border-border-custom shadow-xl shadow-black/5 dark:shadow-black/40">
+<div class="my-6 rounded-[3px] overflow-hidden border border-border-custom shadow-xl shadow-black/5 dark:shadow-black/40">
   <img src="/images/blogs/centaur-ai-worker.jpg" alt="Autonomous AI Agent Pipelines and Workflow Orchestration" class="w-full h-auto aspect-[16/9] object-cover" />
-  <div class="p-3 bg-surface text-center border-t border-border-custom/50 text-xs text-secondary-custom font-mono">
+  <div class="p-2.5 bg-surface text-center border-t border-border-custom/50 text-[11px] text-secondary-custom font-mono">
     Autonomous agent network orchestrating multi-step data pipelines in real time.
   </div>
 </div>
@@ -216,20 +216,20 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 <p>The professionals who will dominate the next decade are neither AI purists nor Luddites. They are <strong>Centaurs</strong>: individuals who blend human strategic intuition with algorithmic horse-power.</p>
 
 <p>Consider how modern high-performance software engineering works today at Tech Infinix:</p>
-<ul class="space-y-2.5 my-4">
+<ul class="space-y-2 my-3">
   <li>A senior engineer conceptualizes the data model, defines system boundaries, and anticipates edge-case security risks.</li>
   <li>They prompt an autonomous agent fleet (like LangGraph or Claude) to scaffold the FastAPI endpoints, database schemas, and unit test suites in 45 seconds.</li>
   <li>The engineer reviews, refactors, and deploys. A task that previously took 4 days now concludes before lunch.</li>
 </ul>
 
 <div class="blog-quote-box">
-  <p class="italic text-foreground font-semibold text-base sm:text-lg mb-2">"Technology does not replace people. It replaces tasks. Those who let go of low-leverage tasks first will command the future."</p>
-  <span class="text-xs font-mono text-secondary-custom uppercase tracking-wider">— Tech Infinix Engineering Principles</span>
+  <p class="italic text-foreground font-medium text-sm sm:text-[15px] mb-1.5 leading-relaxed">"Technology does not replace people. It replaces tasks. Those who let go of low-leverage tasks first will command the future."</p>
+  <span class="text-[11px] font-mono text-secondary-custom uppercase tracking-wider">— Tech Infinix Engineering Principles</span>
 </div>
 
 <h2 id="future-proof-steps">6. How to Future-Proof Your Career & Enterprise</h2>
 <p>To thrive alongside autonomous systems, implement these four strategic shifts today:</p>
-<ol class="space-y-3 my-4">
+<ol class="space-y-2.5 my-3">
   <li><strong>Master System Architecture over Syntax:</strong> Stop spending hours memorizing commands or syntax. Instead, learn how systems interact, how APIs exchange data, and how security models govern access.</li>
   <li><strong>Build a High-Trust Personal Brand:</strong> Algorithms are commodities; reputation is scarce. Cultivate verified domain expertise, case studies, and transparent client partnerships.</li>
   <li><strong>Deploy Autonomous Agents for Repetitive Overhead:</strong> Automate data entry, outbound outreach, and inbound lead qualification so your core team can focus on closing deals and product innovation.</li>
@@ -241,124 +241,135 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
       custom_css: `
 .blog-content {
   font-family: 'Poppins', var(--font-poppins), sans-serif;
-  line-height: 1.8;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  letter-spacing: -0.005em;
 }
 .blog-content h2 {
   font-family: 'Poppins', var(--font-poppins), sans-serif;
-  font-size: 1.85rem;
-  font-weight: 800;
-  margin-top: 3rem;
-  margin-bottom: 1.25rem;
+  font-size: 1.375rem;
+  font-weight: 700;
+  margin-top: 2.25rem;
+  margin-bottom: 0.75rem;
   color: var(--foreground);
-  letter-spacing: -0.02em;
-  line-height: 1.3;
+  letter-spacing: -0.015em;
+  line-height: 1.35;
 }
 .blog-content h3 {
   font-family: 'Poppins', var(--font-poppins), sans-serif;
-  font-size: 1.35rem;
-  font-weight: 700;
-  margin-top: 2rem;
-  margin-bottom: 0.85rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
   color: var(--foreground);
-  line-height: 1.35;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
 }
 .blog-content p {
   font-family: 'Poppins', var(--font-poppins), sans-serif;
-  font-size: 1.025rem;
-  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
+  margin-bottom: 1.25rem;
   color: var(--foreground);
-  opacity: 0.94;
-  line-height: 1.85;
+  opacity: 0.90;
+  line-height: 1.78;
+}
+.blog-content ul, .blog-content ol {
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.72;
+  color: var(--foreground);
+  opacity: 0.90;
 }
 .blog-callout {
-  padding: 1.75rem;
+  padding: 1.25rem 1.5rem;
   border-radius: 3px;
-  margin: 2.25rem 0;
+  margin: 1.75rem 0;
   background: var(--surface);
   border: 1px solid var(--border-custom);
   border-left: 3px solid var(--accent-custom);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.03);
 }
 .blog-highlight-box {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(41, 98, 255, 0.04) 100%);
-  border: 1px solid rgba(99, 102, 241, 0.25);
-  border-left: 4px solid var(--accent-custom);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.07) 0%, rgba(41, 98, 255, 0.03) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.20);
+  border-left: 3px solid var(--accent-custom);
   border-radius: 3px;
-  padding: 1.85rem;
-  margin: 2.25rem 0;
+  padding: 1.35rem 1.5rem;
+  margin: 1.75rem 0;
 }
 .blog-table-wrapper {
   overflow-x: auto;
-  margin: 2.25rem 0;
+  margin: 1.75rem 0;
   border-radius: 3px;
   border: 1px solid var(--border-custom);
 }
 .blog-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.95rem;
+  font-size: 0.825rem;
   text-align: left;
 }
 .blog-table th {
   background: var(--surface);
-  padding: 1.1rem;
-  font-weight: 700;
-  border-bottom: 2px solid var(--border-custom);
+  padding: 0.75rem 0.9rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-custom);
   color: var(--foreground);
   font-family: 'Poppins', var(--font-poppins), sans-serif;
 }
 .blog-table td {
-  padding: 1rem 1.1rem;
+  padding: 0.75rem 0.9rem;
   border-bottom: 1px solid var(--border-custom);
   color: var(--foreground);
+  line-height: 1.55;
 }
 .blog-stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1.25rem;
-  margin: 2.25rem 0;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1rem;
+  margin: 1.75rem 0;
 }
 .blog-stat-card {
-  padding: 1.5rem 1.25rem;
+  padding: 1.15rem 1rem;
   border-radius: 3px;
   background: var(--surface);
   border: 1px solid var(--border-custom);
   text-align: center;
-  box-shadow: 0 2px 10px -2px rgba(0,0,0,0.03);
+  box-shadow: 0 1px 6px -1px rgba(0,0,0,0.02);
 }
 .blog-stat-number {
-  font-size: 2.5rem;
-  font-weight: 800;
+  font-size: 1.75rem;
+  font-weight: 700;
   background: linear-gradient(135deg, #2962FF 0%, #6366F1 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  line-height: 1.15;
+  line-height: 1.2;
   font-family: 'Poppins', var(--font-poppins), sans-serif;
 }
 .blog-stat-label {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 500;
   color: var(--secondary-custom);
-  margin-top: 0.5rem;
-  line-height: 1.4;
+  margin-top: 0.35rem;
+  line-height: 1.35;
 }
 .blog-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.3rem 0.85rem;
+  padding: 0.25rem 0.65rem;
   border-radius: 2px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  background: rgba(99, 102, 241, 0.12);
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(99, 102, 241, 0.10);
   color: #6366F1;
-  border: 1px solid rgba(99, 102, 241, 0.25);
+  border: 1px solid rgba(99, 102, 241, 0.20);
   font-family: 'Poppins', var(--font-poppins), sans-serif;
 }
 .blog-quote-box {
-  padding: 1.75rem;
+  padding: 1.25rem 1.5rem;
   border-left: 3px solid var(--accent-custom);
   background: var(--surface);
-  margin: 2.25rem 0;
+  margin: 1.75rem 0;
   border-radius: 3px;
 }`
     },
@@ -514,16 +525,16 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
         </div>
 
         {/* ═══════ ARTICLE TITLE & HERO METADATA (Full Spacious Width) ═══════ */}
-        <div id="article-top" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-          <div className="max-w-4xl space-y-4">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-[1.2]">
+        <div id="article-top" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
+          <div className="max-w-4xl space-y-3.5">
+            <h1 className="text-2xl sm:text-3xl lg:text-[38px] font-bold tracking-tight text-foreground leading-[1.25]">
               {blog.title}
             </h1>
 
             {/* Author Meta Row */}
-            <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-2 text-xs text-secondary-custom font-mono">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-[2px] bg-accent-custom/15 border border-accent-custom/30 text-accent-custom font-bold text-xs flex items-center justify-center">
+            <div className="flex flex-wrap items-center gap-4 sm:gap-5 pt-1 text-[11px] sm:text-xs text-secondary-custom font-mono">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-[2px] bg-accent-custom/15 border border-accent-custom/30 text-accent-custom font-bold text-[11px] flex items-center justify-center">
                   TI
                 </div>
                 <span className="text-foreground font-semibold">{blog.author || "Tech Infinix Research Team"}</span>
@@ -539,7 +550,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
             </div>
 
             {blog.summary && (
-              <p className="text-base sm:text-lg text-secondary-custom leading-relaxed font-medium pt-2 border-l-[3px] border-accent-custom pl-4 italic bg-surface/30 rounded-r-[3px] py-1">
+              <p className="text-sm sm:text-[15px] text-secondary-custom/90 leading-relaxed font-normal pt-1.5 border-l-2 border-accent-custom pl-3.5 italic bg-surface/20 rounded-r-[2px] py-1.5">
                 "{blog.summary}"
               </p>
             )}
@@ -666,32 +677,32 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
               </div>
 
               {/* Author Box */}
-              <div className="mt-8 p-6 rounded-[3px] bg-surface border border-border-custom shadow-sm flex items-start sm:items-center gap-4 sm:gap-5 flex-col sm:flex-row">
-                <div className="w-14 h-14 rounded-[3px] bg-gradient-to-tr from-accent-custom to-indigo-500 text-white font-black text-lg flex items-center justify-center shrink-0 shadow-md shadow-accent-custom/20">
+              <div className="mt-8 p-5 rounded-[3px] bg-surface border border-border-custom shadow-xs flex items-start sm:items-center gap-4 sm:gap-5 flex-col sm:flex-row">
+                <div className="w-12 h-12 rounded-[2px] bg-gradient-to-tr from-accent-custom to-indigo-500 text-white font-bold text-base flex items-center justify-center shrink-0 shadow-sm shadow-accent-custom/20">
                   TI
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-base font-bold text-foreground">
+                    <h4 className="text-sm font-semibold text-foreground">
                       {blog.author || "Tech Infinix Research Team"}
                     </h4>
                     <span className="px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom text-[10px] font-mono font-semibold">
                       Author
                     </span>
                   </div>
-                  <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed">
+                  <p className="text-xs text-secondary-custom leading-relaxed">
                     Engineering autonomous AI multi-agent pipelines, 24/7 WhatsApp customer intelligence bots, and Google Maps local SEO dominance for fast-growing businesses.
                   </p>
                 </div>
               </div>
 
               {/* Mobile-Only Consultation Prompt */}
-              <div className="lg:hidden mt-8 p-6 rounded-[3px] bg-surface border border-border-custom space-y-3">
+              <div className="lg:hidden mt-8 p-5 rounded-[3px] bg-surface border border-border-custom space-y-2.5">
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 text-[10px] font-mono uppercase tracking-wider font-bold">
                   <Sparkles className="w-3 h-3 text-accent-custom" />
                   Free Strategy Audit
                 </span>
-                <h3 className="text-base font-bold leading-snug text-foreground">
+                <h3 className="text-sm font-semibold leading-snug text-foreground">
                   Automate Your Workflows with Custom AI
                 </h3>
                 <p className="text-xs text-secondary-custom leading-relaxed">
@@ -699,7 +710,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                 </p>
                 <a
                   href="#contact"
-                  className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-[2px] bg-accent-custom text-white hover:opacity-95 font-bold text-xs transition-colors shadow-md shadow-accent-custom/20"
+                  className="inline-flex items-center justify-center gap-2 w-full py-2 rounded-[2px] bg-accent-custom text-white hover:opacity-95 font-semibold text-xs transition-colors shadow-sm shadow-accent-custom/20"
                 >
                   <span>Claim Free Proposal</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -898,18 +909,18 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
         </div>
 
         {/* ═══════ BOTTOM SECTION: "Read also..." (HORIZONTAL ON MOBILE / 4-COL ON DESKTOP) ═══════ */}
-        <div id="related-articles-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 pt-16 border-t border-border-custom">
-          <div className="flex items-center justify-between mb-8">
+        <div id="related-articles-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 pt-14 border-t border-border-custom">
+          <div className="flex items-center justify-between mb-7">
             <div>
-              <span className="text-xs font-mono text-accent-custom uppercase tracking-wider font-semibold">
+              <span className="text-[11px] font-mono text-accent-custom uppercase tracking-wider font-semibold">
                 More Insights
               </span>
-              <h3 className="text-2xl sm:text-3xl font-extrabold text-foreground mt-1">
+              <h3 className="text-xl sm:text-2xl font-bold text-foreground mt-0.5 tracking-tight">
                 Read also...
               </h3>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-[11px] font-mono text-secondary-custom sm:hidden">
+              <span className="text-[10.5px] font-mono text-secondary-custom sm:hidden">
                 Swipe &rarr;
               </span>
               <Link
@@ -923,12 +934,12 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           </div>
 
           {/* Responsive: HORIZONTALLY scrollable row with snap points on mobile | 4-Column Grid on desktop */}
-          <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 overflow-x-auto sm:overflow-visible pb-4 sm:pb-0 scrollbar-none snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 overflow-x-auto sm:overflow-visible pb-4 sm:pb-0 scrollbar-none snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
             {relatedArticles.map((item, idx) => (
               <Link
                 key={idx}
                 href={`/blogs/${item.slug}`}
-                className="w-[280px] sm:w-auto shrink-0 snap-start group flex flex-col rounded-[3px] bg-surface border border-border-custom overflow-hidden hover:border-accent-custom/60 hover:shadow-lg transition-all duration-300"
+                className="w-[270px] sm:w-auto shrink-0 snap-start group flex flex-col rounded-[3px] bg-surface border border-border-custom overflow-hidden hover:border-accent-custom/60 hover:shadow-md transition-all duration-300"
               >
                 <div className="aspect-[16/10] overflow-hidden bg-background relative border-b border-border-custom">
                   <img
@@ -936,20 +947,20 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute top-3 left-3">
-                    <span className={`px-2 py-0.5 rounded-[2px] text-[10px] font-mono font-bold border backdrop-blur-md ${item.tagColor}`}>
+                  <div className="absolute top-2.5 left-2.5">
+                    <span className={`px-2 py-0.5 rounded-[2px] text-[9.5px] font-mono font-bold border backdrop-blur-md ${item.tagColor}`}>
                       {item.tag}
                     </span>
                   </div>
                 </div>
-                <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
-                  <h4 className="text-sm font-bold text-foreground group-hover:text-accent-custom transition-colors line-clamp-2 leading-snug">
+                <div className="p-3.5 flex-1 flex flex-col justify-between space-y-1.5">
+                  <h4 className="text-[13px] font-semibold text-foreground group-hover:text-accent-custom transition-colors line-clamp-2 leading-snug">
                     {item.title}
                   </h4>
-                  <p className="text-xs text-secondary-custom line-clamp-2 leading-relaxed">
+                  <p className="text-[11.5px] text-secondary-custom/90 line-clamp-2 leading-relaxed">
                     {item.summary}
                   </p>
-                  <div className="pt-2 flex items-center justify-between text-[11px] font-mono text-secondary-custom border-t border-border-custom/40">
+                  <div className="pt-2 flex items-center justify-between text-[10.5px] font-mono text-secondary-custom border-t border-border-custom/40">
                     <span>{item.readTime}</span>
                     <span className="inline-flex items-center gap-1 text-accent-custom font-semibold group-hover:translate-x-0.5 transition-transform">
                       Read <ArrowRight className="w-3 h-3" />
