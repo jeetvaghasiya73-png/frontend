@@ -100,8 +100,8 @@ export default function FaqSection() {
         
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 border border-border-custom bg-surface px-3 py-1 rounded-full mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+          <div className="inline-flex items-center gap-2 border border-border-custom bg-surface px-3 py-1 rounded-sm mb-4">
+            <span className="w-1.5 h-1.5 rounded-xs bg-indigo-500" />
             <span className="text-[10px] uppercase tracking-widest font-mono font-bold text-foreground">
               Technical Documentation & FAQs
             </span>
@@ -121,7 +121,7 @@ export default function FaqSection() {
             return (
               <div
                 key={idx}
-                className={`border rounded-2xl transition-all duration-200 overflow-hidden ${
+                className={`border rounded-md transition-all duration-200 overflow-hidden ${
                   isOpen
                     ? "border-foreground/30 bg-surface"
                     : "border-border-custom bg-surface hover:border-border-custom/90"
@@ -134,7 +134,7 @@ export default function FaqSection() {
                 >
                   <div className="space-y-1.5 flex-1">
                     {faq.category && (
-                      <span className={`inline-block text-[10px] font-mono font-medium px-2 py-0.5 rounded-full border ${getCategoryClass(faq.category)}`}>
+                      <span className={`inline-block text-[10px] font-mono font-medium px-2 py-0.5 rounded-xs border ${getCategoryClass(faq.category)}`}>
                         {faq.category}
                       </span>
                     )}
@@ -143,7 +143,7 @@ export default function FaqSection() {
                     </h3>
                   </div>
 
-                  <div className="w-7 h-7 rounded-lg border border-border-custom bg-background flex items-center justify-center text-foreground shrink-0">
+                  <div className="w-7 h-7 rounded-sm border border-border-custom bg-background flex items-center justify-center text-foreground shrink-0">
                     {isOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
                   </div>
                 </button>

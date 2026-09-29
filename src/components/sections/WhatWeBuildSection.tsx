@@ -175,7 +175,7 @@ export default function WhatWeBuildSection() {
             return (
               <div
                 key={idx}
-                className={`build-card border border-border-custom bg-surface p-6 sm:p-8 rounded-2xl flex flex-col justify-between transition-all duration-200 group ${pillar.borderHover}`}
+                className={`build-card border border-border-custom bg-surface p-6 sm:p-8 rounded-md flex flex-col justify-between transition-all duration-200 group ${pillar.borderHover}`}
               >
                 <div>
                   {/* Top Bar with Number & Badge */}
@@ -183,14 +183,14 @@ export default function WhatWeBuildSection() {
                     <span className="font-mono text-xl font-bold text-secondary-custom/60 group-hover:text-foreground transition-colors">
                       {pillar.num}
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border border-border-custom bg-background text-foreground">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-xs text-[10px] font-mono font-bold uppercase tracking-wider border border-border-custom bg-background text-foreground">
                       {pillar.badge}
                     </span>
                   </div>
 
                   {/* Icon & Title */}
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 rounded-xl bg-background border border-border-custom flex items-center justify-center text-foreground shrink-0">
+                    <div className="w-8 h-8 rounded-sm bg-background border border-border-custom flex items-center justify-center text-foreground shrink-0">
                       <Icon className="w-4 h-4" />
                     </div>
                     <h3 className="text-base sm:text-lg font-bold tracking-tight text-foreground group-hover:text-indigo-400 transition-colors">
@@ -220,7 +220,7 @@ export default function WhatWeBuildSection() {
                     {pillar.keyOutcomes.map((outcome, oIdx) => (
                       <span
                         key={oIdx}
-                        className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-background border border-border-custom text-secondary-custom"
+                        className="text-[10px] font-mono px-2 py-0.5 rounded-xs bg-background border border-border-custom text-secondary-custom"
                       >
                         {outcome}
                       </span>

@@ -122,7 +122,7 @@ export default function ProcessSection() {
               return (
                 <div
                   key={idx}
-                  className={`process-step-card border p-6 sm:p-8 rounded-2xl transition-all duration-300 relative ${
+                  className={`process-step-card border p-6 sm:p-8 rounded-md transition-all duration-300 relative ${
                     isActive
                       ? "border-foreground bg-surface shadow-xs"
                       : "border-border-custom bg-surface/50 opacity-60"

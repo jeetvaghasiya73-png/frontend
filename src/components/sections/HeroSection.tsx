@@ -204,7 +204,7 @@ export default function HeroSection() {
         {stats.map((stat, idx) => (
           <div
             key={idx}
-            className="hero-smooth-reveal border border-border-custom bg-surface p-4 sm:p-5 rounded-xl flex flex-col justify-between relative overflow-hidden h-[110px] hover:border-foreground/30 transition group"
+            className="hero-smooth-reveal border border-border-custom bg-surface p-4 sm:p-5 rounded-md flex flex-col justify-between relative overflow-hidden h-[110px] hover:border-foreground/30 transition group"
           >
             <div>
               <span className="text-[10px] uppercase font-bold tracking-wider text-secondary-custom block">
@@ -235,13 +235,13 @@ export default function HeroSection() {
           return (
             <div
               key={pillar.id}
-              className={`hero-smooth-reveal border border-border-custom bg-surface p-4 sm:p-5 rounded-xl text-left flex flex-col justify-between min-h-[160px] ${pillar.borderAccent} transition group`}
+              className={`hero-smooth-reveal border border-border-custom bg-surface p-4 sm:p-5 rounded-md text-left flex flex-col justify-between min-h-[160px] ${pillar.borderAccent} transition group`}
             >
               <div className="flex items-center justify-between">
-                <div className="w-7 h-7 rounded-md bg-background border border-border-custom flex items-center justify-center text-foreground">
+                <div className="w-7 h-7 rounded-sm bg-background border border-border-custom flex items-center justify-center text-foreground">
                   <Icon className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-secondary-custom px-2 py-0.5 rounded-sm border border-border-custom bg-background">
+                <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-secondary-custom px-2 py-0.5 rounded-xs border border-border-custom bg-background">
                   [{pillar.id}] {pillar.badge}
                 </span>
               </div>
