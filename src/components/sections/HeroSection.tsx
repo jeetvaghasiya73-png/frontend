@@ -127,13 +127,6 @@ export default function HeroSection() {
         {/* Left Column: Refined Balanced Typography */}
         <div className="lg:col-span-7 flex flex-col items-start text-left">
           
-          {/* Diode Pill Tag */}
-          <div className="hero-smooth-reveal inline-flex items-center gap-2 border border-border-custom bg-surface px-3 py-1 rounded-full mb-4 sm:mb-5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span className="text-[10px] uppercase tracking-widest font-mono font-bold text-foreground">
-              Autonomous Agency & Growth Engine
-            </span>
-          </div>
 
           {/* Balanced Display Headline (Dual Opacity Contrast - MadeWithGSAP Style) */}
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-bold tracking-tight leading-[1.18] mb-4 sm:mb-5 text-foreground max-w-2xl">

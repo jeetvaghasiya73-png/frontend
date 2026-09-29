@@ -261,15 +261,9 @@ export default function Navbar() {
                   className="w-full h-full object-cover scale-110"
                 />
               </div>
-              <div className="flex flex-col">
-                <span className="font-sans text-sm font-medium tracking-tight text-foreground">
-                  Tech Infinix
-                </span>
-                <span className="flex items-center gap-1 text-[9px] font-mono text-emerald-500 font-semibold tracking-wider uppercase">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Online • Accepting Q1
-                </span>
-              </div>
+              <span className="font-sans text-sm font-medium tracking-tight text-foreground">
+                Tech Infinix
+              </span>
             </Link>
 
             {/* Quick Header Actions: Theme Switcher & Close Button */}
