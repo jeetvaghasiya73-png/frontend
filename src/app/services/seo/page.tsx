@@ -111,10 +111,6 @@ export default function SeoMainPage() {
           <p className="text-base sm:text-lg text-secondary-custom max-w-3xl leading-relaxed mb-10">
             We engineer algorithmic search engine dominance and AI answer engine authority. From sub-second Next.js Core Web Vitals to JSON-LD entity graphs, programmatic topical clusters, and direct citation in ChatGPT Search, Perplexity AI, and Google Gemini.
           </p>
-            We architect data-driven SEO systems that capture high-intent commercial queries, 
-            dominate Google AI Overviews, and elevate search visibility through rigorous on-page clustering, 
-            editorial digital PR, and sub-second Core Web Vitals engineering.
-          </p>
 
           {/* CTAs */}
           <div className="flex flex-wrap items-center gap-4 mb-16">
