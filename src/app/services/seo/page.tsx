@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/components/layout/Navbar";
 import FooterSection from "@/components/layout/FooterSection";
 import SplitText from "@/components/animations/SplitText";
@@ -254,8 +255,14 @@ export default function SeoMainPage() {
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-accent-custom/20 border border-accent-custom/40 flex items-center justify-center text-[10px] font-bold text-accent-custom">
-                        TI
+                      <div className="w-6 h-6 rounded-full overflow-hidden border border-border-custom bg-black flex items-center justify-center shrink-0">
+                        <Image
+                          src="/favicon.png"
+                          alt="Tech Infinix Favicon"
+                          width={24}
+                          height={24}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div className="text-xs">
                         <span className="text-foreground font-semibold">Tech Infinix</span>

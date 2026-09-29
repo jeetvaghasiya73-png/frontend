@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Script from "next/script";
 import { useTheme } from "next-themes";
 import {
@@ -167,8 +168,15 @@ export default function Navbar() {
         >
           {/* Left: Brand Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center text-background font-bold text-xs shadow-2xs group-hover:scale-105 transition-transform">
-              TI
+            <div className="w-7 h-7 rounded-full overflow-hidden border border-border-custom bg-black flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform shrink-0">
+              <Image
+                src="/favicon.png"
+                alt="Tech Infinix Logo"
+                width={28}
+                height={28}
+                className="w-full h-full object-cover"
+                priority
+              />
             </div>
             <span className="text-sm font-bold tracking-tight text-foreground group-hover:opacity-80 transition-opacity">
               Tech Infinix
@@ -244,8 +252,14 @@ export default function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className="flex items-center gap-2.5"
             >
-              <div className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center font-mono font-bold text-xs shadow-sm">
-                TI
+              <div className="w-7 h-7 rounded-full overflow-hidden border border-border-custom bg-black flex items-center justify-center shadow-sm shrink-0">
+                <Image
+                  src="/favicon.png"
+                  alt="Tech Infinix Logo"
+                  width={28}
+                  height={28}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="flex flex-col">
                 <span className="font-sans text-xs font-bold tracking-tight text-foreground">

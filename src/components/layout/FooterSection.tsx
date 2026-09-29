@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Sparkles, Phone, MessageCircle, Mail, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { API_V1_URL } from "@/lib/config";
 
@@ -82,8 +83,14 @@ export default function FooterSection() {
           {/* Logo & Description */}
           <div className="lg:col-span-6 flex flex-col items-start">
             <Link href="/" className="flex items-center gap-2.5 mb-4 group">
-              <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center text-background font-bold text-xs shadow-2xs group-hover:scale-105 transition-transform">
-                TI
+              <div className="w-7 h-7 rounded-full overflow-hidden border border-border-custom bg-black flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform shrink-0">
+                <Image
+                  src="/favicon.png"
+                  alt="Tech Infinix Logo"
+                  width={28}
+                  height={28}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <span className="text-base font-bold tracking-tight text-foreground group-hover:opacity-85 transition-opacity">
                 Tech Infinix

@@ -2,6 +2,7 @@
 
 import React, { use, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Poppins } from "next/font/google";
 import { API_URL } from "@/lib/config";
 import Navbar from "@/components/layout/Navbar";
@@ -272,8 +273,14 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
             {/* Author Meta Row */}
             <div className="flex flex-wrap items-center gap-3.5 sm:gap-4 pt-0.5 text-[11px] text-secondary-custom font-mono">
               <div className="flex items-center gap-1.5">
-                <div className="w-5 h-5 rounded-[2px] bg-accent-custom/15 border border-accent-custom/30 text-accent-custom font-bold text-[10px] flex items-center justify-center">
-                  TI
+                <div className="w-5 h-5 rounded-[2px] overflow-hidden border border-border-custom bg-black flex items-center justify-center shrink-0">
+                  <Image
+                    src="/favicon.png"
+                    alt="Tech Infinix"
+                    width={20}
+                    height={20}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <span className="text-foreground font-semibold">{blog.author || "Tech Infinix Research Team"}</span>
               </div>
@@ -418,8 +425,14 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
               {/* Author Box */}
               <div className="mt-8 p-5 rounded-[3px] bg-surface border border-border-custom shadow-xs flex items-start sm:items-center gap-4 sm:gap-5 flex-col sm:flex-row">
-                <div className="w-12 h-12 rounded-[2px] bg-gradient-to-tr from-accent-custom to-indigo-500 text-white font-bold text-base flex items-center justify-center shrink-0 shadow-sm shadow-accent-custom/20">
-                  TI
+                <div className="w-12 h-12 rounded-[2px] overflow-hidden border border-border-custom bg-black flex items-center justify-center shrink-0 shadow-sm shadow-accent-custom/20">
+                  <Image
+                    src="/favicon.png"
+                    alt="Tech Infinix"
+                    width={48}
+                    height={48}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
