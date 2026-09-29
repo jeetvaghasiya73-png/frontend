@@ -169,7 +169,7 @@ export default function FooterSection() {
               Core Pillars
             </h5>
             <div className="flex flex-col gap-2.5 text-sm text-secondary-custom">
-              <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">SEO Dominance</Link>
+              <Link href="/services/seo" className="hover:text-foreground transition-colors">SEO Dominance</Link>
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Next.js Web Dev</Link>
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Data Lead Scraping</Link>
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">WhatsApp AI Agents</Link>
