@@ -187,7 +187,7 @@ export default function ServicesPage() {
           <span className="text-[10px] font-mono font-bold tracking-widest text-accent-custom uppercase block mb-4">
             Our Offerings
           </span>
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground mb-6">
             <SplitText text="Enterprise AI Services" type="words" />
           </h1>
           <p className="text-sm md:text-base text-secondary-custom max-w-2xl leading-relaxed">
@@ -210,10 +210,10 @@ export default function ServicesPage() {
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${color} mb-6`}>
                     <Icon className="w-5 h-5" />
                   </div>
-                  <h3 className="text-xl font-bold text-white group-hover:text-accent-custom transition-colors duration-300">
+                  <h3 className="text-xl font-bold text-foreground group-hover:text-accent-custom transition-colors duration-300">
                     {srv.title}
                   </h3>
-                  <p className="text-xs text-[#B0B0B0] mt-3 leading-relaxed font-medium">
+                  <p className="text-xs text-secondary-custom mt-3 leading-relaxed font-medium">
                     {srv.description}
                   </p>
 
@@ -223,7 +223,7 @@ export default function ServicesPage() {
                     </h4>
                     <ul className="space-y-2">
                       {srv.features.map((feat: string, fIdx: number) => (
-                        <li key={fIdx} className="flex items-center gap-2.5 text-xs text-[#E0E0E0]">
+                        <li key={fIdx} className="flex items-center gap-2.5 text-xs text-foreground/90">
                           <CheckCircle2 className="w-3.5 h-3.5 text-accent-custom shrink-0" />
                           <span>{feat}</span>
                         </li>
@@ -234,8 +234,8 @@ export default function ServicesPage() {
 
                 <div className="border-t border-border-custom/50 pt-6 mt-8">
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-[#666666]">Starting at:</span>
-                    <span className="font-bold text-white">${srv.baseCost}</span>
+                    <span className="text-secondary-custom">Starting at:</span>
+                    <span className="font-bold text-foreground">${srv.baseCost}</span>
                   </div>
                 </div>
               </div>
@@ -252,7 +252,7 @@ export default function ServicesPage() {
               <span className="text-[10px] font-mono font-bold tracking-widest text-accent-custom uppercase block mb-3">
                 Project Architect
               </span>
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
                 Estimate Your System Scale
               </h2>
               <p className="text-xs text-secondary-custom leading-relaxed mb-8">
@@ -268,8 +268,8 @@ export default function ServicesPage() {
                   onClick={() => handleToggleService(srv.id)}
                   className={`border p-5 rounded-xl text-left cursor-pointer transition-all duration-300 ${
                     selectedServices.includes(srv.id)
-                      ? "border-accent-custom bg-accent-custom/5 text-white"
-                      : "border-border-custom bg-surface/50 hover:bg-surface text-[#B0B0B0]"
+                      ? "border-accent-custom bg-accent-custom/10 text-foreground"
+                      : "border-border-custom bg-surface/50 hover:bg-surface text-secondary-custom"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
@@ -282,7 +282,7 @@ export default function ServicesPage() {
                       {selectedServices.includes(srv.id) && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                     </div>
                   </div>
-                  <h4 className="text-sm font-bold text-white mb-1">{srv.title}</h4>
+                  <h4 className="text-sm font-bold text-foreground mb-1">{srv.title}</h4>
                   <span className="text-[10px] text-secondary-custom font-mono">From ${srv.baseCost}</span>
                 </button>
               ))}
@@ -293,15 +293,15 @@ export default function ServicesPage() {
               <div className="border-t border-border-custom/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="flex gap-10">
                   <div>
-                    <span className="text-[9px] font-mono font-bold tracking-widest text-[#666666] uppercase block">
+                    <span className="text-[9px] font-mono font-bold tracking-widest text-secondary-custom uppercase block">
                       Estimated Cost (10% bundle discount applied)
                     </span>
-                    <span className="text-3xl font-bold font-mono text-white mt-1.5 block">
+                    <span className="text-3xl font-bold font-mono text-foreground mt-1.5 block">
                       ${estimate.cost}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[9px] font-mono font-bold tracking-widest text-[#666666] uppercase block">
+                    <span className="text-[9px] font-mono font-bold tracking-widest text-secondary-custom uppercase block">
                       Estimated Delivery Timeline
                     </span>
                     <span className="text-3xl font-bold font-mono text-accent-custom mt-1.5 block">
@@ -312,14 +312,14 @@ export default function ServicesPage() {
 
                 <a
                   href="/contact"
-                  className="bg-white text-black hover:bg-accent-custom hover:text-white px-6 py-3.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg"
+                  className="bg-foreground text-background hover:bg-accent-custom hover:text-white px-6 py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg"
                 >
                   Book Proposal
                   <ArrowRight className="w-4 h-4" />
                 </a>
               </div>
             ) : (
-              <div className="border-t border-border-custom/50 pt-8 text-center text-xs font-mono text-[#666666]">
+              <div className="border-t border-border-custom/50 pt-8 text-center text-xs font-mono text-secondary-custom">
                 Select one or more scope options above to generate a projection.
               </div>
             )}

@@ -174,7 +174,7 @@ export default function HeroSection() {
           <div className="hero-smooth-reveal flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-foreground text-background hover:opacity-90 text-xs font-mono uppercase tracking-wider font-bold transition duration-200 group shadow-xs cursor-pointer text-center"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-foreground text-background hover:opacity-90 text-xs uppercase tracking-wider font-semibold transition duration-200 group shadow-xs cursor-pointer text-center"
             >
               <span>Get Architecture Quote</span>
               <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -183,7 +183,7 @@ export default function HeroSection() {
             <a
               href="/#services"
               onClick={handleScrollToServices}
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full border border-border-custom bg-surface hover:bg-surface/80 text-foreground text-xs font-mono uppercase tracking-wider font-semibold transition duration-200 group shadow-xs cursor-pointer text-center"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-border-custom bg-surface hover:bg-surface/80 text-foreground text-xs uppercase tracking-wider font-semibold transition duration-200 group shadow-xs cursor-pointer text-center"
             >
               <span>Explore 4 Pillars</span>
               <ArrowDown className="w-3.5 h-3.5 group-hover:translate-y-0.5 transition-transform" />
@@ -204,10 +204,10 @@ export default function HeroSection() {
         {stats.map((stat, idx) => (
           <div
             key={idx}
-            className="hero-smooth-reveal border border-border-custom bg-surface p-4 sm:p-5 rounded-md flex flex-col justify-between relative overflow-hidden h-[110px] hover:border-foreground/30 transition group"
+            className="hero-smooth-reveal border border-border-custom bg-surface p-4 sm:p-5 rounded-xl flex flex-col justify-between relative overflow-hidden h-[110px] hover:border-foreground/30 transition group"
           >
             <div>
-              <span className="text-[10px] uppercase font-bold font-mono tracking-wider text-secondary-custom block">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-secondary-custom block">
                 {stat.label}
               </span>
               <span className="text-xl sm:text-2xl md:text-3xl font-bold font-mono mt-1.5 block text-foreground">
@@ -235,13 +235,13 @@ export default function HeroSection() {
           return (
             <div
               key={pillar.id}
-              className={`hero-smooth-reveal border border-border-custom bg-surface p-4 sm:p-5 rounded-md text-left flex flex-col justify-between min-h-[160px] ${pillar.borderAccent} transition group`}
+              className={`hero-smooth-reveal border border-border-custom bg-surface p-4 sm:p-5 rounded-xl text-left flex flex-col justify-between min-h-[160px] ${pillar.borderAccent} transition group`}
             >
               <div className="flex items-center justify-between">
-                <div className="w-7 h-7 rounded-sm bg-background border border-border-custom flex items-center justify-center text-foreground">
+                <div className="w-7 h-7 rounded-md bg-background border border-border-custom flex items-center justify-center text-foreground">
                   <Icon className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-secondary-custom px-2 py-0.5 rounded-xs border border-border-custom bg-background">
+                <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-secondary-custom px-2 py-0.5 rounded-sm border border-border-custom bg-background">
                   [{pillar.id}] {pillar.badge}
                 </span>
               </div>

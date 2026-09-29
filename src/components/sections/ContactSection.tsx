@@ -335,8 +335,8 @@ export default function ContactSection() {
           <div ref={infoCardRef} className="lg:col-span-4 space-y-5 order-2 lg:order-1">
 
             {/* Quick 3-Step Overview */}
-            <div className="contact-info-anim border border-border-custom bg-surface p-6 sm:p-7 rounded-lg space-y-5">
-              <h3 className="text-sm font-bold text-foreground font-mono uppercase tracking-wider">
+            <div className="contact-info-anim border border-border-custom bg-surface p-6 sm:p-7 rounded-2xl space-y-5">
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
                 How It Works
               </h3>
 
@@ -374,8 +374,8 @@ export default function ContactSection() {
             </div>
 
             {/* Direct Contact Info */}
-            <div className="contact-info-anim border border-border-custom bg-surface p-6 sm:p-7 rounded-lg space-y-4">
-              <h3 className="text-sm font-bold text-foreground font-mono uppercase tracking-wider">
+            <div className="contact-info-anim border border-border-custom bg-surface p-6 sm:p-7 rounded-2xl space-y-4">
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
                 Direct Contact
               </h3>
 
@@ -384,7 +384,7 @@ export default function ContactSection() {
                   href="mailto:contact@techinfinix.com"
                   className="flex items-center gap-3 text-xs text-secondary-custom hover:text-foreground transition-colors group"
                 >
-                  <div className="w-8 h-8 rounded-md bg-background border border-border-custom flex items-center justify-center group-hover:border-foreground/40 transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-background border border-border-custom flex items-center justify-center group-hover:border-foreground/40 transition-colors">
                     <Mail className="w-3.5 h-3.5 text-foreground" />
                   </div>
                   <div>
@@ -397,7 +397,7 @@ export default function ContactSection() {
                   href="tel:+917990738939"
                   className="flex items-center gap-3 text-xs text-secondary-custom hover:text-foreground transition-colors group"
                 >
-                  <div className="w-8 h-8 rounded-md bg-background border border-border-custom flex items-center justify-center group-hover:border-foreground/40 transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-background border border-border-custom flex items-center justify-center group-hover:border-foreground/40 transition-colors">
                     <Phone className="w-3.5 h-3.5 text-foreground" />
                   </div>
                   <div>
@@ -412,7 +412,7 @@ export default function ContactSection() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-xs text-secondary-custom hover:text-foreground transition-colors group"
                 >
-                  <div className="w-8 h-8 rounded-md bg-background border border-border-custom flex items-center justify-center group-hover:border-emerald-500/40 transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-background border border-border-custom flex items-center justify-center group-hover:border-emerald-500/40 transition-colors">
                     <MessageCircle className="w-3.5 h-3.5 text-emerald-500" />
                   </div>
                   <div>
@@ -422,7 +422,7 @@ export default function ContactSection() {
                 </a>
 
                 <div className="flex items-center gap-3 text-xs text-secondary-custom">
-                  <div className="w-8 h-8 rounded-md bg-background border border-border-custom flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-background border border-border-custom flex items-center justify-center">
                     <MapPin className="w-3.5 h-3.5 text-foreground" />
                   </div>
                   <div>
@@ -434,7 +434,7 @@ export default function ContactSection() {
             </div>
 
             {/* Trust Badge */}
-            <div className="contact-info-anim border border-emerald-500/20 bg-emerald-500/5 p-4 rounded-lg flex items-start gap-3">
+            <div className="contact-info-anim border border-emerald-500/20 bg-emerald-500/5 p-4 rounded-xl flex items-start gap-3">
               <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
               <div>
                 <span className="text-xs font-bold text-foreground block">100% Confidential</span>
@@ -447,7 +447,7 @@ export default function ContactSection() {
 
           {/* ─── RIGHT: Step-by-Step Form / Persistent Confirmation ─── */}
           <div ref={formCardRef} className="lg:col-span-8 order-1 lg:order-2">
-            <div className="contact-form-anim border border-border-custom bg-surface p-6 sm:p-8 md:p-10 rounded-lg shadow-sm">
+            <div className="contact-form-anim border border-border-custom bg-surface p-6 sm:p-8 md:p-10 rounded-2xl shadow-sm">
 
               {submittedLead ? (
                 /* ═══════ PERSISTENT CONFIRMATION STATE (AFTER SUBMISSION) ═══════ */

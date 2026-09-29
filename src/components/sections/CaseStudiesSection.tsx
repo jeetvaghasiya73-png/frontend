@@ -85,7 +85,7 @@ export default function CaseStudiesSection() {
           <a
             href="/contact"
             onClick={handleNavigateToContact}
-            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-mono font-bold text-foreground hover:underline self-start md:self-end shrink-0"
+            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-semibold text-foreground hover:underline self-start md:self-end shrink-0"
           >
             <span>Deploy a Blueprint</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -97,7 +97,7 @@ export default function CaseStudiesSection() {
           {blueprints.map((proj, idx) => (
             <div
               key={idx}
-              className={`${SPAN_PATTERN[idx % SPAN_PATTERN.length]} border border-border-custom bg-surface p-6 sm:p-8 rounded-md flex flex-col justify-between relative overflow-hidden min-h-[300px] group hover:border-foreground/40 transition-all duration-200 text-left`}
+              className={`${SPAN_PATTERN[idx % SPAN_PATTERN.length]} border border-border-custom bg-surface p-6 sm:p-8 rounded-2xl flex flex-col justify-between relative overflow-hidden min-h-[300px] group hover:border-foreground/40 transition-all duration-200 text-left`}
             >
               {/* Top Meta Info */}
               <div className="flex items-center justify-between gap-4">
@@ -110,7 +110,7 @@ export default function CaseStudiesSection() {
                   </span>
                 </div>
 
-                <div className="w-8 h-8 rounded-sm border border-border-custom bg-background flex items-center justify-center text-foreground group-hover:border-foreground transition-colors shrink-0">
+                <div className="w-8 h-8 rounded-xl border border-border-custom bg-background flex items-center justify-center text-foreground group-hover:border-foreground transition-colors shrink-0">
                   <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </div>
               </div>
@@ -130,7 +130,7 @@ export default function CaseStudiesSection() {
                   {proj.servicesList.map((srv: string, sIdx: number) => (
                     <span
                       key={sIdx}
-                      className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-xs border border-border-custom bg-background text-secondary-custom"
+                      className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md border border-border-custom bg-background text-secondary-custom"
                     >
                       {srv}
                     </span>

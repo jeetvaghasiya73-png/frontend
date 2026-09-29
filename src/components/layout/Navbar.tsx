@@ -167,16 +167,16 @@ export default function Navbar() {
         >
           {/* Left: Brand Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center text-background font-mono font-bold text-xs shadow-2xs group-hover:scale-105 transition-transform">
+            <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center text-background font-bold text-xs shadow-2xs group-hover:scale-105 transition-transform">
               TI
             </div>
-            <span className="font-sans text-sm font-bold tracking-tight text-foreground group-hover:opacity-80 transition-opacity">
+            <span className="text-sm font-bold tracking-tight text-foreground group-hover:opacity-80 transition-opacity">
               Tech Infinix
             </span>
           </Link>
 
           {/* Center: Desktop Nav Links (MadeWithGSAP Style) */}
-          <nav className="hidden md:flex items-center gap-6 text-xs font-mono tracking-wider uppercase">
+          <nav className="hidden md:flex items-center gap-6 text-xs font-medium tracking-wider uppercase">
             {navLinks.map((link) => (
               <a
                 key={link.name}
@@ -210,7 +210,7 @@ export default function Navbar() {
             {/* Primary Action Button */}
             <Link
               href="/contact"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-foreground text-background hover:opacity-90 text-[11px] font-mono uppercase tracking-wider font-bold transition duration-200 shadow-2xs group cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-foreground text-background hover:opacity-90 text-[11px] uppercase tracking-wider font-semibold transition duration-200 shadow-2xs group cursor-pointer"
             >
               <span>Get Quote</span>
               <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -349,7 +349,7 @@ export default function Navbar() {
               <Link
                 href="/contact"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-foreground text-background text-xs font-mono font-bold uppercase tracking-wider shadow-md hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-foreground text-background text-xs font-semibold uppercase tracking-wider shadow-md hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
               >
                 <span>Get Custom Quote</span>
                 <ArrowUpRight className="w-4 h-4" />
@@ -361,7 +361,7 @@ export default function Navbar() {
                   href="https://wa.me/7990738939?text=Hi%20Tech%20Infinix%20team,%20I'd%20like%20to%20discuss%20a%20project."
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-mono font-medium transition-colors"
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium transition-colors"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
                   <span>WhatsApp</span>
@@ -369,7 +369,7 @@ export default function Navbar() {
 
                 <a
                   href="mailto:contact@techinfinix.com"
-                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg border border-border-custom bg-surface/50 hover:bg-surface text-foreground text-[11px] font-mono font-medium transition-colors"
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg border border-border-custom bg-surface/50 hover:bg-surface text-foreground text-xs font-medium transition-colors"
                 >
                   <Mail className="w-3.5 h-3.5 text-secondary-custom" />
                   <span>Email Team</span>

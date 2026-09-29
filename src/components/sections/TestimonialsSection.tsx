@@ -71,7 +71,7 @@ export default function TestimonialsSection() {
           <a
             href="/contact"
             onClick={handleNavigateToContact}
-            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-mono font-bold text-foreground hover:underline self-start md:self-end shrink-0"
+            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-semibold text-foreground hover:underline self-start md:self-end shrink-0"
           >
             <span>Become a Founding Client</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -85,14 +85,14 @@ export default function TestimonialsSection() {
             return (
               <div
                 key={idx}
-                className="border border-border-custom bg-surface p-6 rounded-md flex flex-col justify-between hover:border-foreground/40 transition-all duration-200 group"
+                className="border border-border-custom bg-surface p-6 rounded-2xl flex flex-col justify-between hover:border-foreground/40 transition-all duration-200 group"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-8 h-8 rounded-sm bg-background border border-border-custom flex items-center justify-center text-foreground">
+                    <div className="w-8 h-8 rounded-xl bg-background border border-border-custom flex items-center justify-center text-foreground">
                       <Icon className="w-4 h-4" />
                     </div>
-                    <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-secondary-custom px-2 py-0.5 rounded-xs border border-border-custom bg-background">
+                    <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-secondary-custom px-2.5 py-0.5 rounded-full border border-border-custom bg-background">
                       {item.badge}
                     </span>
                   </div>
