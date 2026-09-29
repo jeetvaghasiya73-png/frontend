@@ -255,13 +255,13 @@ export default function SeoMainPage() {
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full overflow-hidden border border-border-custom bg-black flex items-center justify-center shrink-0">
+                      <div className="w-6 h-6 rounded-full overflow-hidden border border-border-custom bg-black dark:bg-white flex items-center justify-center shrink-0">
                         <Image
                           src="/favicon.png"
                           alt="Tech Infinix Favicon"
                           width={24}
                           height={24}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover dark:invert"
                         />
                       </div>
                       <div className="text-xs">

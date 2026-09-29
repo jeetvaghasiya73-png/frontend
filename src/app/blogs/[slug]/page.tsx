@@ -273,13 +273,13 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
             {/* Author Meta Row */}
             <div className="flex flex-wrap items-center gap-3.5 sm:gap-4 pt-0.5 text-[11px] text-secondary-custom font-mono">
               <div className="flex items-center gap-1.5">
-                <div className="w-5 h-5 rounded-[2px] overflow-hidden border border-border-custom bg-black flex items-center justify-center shrink-0">
+                <div className="w-5 h-5 rounded-[2px] overflow-hidden border border-border-custom bg-black dark:bg-white flex items-center justify-center shrink-0">
                   <Image
                     src="/favicon.png"
                     alt="Tech Infinix"
                     width={20}
                     height={20}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover dark:invert"
                   />
                 </div>
                 <span className="text-foreground font-semibold">{blog.author || "Tech Infinix Research Team"}</span>
@@ -425,13 +425,13 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
               {/* Author Box */}
               <div className="mt-8 p-5 rounded-[3px] bg-surface border border-border-custom shadow-xs flex items-start sm:items-center gap-4 sm:gap-5 flex-col sm:flex-row">
-                <div className="w-12 h-12 rounded-[2px] overflow-hidden border border-border-custom bg-black flex items-center justify-center shrink-0 shadow-sm shadow-accent-custom/20">
+                <div className="w-12 h-12 rounded-[2px] overflow-hidden border border-border-custom bg-black dark:bg-white flex items-center justify-center shrink-0 shadow-sm shadow-accent-custom/20">
                   <Image
                     src="/favicon.png"
                     alt="Tech Infinix"
                     width={48}
                     height={48}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover dark:invert"
                   />
                 </div>
                 <div className="space-y-1">

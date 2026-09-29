@@ -168,13 +168,13 @@ export default function Navbar() {
         >
           {/* Left: Brand Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-7 h-7 rounded-full overflow-hidden border border-border-custom bg-black flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform shrink-0">
+            <div className="w-7 h-7 rounded-full overflow-hidden border border-border-custom bg-black dark:bg-white flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform shrink-0">
               <Image
                 src="/favicon.png"
                 alt="Tech Infinix Logo"
                 width={28}
                 height={28}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover dark:invert"
                 priority
               />
             </div>
@@ -252,13 +252,13 @@ export default function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className="flex items-center gap-2.5"
             >
-              <div className="w-7 h-7 rounded-full overflow-hidden border border-border-custom bg-black flex items-center justify-center shadow-sm shrink-0">
+              <div className="w-7 h-7 rounded-full overflow-hidden border border-border-custom bg-black dark:bg-white flex items-center justify-center shadow-sm shrink-0">
                 <Image
                   src="/favicon.png"
                   alt="Tech Infinix Logo"
                   width={28}
                   height={28}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover dark:invert"
                 />
               </div>
               <div className="flex flex-col">
