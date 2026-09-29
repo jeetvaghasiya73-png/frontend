@@ -29,20 +29,20 @@ const blueprints = [
   {
     id: "seo",
     stepNum: "01",
-    tabLabel: "SEO & Search",
-    badge: "Search Dominance",
-    title: "Google Page #1 SEO Dominance",
-    subtitle: "Capture daily high-intent customers actively searching for your services.",
+    tabLabel: "Professional SEO & AEO",
+    badge: "Search & AI Dominance",
+    title: "Google Page #1 SEO & Answer Engine Optimization (AEO)",
+    subtitle: "Dominate Google search results and capture verified citations across ChatGPT, Perplexity, and Gemini.",
     icon: TrendingUp,
     timeline: "2–3 weeks launch",
     accentColor: "emerald",
     deliverables: [
-      "Comprehensive Technical & On-Page SEO Overhaul",
-      "High-Intent Keyword Research & Content Architecture",
-      "Authority Backlink Acquisition & Domain Health Sync",
-      "Monthly Organic Traffic & Keyword Position Tracking"
+      "Technical Core Web Vitals & JSON-LD Entity Schema Graph",
+      "Direct AEO Citations in ChatGPT Search, Perplexity & Google SGE",
+      "High-Intent Semantic Keyword Clustering & Programmatic Content",
+      "High-Authority Tier-1 Digital PR Backlinks & Domain Entity Sync"
     ],
-    clientBenefit: "Consistently rank on Google Page #1 for high-intent commercial keywords."
+    clientBenefit: "Dominate both traditional Google organic rankings and next-generation AI answer engines."
   },
   {
     id: "web",
@@ -250,21 +250,21 @@ export default function DataFlowShowcase() {
         <div className="flex items-center justify-between border-b border-border-custom pb-3">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-mono font-bold text-foreground uppercase tracking-wider">Google Maps 3-Pack & Geo-Grid</span>
+            <span className="text-xs font-mono font-bold text-foreground uppercase tracking-wider">Professional SEO &amp; AEO Engine Radar</span>
           </div>
           <button onClick={triggerSeoScan} className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-foreground bg-surface hover:bg-border-custom border border-border-custom px-2.5 py-1 rounded-xs cursor-pointer transition-colors">
             <Radio className="w-3.5 h-3.5 text-emerald-500" /><span>Ping Radar</span>
           </button>
         </div>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-emerald-500 fill-emerald-500/20" /><div><div className="text-xs font-bold text-foreground">Your Local Business Profile</div><div className="text-[10px] text-secondary-custom">Verified Google Listing</div></div></div>
-          <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-xs text-amber-500 font-bold text-[10px]"><Star className="w-3 h-3 fill-current" /><span>5.0 (140+)</span></div>
+          <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-emerald-500 fill-emerald-500/20" /><div><div className="text-xs font-bold text-foreground">Verified Global Entity &amp; Domain</div><div className="text-[10px] text-secondary-custom">Knowledge Graph &amp; Search Index</div></div></div>
+          <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-xs text-amber-500 font-bold text-[10px]"><Star className="w-3 h-3 fill-current" /><span>99.8% Authority</span></div>
         </div>
         <div className="p-3 border border-border-custom rounded-xs bg-surface/60 space-y-2 relative">
-          <div className="flex items-center justify-between text-[10px] text-secondary-custom"><span>5-Mile Radius Search Grid:</span><span className="text-emerald-500 font-bold">ALL #1 POSITIONS</span></div>
+          <div className="flex items-center justify-between text-[10px] text-secondary-custom"><span>Search &amp; AI Citation Coverage:</span><span className="text-emerald-500 font-bold">100% #1 CITATION CONFIDENCE</span></div>
           <div className="grid grid-cols-3 gap-2 py-1 relative">
             <div className="anim-radar-wave absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full border border-emerald-500/40 pointer-events-none opacity-0" />
-            {[{ pos: "#1", label: "Downtown" },{ pos: "#1", label: "West End" },{ pos: "#2", label: "Tech Hub" },{ pos: "#1", label: "Northside" },{ pos: "CTR", label: "HQ (You)", isCenter: true },{ pos: "#1", label: "East End" },{ pos: "#2", label: "Metro" },{ pos: "#1", label: "Airport" },{ pos: "#1", label: "Southside" }].map((n, i) => (
+            {[{ pos: "#1", label: "Google Organic" },{ pos: "#1", label: "ChatGPT Search" },{ pos: "#1", label: "Perplexity AI" },{ pos: "#1", label: "Google SGE / AIO" },{ pos: "VERIFIED", label: "Entity (You)", isCenter: true },{ pos: "#1", label: "Claude Citations" },{ pos: "#1", label: "Bing Copilot" },{ pos: "#1", label: "Schema Graph" },{ pos: "#1", label: "Knowledge Panel" }].map((n, i) => (
               <div key={i} className={`p-2 rounded-xs border text-center ${n.isCenter ? "border-emerald-500 bg-emerald-500/15 font-bold shadow-[0_0_10px_rgba(16,185,129,0.2)]" : "border-border-custom bg-background"}`}>
                 <div className={`text-xs font-bold ${n.isCenter ? "text-emerald-500" : "text-foreground"}`}>{n.pos}</div>
                 <div className="text-[8px] text-secondary-custom uppercase tracking-wider truncate">{n.label}</div>
@@ -273,7 +273,7 @@ export default function DataFlowShowcase() {
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
-          {[["Inbound Calls", "+184%"],["Map Views", "14,200/mo"],["Review Funnel", "Automated"]].map(([l, v], i) => (
+          {[["Google Page #1", "100% Dominance"],["AEO Citations", "Primary Source"],["Organic Growth", "+284% MoM"]].map(([l, v], i) => (
             <div key={i} className="p-2 border border-border-custom rounded-xs bg-surface"><div className="text-secondary-custom">{l}</div><div className="text-xs font-bold text-foreground mt-0.5">{v}</div></div>
           ))}
         </div>

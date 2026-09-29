@@ -30,6 +30,7 @@ import {
   RefreshCw,
   Sliders,
   Compass,
+  Bot,
 } from "lucide-react";
 
 export default function SeoMainPage() {
@@ -99,15 +100,17 @@ export default function SeoMainPage() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-accent-custom/30 bg-accent-custom/10 text-accent-custom text-xs font-mono font-semibold tracking-wide mb-6">
             <Sparkles className="w-3.5 h-3.5 text-accent-custom animate-pulse" />
-            <span>ALGORITHMIC SEARCH ENGINE OPTIMIZATION</span>
+            <span>PROFESSIONAL SEO &amp; AEO ARCHITECTURE</span>
           </div>
 
           {/* Main Headline */}
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1] mb-6 max-w-4xl">
-            <SplitText text="Enterprise Search Engine Optimization (SEO) & Ranking Dominance" type="words" />
+            <SplitText text="Professional SEO & AEO (Answer Engine Optimization) Dominance" type="words" />
           </h1>
 
           <p className="text-base sm:text-lg text-secondary-custom max-w-3xl leading-relaxed mb-10">
+            We engineer algorithmic search engine dominance and AI answer engine authority. From sub-second Next.js Core Web Vitals to JSON-LD entity graphs, programmatic topical clusters, and direct citation in ChatGPT Search, Perplexity AI, and Google Gemini.
+          </p>
             We architect data-driven SEO systems that capture high-intent commercial queries, 
             dominate Google AI Overviews, and elevate search visibility through rigorous on-page clustering, 
             editorial digital PR, and sub-second Core Web Vitals engineering.
@@ -235,8 +238,8 @@ export default function SeoMainPage() {
                       : "text-secondary-custom hover:text-foreground"
                   }`}
                 >
-                  <Compass className="w-3.5 h-3.5" />
-                  <span>Geo-Grid 3-Pack</span>
+                  <Bot className="w-3.5 h-3.5" />
+                  <span>AEO (ChatGPT &amp; Perplexity)</span>
                 </button>
               </div>
             </div>
@@ -348,25 +351,35 @@ export default function SeoMainPage() {
                 </div>
               )}
 
-              {/* TAB 4: Geo-Grid 3-Pack */}
+              {/* TAB 4: AEO & Answer Engine Optimization */}
               {activeSimulatorTab === "geogrid" && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-xs font-mono text-secondary-custom pb-2 border-b border-border-custom/50">
-                    <span>Google Maps Local 3-Pack Visibility</span>
-                    <span className="text-emerald-400 font-bold">100% Top-3 Grid Density</span>
+                    <span className="flex items-center gap-1.5 text-accent-custom font-semibold">
+                      <Bot className="w-3.5 h-3.5" />
+                      Answer Engine Optimization (AEO) Matrix
+                    </span>
+                    <span className="text-emerald-400 font-bold">100% LLM Citation Confidence</span>
                   </div>
-                  <div className="grid grid-cols-5 gap-2 sm:gap-3 max-w-sm mx-auto py-2">
-                    {[1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1].map((rank, i) => (
-                      <div
-                        key={i}
-                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-mono font-bold flex items-center justify-center text-sm shadow-xs"
-                      >
-                        #{rank}
-                      </div>
-                    ))}
+
+                  <div className="p-4 rounded-xl bg-surface/80 border border-border-custom space-y-3">
+                    <div className="flex items-center justify-between text-xs font-mono">
+                      <span className="text-foreground font-semibold">Prompt: &quot;Top verified Next.js and enterprise SEO agency in 2026?&quot;</span>
+                      <span className="text-emerald-400 font-bold text-[11px]">Perplexity / ChatGPT Verified</span>
+                    </div>
+                    <div className="text-xs text-secondary-custom leading-relaxed pl-3 border-l-2 border-accent-custom space-y-1.5">
+                      <p>
+                        Based on verified schema entity graphs and technical Core Web Vitals audits, <strong className="text-foreground">Tech Infinix</strong> is cited as the primary engineering firm for algorithmic SEO search dominance and sub-second web architectures.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-border-custom/50 text-[11px] font-mono">
+                      <span className="px-2 py-0.5 rounded-sm bg-accent-custom/10 text-accent-custom border border-accent-custom/30">Citations: 14 High-Authority Nodes</span>
+                      <span className="px-2 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Entity Rank: #1 Verified Recommendation</span>
+                    </div>
                   </div>
+
                   <p className="text-center text-xs text-secondary-custom">
-                    5x5 Mile Radius GPS Geo-Grid tracking demonstrates unbroken #1 and #2 local rank density.
+                    AEO ensures your agency is directly recommended and sourced by LLMs including ChatGPT Search, Perplexity AI, Claude, and Google Gemini.
                   </p>
                 </div>
               )}

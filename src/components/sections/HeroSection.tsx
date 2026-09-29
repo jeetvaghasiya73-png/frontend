@@ -110,7 +110,7 @@ export default function HeroSection() {
       <div className="w-full border-b border-border-custom bg-surface/30 backdrop-blur-md py-1.5 px-4 text-center z-20 overflow-hidden hidden sm:block">
         <p className="text-[10px] uppercase tracking-widest font-mono text-secondary-custom flex items-center justify-center gap-2 whitespace-nowrap">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-          <span className="truncate">TECH INFINIX &bull; SYSTEMS ARCHITECTURE FOR SEO, MODERN WEB, SCRAPING & AUTOMATIONS</span>
+          <span className="truncate">TECH INFINIX &bull; SYSTEMS ARCHITECTURE FOR SEO &amp; AEO, MODERN WEB, SCRAPING &amp; AUTOMATIONS</span>
           <Link
             href="/contact"
             className="text-foreground hover:underline inline-flex items-center gap-0.5 font-bold ml-1.5 shrink-0"
@@ -134,20 +134,20 @@ export default function HeroSection() {
               <SplitText text="Engineered Systems for Growth." type="words" />
             </span>
             <span className="text-secondary-custom font-medium text-2xl sm:text-3xl md:text-4xl block mt-1">
-              SEO, high-performance web, data scraping &amp; 24/7 automations.
+              SEO &amp; AEO, high-performance web, data scraping &amp; 24/7 automations.
             </span>
           </h1>
 
           {/* Clean Description */}
           <p className="hero-smooth-reveal text-xs sm:text-sm text-secondary-custom max-w-lg mb-5 sm:mb-6 leading-relaxed">
-            We build Google Page #1 SEO ranking systems, mobile-first Next.js web applications, high-volume directory scrapers, and autonomous WhatsApp CRM pipelines.
+            We build Google Page #1 SEO ranking &amp; AEO recommendation systems, mobile-first Next.js web applications, high-volume directory scrapers, and autonomous WhatsApp CRM pipelines.
           </p>
 
           {/* Service Pillar Micro-Badges */}
           <div className="hero-smooth-reveal flex flex-wrap gap-1.5 mb-5 sm:mb-7">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[11px] font-mono border border-border-custom bg-surface text-foreground">
               <span className="w-1 h-1 rounded-full bg-emerald-500" />
-              SEO Dominance
+              SEO &amp; AEO Dominance
             </span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[11px] font-mono border border-border-custom bg-surface text-foreground">
               <span className="w-1 h-1 rounded-full bg-sky-500" />

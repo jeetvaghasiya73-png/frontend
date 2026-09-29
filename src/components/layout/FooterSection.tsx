@@ -97,7 +97,7 @@ export default function FooterSection() {
               </span>
             </Link>
             <p className="text-secondary-custom text-sm leading-relaxed max-w-sm">
-              We engineer enterprise-grade SEO search dominance, full-stack Next.js web applications, automated web scrapers, and 24/7 WhatsApp workflow pipelines.
+              We engineer professional SEO &amp; AEO search dominance, full-stack Next.js web applications, automated web scrapers, and 24/7 WhatsApp workflow pipelines.
             </p>
             <div className="mt-4 flex items-center gap-2 text-xs text-foreground font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -176,7 +176,7 @@ export default function FooterSection() {
               Core Pillars
             </h5>
             <div className="flex flex-col gap-2.5 text-sm text-secondary-custom">
-              <Link href="/services/seo" className="hover:text-foreground transition-colors">SEO Dominance</Link>
+              <Link href="/services/seo" className="hover:text-foreground transition-colors">Professional SEO &amp; AEO</Link>
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Next.js Web Dev</Link>
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Data Lead Scraping</Link>
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">WhatsApp AI Agents</Link>
@@ -188,7 +188,7 @@ export default function FooterSection() {
               Capabilities
             </h5>
             <div className="flex flex-col gap-2.5 text-sm text-secondary-custom">
-              <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Geo-Grid Rank Trackers</Link>
+              <Link href="/services/seo" className="hover:text-foreground transition-colors">AEO &amp; AI Search</Link>
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Playwright Crawlers</Link>
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">n8n Automation Nodes</Link>
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Evolution API Baileys</Link>

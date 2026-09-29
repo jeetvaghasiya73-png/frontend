@@ -64,6 +64,13 @@ src/app/
 │       │       ├── layout.tsx
 │       │       └── page.tsx
 │       │
+│       └── aeo/                           # [SUB-SERVICE 4] AEO & AI Search (/services/seo/aeo)
+│           ├── layout.tsx
+│           ├── page.tsx
+│           └── [location]/                # [GEO EXTENSION] Location-specific AEO
+│               ├── layout.tsx
+│               └── page.tsx
+│       │
 │       └── [location]/                    # [GEO MAIN] City/Region Hub (/services/seo/[location])
 │           ├── layout.tsx
 │           └── page.tsx

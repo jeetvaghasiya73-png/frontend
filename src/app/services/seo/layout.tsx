@@ -1,36 +1,39 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Enterprise SEO Services & Search Engine Optimization Dominance | Tech Infinix",
+  title: "Professional SEO & AEO Services | Search & Answer Engine Dominance | Tech Infinix",
   description:
-    "Dominate Google rankings with Tech Infinix's technical SEO architecture, on-page semantic clustering, high-authority off-page digital PR, and sub-second Core Web Vitals optimization.",
+    "Dominate Google organic rankings and AI answer engines (ChatGPT Search, Perplexity, Google SGE) with Tech Infinix's professional SEO & AEO architecture, semantic clustering, high-authority digital PR, and sub-second Core Web Vitals.",
   keywords: [
-    "Enterprise SEO Services",
+    "Professional SEO Services",
+    "AEO Services",
+    "Answer Engine Optimization",
+    "AI Search Engine Optimization",
+    "ChatGPT Search SEO",
+    "Perplexity AI SEO",
     "Technical SEO Agency",
     "On-Page SEO Optimization",
     "Off-Page SEO Backlinks",
     "Core Web Vitals Optimization",
     "Next.js SEO",
-    "AI Search Engine Optimization",
-    "Google Maps 3-Pack SEO",
     "Tech Infinix SEO",
   ],
   alternates: {
     canonical: "/services/seo",
   },
   openGraph: {
-    title: "Enterprise SEO Services & Search Engine Optimization | Tech Infinix",
+    title: "Professional SEO & AEO Services | Tech Infinix",
     description:
-      "Data-driven SEO architecture: algorithm-proof on-page clustering, high-authority backlink outreach, and lightning-fast technical Core Web Vitals.",
+      "Data-driven SEO & AEO architecture: algorithm-proof topical clustering, AI search engine citations, and lightning-fast technical Core Web Vitals.",
     url: "/services/seo",
     type: "website",
     siteName: "Tech Infinix",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Enterprise SEO Services | Tech Infinix",
+    title: "Professional SEO & AEO Services | Tech Infinix",
     description:
-      "Data-driven SEO architecture for fast, scalable Google organic ranking dominance.",
+      "Data-driven SEO & AEO architecture for fast, scalable Google ranking and AI answer engine dominance.",
   },
 };
 
