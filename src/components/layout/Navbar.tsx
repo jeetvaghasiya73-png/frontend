@@ -167,18 +167,18 @@ export default function Navbar() {
           }`}
         >
           {/* Left: Brand Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-7 h-7 rounded-full overflow-hidden border border-border-custom bg-black dark:bg-white flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform shrink-0">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-border-custom dark:border-white/35 dark:ring-1 dark:ring-white/20 bg-black flex items-center justify-center shadow-xs dark:shadow-[0_0_12px_rgba(255,255,255,0.12)] group-hover:scale-105 transition-all shrink-0">
               <Image
                 src="/favicon.png"
                 alt="Tech Infinix Logo"
-                width={28}
-                height={28}
-                className="w-full h-full object-cover dark:invert"
+                width={40}
+                height={40}
+                className="w-full h-full object-cover scale-110"
                 priority
               />
             </div>
-            <span className="text-sm font-bold tracking-tight text-foreground group-hover:opacity-80 transition-opacity">
+            <span className="text-[15px] sm:text-base font-medium tracking-tight text-foreground group-hover:opacity-80 transition-opacity">
               Tech Infinix
             </span>
           </Link>
@@ -250,19 +250,19 @@ export default function Navbar() {
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2.5"
+              className="flex items-center gap-3"
             >
-              <div className="w-7 h-7 rounded-full overflow-hidden border border-border-custom bg-black dark:bg-white flex items-center justify-center shadow-sm shrink-0">
+              <div className="w-9 h-9 rounded-full overflow-hidden border border-border-custom dark:border-white/35 dark:ring-1 dark:ring-white/20 bg-black flex items-center justify-center shadow-xs dark:shadow-[0_0_12px_rgba(255,255,255,0.12)] shrink-0">
                 <Image
                   src="/favicon.png"
                   alt="Tech Infinix Logo"
-                  width={28}
-                  height={28}
-                  className="w-full h-full object-cover dark:invert"
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-cover scale-110"
                 />
               </div>
               <div className="flex flex-col">
-                <span className="font-sans text-xs font-bold tracking-tight text-foreground">
+                <span className="font-sans text-sm font-medium tracking-tight text-foreground">
                   Tech Infinix
                 </span>
                 <span className="flex items-center gap-1 text-[9px] font-mono text-emerald-500 font-semibold tracking-wider uppercase">

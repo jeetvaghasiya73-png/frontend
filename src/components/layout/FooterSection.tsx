@@ -82,17 +82,17 @@ export default function FooterSection() {
           
           {/* Logo & Description */}
           <div className="lg:col-span-6 flex flex-col items-start">
-            <Link href="/" className="flex items-center gap-2.5 mb-4 group">
-              <div className="w-7 h-7 rounded-full overflow-hidden border border-border-custom bg-black dark:bg-white flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform shrink-0">
+            <Link href="/" className="flex items-center gap-3 mb-4 group">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden border border-border-custom dark:border-white/35 dark:ring-1 dark:ring-white/20 bg-black flex items-center justify-center shadow-xs dark:shadow-[0_0_14px_rgba(255,255,255,0.12)] group-hover:scale-105 transition-all shrink-0">
                 <Image
                   src="/favicon.png"
                   alt="Tech Infinix Logo"
-                  width={28}
-                  height={28}
-                  className="w-full h-full object-cover dark:invert"
+                  width={44}
+                  height={44}
+                  className="w-full h-full object-cover scale-110"
                 />
               </div>
-              <span className="text-base font-bold tracking-tight text-foreground group-hover:opacity-85 transition-opacity">
+              <span className="text-lg sm:text-xl font-medium tracking-tight text-foreground group-hover:opacity-85 transition-opacity">
                 Tech Infinix
               </span>
             </Link>

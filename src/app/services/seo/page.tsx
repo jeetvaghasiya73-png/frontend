@@ -254,18 +254,18 @@ export default function SeoMainPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full overflow-hidden border border-border-custom bg-black dark:bg-white flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full overflow-hidden border border-border-custom dark:border-white/35 dark:ring-1 dark:ring-white/20 bg-black flex items-center justify-center shrink-0">
                         <Image
                           src="/favicon.png"
                           alt="Tech Infinix Favicon"
-                          width={24}
-                          height={24}
-                          className="w-full h-full object-cover dark:invert"
+                          width={28}
+                          height={28}
+                          className="w-full h-full object-cover scale-110"
                         />
                       </div>
                       <div className="text-xs">
-                        <span className="text-foreground font-semibold">Tech Infinix</span>
+                        <span className="text-foreground font-medium">Tech Infinix</span>
                         <span className="text-secondary-custom ml-1.5 font-mono text-[11px]">https://techinfinix.com › services › seo</span>
                       </div>
                     </div>

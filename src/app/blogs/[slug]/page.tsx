@@ -272,17 +272,17 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
             {/* Author Meta Row */}
             <div className="flex flex-wrap items-center gap-3.5 sm:gap-4 pt-0.5 text-[11px] text-secondary-custom font-mono">
-              <div className="flex items-center gap-1.5">
-                <div className="w-5 h-5 rounded-[2px] overflow-hidden border border-border-custom bg-black dark:bg-white flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-[3px] overflow-hidden border border-border-custom dark:border-white/35 dark:ring-1 dark:ring-white/20 bg-black flex items-center justify-center shrink-0">
                   <Image
                     src="/favicon.png"
                     alt="Tech Infinix"
-                    width={20}
-                    height={20}
-                    className="w-full h-full object-cover dark:invert"
+                    width={24}
+                    height={24}
+                    className="w-full h-full object-cover scale-110"
                   />
                 </div>
-                <span className="text-foreground font-semibold">{blog.author || "Tech Infinix Research Team"}</span>
+                <span className="text-foreground font-medium">{blog.author || "Tech Infinix Research Team"}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3 text-accent-custom" />
@@ -425,18 +425,18 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
 
               {/* Author Box */}
               <div className="mt-8 p-5 rounded-[3px] bg-surface border border-border-custom shadow-xs flex items-start sm:items-center gap-4 sm:gap-5 flex-col sm:flex-row">
-                <div className="w-12 h-12 rounded-[2px] overflow-hidden border border-border-custom bg-black dark:bg-white flex items-center justify-center shrink-0 shadow-sm shadow-accent-custom/20">
+                <div className="w-14 h-14 rounded-full overflow-hidden border border-border-custom dark:border-white/35 dark:ring-1 dark:ring-white/20 bg-black flex items-center justify-center shrink-0 shadow-md">
                   <Image
                     src="/favicon.png"
                     alt="Tech Infinix"
-                    width={48}
-                    height={48}
-                    className="w-full h-full object-cover dark:invert"
+                    width={56}
+                    height={56}
+                    className="w-full h-full object-cover scale-110"
                   />
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-semibold text-foreground">
+                    <h4 className="text-sm font-medium text-foreground">
                       {blog.author || "Tech Infinix Research Team"}
                     </h4>
                     <span className="px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom text-[10px] font-mono font-semibold">
