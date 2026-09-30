@@ -14,7 +14,6 @@ import {
   RefreshCw,
   Search,
   Filter,
-  PhoneCall,
   Globe,
   Star,
   Users,
@@ -25,9 +24,6 @@ import {
   ChevronLeft,
   Loader2,
   Mail,
-  Smartphone,
-  ArrowRight,
-  BellRing,
   QrCode,
   Play,
   Square,
@@ -35,22 +31,13 @@ import {
   Bot,
   X,
   ChevronDown,
-  ChevronUp,
   MessageCircle,
-  UserX,
-  Building,
   MapPin,
-  Tag,
   Check,
   Eye,
-  Trash2,
   Calendar,
-  CheckSquare,
-  Square as SquareOutline,
   SlidersHorizontal,
   UserCheck,
-  Settings2,
-  Lock,
   KeyRound,
   EyeOff,
   PauseCircle,
@@ -58,21 +45,16 @@ import {
   Info,
   Paperclip,
   Smile,
-  Mic,
-  FileText,
-  PieChart as PieIcon,
   BarChart3,
   TrendingUp,
   Activity,
   Download,
-  Share2,
   Phone,
-  PlusCircle,
   CheckCircle,
-  Sparkle,
   ShieldAlert,
   Ban,
-  UserMinus
+  Smartphone,
+  PieChart as PieIcon
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
 import { isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTTime, formatISTDateTime } from "@/lib/formatters";
@@ -1511,15 +1493,6 @@ export default function WhatsAppOutreachPage() {
                         <h2 className="font-bold text-xs sm:text-sm md:text-base text-[var(--dash-text)] truncate" title={selectedConv.bussiness_name}>
                           {selectedConv.bussiness_name || format10DigitPhone(selectedConv.phone_number)}
                         </h2>
-                        {selectedConv.is_interested ? (
-                          <span className="hidden md:inline-flex bg-amber-500/15 text-amber-500 text-[10px] px-1.5 py-0.5 rounded border border-amber-500/30 font-bold shrink-0 items-center gap-0.5">
-                            <Star className="w-2.5 h-2.5 fill-amber-500" /> Hot Lead
-                          </span>
-                        ) : selectedConv.last_reply ? (
-                          <span className="hidden md:inline-flex bg-blue-500/15 text-blue-500 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/30 font-semibold shrink-0">
-                            💬 Replied
-                          </span>
-                        ) : null}
                       </div>
                       <p className="text-[10px] text-[var(--dash-text-muted)] truncate flex items-center gap-1 font-mono">
                         <span>{format10DigitPhone(selectedConv.phone_number)}</span>
@@ -2242,40 +2215,30 @@ export default function WhatsAppOutreachPage() {
                     >
                       {/* Sticky Header with Safe-Area Inset & High-Contrast Close Button */}
                       <div
-                        className="flex-none px-3.5 sm:px-4 py-3 flex items-center justify-between z-30 sticky top-0 shadow-xs bg-[var(--dash-card-bg)] border-b border-[var(--dash-border)]"
+                        className="flex-none px-3.5 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 z-30 sticky top-0 shadow-xs bg-[var(--dash-card-bg)] border-b border-[var(--dash-border)]"
                         style={{
                           paddingTop: "max(env(safe-area-inset-top, 0px), 0.75rem)"
                         }}
                       >
-                        <div className="flex items-center gap-1.5 sm:gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
                           <button
                             onClick={() => handleToggleInterest(selectedConv)}
-                            className={`crm-badge ${selectedConv.is_interested ? "badge-warning" : "badge-secondary"} text-xs font-bold cursor-pointer hover:opacity-80 transition flex items-center gap-1.5`}
+                            className={`crm-badge ${selectedConv.is_interested ? "badge-warning" : "badge-secondary"} text-xs font-bold cursor-pointer hover:opacity-80 transition flex items-center gap-1.5 shrink-0`}
                             title="Click to toggle interest status"
                           >
                             <span className="w-2 h-2 rounded-full" style={{ background: selectedConv.is_interested ? "var(--dash-warning)" : "var(--dash-text-muted)" }} />
                             <span className="capitalize">{selectedConv.is_interested ? "Interested" : (selectedConv.whatsapp_status || "Outreach")}</span>
                             <ChevronDown className="w-3 h-3 opacity-60" />
                           </button>
-                          <span className="crm-badge badge-success text-xs font-bold">
+                          <span className="crm-badge badge-success text-xs font-bold shrink-0">
                             Score: {selectedConv.is_interested ? 94 : 75}
-                          </span>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                            selectedConv.latest_direction === "inbound"
-                              ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
-                              : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                          }`}>
-                            {selectedConv.latest_direction === "inbound" ? "Inbound" : "Outbound"}
-                          </span>
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border bg-blue-500/10 text-blue-500 border-blue-500/20">
-                            {selectedConv.last_reply ? "✓ Details: Done" : "⏳ Details: Pending"}
                           </span>
                         </div>
 
                         {/* Red Close Button */}
                         <button
                           onClick={() => setShowRightDrawer(false)}
-                          className="px-3 sm:px-3.5 py-1.5 min-h-[36px] text-xs font-bold flex items-center gap-1.5 cursor-pointer transition rounded-md shadow-xs active:scale-95 shrink-0"
+                          className="px-3 sm:px-3.5 py-1.5 min-h-[34px] text-xs font-bold flex items-center gap-1.5 cursor-pointer transition rounded-md shadow-xs active:scale-95 shrink-0"
                           style={{
                             background: "var(--dash-danger-light)",
                             color: "var(--dash-danger)",
