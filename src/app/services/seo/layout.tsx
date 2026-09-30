@@ -1,39 +1,39 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Professional SEO & AEO Services | Search & Answer Engine Dominance | Tech Infinix",
+  title: "SEO Services | On-Page, Technical & E-commerce SEO | Tech Infinix",
   description:
-    "Dominate Google organic rankings and AI answer engines (ChatGPT Search, Perplexity, Google SGE) with Tech Infinix's professional SEO & AEO architecture, semantic clustering, high-authority digital PR, and sub-second Core Web Vitals.",
+    "Explore SEO services from Tech Infinix, including technical, on-page, off-page, e-commerce, and white-label SEO solutions for businesses and agencies.",
   keywords: [
-    "Professional SEO Services",
-    "AEO Services",
-    "Answer Engine Optimization",
-    "AI Search Engine Optimization",
-    "ChatGPT Search SEO",
-    "Perplexity AI SEO",
-    "Technical SEO Agency",
-    "On-Page SEO Optimization",
-    "Off-Page SEO Backlinks",
-    "Core Web Vitals Optimization",
-    "Next.js SEO",
-    "Tech Infinix SEO",
+    "Best search engine optimization agency",
+    "On page SEO service",
+    "Off page SEO services",
+    "Google ranking expert",
+    "Organic search engine optimization services",
+    "Google search engine optimization",
+    "Dental SEO services",
+    "E-commerce SEO services",
+    "Search engine optimization for lawyers",
+    "E-commerce SEO agency",
+    "SEO in e-commerce",
+    "White label SEO services"
   ],
   alternates: {
-    canonical: "/services/seo",
+    canonical: "https://www.techinfinix.com/services/seo",
   },
   openGraph: {
-    title: "Professional SEO & AEO Services | Tech Infinix",
+    title: "SEO Services | On-Page, Technical & E-commerce SEO | Tech Infinix",
     description:
-      "Data-driven SEO & AEO architecture: algorithm-proof topical clustering, AI search engine citations, and lightning-fast technical Core Web Vitals.",
-    url: "/services/seo",
+      "Explore SEO services from Tech Infinix, including technical, on-page, off-page, e-commerce, and white-label SEO solutions for businesses and agencies.",
+    url: "https://www.techinfinix.com/services/seo",
     type: "website",
     siteName: "Tech Infinix",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Professional SEO & AEO Services | Tech Infinix",
+    title: "SEO Services | On-Page, Technical & E-commerce SEO | Tech Infinix",
     description:
-      "Data-driven SEO & AEO architecture for fast, scalable Google ranking and AI answer engine dominance.",
+      "Explore SEO services from Tech Infinix, including technical, on-page, off-page, e-commerce, and white-label SEO solutions for businesses and agencies.",
   },
 };
 
@@ -47,14 +47,14 @@ export default function SeoLayout({
     "@graph": [
       {
         "@type": "Service",
-        "@id": "https://techinfinix.com/services/seo#service",
-        name: "Enterprise Search Engine Optimization (SEO) Services",
+        "@id": "https://www.techinfinix.com/services/seo#service",
+        name: "Search Engine Optimization (SEO) Services",
         serviceType: "Search Engine Optimization",
         provider: {
           "@type": "Organization",
           name: "Tech Infinix",
-          url: "https://techinfinix.com",
-          logo: "https://techinfinix.com/icon.png",
+          url: "https://www.techinfinix.com",
+          logo: "https://www.techinfinix.com/icon.png",
           contactPoint: {
             "@type": "ContactPoint",
             telephone: "+91-79907-38939",
@@ -64,90 +64,106 @@ export default function SeoLayout({
           },
         },
         description:
-          "Full-spectrum enterprise search engine optimization including on-page semantic structuring, authoritative off-page digital PR, and technical Core Web Vitals engineering.",
+          "Professional SEO services including on-page SEO, off-page SEO, technical SEO, e-commerce SEO, and white-label SEO services.",
         hasOfferCatalog: {
           "@type": "OfferCatalog",
-          name: "SEO Services Architecture",
+          name: "SEO Services Overview",
           itemListElement: [
             {
               "@type": "Offer",
               itemOffered: {
                 "@type": "Service",
-                name: "On-Page SEO Architecture",
-                description: "Semantic HTML5 structure, schema markup, keyword clustering, and NLP content alignment.",
+                name: "On-Page SEO Service",
+                description: "Keyword mapping, title tag optimization, internal linking, and search intent alignment.",
               },
             },
             {
               "@type": "Offer",
               itemOffered: {
                 "@type": "Service",
-                name: "Off-Page SEO & Digital PR",
-                description: "High-authority contextual editorial backlinks, brand mentions, and tiered citation networks.",
+                name: "Off-Page SEO Services",
+                description: "High-quality link acquisition, digital PR, and authority building.",
               },
             },
             {
               "@type": "Offer",
               itemOffered: {
                 "@type": "Service",
-                name: "Technical SEO & Core Web Vitals",
-                description: "Next.js SSR/ISR rendering speed, crawl budget optimization, server latency minimization, and schema graphs.",
+                name: "Technical SEO",
+                description: "Crawlability fixes, XML sitemaps, Core Web Vitals optimization, and structured data implementation.",
               },
             },
+            {
+              "@type": "Offer",
+              itemOffered: {
+                "@type": "Service",
+                name: "White Label SEO Services",
+                description: "Reliable SEO fulfillment and delivery support for digital marketing agencies.",
+              },
+            }
           ],
         },
       },
       {
         "@type": "BreadcrumbList",
-        "@id": "https://techinfinix.com/services/seo#breadcrumb",
+        "@id": "https://www.techinfinix.com/services/seo#breadcrumb",
         itemListElement: [
           {
             "@type": "ListItem",
             position: 1,
             name: "Home",
-            item: "https://techinfinix.com",
+            item: "https://www.techinfinix.com",
           },
           {
             "@type": "ListItem",
             position: 2,
             name: "Services",
-            item: "https://techinfinix.com/services",
+            item: "https://www.techinfinix.com/services",
           },
           {
             "@type": "ListItem",
             position: 3,
             name: "SEO Services",
-            item: "https://techinfinix.com/services/seo",
+            item: "https://www.techinfinix.com/services/seo",
           },
         ],
       },
       {
         "@type": "FAQPage",
-        "@id": "https://techinfinix.com/services/seo#faq",
+        "@id": "https://www.techinfinix.com/services/seo#faq",
         mainEntity: [
           {
             "@type": "Question",
-            name: "How long does it take to see rankings and traffic results from SEO?",
+            name: "What are search engine optimization services?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Typically, technical fixes and on-page indexation improvements yield measurable ranking improvements within 4 to 8 weeks. For competitive commercial keywords, aggressive traffic compounding accelerates between months 3 and 6 as topical authority is consolidated.",
+              text: "Search engine optimization (SEO) services involve improving your website's visibility on search engines like Google. This includes optimizing technical performance, on-page content relevance, and off-page authority so potential customers can easily find your business.",
             },
           },
           {
             "@type": "Question",
-            name: "How does Tech Infinix handle modern Google AI Overviews and SGE?",
+            name: "What is the difference between on-page and off-page SEO?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "We optimize content using entity-based schema structures, direct informational definitions, structured data graphs, and high-trust citation sources that Google Gemini and AI Overviews explicitly cite in answer snapshots.",
+              text: "On-page SEO focuses on optimizing elements within your website, such as content, headings, and internal links. Off-page SEO involves building authority and trust outside of your website, primarily through acquiring high-quality backlinks and digital PR.",
             },
           },
           {
             "@type": "Question",
-            name: "Do you guarantee 100% Core Web Vitals pass scores?",
+            name: "Do you offer e-commerce SEO services?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Yes. Because our engineering stack is centered on Next.js, headless architectures, and sub-100ms server responses, we routinely achieve 95-100 scores across Desktop and Mobile on Google PageSpeed Insights.",
+              text: "Yes, we are an e-commerce SEO agency that helps online stores increase visibility. We optimize product pages, category structures, faceted navigation, and schema markup to drive organic traffic and product discovery.",
             },
           },
+          {
+            "@type": "Question",
+            name: "What are white-label SEO services?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "White-label SEO services allow digital marketing agencies to outsource their SEO fulfillment to us. We handle the research, execution, and reporting under your brand name, allowing you to scale your business without hiring an in-house team.",
+            },
+          }
         ],
       },
     ],
