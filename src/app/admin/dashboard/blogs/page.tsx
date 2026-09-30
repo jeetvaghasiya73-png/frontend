@@ -5,6 +5,7 @@ import { useAuthStore } from "@/lib/authStore";
 import { Loader2, Plus, Edit2, Trash2, Eye, ExternalLink, Sparkles } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
 import BlankCanvasBlogEditor from "@/components/admin/BlankCanvasBlogEditor";
+import { formatISTDate } from "@/lib/formatters";
 
 export default function BlogsManager() {
   const { accessToken } = useAuthStore();
@@ -189,7 +190,7 @@ export default function BlogsManager() {
                     </span>
                   )}
                   <span className="text-[10.5px] font-mono text-secondary-custom">
-                    By {blog.author} &bull; {new Date(blog.created_at).toLocaleDateString()}
+                    By {blog.author} &bull; {formatISTDate(blog.created_at)}
                   </span>
                 </div>
 

@@ -35,6 +35,7 @@ import {
   ShieldAlert
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
+import { formatISTTime, formatISTDate, formatISTDateTime } from "@/lib/formatters";
 import {
   ResponsiveContainer,
   BarChart,
@@ -1358,7 +1359,7 @@ function OutreachManager() {
                           )}
                           {msg.status === "SENT" && (
                             <span className="text-[10px] text-gray-400 font-mono">
-                              {new Date(msg.sent_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                              {formatISTTime(msg.sent_at)}
                             </span>
                           )}
                         </td>
@@ -1399,7 +1400,7 @@ function OutreachManager() {
                     )}
                     <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-white/5">
                       <span className="text-[9px] text-gray-400 font-mono">
-                        {msg.sent_at ? new Date(msg.sent_at).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "Pending"}
+                        {msg.sent_at ? formatISTDateTime(msg.sent_at) : "Pending"}
                       </span>
                       <div className="flex items-center gap-2">
                         {msg.status === "FAILED" && (
@@ -1540,7 +1541,7 @@ function OutreachManager() {
                           }`}>
                             <div className="flex items-center justify-between gap-4 font-mono text-[9px] opacity-70 mb-2 border-b border-gray-200/20 dark:border-white/10 pb-1.5">
                               <span className="font-bold uppercase tracking-wider">{isReply ? "Lead Response" : "AI Assistant Outreach"}</span>
-                              <span>{new Date(m.timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} &bull; {new Date(m.timestamp).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</span>
+                              <span>{formatISTTime(m.timestamp)} &bull; {formatISTDate(m.timestamp, { day: "2-digit", month: "short" })}</span>
                             </div>
                             {(() => {
                               const { cleanText, quotedText } = cleanEmailBody(m.body);

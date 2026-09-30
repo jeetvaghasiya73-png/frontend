@@ -30,6 +30,7 @@ import {
 import { useAuthStore } from "@/lib/authStore";
 import { authFetch } from "@/lib/authFetch";
 import { API_URL } from "@/lib/config";
+import { formatISTDateTime } from "@/lib/formatters";
 
 const API = API_URL;
 
@@ -65,13 +66,7 @@ interface TokenUsage {
 
 /* ─────────────────────────── Helpers ─────────────────────────── */
 function fmt(dt: string) {
-  return new Date(dt).toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatISTDateTime(dt);
 }
 
 function Badge({ active }: { active: boolean }) {

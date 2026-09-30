@@ -160,6 +160,44 @@ export const IST_TIMEZONE = "Asia/Kolkata";
 export const IST_LOCALE = "en-IN";
 
 /**
+ * Accurately parses any date representation (ISO with offset, ISO naive, SQLite string, epoch number, Date)
+ * into a valid Date object.
+ *
+ * Critical rule for Indian Standard Time (IST):
+ * - If a string contains explicit timezone info (e.g. "Z", "+05:30", "-04:00"), it is parsed as an exact moment in time.
+ * - If a string is naive (e.g. "2026-09-30 18:21:14" or "2026-09-30T18:21:14") without timezone offset,
+ *   standard SQL databases store naive timestamps in UTC. Adding 'Z' ensures JavaScript treats it as UTC,
+ *   so formatting with timeZone: "Asia/Kolkata" accurately adds +05:30 to show Indian Standard Time.
+ */
+export function parseDateSafely(dateInput?: string | number | Date | null): Date | null {
+  if (!dateInput) return null;
+  if (dateInput instanceof Date) return isNaN(dateInput.getTime()) ? null : dateInput;
+  if (typeof dateInput === "number") {
+    const d = new Date(dateInput);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  const str = String(dateInput).trim();
+  if (!str || str === "null" || str === "undefined" || str === "N/A") return null;
+
+  // 1. If string already has a timezone indicator (+HH:MM, -HH:MM, or trailing Z)
+  if (/Z|[+-]\d{2}:?\d{2}$/i.test(str)) {
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // 2. If naive ISO or SQL format (e.g., '2026-09-30 18:21:14' or '2026-09-30T18:21:14')
+  if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(str)) {
+    const normalized = str.replace(" ", "T") + "Z";
+    const d = new Date(normalized);
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  const fallback = new Date(str);
+  return isNaN(fallback.getTime()) ? null : fallback;
+}
+
+/**
  * Formats any date string/object into Indian Standard Time (IST - Asia/Kolkata).
  * Output example: "28 Sep 2026" or "Sep 28, 2026"
  */
@@ -169,8 +207,8 @@ export function formatISTDate(
 ): string {
   if (!dateInput) return "N/A";
   try {
-    const d = new Date(dateInput);
-    if (isNaN(d.getTime())) return "N/A";
+    const d = parseDateSafely(dateInput);
+    if (!d) return "N/A";
     return d.toLocaleDateString("en-IN", {
       timeZone: IST_TIMEZONE,
       month: "short",
@@ -193,8 +231,8 @@ export function formatISTTime(
 ): string {
   if (!dateInput) return "";
   try {
-    const d = new Date(dateInput);
-    if (isNaN(d.getTime())) return "";
+    const d = parseDateSafely(dateInput);
+    if (!d) return "";
     return d.toLocaleTimeString("en-IN", {
       timeZone: IST_TIMEZONE,
       hour: "2-digit",
@@ -217,8 +255,8 @@ export function formatISTDateTime(
 ): string {
   if (!dateInput) return "N/A";
   try {
-    const d = new Date(dateInput);
-    if (isNaN(d.getTime())) return "N/A";
+    const d = parseDateSafely(dateInput);
+    if (!d) return "N/A";
     return d.toLocaleString("en-IN", {
       timeZone: IST_TIMEZONE,
       day: "2-digit",
