@@ -8,6 +8,7 @@ const WhatWeBuildSection = dynamic(() => import("@/components/sections/WhatWeBui
 const DataFlowShowcase = dynamic(() => import("@/components/sections/DataFlowShowcase"));
 const CaseStudiesSection = dynamic(() => import("@/components/sections/CaseStudiesSection"));
 const ProcessSection = dynamic(() => import("@/components/sections/ProcessSection"));
+const LatestResourcesSection = dynamic(() => import("@/components/sections/LatestResourcesSection"));
 const TestimonialsSection = dynamic(() => import("@/components/sections/TestimonialsSection"));
 const FaqSection = dynamic(() => import("@/components/sections/FaqSection"));
 const FooterSection = dynamic(() => import("@/components/layout/FooterSection"));
@@ -22,6 +23,7 @@ export default function Home() {
         <DataFlowShowcase />
         <CaseStudiesSection />
         <ProcessSection />
+        <LatestResourcesSection />
         <TestimonialsSection />
         <FaqSection />
       </main>
