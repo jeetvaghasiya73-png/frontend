@@ -78,14 +78,14 @@ export default function HeroSection() {
     const ctx = gsap.context(() => {
       gsap.fromTo(
         ".hero-smooth-reveal",
-        { opacity: 0, y: 15 },
+        { opacity: 0, y: 12 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.7,
-          stagger: 0.05,
+          duration: 0.5,
+          stagger: 0.03,
           ease: "power2.out",
-          delay: 0.05
+          delay: 0.02
         }
       );
     }, containerRef);
@@ -138,7 +138,7 @@ export default function HeroSection() {
           {/* Balanced Display Headline (Dual Opacity Contrast - MadeWithGSAP Style) */}
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-bold tracking-tight leading-[1.18] mb-4 sm:mb-5 text-foreground max-w-2xl">
             <span className="text-foreground block">
-              <SplitText text="Trusted IT Solutions Provider: Web Apps, SEO, Scraping & Automation That Grow Your Business" type="words" />
+              <SplitText text="Trusted IT Solutions Provider: Web Apps, SEO, Scraping & Automation That Grow Your Business" type="words" useScrollTrigger={false} />
             </span>
           </h1>
 

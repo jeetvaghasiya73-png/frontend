@@ -707,7 +707,6 @@ export default function ContactSection() {
                           <User className="w-4 h-4 text-secondary-custom/60 absolute left-3.5 top-3.5 pointer-events-none" />
                           <input
                             type="text"
-                            autoFocus
                             placeholder="e.g. Rahul Sharma"
                             {...register("name")}
                             className="w-full bg-background border border-border-custom rounded-md pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-secondary-custom/60 focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:border-foreground/50 transition"
@@ -789,7 +788,6 @@ export default function ContactSection() {
                           <Building2 className="w-4 h-4 text-secondary-custom/60 absolute left-3.5 top-3.5 pointer-events-none" />
                           <input
                             type="text"
-                            autoFocus
                             placeholder="e.g. Apex Dental Care or Royal Jewelers"
                             {...register("business_name")}
                             className="w-full bg-background border border-border-custom rounded-md pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-secondary-custom/60 focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:border-foreground/50 transition"
@@ -823,7 +821,6 @@ export default function ContactSection() {
                             <Briefcase className="w-4 h-4 text-secondary-custom/60 absolute left-3.5 top-3.5 pointer-events-none" />
                             <input
                               type="text"
-                              autoFocus
                               placeholder="e.g. Luxury Interior Architecture"
                               {...register("category")}
                               className="w-full bg-background border border-border-custom rounded-md pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-secondary-custom/60 focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:border-foreground/50 transition"

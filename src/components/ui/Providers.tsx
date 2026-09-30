@@ -48,6 +48,18 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   const isExcluded = isAdmin || pathname?.startsWith("/intro");
 
+  const lenisRef = React.useRef<Lenis | null>(null);
+
+  // Guarantee that every page redirection starts at top (0, 0)
+  useEffect(() => {
+    if (typeof window !== "undefined" && !window.location.hash) {
+      window.scrollTo(0, 0);
+      if (lenisRef.current) {
+        lenisRef.current.scrollTo(0, { immediate: true });
+      }
+    }
+  }, [pathname]);
+
   useEffect(() => {
     if (isExcluded) return;
 
@@ -58,16 +70,17 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
     if (prefersReducedMotion) return;
 
-    // Initialize high-performance Lenis smooth scroll synchronized with GSAP ScrollTrigger
+    // Fast, responsive, ultra-smooth Lenis scroll without sluggish delay
     const lenis = new Lenis({
-      duration: 0.85,
+      duration: 0.6,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
-      wheelMultiplier: 1.05,
-      touchMultiplier: 1.5,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 1.2,
     });
+    lenisRef.current = lenis;
 
     // Synchronize Lenis scroll with ScrollTrigger
     lenis.on("scroll", ScrollTrigger.update);
@@ -77,12 +90,13 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     };
 
     gsap.ticker.add(tickerCallback);
-    // Setting lagSmoothing to 0 is required for perfect 1:1 synchronization between Lenis and GSAP
-    gsap.ticker.lagSmoothing(0);
+    // Allow standard GSAP lag smoothing to prevent jarring frame drops on reload/heavy scenes
+    gsap.ticker.lagSmoothing(500, 33);
 
     return () => {
       gsap.ticker.remove(tickerCallback);
       lenis.destroy();
+      lenisRef.current = null;
     };
   }, [isExcluded]);
 

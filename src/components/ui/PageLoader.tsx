@@ -5,131 +5,48 @@ import { usePathname } from "next/navigation";
 import { ADMIN_PATH } from "@/lib/config";
 
 export default function PageLoader() {
-  const [visible, setVisible] = useState(true);
-  const [fadeOut, setFadeOut] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [visible, setVisible] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
-    // Check document readiness or give a brief micro-delay to let React hydrate smoothly
-    const startFade = () => {
-      const fadeTimer = setTimeout(() => setFadeOut(true), 350);
-      const removeTimer = setTimeout(() => setVisible(false), 750);
-      return () => {
-        clearTimeout(fadeTimer);
-        clearTimeout(removeTimer);
-      };
-    };
-
-    if (document.readyState === "complete") {
-      return startFade();
-    } else {
-      const handleLoad = () => startFade();
-      window.addEventListener("load", handleLoad, { once: true });
-      // Fallback timer if load event already fired
-      const fallbackTimer = setTimeout(startFade, 600);
-      return () => {
-        window.removeEventListener("load", handleLoad);
-        clearTimeout(fallbackTimer);
-      };
+    // Only run for non-admin pages
+    if (pathname?.startsWith("/admin") || (ADMIN_PATH && pathname?.startsWith(ADMIN_PATH))) {
+      return;
     }
-  }, []);
 
-  if (!visible || pathname?.startsWith("/admin") || (ADMIN_PATH && pathname?.startsWith(ADMIN_PATH))) return null;
+    setVisible(true);
+    setProgress(30);
+
+    const t1 = setTimeout(() => setProgress(75), 100);
+    const t2 = setTimeout(() => setProgress(100), 220);
+    const t3 = setTimeout(() => {
+      setVisible(false);
+      setProgress(0);
+    }, 450);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [pathname]);
+
+  if (!visible) return null;
 
   return (
     <div
       aria-hidden="true"
-      className={`fixed inset-0 z-[9999] bg-background flex flex-col justify-start overflow-hidden transition-opacity duration-400 ease-out select-none pointer-events-none ${
-        fadeOut ? "opacity-0" : "opacity-100"
-      }`}
+      className="fixed top-0 left-0 right-0 h-[2.5px] z-[99999] pointer-events-none overflow-hidden"
     >
-      {/* Skeleton Header Navbar (matching capsule pill layout) */}
-      <div className="w-full pt-3.5 px-4 sm:px-6 md:px-12 flex justify-center">
-        <div className="w-full max-w-5xl h-12 rounded-full border border-border-custom/80 bg-surface/80 px-4 sm:px-6 flex items-center justify-between shadow-2xs">
-          {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-full skeleton-pulse shrink-0" />
-            <div className="w-20 h-4 rounded-md skeleton-pulse" />
-          </div>
-
-          {/* Desktop Nav Links */}
-          <div className="hidden md:flex items-center gap-6">
-            <div className="w-14 h-3.5 rounded-sm skeleton-pulse" />
-            <div className="w-14 h-3.5 rounded-sm skeleton-pulse" />
-            <div className="w-20 h-3.5 rounded-sm skeleton-pulse" />
-            <div className="w-14 h-3.5 rounded-sm skeleton-pulse" />
-            <div className="w-12 h-3.5 rounded-sm skeleton-pulse" />
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full skeleton-pulse" />
-            <div className="hidden sm:block w-24 h-7 rounded-full skeleton-pulse" />
-            <div className="md:hidden w-8 h-8 rounded-full skeleton-pulse" />
-          </div>
-        </div>
-      </div>
-
-      {/* Diode Bar Placeholder */}
-      <div className="w-full border-b border-border-custom bg-surface/30 py-2 px-4 mt-3 hidden sm:flex justify-center">
-        <div className="w-[480px] max-w-full h-3 rounded-full skeleton-pulse" />
-      </div>
-
-      {/* Hero Content Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center pt-6 pb-6 flex-1">
-        {/* Left Column */}
-        <div className="lg:col-span-7 flex flex-col items-start gap-4">
-          {/* Tag Pill */}
-          <div className="w-48 h-6 rounded-full skeleton-pulse mb-1" />
-
-          {/* Headline */}
-          <div className="w-full flex flex-col gap-2.5 max-w-2xl">
-            <div className="w-11/12 h-10 sm:h-12 md:h-14 rounded-lg skeleton-pulse" />
-            <div className="w-4/5 h-10 sm:h-12 md:h-14 rounded-lg skeleton-pulse" />
-            <div className="w-2/3 h-7 sm:h-9 rounded-md skeleton-pulse opacity-75 mt-1" />
-          </div>
-
-          {/* Description */}
-          <div className="w-full max-w-lg flex flex-col gap-2 mt-2">
-            <div className="w-full h-4 rounded-sm skeleton-pulse opacity-80" />
-            <div className="w-4/5 h-4 rounded-sm skeleton-pulse opacity-80" />
-          </div>
-
-          {/* Micro-Badges */}
-          <div className="flex flex-wrap gap-2 mt-2">
-            <div className="w-24 h-6 rounded-sm skeleton-pulse" />
-            <div className="w-28 h-6 rounded-sm skeleton-pulse" />
-            <div className="w-24 h-6 rounded-sm skeleton-pulse" />
-            <div className="w-32 h-6 rounded-sm skeleton-pulse" />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-3">
-            <div className="w-full sm:w-44 h-11 rounded-full skeleton-pulse" />
-            <div className="w-full sm:w-36 h-11 rounded-full skeleton-pulse" />
-          </div>
-        </div>
-
-        {/* Right Column: 3D Orb Placeholder */}
-        <div className="lg:col-span-5 w-full flex justify-center items-center">
-          <div className="w-full max-w-[380px] aspect-square rounded-3xl border border-border-custom/60 bg-surface/20 skeleton-pulse flex items-center justify-center relative p-8">
-            <div className="w-36 h-36 rounded-2xl border border-border-custom/40 bg-surface/30 skeleton-pulse" />
-          </div>
-        </div>
-      </div>
-
-      {/* KPI Stats Strip */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full grid grid-cols-2 lg:grid-cols-4 gap-3 pb-8 hidden sm:grid">
-        {[...Array(4)].map((_, i) => (
-          <div
-            key={i}
-            className="h-[105px] border border-border-custom/70 bg-surface/60 rounded-md p-4 flex flex-col justify-between"
-          >
-            <div className="w-20 h-3 rounded-xs skeleton-pulse" />
-            <div className="w-28 h-7 rounded-sm skeleton-pulse" />
-          </div>
-        ))}
-      </div>
+      <div
+        className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 shadow-[0_0_10px_rgba(99,102,241,0.6)] transition-all duration-300 ease-out"
+        style={{
+          width: `${progress}%`,
+          opacity: progress === 100 ? 0 : 1,
+          transitionProperty: "width, opacity",
+        }}
+      />
     </div>
   );
 }

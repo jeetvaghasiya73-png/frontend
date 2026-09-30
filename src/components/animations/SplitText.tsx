@@ -15,6 +15,7 @@ interface SplitTextProps {
   className?: string;
   delay?: number;
   triggerOnce?: boolean;
+  useScrollTrigger?: boolean;
 }
 
 export default function SplitText({
@@ -23,6 +24,7 @@ export default function SplitText({
   className = "",
   delay = 0,
   triggerOnce = true,
+  useScrollTrigger = true,
 }: SplitTextProps) {
   const containerRef = useRef<HTMLSpanElement>(null);
 
@@ -39,32 +41,37 @@ export default function SplitText({
       const elements = containerRef.current?.querySelectorAll(".split-item");
       if (!elements || elements.length === 0) return;
 
+      const tweenVars: gsap.TweenVars = {
+        y: "0%",
+        opacity: 1,
+        duration: 0.55,
+        stagger: type === "chars" ? 0.01 : 0.02,
+        ease: "power2.out",
+        delay,
+      };
+
+      if (useScrollTrigger) {
+        tweenVars.scrollTrigger = {
+          trigger: containerRef.current,
+          start: "top 92%",
+          toggleActions: triggerOnce
+            ? "play none none none"
+            : "play reverse play reverse",
+        };
+      }
+
       gsap.fromTo(
         elements,
         {
           y: "100%",
           opacity: 0,
         },
-        {
-          y: "0%",
-          opacity: 1,
-          duration: 0.65,
-          stagger: type === "chars" ? 0.012 : 0.03,
-          ease: "power2.out",
-          delay,
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 92%",
-            toggleActions: triggerOnce
-              ? "play none none none"
-              : "play reverse play reverse",
-          },
-        }
+        tweenVars
       );
     }, containerRef);
 
     return () => ctx.revert();
-  }, [type, delay, triggerOnce]);
+  }, [type, delay, triggerOnce, useScrollTrigger]);
 
   if (type === "chars") {
     return (

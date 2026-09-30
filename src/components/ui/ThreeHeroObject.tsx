@@ -29,29 +29,30 @@ export default function ThreeHeroObject() {
     );
     camera.position.z = isMobile ? 6.5 : 7;
 
-    // Renderer
+    // High performance WebGL Renderer
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
       antialias: true,
       alpha: true,
       powerPreference: "high-performance",
+      precision: "mediump",
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.35));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
 
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+    // Balanced Fixed Lighting (zero per-frame light matrix recalculation)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
     scene.add(ambientLight);
 
-    const blueLight = new THREE.PointLight(0x4f7cff, 12, 30);
+    const blueLight = new THREE.PointLight(0x4f7cff, 14, 30);
     blueLight.position.set(4, 4, 4);
     scene.add(blueLight);
 
-    const purpleLight = new THREE.PointLight(0xa855f7, 8, 30);
+    const purpleLight = new THREE.PointLight(0xa855f7, 10, 30);
     purpleLight.position.set(-4, -4, 4);
     scene.add(purpleLight);
 
-    const cyanLight = new THREE.PointLight(0x06b6d4, 6, 20);
+    const cyanLight = new THREE.PointLight(0x06b6d4, 8, 20);
     cyanLight.position.set(0, 4, -4);
     scene.add(cyanLight);
 
@@ -62,87 +63,86 @@ export default function ThreeHeroObject() {
     // Central Monolith (Inner Cube)
     const cubeGeometry = new THREE.BoxGeometry(1.6, 1.6, 1.6);
 
-    // Create high-res dynamic canvas for the glowing Tech Infinix logo texture
+    // Optimized 256x256 canvas for the glowing Tech Infinix logo texture (4x less memory & instant raster)
     const canvas = document.createElement("canvas");
-    canvas.width = 512;
-    canvas.height = 512;
+    canvas.width = 256;
+    canvas.height = 256;
     const ctx = canvas.getContext("2d");
     if (ctx) {
       // Sleek cyber gradient background
-      const bgGrad = ctx.createRadialGradient(256, 256, 40, 256, 256, 256);
+      const bgGrad = ctx.createRadialGradient(128, 128, 20, 128, 128, 128);
       bgGrad.addColorStop(0, "#0e1526");
       bgGrad.addColorStop(1, "#030611");
       ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, 512, 512);
+      ctx.fillRect(0, 0, 256, 256);
 
       // Subtle tech circuit grid
       ctx.strokeStyle = "rgba(79, 124, 255, 0.12)";
-      ctx.lineWidth = 2;
-      for (let i = 64; i < 512; i += 64) {
+      ctx.lineWidth = 1;
+      for (let i = 32; i < 256; i += 32) {
         ctx.beginPath();
         ctx.moveTo(i, 0);
-        ctx.lineTo(i, 512);
+        ctx.lineTo(i, 256);
         ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(0, i);
-        ctx.lineTo(512, i);
+        ctx.lineTo(256, i);
         ctx.stroke();
       }
 
       // Outer bounding border
       ctx.strokeStyle = "rgba(79, 124, 255, 0.35)";
-      ctx.lineWidth = 4;
-      ctx.strokeRect(20, 20, 472, 472);
+      ctx.lineWidth = 2;
+      ctx.strokeRect(10, 10, 236, 236);
 
       // Inner tech border
       ctx.strokeStyle = "#3b82f6";
-      ctx.lineWidth = 8;
-      ctx.strokeRect(36, 36, 440, 440);
+      ctx.lineWidth = 4;
+      ctx.strokeRect(18, 18, 220, 220);
 
       // Corner brackets (cyber aesthetic)
       ctx.strokeStyle = "#38bdf8";
-      ctx.lineWidth = 12;
-      const corner = 45;
+      ctx.lineWidth = 6;
+      const corner = 22;
       // Top-left
       ctx.beginPath();
-      ctx.moveTo(30, 30 + corner);
-      ctx.lineTo(30, 30);
-      ctx.lineTo(30 + corner, 30);
+      ctx.moveTo(15, 15 + corner);
+      ctx.lineTo(15, 15);
+      ctx.lineTo(15 + corner, 15);
       ctx.stroke();
       // Top-right
       ctx.beginPath();
-      ctx.moveTo(482 - corner, 30);
-      ctx.lineTo(482, 30);
-      ctx.lineTo(482, 30 + corner);
+      ctx.moveTo(241 - corner, 15);
+      ctx.lineTo(241, 15);
+      ctx.lineTo(241, 15 + corner);
       ctx.stroke();
       // Bottom-left
       ctx.beginPath();
-      ctx.moveTo(30, 482 - corner);
-      ctx.lineTo(30, 482);
-      ctx.lineTo(30 + corner, 482);
+      ctx.moveTo(15, 241 - corner);
+      ctx.lineTo(15, 241);
+      ctx.lineTo(15 + corner, 241);
       ctx.stroke();
       // Bottom-right
       ctx.beginPath();
-      ctx.moveTo(482 - corner, 482);
-      ctx.lineTo(482, 482);
-      ctx.lineTo(482, 482 - corner);
+      ctx.moveTo(241 - corner, 241);
+      ctx.lineTo(241, 241);
+      ctx.lineTo(241, 241 - corner);
       ctx.stroke();
 
       // Soft luminous central glow disc
-      const glowGrad = ctx.createRadialGradient(256, 256, 10, 256, 256, 160);
+      const glowGrad = ctx.createRadialGradient(128, 128, 5, 128, 128, 80);
       glowGrad.addColorStop(0, "rgba(56, 189, 248, 0.25)");
       glowGrad.addColorStop(0.6, "rgba(99, 102, 241, 0.12)");
       glowGrad.addColorStop(1, "transparent");
       ctx.fillStyle = glowGrad;
       ctx.beginPath();
-      ctx.arc(256, 256, 160, 0, Math.PI * 2);
+      ctx.arc(128, 128, 80, 0, Math.PI * 2);
       ctx.fill();
-
     }
     const nTexture = new THREE.CanvasTexture(canvas);
     nTexture.colorSpace = THREE.SRGBColorSpace;
 
-    // Official Favicon Brand Logo with luminous glow on every cube face
+    // Official Favicon Brand Logo with luminous glow
     if (typeof window !== "undefined") {
       const logoImg = new window.Image();
       logoImg.src = "/favicon.png";
@@ -150,39 +150,35 @@ export default function ThreeHeroObject() {
         if (ctx) {
           ctx.save();
           ctx.shadowColor = "#38bdf8";
-          ctx.shadowBlur = 32;
-          ctx.drawImage(logoImg, 128, 128, 256, 256);
+          ctx.shadowBlur = 16;
+          ctx.drawImage(logoImg, 64, 64, 128, 128);
           ctx.restore();
           nTexture.needsUpdate = true;
         }
       };
     }
 
-    const cubeMaterial = new THREE.MeshPhysicalMaterial({
+    // MeshStandardMaterial: Same stunning cyber sheen with ~5x faster fragment evaluation than physical
+    const cubeMaterial = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       map: nTexture,
       emissive: 0x3b82f6,
       emissiveMap: nTexture,
-      emissiveIntensity: 0.85,
+      emissiveIntensity: 0.9,
       metalness: 0.2,
-      roughness: 0.2,
-      clearcoat: 0.9,
-      clearcoatRoughness: 0.1,
+      roughness: 0.25,
     });
     const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
     group.add(cube);
 
-    // Outer Glass Sphere (optimized for ultra-high FPS without framebuffer copies)
-    const sphereGeometry = new THREE.SphereGeometry(1.85, 40, 40);
-    const sphereMaterial = new THREE.MeshPhysicalMaterial({
+    // Outer Glass Sphere (lightweight standard material with transparency)
+    const sphereGeometry = new THREE.SphereGeometry(1.85, 32, 32);
+    const sphereMaterial = new THREE.MeshStandardMaterial({
       color: 0x93c5fd,
       metalness: 0.1,
-      roughness: 0.08,
+      roughness: 0.1,
       transparent: true,
       opacity: 0.16,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.05,
-      reflectivity: 0.9,
     });
     const glassSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
     group.add(glassSphere);
@@ -191,7 +187,7 @@ export default function ThreeHeroObject() {
     const createOrbitRing = (radius: number, color: number, opacity: number) => {
       const ringGeom = new THREE.BufferGeometry();
       const points = [];
-      const segments = 80;
+      const segments = 64;
       for (let i = 0; i <= segments; i++) {
         const theta = (i / segments) * Math.PI * 2;
         points.push(new THREE.Vector3(Math.cos(theta) * radius, 0, Math.sin(theta) * radius));
@@ -221,7 +217,7 @@ export default function ThreeHeroObject() {
     ring3.rotation.z = -Math.PI / 4;
     group.add(ring3);
 
-    // Interactivity
+    // Smooth Mouse Interactivity
     let targetX = 0;
     let targetY = 0;
     let currentX = 0;
@@ -234,15 +230,7 @@ export default function ThreeHeroObject() {
     };
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
 
-    // Scroll mapping
-    let scrollY = 0;
-    const handleScroll = () => {
-      if (!isVisible || !isTabVisible) return;
-      scrollY = window.scrollY;
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    // Resize Handler — responsive camera adjustment
+    // Resize Handler
     let resizeTimer: NodeJS.Timeout;
     const handleResize = () => {
       clearTimeout(resizeTimer);
@@ -289,7 +277,7 @@ export default function ThreeHeroObject() {
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // Viewport Visibility Tracking via IntersectionObserver — halts WebGL completely when scrolled past
+    // Viewport Visibility Tracking via IntersectionObserver — halts WebGL completely when scrolled past hero
     const observer = new IntersectionObserver(
       (entries) => {
         const wasVisible = isVisible;
@@ -300,7 +288,7 @@ export default function ThreeHeroObject() {
           stopAnimation();
         }
       },
-      { threshold: 0.05 }
+      { threshold: 0 }
     );
     if (containerRef.current) {
       observer.observe(containerRef.current);
@@ -309,7 +297,7 @@ export default function ThreeHeroObject() {
     // Precompile shaders to eliminate first-frame compilation stutter
     renderer.compile(scene, camera);
 
-    // Render Loop (using performance.now for smooth 60fps)
+    // Render Loop (constant 60fps with zero scroll contention)
     const startTime = performance.now();
 
     const animate = () => {
@@ -330,22 +318,13 @@ export default function ThreeHeroObject() {
       ring2.rotation.y = -elapsedTime * 0.2;
       ring3.rotation.x = elapsedTime * 0.1;
 
-      group.position.y = Math.sin(elapsedTime * 0.7) * 0.12;
+      group.position.y = Math.sin(elapsedTime * 0.7) * 0.1;
 
-      currentX += (targetX - currentX) * 0.06;
-      currentY += (targetY - currentY) * 0.06;
+      currentX += (targetX - currentX) * 0.05;
+      currentY += (targetY - currentY) * 0.05;
 
-      group.rotation.y = currentX * 0.35;
-      group.rotation.x = -currentY * 0.35;
-
-      const scrollScale = Math.max(0.7, 1 - scrollY * 0.0005);
-      group.scale.set(scrollScale, scrollScale, scrollScale);
-      group.rotation.z = scrollY * 0.0008;
-
-      blueLight.position.x = Math.sin(elapsedTime * 0.5) * 5;
-      blueLight.position.z = Math.cos(elapsedTime * 0.5) * 5;
-      purpleLight.position.x = -Math.sin(elapsedTime * 0.4) * 5;
-      purpleLight.position.y = Math.cos(elapsedTime * 0.4) * 5;
+      group.rotation.y = currentX * 0.3;
+      group.rotation.x = -currentY * 0.3;
 
       renderer.render(scene, camera);
     };
@@ -358,7 +337,6 @@ export default function ThreeHeroObject() {
       observer.disconnect();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleResize);
 
       cubeGeometry.dispose();
@@ -380,7 +358,7 @@ export default function ThreeHeroObject() {
     };
   }, []);
 
-  // Floating cards — HIDDEN below md breakpoint to prevent overlap on mobile
+  // Floating cards — Desktop only (md+)
   const floatingCards = [
     {
       title: "AI AUTOMATION",
@@ -423,7 +401,7 @@ export default function ThreeHeroObject() {
         <canvas ref={canvasRef} className="w-full h-full max-w-full outline-none z-10" />
 
         {/* Ambient background glow */}
-        <div className="absolute inset-0 w-[80%] h-[80%] rounded-full bg-accent-glow blur-[100px] sm:blur-[120px] pointer-events-none opacity-40 mix-blend-screen scale-75 m-auto z-0" />
+        <div className="absolute inset-0 w-[80%] h-[80%] rounded-full bg-accent-glow blur-[80px] pointer-events-none opacity-40 mix-blend-screen scale-75 m-auto z-0" />
 
         {/* Floating DOM Cards — Desktop only (md+) */}
         <div className="absolute inset-0 w-full h-full pointer-events-none z-20 hidden md:block">
@@ -432,12 +410,8 @@ export default function ThreeHeroObject() {
             return (
               <div
                 key={idx}
-                className={`absolute ${card.position} w-[220px] md:w-[260px] pointer-events-auto border border-border-custom/50 dark:border-border-custom bg-surface/90 dark:bg-surface/80 backdrop-blur-md p-3 md:p-4 rounded-xl shadow-xl hover:border-accent-custom hover:shadow-[0_0_20px_var(--accent-glow)] transition-all duration-500 group flex flex-row items-center gap-3 animate-float-card`}
-                style={{
-                  animationDelay: `${idx * 0.7}s`,
-                }}
+                className={`absolute ${card.position} w-[220px] md:w-[260px] pointer-events-auto border border-border-custom/50 dark:border-border-custom bg-surface/90 dark:bg-surface/80 backdrop-blur-md p-3 md:p-4 rounded-xl shadow-xl hover:border-accent-custom hover:shadow-[0_0_20px_var(--accent-glow)] transition-all duration-300 group flex flex-row items-center gap-3`}
               >
-
                 <div className="w-8 h-8 rounded-lg bg-surface border border-border-custom flex items-center justify-center text-accent-custom shrink-0 group-hover:bg-accent-custom group-hover:text-white transition-all duration-300">
                   <Icon className="w-4 h-4" />
                 </div>
@@ -460,7 +434,7 @@ export default function ThreeHeroObject() {
         </div>
       </div>
 
-      {/* Mobile Responsive 2x2 Feature Grid — Perfectly fills responsive space without empty gaps */}
+      {/* Mobile Responsive 2x2 Feature Grid */}
       <div className="w-full grid grid-cols-2 gap-2 mt-2 px-1 block md:hidden z-20">
         {floatingCards.map((card, idx) => {
           const Icon = card.icon;

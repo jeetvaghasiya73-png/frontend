@@ -11,6 +11,16 @@ const nextConfig: NextConfig = {
     "127.0.0.1"
   ],
 
+  compress: true,
+  poweredByHeader: false,
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "gsap",
+      "three",
+      "@tanstack/react-query",
+    ],
+  },
   typescript: {
     // !! WARN !!
     // Dangerously allow production builds to successfully complete even if
