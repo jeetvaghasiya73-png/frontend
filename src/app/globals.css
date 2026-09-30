@@ -9,6 +9,9 @@
   --color-secondary-custom: var(--secondary-custom);
   --color-accent-custom: var(--accent-custom);
   --color-accent-glow: var(--accent-glow);
+  --font-sans: var(--font-poppins), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: var(--font-poppins), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-mono), monospace;
 }
 
 :root {
@@ -78,11 +81,16 @@ body {
 html, body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-poppins), var(--font-sans), system-ui, -apple-system, sans-serif;
   overflow-x: clip;
   margin: 0;
   padding: 0;
   scroll-behavior: auto; /* Handled by Lenis */
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-poppins), var(--font-sans), sans-serif;
+  letter-spacing: -0.02em;
 }
 
 /* Lenis Scroll Smoothness settings */

@@ -161,7 +161,7 @@ export default function WhatWeBuildSection() {
           <a
             href="/contact"
             onClick={handleNavigateToContact}
-            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-mono font-bold text-foreground hover:underline self-start md:self-end shrink-0"
+            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-semibold text-foreground hover:underline self-start md:self-end shrink-0"
           >
             <span>Get a Free IT Consultation</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -230,7 +230,7 @@ export default function WhatWeBuildSection() {
                   <a
                     href="/contact"
                     onClick={handleNavigateToContact}
-                    className="inline-flex items-center gap-1 text-xs font-mono font-bold uppercase tracking-wider text-foreground hover:text-indigo-400 transition-colors self-start sm:self-auto shrink-0"
+                    className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-foreground hover:text-indigo-400 transition-colors self-start sm:self-auto shrink-0"
                   >
                     <span>{pillar.ctaText}</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />

@@ -659,8 +659,8 @@ export default function BlogVisualEditor({
       {/* ═══════ TOP COMMAND BAR ═══════ */}
       <header className="sticky top-0 z-40 bg-surface/90 backdrop-blur-md border-b border-border-custom px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-[3px] bg-accent-custom/15 border border-accent-custom/30 text-accent-custom flex items-center justify-center font-bold text-xs font-mono shrink-0">
-            TI
+          <div className="w-9 h-9 rounded-[3px] overflow-hidden border border-border-custom dark:border-white/35 dark:ring-1 dark:ring-white/20 bg-black flex items-center justify-center shrink-0 shadow-xs">
+            <img src="/favicon.png" alt="Tech Infinix Logo" className="w-full h-full object-cover scale-110" />
           </div>
           <div className="min-w-0">
             <h1 className="text-sm font-bold text-foreground truncate">

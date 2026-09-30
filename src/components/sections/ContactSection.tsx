@@ -336,7 +336,7 @@ export default function ContactSection() {
 
             {/* Quick 3-Step Overview */}
             <div className="contact-info-anim border border-border-custom bg-surface p-6 sm:p-7 rounded-lg space-y-5">
-              <h3 className="text-sm font-bold text-foreground font-mono uppercase tracking-wider">
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
                 How It Works
               </h3>
 
@@ -375,7 +375,7 @@ export default function ContactSection() {
 
             {/* Direct Contact Info */}
             <div className="contact-info-anim border border-border-custom bg-surface p-6 sm:p-7 rounded-lg space-y-4">
-              <h3 className="text-sm font-bold text-foreground font-mono uppercase tracking-wider">
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
                 Direct Contact
               </h3>
 

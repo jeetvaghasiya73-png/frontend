@@ -138,19 +138,25 @@ export default function ThreeHeroObject() {
       ctx.arc(256, 256, 160, 0, Math.PI * 2);
       ctx.fill();
 
-      // Bold Luminous "TI" Logo with Cyan Glow (centered perfectly on every face)
-      ctx.save();
-      ctx.shadowColor = "#38bdf8";
-      ctx.shadowBlur = 36;
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "900 200px -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("TI", 256, 256);
-      ctx.restore();
     }
     const nTexture = new THREE.CanvasTexture(canvas);
     nTexture.colorSpace = THREE.SRGBColorSpace;
+
+    // Official Favicon Brand Logo with luminous glow on every cube face
+    if (typeof window !== "undefined") {
+      const logoImg = new window.Image();
+      logoImg.src = "/favicon.png";
+      logoImg.onload = () => {
+        if (ctx) {
+          ctx.save();
+          ctx.shadowColor = "#38bdf8";
+          ctx.shadowBlur = 32;
+          ctx.drawImage(logoImg, 128, 128, 256, 256);
+          ctx.restore();
+          nTexture.needsUpdate = true;
+        }
+      };
+    }
 
     const cubeMaterial = new THREE.MeshPhysicalMaterial({
       color: 0xffffff,

@@ -18,6 +18,15 @@ const nextConfig: NextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+  async redirects() {
+    return [
+      {
+        source: "/seo",
+        destination: "/services/seo",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     const backendUrl = process.env.INTERNAL_BACKEND_URL || "http://127.0.0.1:8000";
     return [

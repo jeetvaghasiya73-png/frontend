@@ -71,7 +71,7 @@ export default function TestimonialsSection() {
           <a
             href="/contact"
             onClick={handleNavigateToContact}
-            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-mono font-bold text-foreground hover:underline self-start md:self-end shrink-0"
+            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-semibold text-foreground hover:underline self-start md:self-end shrink-0"
           >
             <span>Become a Founding Client</span>
             <ArrowUpRight className="w-3.5 h-3.5" />

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Script from "next/script";
 import { useTheme } from "next-themes";
 import {
@@ -166,17 +167,24 @@ export default function Navbar() {
           }`}
         >
           {/* Left: Brand Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center text-background font-mono font-bold text-xs shadow-2xs group-hover:scale-105 transition-transform">
-              TI
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-border-custom dark:border-white/35 dark:ring-1 dark:ring-white/20 bg-black flex items-center justify-center shadow-xs dark:shadow-[0_0_12px_rgba(255,255,255,0.12)] group-hover:scale-105 transition-all shrink-0">
+              <Image
+                src="/favicon.png"
+                alt="Tech Infinix Logo"
+                width={40}
+                height={40}
+                className="w-full h-full object-cover scale-110"
+                priority
+              />
             </div>
-            <span className="font-sans text-sm font-bold tracking-tight text-foreground group-hover:opacity-80 transition-opacity">
+            <span className="text-[15px] sm:text-base font-medium tracking-tight text-foreground group-hover:opacity-80 transition-opacity">
               Tech Infinix
             </span>
           </Link>
 
           {/* Center: Desktop Nav Links (MadeWithGSAP Style) */}
-          <nav className="hidden md:flex items-center gap-6 text-xs font-mono tracking-wider uppercase">
+          <nav className="hidden md:flex items-center gap-6 text-xs font-medium tracking-wider uppercase">
             {navLinks.map((link) => (
               <a
                 key={link.name}
@@ -210,7 +218,7 @@ export default function Navbar() {
             {/* Primary Action Button */}
             <Link
               href="/contact"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-foreground text-background hover:opacity-90 text-[11px] font-mono uppercase tracking-wider font-bold transition duration-200 shadow-2xs group cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-foreground text-background hover:opacity-90 text-[11px] uppercase tracking-wider font-semibold transition duration-200 shadow-2xs group cursor-pointer"
             >
               <span>Get Quote</span>
               <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -242,20 +250,20 @@ export default function Navbar() {
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2.5"
+              className="flex items-center gap-3"
             >
-              <div className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center font-mono font-bold text-xs shadow-sm">
-                TI
+              <div className="w-9 h-9 rounded-full overflow-hidden border border-border-custom dark:border-white/35 dark:ring-1 dark:ring-white/20 bg-black flex items-center justify-center shadow-xs dark:shadow-[0_0_12px_rgba(255,255,255,0.12)] shrink-0">
+                <Image
+                  src="/favicon.png"
+                  alt="Tech Infinix Logo"
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-cover scale-110"
+                />
               </div>
-              <div className="flex flex-col">
-                <span className="font-sans text-xs font-bold tracking-tight text-foreground">
-                  Tech Infinix
-                </span>
-                <span className="flex items-center gap-1 text-[9px] font-mono text-emerald-500 font-semibold tracking-wider uppercase">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Online • Accepting Q1
-                </span>
-              </div>
+              <span className="font-sans text-sm font-medium tracking-tight text-foreground">
+                Tech Infinix
+              </span>
             </Link>
 
             {/* Quick Header Actions: Theme Switcher & Close Button */}
@@ -349,7 +357,7 @@ export default function Navbar() {
               <Link
                 href="/contact"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-foreground text-background text-xs font-mono font-bold uppercase tracking-wider shadow-md hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-foreground text-background text-xs font-semibold uppercase tracking-wider shadow-md hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
               >
                 <span>Get Custom Quote</span>
                 <ArrowUpRight className="w-4 h-4" />
@@ -361,7 +369,7 @@ export default function Navbar() {
                   href="https://wa.me/7990738939?text=Hi%20Tech%20Infinix%20team,%20I'd%20like%20to%20discuss%20a%20project."
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-mono font-medium transition-colors"
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium transition-colors"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
                   <span>WhatsApp</span>
@@ -369,7 +377,7 @@ export default function Navbar() {
 
                 <a
                   href="mailto:contact@techinfinix.com"
-                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg border border-border-custom bg-surface/50 hover:bg-surface text-foreground text-[11px] font-mono font-medium transition-colors"
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg border border-border-custom bg-surface/50 hover:bg-surface text-foreground text-xs font-medium transition-colors"
                 >
                   <Mail className="w-3.5 h-3.5 text-secondary-custom" />
                   <span>Email Team</span>

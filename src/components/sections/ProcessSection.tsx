@@ -102,7 +102,7 @@ export default function ProcessSection() {
             <span className="text-7xl font-bold font-mono tracking-tighter text-foreground/10 leading-none block">
               {steps[activeStep].num}
             </span>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground font-mono mt-1">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground mt-1">
               {steps[activeStep].title}
             </h3>
           </div>
