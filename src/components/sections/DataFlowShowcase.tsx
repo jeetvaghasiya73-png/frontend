@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
@@ -191,11 +192,6 @@ export default function DataFlowShowcase() {
       window.scrollTo({ top: target, behavior: "smooth" });
     }
   }, []);
-
-  const handleNavigateToContact = (e: React.MouseEvent) => {
-    e.preventDefault();
-    window.location.href = "/contact";
-  };
 
   // Interactive triggers
   const triggerSeoScan = () => {
@@ -458,9 +454,9 @@ export default function DataFlowShowcase() {
                 <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-secondary-custom block">Primary Client Outcome:</span>
                 <span className="text-xs font-mono font-bold text-foreground">{bp.clientBenefit}</span>
               </div>
-              <a href="/contact" onClick={handleNavigateToContact} className="inline-flex items-center gap-1 text-xs font-mono font-bold text-foreground hover:underline shrink-0 bg-surface px-2.5 py-1.5 rounded-xs border border-border-custom">
+              <Link href="/contact" className="inline-flex items-center gap-1 text-xs font-mono font-bold text-foreground hover:underline shrink-0 bg-surface px-2.5 py-1.5 rounded-xs border border-border-custom">
                 <span>Deploy This</span><ArrowUpRight className="w-3.5 h-3.5" />
-              </a>
+              </Link>
             </div>
           </div>
 

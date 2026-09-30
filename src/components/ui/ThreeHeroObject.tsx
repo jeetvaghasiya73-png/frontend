@@ -37,7 +37,7 @@ export default function ThreeHeroObject() {
       powerPreference: "high-performance",
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.35));
 
     // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
@@ -228,6 +228,7 @@ export default function ThreeHeroObject() {
     let currentY = 0;
 
     const handleMouseMove = (e: MouseEvent) => {
+      if (!isVisible || !isTabVisible) return;
       targetX = (e.clientX / window.innerWidth) * 2 - 1;
       targetY = -(e.clientY / window.innerHeight) * 2 + 1;
     };
@@ -236,38 +237,70 @@ export default function ThreeHeroObject() {
     // Scroll mapping
     let scrollY = 0;
     const handleScroll = () => {
+      if (!isVisible || !isTabVisible) return;
       scrollY = window.scrollY;
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     // Resize Handler — responsive camera adjustment
+    let resizeTimer: NodeJS.Timeout;
     const handleResize = () => {
-      if (!containerRef.current) return;
-      const w = containerRef.current.clientWidth;
-      const h = containerRef.current.clientHeight || 450;
-      const mobile = w < 640;
-      camera.fov = mobile ? 46 : 45;
-      camera.position.z = mobile ? 6.5 : 7;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (!containerRef.current) return;
+        const w = containerRef.current.clientWidth;
+        const h = containerRef.current.clientHeight || 450;
+        const mobile = w < 640;
+        camera.fov = mobile ? 46 : 45;
+        camera.position.z = mobile ? 6.5 : 7;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      }, 100);
     };
     window.addEventListener("resize", handleResize, { passive: true });
 
-    // Tab Visibility Tracking to completely sleep when backgrounded
+    // Render Loop state
+    let animId = 0;
     let isTabVisible = !document.hidden;
+    let isVisible = true;
+
+    const startAnimation = () => {
+      if (!animId && isVisible && isTabVisible) {
+        animId = requestAnimationFrame(animate);
+      }
+    };
+
+    const stopAnimation = () => {
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = 0;
+      }
+    };
+
+    // Tab Visibility Tracking to completely sleep when backgrounded
     const handleVisibilityChange = () => {
       isTabVisible = !document.hidden;
+      if (isTabVisible) {
+        startAnimation();
+      } else {
+        stopAnimation();
+      }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // Viewport Visibility Tracking via IntersectionObserver
-    let isVisible = true;
+    // Viewport Visibility Tracking via IntersectionObserver — halts WebGL completely when scrolled past
     const observer = new IntersectionObserver(
       (entries) => {
+        const wasVisible = isVisible;
         isVisible = entries[0].isIntersecting;
+        if (isVisible && !wasVisible) {
+          startAnimation();
+        } else if (!isVisible) {
+          stopAnimation();
+        }
       },
-      { threshold: 0 }
+      { threshold: 0.05 }
     );
     if (containerRef.current) {
       observer.observe(containerRef.current);
@@ -278,11 +311,14 @@ export default function ThreeHeroObject() {
 
     // Render Loop (using performance.now for smooth 60fps)
     const startTime = performance.now();
-    let animId: number;
 
     const animate = () => {
+      if (!isVisible || !isTabVisible) {
+        animId = 0;
+        return;
+      }
+
       animId = requestAnimationFrame(animate);
-      if (!isVisible || !isTabVisible) return;
 
       const elapsedTime = (performance.now() - startTime) * 0.001;
 
@@ -314,8 +350,8 @@ export default function ThreeHeroObject() {
       renderer.render(scene, camera);
     };
 
-    // Defer start by a micro-tick to let React finish hydrating smoothly
-    animId = requestAnimationFrame(animate);
+    // Start animation loop
+    startAnimation();
 
     return () => {
       cancelAnimationFrame(animId);

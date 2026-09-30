@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
+import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import SplitText from "@/components/animations/SplitText";
 
@@ -52,11 +53,6 @@ export default function CaseStudiesSection() {
     }
   ];
 
-  const handleNavigateToContact = (e: React.MouseEvent) => {
-    e.preventDefault();
-    window.location.href = "/contact";
-  };
-
   return (
     <section
       id="work"
@@ -82,14 +78,13 @@ export default function CaseStudiesSection() {
             </p>
           </div>
 
-          <a
+          <Link
             href="/contact"
-            onClick={handleNavigateToContact}
             className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-semibold text-foreground hover:underline self-start md:self-end shrink-0"
           >
             <span>Deploy a Blueprint</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
-          </a>
+          </Link>
         </div>
 
         {/* Blueprint Grid - Strict Geometric Rectangles */}

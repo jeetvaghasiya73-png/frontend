@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
+import Link from "next/link";
 import { ShieldCheck, UserCheck, Clock, MessageSquare, ArrowUpRight } from "lucide-react";
 import SplitText from "@/components/animations/SplitText";
 
@@ -38,11 +39,6 @@ export default function TestimonialsSection() {
     }
   ];
 
-  const handleNavigateToContact = (e: React.MouseEvent) => {
-    e.preventDefault();
-    window.location.href = "/contact";
-  };
-
   return (
     <section
       id="commitment"
@@ -68,14 +64,13 @@ export default function TestimonialsSection() {
             </p>
           </div>
 
-          <a
+          <Link
             href="/contact"
-            onClick={handleNavigateToContact}
             className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-semibold text-foreground hover:underline self-start md:self-end shrink-0"
           >
             <span>Become a Founding Client</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
-          </a>
+          </Link>
         </div>
 
         {/* 4 Guarantees Grid - Strict Geometric Cards */}

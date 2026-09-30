@@ -49,7 +49,7 @@ export default function ProcessSection() {
       scrub: true,
       onUpdate: (self) => {
         if (progressLine) {
-          (progressLine as HTMLElement).style.height = `${self.progress * 100}%`;
+          (progressLine as HTMLElement).style.transform = `scaleY(${self.progress})`;
         }
       }
     });
@@ -112,8 +112,8 @@ export default function ProcessSection() {
         <div className="lg:col-span-8 relative pl-6 sm:pl-8">
           
           {/* Vertical Track Line */}
-          <div className="absolute top-4 bottom-4 left-0 w-[1px] bg-border-custom">
-            <div className="process-progress-line absolute top-0 left-0 w-full bg-foreground h-0 transition-all" />
+          <div className="absolute top-4 bottom-4 left-0 w-[1px] bg-border-custom overflow-hidden">
+            <div className="process-progress-line absolute top-0 left-0 w-full h-full bg-foreground origin-top scale-y-0" />
           </div>
 
           <div className="space-y-6 sm:space-y-8">

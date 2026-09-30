@@ -179,53 +179,26 @@ html.lenis, html.lenis body {
   animation-play-state: paused;
 }
 
-/* Cursor Glow follow utility */
+/* Cursor Glow follow utility - GPU optimized without blend-mode thrashing */
 .cursor-glow {
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 68%);
   position: fixed;
   top: 0;
   left: 0;
-  transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 1;
-  mix-blend-mode: screen;
-}
-
-/* DataFlowShowcase — Floating Blob Animations */
-@keyframes float-blob-1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(30px, -40px) scale(1.05); }
-  50% { transform: translate(-20px, 20px) scale(0.95); }
-  75% { transform: translate(15px, 35px) scale(1.02); }
-}
-
-@keyframes float-blob-2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(-25px, 30px) scale(1.08); }
-  66% { transform: translate(20px, -20px) scale(0.96); }
-}
-
-@keyframes float-blob-3 {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); }
-  50% { transform: translate(-45%, -55%) scale(1.1); }
-}
-
-.animate-float-blob-1 { animation: float-blob-1 18s ease-in-out infinite; }
-.animate-float-blob-2 { animation: float-blob-2 22s ease-in-out infinite; }
-.animate-float-blob-3 { animation: float-blob-3 15s ease-in-out infinite; }
-
-/* DataFlowShowcase — Progress Bar Fill */
-@keyframes progress-fill {
-  from { width: 0%; }
-  to { width: 100%; }
+  contain: strict;
+  border-radius: 50%;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
 }
 
 /* DataFlowShowcase — Floating smooth (shared) */
 @keyframes float-smooth {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-8px); }
 }
 
 .animate-float-smooth { animation: float-smooth 5s ease-in-out infinite; }
@@ -241,28 +214,25 @@ html.lenis, html.lenis body {
 /* Floating Card Keyframes for 3D Hero */
 @keyframes float-card {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-6px); }
 }
 
 .animate-float-card {
   animation: float-card 5s ease-in-out infinite;
-  will-change: transform;
 }
 
-/* GPU hardware acceleration for lag-free rendering */
+/* GPU hardware acceleration & content visibility optimization */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 700px;
+}
+
 .glass-panel,
-.cursor-glow,
-.noise-overlay,
-.animate-float-blob-1,
-.animate-float-blob-2,
-.animate-float-blob-3,
 .animate-float-smooth,
 .animate-spin-slow,
 .animate-marquee {
-  transform: translateZ(0);
+  transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
-  perspective: 1000px;
-  will-change: transform, opacity;
 }
 
 /* ═══════════════════════════════════════════════════════════

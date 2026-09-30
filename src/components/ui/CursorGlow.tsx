@@ -8,6 +8,12 @@ export default function CursorGlow() {
   const current = useRef({ x: -200, y: -200 });
 
   useEffect(() => {
+    // Skip completely on touch screens or reduced-motion
+    if (typeof window === "undefined") return;
+    const isTouch = window.matchMedia("(pointer: coarse)").matches;
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (isTouch || prefersReduced) return;
+
     let isRunning = false;
     let animationFrameId: number;
 

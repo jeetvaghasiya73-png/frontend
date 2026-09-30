@@ -46,8 +46,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin") || (ADMIN_PATH && pathname?.startsWith(ADMIN_PATH));
 
+  const isExcluded = isAdmin || pathname?.startsWith("/intro");
+
   useEffect(() => {
-    if (isAdmin) return;
+    if (isExcluded) return;
 
     // Check if user prefers reduced motion
     const prefersReducedMotion = window.matchMedia(
@@ -56,11 +58,15 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
     if (prefersReducedMotion) return;
 
-    // Initialize Lenis smooth scroll synchronized with GSAP ScrollTrigger
+    // Initialize high-performance Lenis smooth scroll synchronized with GSAP ScrollTrigger
     const lenis = new Lenis({
-      duration: 1.0,
+      duration: 0.85,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: "vertical",
+      gestureOrientation: "vertical",
       smoothWheel: true,
+      wheelMultiplier: 1.05,
+      touchMultiplier: 1.5,
     });
 
     // Synchronize Lenis scroll with ScrollTrigger
@@ -71,14 +77,14 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     };
 
     gsap.ticker.add(tickerCallback);
-    // Enable lag smoothing so frames dropped during initial hydration don't freeze the page
-    gsap.ticker.lagSmoothing(500, 33);
+    // Setting lagSmoothing to 0 is required for perfect 1:1 synchronization between Lenis and GSAP
+    gsap.ticker.lagSmoothing(0);
 
     return () => {
       gsap.ticker.remove(tickerCallback);
       lenis.destroy();
     };
-  }, [isAdmin]);
+  }, [isExcluded]);
 
 
   return (

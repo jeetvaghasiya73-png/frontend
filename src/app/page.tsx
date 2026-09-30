@@ -21,11 +21,19 @@ export default function Home() {
         <HeroSection />
         <WhatWeBuildSection />
         <DataFlowShowcase />
-        <CaseStudiesSection />
+        <div className="cv-auto">
+          <CaseStudiesSection />
+        </div>
         <ProcessSection />
-        <LatestResourcesSection />
-        <TestimonialsSection />
-        <FaqSection />
+        <div className="cv-auto">
+          <LatestResourcesSection />
+        </div>
+        <div className="cv-auto">
+          <TestimonialsSection />
+        </div>
+        <div className="cv-auto">
+          <FaqSection />
+        </div>
       </main>
       <FooterSection />
     </>

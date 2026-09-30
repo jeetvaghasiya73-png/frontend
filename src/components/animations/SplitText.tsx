@@ -35,32 +35,35 @@ export default function SplitText({
     ).matches;
     if (prefersReducedMotion) return;
 
-    const elements = containerRef.current.querySelectorAll(".split-item");
+    const ctx = gsap.context(() => {
+      const elements = containerRef.current?.querySelectorAll(".split-item");
+      if (!elements || elements.length === 0) return;
 
-    gsap.fromTo(
-      elements,
-      {
-        y: "110%",
-        opacity: 0,
-        rotateX: 15,
-      },
-      {
-        y: "0%",
-        opacity: 1,
-        rotateX: 0,
-        duration: 0.8,
-        stagger: type === "chars" ? 0.015 : 0.04,
-        ease: "power3.out",
-        delay,
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 90%",
-          toggleActions: triggerOnce
-            ? "play none none none"
-            : "play reverse play reverse",
+      gsap.fromTo(
+        elements,
+        {
+          y: "100%",
+          opacity: 0,
         },
-      }
-    );
+        {
+          y: "0%",
+          opacity: 1,
+          duration: 0.65,
+          stagger: type === "chars" ? 0.012 : 0.03,
+          ease: "power2.out",
+          delay,
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: "top 92%",
+            toggleActions: triggerOnce
+              ? "play none none none"
+              : "play reverse play reverse",
+          },
+        }
+      );
+    }, containerRef);
+
+    return () => ctx.revert();
   }, [type, delay, triggerOnce]);
 
   if (type === "chars") {
@@ -70,9 +73,8 @@ export default function SplitText({
           <span
             key={index}
             className="inline-block overflow-hidden char-reveal-parent"
-            style={{ perspective: "1000px" }}
           >
-            <span className="inline-block split-item transform-gpu origin-top-left">
+            <span className="inline-block split-item">
               {char === " " ? "\u00A0" : char}
             </span>
           </span>
@@ -87,9 +89,8 @@ export default function SplitText({
         <span
           key={index}
           className="inline-block overflow-hidden char-reveal-parent mr-[0.25em]"
-          style={{ perspective: "1000px" }}
         >
-          <span className="inline-block split-item transform-gpu origin-top-left">
+          <span className="inline-block split-item">
             {word}
           </span>
         </span>

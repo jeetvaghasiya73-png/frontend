@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
+import Link from "next/link";
 import { API_URL } from "@/lib/config";
 import {
   TrendingUp,
@@ -128,11 +129,6 @@ export default function WhatWeBuildSection() {
     return () => ctx.revert();
   }, []);
 
-  const handleNavigateToContact = (e: React.MouseEvent) => {
-    e.preventDefault();
-    window.location.href = "/contact";
-  };
-
   return (
     <section
       ref={containerRef}
@@ -158,14 +154,13 @@ export default function WhatWeBuildSection() {
             </p>
           </div>
 
-          <a
+          <Link
             href="/contact"
-            onClick={handleNavigateToContact}
             className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-semibold text-foreground hover:underline self-start md:self-end shrink-0"
           >
             <span>Get a Free IT Consultation</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
-          </a>
+          </Link>
         </div>
 
         {/* 4 Pillars Grid - Clean 1px Borders, Zero Tech Jargon */}
@@ -227,14 +222,13 @@ export default function WhatWeBuildSection() {
                     ))}
                   </div>
 
-                  <a
+                  <Link
                     href="/contact"
-                    onClick={handleNavigateToContact}
                     className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-foreground hover:text-indigo-400 transition-colors self-start sm:self-auto shrink-0"
                   >
                     <span>{pillar.ctaText}</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
-                  </a>
+                  </Link>
                 </div>
               </div>
             );
