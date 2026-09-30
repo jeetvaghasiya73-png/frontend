@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect } from "react";
 import Link from "next/link";
-import { ArrowUpRight, ArrowDown, TrendingUp, Globe, Database, Bot } from "lucide-react";
+import { ArrowUpRight, ArrowDown, TrendingUp, Globe, Database, Bot, Sparkles } from "lucide-react";
 import { gsap } from "gsap";
 import SplitText from "@/components/animations/SplitText";
 import dynamic from "next/dynamic";
@@ -176,13 +176,21 @@ export default function HeroSection() {
               <span>Get a Free Quote</span>
               <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Link>
+
+            <Link
+              href="/intro"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-foreground text-xs font-mono uppercase tracking-wider font-semibold transition duration-200 group shadow-xs cursor-pointer text-center"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition-transform" />
+              <span>Watch 3D Film (44s)</span>
+            </Link>
             
             <a
               href="/#services"
               onClick={handleScrollToServices}
               className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full border border-border-custom bg-surface hover:bg-surface/80 text-foreground text-xs font-mono uppercase tracking-wider font-semibold transition duration-200 group shadow-xs cursor-pointer text-center"
             >
-              <span>Explore Our Services</span>
+              <span>Explore Services</span>
               <ArrowDown className="w-3.5 h-3.5 group-hover:translate-y-0.5 transition-transform" />
             </a>
           </div>

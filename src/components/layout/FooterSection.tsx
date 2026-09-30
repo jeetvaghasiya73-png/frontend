@@ -193,6 +193,10 @@ export default function FooterSection() {
               Agency
             </h5>
             <div className="flex flex-col gap-2.5 text-sm text-secondary-custom">
+              <Link href="/intro" className="hover:text-amber-400 font-medium transition-colors flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>3D Brand Film</span>
+              </Link>
               <Link href="/#work" onClick={(e) => handleHashLink(e, "/#work")} className="hover:text-foreground transition-colors">Case Studies</Link>
               <Link href="/#process" onClick={(e) => handleHashLink(e, "/#process")} className="hover:text-foreground transition-colors">Our Process</Link>
               <Link href="/#faq" onClick={(e) => handleHashLink(e, "/#faq")} className="hover:text-foreground transition-colors">FAQ Knowledge</Link>

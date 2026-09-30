@@ -97,6 +97,14 @@ export default function Navbar() {
   const navLinks = [
     {
       id: "01",
+      name: "Intro",
+      href: "/intro",
+      desc: "44-Second Interactive 3D Brand Film",
+      icon: Sparkles,
+      badge: "3D Film",
+    },
+    {
+      id: "02",
       name: "Services",
       href: "/#services",
       desc: "Autonomous AI Agents & Pipelines",
@@ -104,7 +112,7 @@ export default function Navbar() {
       badge: "Core AI",
     },
     {
-      id: "02",
+      id: "03",
       name: "Process",
       href: "/#process",
       desc: "4-Phase Engineering Framework",
@@ -112,7 +120,7 @@ export default function Navbar() {
       badge: "Execution",
     },
     {
-      id: "03",
+      id: "04",
       name: "Case Studies",
       href: "/#work",
       desc: "Enterprise Client ROI & Deployments",
@@ -120,7 +128,7 @@ export default function Navbar() {
       badge: "Results",
     },
     {
-      id: "04",
+      id: "05",
       name: "Contact",
       href: "/contact",
       desc: "Direct Technical Consultation",
@@ -128,7 +136,7 @@ export default function Navbar() {
       badge: "Direct Line",
     },
     {
-      id: "05",
+      id: "06",
       name: "FAQ",
       href: "/#faq",
       desc: "Security, Tech Stack & Timelines",
@@ -184,17 +192,20 @@ export default function Navbar() {
           </Link>
 
           {/* Center: Desktop Nav Links (MadeWithGSAP Style) */}
-          <nav className="hidden md:flex items-center gap-6 text-xs font-medium tracking-wider uppercase">
+          <nav className="hidden md:flex items-center gap-5 lg:gap-6 text-xs font-medium tracking-wider uppercase">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.name}
                 href={link.href}
                 onClick={(e) => handleHashLink(e, link.href)}
-                className="text-secondary-custom hover:text-foreground relative py-1 transition-colors duration-200 group"
+                className="text-secondary-custom hover:text-foreground relative py-1 transition-colors duration-200 group flex items-center gap-1.5"
               >
+                {link.badge === "3D Film" && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse inline-block shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+                )}
                 <span>{link.name}</span>
                 <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-foreground group-hover:w-full transition-all duration-300" />
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -302,7 +313,7 @@ export default function Navbar() {
                   Navigation Directory
                 </span>
                 <span className="text-[10px] font-mono text-secondary-custom/70">
-                  5 SECTIONS
+                  {navLinks.length} SECTIONS
                 </span>
               </div>
 
@@ -311,7 +322,7 @@ export default function Navbar() {
                 {navLinks.map((link) => {
                   const Icon = link.icon;
                   return (
-                    <a
+                    <Link
                       key={link.name}
                       href={link.href}
                       onClick={(e) => {
@@ -345,7 +356,7 @@ export default function Navbar() {
                         </span>
                         <ArrowUpRight className="w-4 h-4 text-secondary-custom group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                       </div>
-                    </a>
+                    </Link>
                   );
                 })}
               </nav>
