@@ -367,6 +367,11 @@ export default function DashboardLayout({
     try { await authFetch(`${API_URL}/api/v1/notifications/clear`, { method: "DELETE" }); } catch (e) { console.error("Failed to clear notifications in DB:", e); }
   };
 
+  const handleDeleteNotification = async (notifId: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== notifId));
+    try { await authFetch(`${API_URL}/api/v1/notifications/${notifId}`, { method: "DELETE" }); } catch (e) { console.error("Failed to delete notification in DB:", e); }
+  };
+
   const triggerTestNotification = async () => {
     playNotificationSound();
     try {
@@ -468,7 +473,19 @@ export default function DashboardLayout({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-1">
                   <span className="text-xs font-bold truncate" style={{ color: !n.read ? "var(--dash-primary)" : "var(--dash-text)" }}>{n.title}</span>
-                  <span className="text-[10px] font-mono shrink-0" style={{ color: "var(--dash-text-muted)" }}>{n.time}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] font-mono" style={{ color: "var(--dash-text-muted)" }}>{n.time}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteNotification(n.id);
+                      }}
+                      className="p-0.5 opacity-40 hover:opacity-100 hover:text-red-500 transition cursor-pointer"
+                      title="Dismiss notification"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
                 <p className="text-xs mt-0.5 line-clamp-2 leading-relaxed" style={{ color: "var(--dash-text-secondary)" }}>{n.message}</p>
               </div>

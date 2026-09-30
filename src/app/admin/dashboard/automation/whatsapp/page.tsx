@@ -843,20 +843,41 @@ export default function WhatsAppOutreachPage() {
     }
   };
 
-  const handleMarkInterested = async (leadId: number | string) => {
+  const handleToggleInterest = async (convOrId: ConversationItem | number | string) => {
+    const leadId = typeof convOrId === "object" ? convOrId.lead_id : convOrId;
+    const isCurrentlyInterested = typeof convOrId === "object" ? convOrId.is_interested : Boolean(selectedConv?.lead_id === leadId ? selectedConv?.is_interested : false);
     try {
-      const res = await authFetch(`${API}/api/v1/whatsapp/mark-interested/${leadId}`, { method: "POST" });
-      const d = await res.json();
+      const res = await authFetch(`${API}/api/v1/whatsapp/chats/${leadId}/toggle-interest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_interested: !isCurrentlyInterested })
+      });
+      const data = await res.json();
       if (res.ok) {
-        showAlert("success", "Marked as Interested! Lead updated in database.");
+        const newInterested = data.is_interested;
+        const newStatus = data.whatsapp_status;
+        showAlert("success", newInterested ? "⭐ Marked as Interested!" : "↩️ Unmarked from Interested.");
+        setConversations(prev =>
+          prev.map(c => c.lead_id === leadId ? { ...c, is_interested: newInterested, whatsapp_status: newStatus } : c)
+        );
+        if (selectedConv?.lead_id === leadId) {
+          setSelectedConv(prev => prev ? { ...prev, is_interested: newInterested, whatsapp_status: newStatus } : null);
+        }
+        setLeads(prev =>
+          prev.map(l => l.id === Number(leadId) ? { ...l, is_interested: newInterested, whatsapp_status: newStatus } : l)
+        );
         fetchOverview();
         fetchAnalytics();
       } else {
-        showAlert("error", d.detail || "Failed to mark lead as interested.");
+        showAlert("error", data.detail || "Failed to update interest status.");
       }
     } catch (err) {
-      showAlert("error", "Network error marking lead interested.");
+      showAlert("error", "Network error updating interest status.");
     }
+  };
+
+  const handleMarkInterested = async (leadId: number | string) => {
+    await handleToggleInterest(leadId);
   };
 
   const handleExportChatLog = () => {
@@ -1344,8 +1365,9 @@ export default function WhatsAppOutreachPage() {
               <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none text-[11px]">
                 {[
                   { id: "all", label: "All Chats" },
-                  { id: "interested", label: "⭐ Hot" },
-                  { id: "replied", label: "Inbound" },
+                  { id: "replied", label: "💬 Replied" },
+                  { id: "interested", label: "⭐ Interested" },
+                  { id: "combined", label: "🔥 Combined" },
                   { id: "ai_active", label: "🤖 AI" },
                   { id: "human_takeover", label: "👤 Human" }
                 ].map((f) => (
@@ -1455,11 +1477,15 @@ export default function WhatsAppOutreachPage() {
                         <h2 className="font-bold text-xs sm:text-sm text-[var(--dash-text)] truncate max-w-[150px]">
                           {selectedConv.bussiness_name}
                         </h2>
-                        {selectedConv.is_interested && (
-                          <span className="bg-emerald-500/10 text-emerald-500 text-[10px] px-1.5 py-0.2 rounded border border-emerald-500/25 font-bold shrink-0">
-                            ⭐ Hot
+                        {selectedConv.is_interested ? (
+                          <span className="bg-amber-500/10 text-amber-500 text-[10px] px-1.5 py-0.2 rounded border border-amber-500/25 font-bold shrink-0 flex items-center gap-0.5">
+                            ⭐ Interested
                           </span>
-                        )}
+                        ) : selectedConv.last_reply ? (
+                          <span className="bg-blue-500/10 text-blue-500 text-[10px] px-1.5 py-0.2 rounded border border-blue-500/25 font-semibold shrink-0">
+                            💬 Replied
+                          </span>
+                        ) : null}
                       </div>
                       <p className="text-[10px] text-[var(--dash-text-muted)] truncate flex items-center gap-1 font-mono">
                         <span>{format10DigitPhone(selectedConv.phone_number)}</span>
@@ -1471,6 +1497,19 @@ export default function WhatsAppOutreachPage() {
 
                   {/* Header CTA Action Buttons */}
                   <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => handleToggleInterest(selectedConv)}
+                      className={`crm-btn-secondary text-[11px] py-1 px-2 flex items-center gap-1 cursor-pointer transition ${
+                        selectedConv.is_interested
+                          ? "text-amber-500 border-amber-500/40 bg-amber-500/10 font-bold"
+                          : "text-[var(--dash-text-muted)] hover:text-amber-500"
+                      }`}
+                      title={selectedConv.is_interested ? "Currently Marked as Interested — Click to unmark" : "Mark as Interested"}
+                    >
+                      <Star className={`w-3 h-3 ${selectedConv.is_interested ? "fill-amber-500 text-amber-500" : ""}`} />
+                      <span className="hidden sm:inline">{selectedConv.is_interested ? "Interested ⭐" : "Interested?"}</span>
+                    </button>
+
                     <button
                       onClick={() => handleCtaClick({ id: "call", label: "Call", action_type: "call", payload: "" })}
                       className="crm-btn-secondary text-[11px] py-1 px-2 text-emerald-500 flex items-center gap-1"
@@ -1821,10 +1860,15 @@ export default function WhatsAppOutreachPage() {
                 )}
 
                 <button
-                  onClick={() => handleMarkInterested(selectedConv.lead_id)}
-                  className="w-full crm-btn-primary text-xs flex items-center justify-center gap-1.5"
+                  onClick={() => handleToggleInterest(selectedConv)}
+                  className={`w-full text-xs flex items-center justify-center gap-1.5 py-2 rounded-md font-bold transition cursor-pointer ${
+                    selectedConv.is_interested
+                      ? "bg-amber-500/15 border border-amber-500/30 text-amber-500 hover:bg-amber-500/25"
+                      : "crm-btn-primary"
+                  }`}
                 >
-                  <Star className="w-3.5 h-3.5 fill-current" /> Mark Hot Interested ⭐
+                  <Star className={`w-3.5 h-3.5 ${selectedConv.is_interested ? "fill-amber-500 text-amber-500" : "fill-current"}`} />
+                  <span>{selectedConv.is_interested ? "↩️ Unmark Interested" : "Mark Hot Interested ⭐"}</span>
                 </button>
               </div>
 
@@ -2194,10 +2238,11 @@ export default function WhatsAppOutreachPage() {
                 className="crm-input text-xs py-1.5"
               >
                 <option value="all">All Statuses</option>
+                <option value="replied">💬 Replied (Awaiting Interest)</option>
+                <option value="interested">⭐ Interested (High Intent)</option>
+                <option value="combined">🔥 Combined (Replied + Interested)</option>
                 <option value="pending">Pending</option>
                 <option value="sent">Sent</option>
-                <option value="replied">Replied</option>
-                <option value="interested">⭐ Interested</option>
                 <option value="failed">Failed</option>
                 <option value="blocked">Blocked</option>
                 <option value="reported">Reported</option>
@@ -2254,10 +2299,14 @@ export default function WhatsAppOutreachPage() {
                           View Details
                         </button>
                         <button
-                          onClick={() => handleMarkInterested(l.id)}
-                          className="crm-btn-primary text-[10px] py-1 px-2"
+                          onClick={() => handleToggleInterest(l.id)}
+                          className={`text-[10px] py-1 px-2 rounded-md font-semibold transition cursor-pointer ${
+                            l.is_interested
+                              ? "bg-amber-500/15 border border-amber-500/30 text-amber-500 hover:bg-amber-500/25"
+                              : "crm-btn-primary"
+                          }`}
                         >
-                          Interested ⭐
+                          {l.is_interested ? "⭐ Interested" : "Interested?"}
                         </button>
                       </td>
                     </tr>

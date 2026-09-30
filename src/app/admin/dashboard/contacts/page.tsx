@@ -29,7 +29,8 @@ import {
   CheckCircle2,
   MessageCircle,
   History,
-  FileText
+  FileText,
+  Star
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
 import { formatISTDate, formatISTTime, formatISTDateTime } from "@/lib/formatters";
@@ -184,7 +185,7 @@ export default function ContactMessagesManager() {
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "unread" | "replied" | "interested">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "replied" | "interested" | "combined" | "unread">("all");
 
   // AI Meeting / Reply Modal State
   const [aiModalOpen, setAiModalOpen] = useState(false);
@@ -416,14 +417,22 @@ export default function ContactMessagesManager() {
       }
 
       // Status filter
-      if (statusFilter === "unread" && !["pending", "unread", "new"].includes(msg.status.toLowerCase())) {
-        return false;
-      }
-      if (statusFilter === "replied" && !["replied", "sent", "read"].includes(msg.status.toLowerCase())) {
-        return false;
-      }
-      if (statusFilter === "interested" && !msg.isInterested && msg.status.toLowerCase() !== "interested") {
-        return false;
+      if (statusFilter === "unread") {
+        if (!["pending", "unread", "new"].includes(msg.status.toLowerCase())) return false;
+      } else if (statusFilter === "replied") {
+        // Contact replied to us, but is not yet qualified as interested
+        const isQualifiedInterested = Boolean(msg.isInterested || msg.status.toLowerCase() === "interested");
+        const hasReplied = msg.status.toLowerCase() === "replied" || Boolean(msg.channel === "whatsapp" && msg.raw?.last_reply) || Boolean(msg.channel === "email" && msg.status === "replied");
+        if (isQualifiedInterested || !hasReplied) return false;
+      } else if (statusFilter === "interested") {
+        // High intent: clicked interested CTA, marked interested, or submitted website form inquiry
+        const isInterested = Boolean(msg.isInterested || msg.status.toLowerCase() === "interested" || (msg.channel === "website" && msg.sourceId));
+        if (!isInterested) return false;
+      } else if (statusFilter === "combined") {
+        // Combined view: any active response (either replied OR interested)
+        const hasReplied = msg.status.toLowerCase() === "replied" || Boolean(msg.channel === "whatsapp" && msg.raw?.last_reply) || Boolean(msg.channel === "email" && msg.status === "replied");
+        const isInterested = Boolean(msg.isInterested || msg.status.toLowerCase() === "interested" || (msg.channel === "website" && msg.sourceId));
+        if (!hasReplied && !isInterested) return false;
       }
 
       // Search Query filter
@@ -719,6 +728,54 @@ export default function ContactMessagesManager() {
     } catch (e) {
       console.error(e);
       showToast("Failed to update status", "error");
+    }
+  };
+
+  const handleToggleInterest = async () => {
+    if (!selectedMessage) return;
+    const currentInterested = Boolean(selectedMessage.isInterested || selectedMessage.status === "interested");
+    const newInterested = !currentInterested;
+
+    try {
+      if (selectedMessage.channel === "whatsapp") {
+        const res = await authFetch(`${API}/api/v1/whatsapp/chats/${selectedMessage.sourceId}/toggle-interest`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_interested: newInterested })
+        });
+        if (res.ok) {
+          showToast(newInterested ? "⭐ Marked as Interested!" : "↩️ Unmarked from Interested.", "success");
+          setSelectedMessage(prev => prev ? { ...prev, isInterested: newInterested, status: newInterested ? "interested" : "replied" } : null);
+          setWaConversations(prev =>
+            prev.map(c => c.lead_id === selectedMessage.sourceId ? { ...c, is_interested: newInterested, whatsapp_status: newInterested ? "interested" : "replied" } : c)
+          );
+        } else {
+          showToast("Failed to update interest status", "error");
+        }
+      } else if (selectedMessage.channel === "website") {
+        const newStatus = newInterested ? "interested" : "read";
+        const res = await authFetch(`${API}/api/v1/contacts/${selectedMessage.sourceId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus })
+        });
+        if (res.ok) {
+          showToast(newInterested ? "⭐ Marked as Interested!" : "↩️ Updated status.", "success");
+          setSelectedMessage(prev => prev ? { ...prev, isInterested: newInterested, status: newStatus } : null);
+          setWebsiteInquiries(prev =>
+            prev.map(w => w.id === selectedMessage.sourceId ? { ...w, status: newStatus } : w)
+          );
+        } else {
+          showToast("Failed to update status", "error");
+        }
+      } else {
+        setSelectedMessage(prev => prev ? { ...prev, isInterested: newInterested, status: newInterested ? "interested" : "replied" } : null);
+        showToast(newInterested ? "⭐ Marked as Interested!" : "↩️ Updated status.", "success");
+      }
+      fetchAllData();
+    } catch (e) {
+      console.error(e);
+      showToast("Error updating interest status", "error");
     }
   };
 
@@ -1022,17 +1079,23 @@ export default function ContactMessagesManager() {
             </div>
 
             <div className="flex items-center gap-1.5 text-[11px] overflow-x-auto no-scrollbar">
-              {(["all", "unread", "replied", "interested"] as const).map((st) => (
+              {[
+                { id: "all", label: "All Statuses" },
+                { id: "replied", label: "💬 Replied" },
+                { id: "interested", label: "⭐ Interested" },
+                { id: "combined", label: "🔥 Combined" },
+                { id: "unread", label: "📬 Unread" }
+              ].map((st) => (
                 <button
-                  key={st}
-                  onClick={() => setStatusFilter(st)}
-                  className={`px-2.5 py-1 rounded-md capitalize font-semibold transition cursor-pointer whitespace-nowrap ${
-                    statusFilter === st
+                  key={st.id}
+                  onClick={() => setStatusFilter(st.id as any)}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition cursor-pointer whitespace-nowrap ${
+                    statusFilter === st.id
                       ? "bg-indigo-600 text-white shadow-xs"
                       : "bg-[var(--dash-card-bg)] border border-[var(--dash-border)] text-[var(--dash-text-muted)] hover:text-[var(--dash-text-primary)]"
                   }`}
                 >
-                  {st === "all" ? "All Statuses" : st}
+                  {st.label}
                 </button>
               ))}
             </div>
@@ -1151,6 +1214,15 @@ export default function ContactMessagesManager() {
                       >
                         {selectedMessage.channel.toUpperCase()}
                       </span>
+                      {selectedMessage.isInterested || selectedMessage.status === "interested" ? (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/30 flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-amber-500" /> Interested Lead
+                        </span>
+                      ) : selectedMessage.status === "replied" || (selectedMessage.channel === "whatsapp" && selectedMessage.raw?.last_reply) ? (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500 border border-blue-500/30 flex items-center gap-1">
+                          <MessageCircle className="w-3 h-3" /> Replied (Inbound)
+                        </span>
+                      ) : null}
                     </div>
 
                     <div className="flex items-center gap-3 text-xs text-[var(--dash-text-muted)] font-mono mt-0.5">
@@ -1162,6 +1234,32 @@ export default function ContactMessagesManager() {
 
                 {/* Header Action Tools */}
                 <div className="flex items-center gap-2 flex-wrap">
+                  {/* Universal Interest Flag Toggle */}
+                  <button
+                    onClick={handleToggleInterest}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-md border transition cursor-pointer flex items-center gap-1.5 ${
+                      selectedMessage.isInterested || selectedMessage.status === "interested"
+                        ? "bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400 font-extrabold"
+                        : "bg-[var(--dash-card-bg)] border-[var(--dash-border)] text-[var(--dash-text-muted)] hover:text-amber-500"
+                    }`}
+                    title={selectedMessage.isInterested ? "Currently marked as interested — click to unmark" : "Mark as Interested"}
+                  >
+                    <Star className={`w-3.5 h-3.5 ${selectedMessage.isInterested || selectedMessage.status === "interested" ? "fill-amber-500 text-amber-500" : ""}`} />
+                    <span>{selectedMessage.isInterested || selectedMessage.status === "interested" ? "⭐ Interested" : "Mark Interested"}</span>
+                  </button>
+
+                  {/* Direct Phone Dialer Button */}
+                  {(selectedMessage.phone || (selectedMessage.senderContact && /^[+0-9\s-]{8,}$/.test(selectedMessage.senderContact))) && (
+                    <a
+                      href={`tel:${(selectedMessage.phone || selectedMessage.senderContact).replace(/\s+/g, "")}`}
+                      className="px-2.5 py-1.5 text-xs font-semibold rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 flex items-center gap-1 transition"
+                      title="Direct Phone Call"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Call</span>
+                    </a>
+                  )}
+
                   {/* WhatsApp Specific Actions */}
                   {selectedMessage.channel === "whatsapp" && (
                     <>
