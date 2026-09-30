@@ -1473,11 +1473,12 @@ export default function WhatsAppOutreachPage() {
             {selectedConv ? (
               <>
                 {/* Active Chat Header */}
-                <div className="p-3 border-b border-[var(--dash-border)] bg-[var(--dash-card-bg)] flex items-center justify-between gap-3 shadow-sm">
-                  <div className="flex items-center gap-2.5 min-w-0">
+                <div className="p-2.5 sm:p-3 border-b border-[var(--dash-border)] bg-[var(--dash-card-bg)] flex items-center justify-between gap-2 shadow-sm min-w-0">
+                  <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
                     <button
                       onClick={() => setMobileView("list")}
                       className="lg:hidden p-1.5 rounded-md crm-btn-secondary text-xs shrink-0 cursor-pointer"
+                      title="Back to conversation list"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
@@ -1485,31 +1486,35 @@ export default function WhatsAppOutreachPage() {
                     <div className="w-8 h-8 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 flex items-center justify-center font-bold text-xs shrink-0">
                       {selectedConv.bussiness_name ? selectedConv.bussiness_name.charAt(0).toUpperCase() : "#"}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <h2 className="font-bold text-xs sm:text-sm text-[var(--dash-text)] truncate max-w-[150px]">
+                        <h2 className="font-bold text-xs sm:text-sm text-[var(--dash-text)] truncate max-w-[130px] sm:max-w-[200px] md:max-w-xs" title={selectedConv.bussiness_name}>
                           {selectedConv.bussiness_name}
                         </h2>
                         {selectedConv.is_interested ? (
-                          <span className="bg-amber-500/10 text-amber-500 text-[10px] px-1.5 py-0.2 rounded border border-amber-500/25 font-bold shrink-0 flex items-center gap-0.5">
+                          <span className="hidden sm:inline-flex bg-amber-500/10 text-amber-500 text-[10px] px-1.5 py-0.2 rounded border border-amber-500/25 font-bold shrink-0 items-center gap-0.5">
                             ⭐ Interested
                           </span>
                         ) : selectedConv.last_reply ? (
-                          <span className="bg-blue-500/10 text-blue-500 text-[10px] px-1.5 py-0.2 rounded border border-blue-500/25 font-semibold shrink-0">
+                          <span className="hidden sm:inline-flex bg-blue-500/10 text-blue-500 text-[10px] px-1.5 py-0.2 rounded border border-blue-500/25 font-semibold shrink-0">
                             💬 Replied
                           </span>
                         ) : null}
                       </div>
                       <p className="text-[10px] text-[var(--dash-text-muted)] truncate flex items-center gap-1 font-mono">
                         <span>{format10DigitPhone(selectedConv.phone_number)}</span>
-                        <span>•</span>
-                        <span className="text-emerald-500 font-sans">Active Thread</span>
+                        {selectedConv.scraped_city && (
+                          <>
+                            <span>•</span>
+                            <span className="truncate">{selectedConv.scraped_city}</span>
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>
 
                   {/* Header CTA Action Buttons */}
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                     <button
                       onClick={() => handleToggleInterest(selectedConv)}
                       className={`crm-btn-secondary text-[11px] py-1 px-2 flex items-center gap-1 cursor-pointer transition ${
@@ -1519,8 +1524,8 @@ export default function WhatsAppOutreachPage() {
                       }`}
                       title={selectedConv.is_interested ? "Currently Marked as Interested — Click to unmark" : "Mark as Interested"}
                     >
-                      <Star className={`w-3 h-3 ${selectedConv.is_interested ? "fill-amber-500 text-amber-500" : ""}`} />
-                      <span className="hidden sm:inline">{selectedConv.is_interested ? "Interested ⭐" : "Interested?"}</span>
+                      <Star className={`w-3.5 h-3.5 ${selectedConv.is_interested ? "fill-amber-500 text-amber-500" : ""}`} />
+                      <span className="hidden xl:inline">{selectedConv.is_interested ? "Interested" : "Mark Star"}</span>
                     </button>
 
                     <button
@@ -1528,8 +1533,8 @@ export default function WhatsAppOutreachPage() {
                       className="crm-btn-secondary text-[11px] py-1 px-2 text-emerald-500 flex items-center gap-1"
                       title="Direct Call CTA"
                     >
-                      <Phone className="w-3 h-3" />
-                      <span className="hidden sm:inline">Call</span>
+                      <Phone className="w-3.5 h-3.5" />
+                      <span className="hidden md:inline">Call</span>
                     </button>
 
                     {isValidWebsite(selectedConv.website) ? (
@@ -1540,23 +1545,22 @@ export default function WhatsAppOutreachPage() {
                         className="crm-btn-secondary text-[11px] py-1 px-2 text-blue-500 flex items-center gap-1"
                         title="Open Business Website"
                       >
-                        <Globe className="w-3 h-3" />
-                        <span className="hidden sm:inline">Site</span>
+                        <Globe className="w-3.5 h-3.5" />
+                        <span className="hidden md:inline">Site</span>
                       </a>
                     ) : (
                       <span
-                        className="crm-btn-secondary text-[11px] py-1 px-2 text-[var(--dash-text-muted)] opacity-50 cursor-not-allowed flex items-center gap-1"
+                        className="crm-btn-secondary text-[11px] py-1 px-1.5 text-[var(--dash-text-muted)] opacity-50 cursor-not-allowed flex items-center gap-1"
                         title="No registered website for this business"
                       >
-                        <Globe className="w-3 h-3" />
-                        <span className="hidden sm:inline">No Site</span>
+                        <Globe className="w-3.5 h-3.5" />
                       </span>
                     )}
 
                     <button
                       onClick={() => handleToggleAiAutoPilot(selectedConv)}
                       disabled={togglingAi}
-                      className={`crm-btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1.5 font-medium border transition ${
+                      className={`crm-btn-secondary text-[11px] py-1 px-2 sm:px-2.5 flex items-center gap-1.5 font-medium border transition ${
                         selectedConv.whatsapp_ai_enabled
                           ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/20"
                           : "bg-amber-500/10 text-amber-500 border-amber-500/30 hover:bg-amber-500/20"
@@ -1808,11 +1812,11 @@ export default function WhatsAppOutreachPage() {
                   </div>
 
                   {/* Main Inputs */}
-                  <form onSubmit={(e) => { e.preventDefault(); handleSendManualReply(); }} className="flex items-center gap-1.5">
+                  <form onSubmit={(e) => { e.preventDefault(); handleSendManualReply(); }} className="flex items-center gap-1.5 min-w-0">
                     <button
                       type="button"
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className="p-2 text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] hover:bg-slate-500/10 rounded-md cursor-pointer"
+                      className="p-2 text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] hover:bg-slate-500/10 rounded-md cursor-pointer shrink-0"
                       title="Emojis"
                     >
                       <Smile className="w-4 h-4" />
@@ -1821,7 +1825,7 @@ export default function WhatsAppOutreachPage() {
                     <button
                       type="button"
                       onClick={() => setShowCtaMenu(!showCtaMenu)}
-                      className="p-2 text-[var(--dash-text-muted)] hover:text-emerald-500 hover:bg-slate-500/10 rounded-md cursor-pointer"
+                      className="p-2 text-[var(--dash-text-muted)] hover:text-emerald-500 hover:bg-slate-500/10 rounded-md cursor-pointer shrink-0"
                       title="Insert CTA Template"
                     >
                       <Paperclip className="w-4 h-4" />
@@ -1832,7 +1836,7 @@ export default function WhatsAppOutreachPage() {
                       placeholder={`Reply to ${selectedConv.bussiness_name} on WhatsApp...`}
                       value={manualMessageText}
                       onChange={(e) => setManualMessageText(e.target.value)}
-                      className="crm-input flex-1 text-xs py-2"
+                      className="crm-input flex-1 min-w-0 text-xs py-2"
                     />
 
                     <button
@@ -1852,9 +1856,14 @@ export default function WhatsAppOutreachPage() {
             )}
           </div>
 
-          {/* Right Panel: Lead CRM Profile (3 cols) */}
+          {/* Right Panel: Lead CRM Profile (Overlay on mobile, col-span-3 on desktop) */}
           {showRightDrawer && selectedConv && (
-            <div className="lg:col-span-3 border-l border-[var(--dash-border)] p-4 space-y-4 overflow-y-auto bg-[var(--dash-card-bg)]">
+            <>
+              <div
+                onClick={() => setShowRightDrawer(false)}
+                className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-xs"
+              />
+              <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-80 lg:static lg:z-auto lg:w-auto lg:col-span-3 border-l border-[var(--dash-border)] p-4 space-y-4 overflow-y-auto bg-[var(--dash-card-bg)] shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-200">
               <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-2.5">
                 <h3 className="font-bold text-xs text-[var(--dash-text)] flex items-center gap-1.5">
                   <UserCheck className="w-3.5 h-3.5 text-emerald-500" /> Lead CRM Details
@@ -1955,6 +1964,7 @@ export default function WhatsAppOutreachPage() {
                 </button>
               </div>
             </div>
+            </>
           )}
         </div>
       )}

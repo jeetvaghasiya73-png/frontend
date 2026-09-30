@@ -30,7 +30,8 @@ import {
   MessageCircle,
   History,
   FileText,
-  Star
+  Star,
+  ArrowLeft
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
 import { formatISTDate, formatISTTime, formatISTDateTime } from "@/lib/formatters";
@@ -166,6 +167,7 @@ export default function ContactMessagesManager() {
 
   // Selected Message in CRM 2-pane view
   const [selectedMessage, setSelectedMessage] = useState<UnifiedMessage | null>(null);
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
 
   // WhatsApp Active Thread Messages
   const [waChatMessages, setWaChatMessages] = useState<WhatsAppChatMessage[]>([]);
@@ -1010,7 +1012,7 @@ export default function ContactMessagesManager() {
       </header>
 
       {/* ── Channel Navigation Tabs ── */}
-      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto scrollbar-none shrink-0 pb-1 max-w-full">
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto no-scrollbar shrink-0 pb-1 max-w-full">
         <button
           onClick={() => setChannelTab("all")}
           className={`px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 ${
@@ -1073,7 +1075,7 @@ export default function ContactMessagesManager() {
       {/* ── Main 2-Pane CRM Inbox Layout ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-auto lg:h-[760px] w-full">
         {/* ── Left Pane: Conversation Feed (4 Cols) ── */}
-        <div className="lg:col-span-5 xl:col-span-4 crm-card flex flex-col overflow-hidden h-[600px] lg:h-full">
+        <div className={`lg:col-span-5 xl:col-span-4 crm-card flex flex-col overflow-hidden h-[600px] lg:h-full ${mobileView === "detail" ? "hidden lg:flex" : "flex"}`}>
           {/* Search & Status Filter Deck */}
           <div className="p-3 border-b border-[var(--dash-border)] space-y-2.5 bg-[var(--dash-table-header)]">
             <div className="relative">
@@ -1125,6 +1127,7 @@ export default function ContactMessagesManager() {
                     setSelectedMessage(item);
                     setWaReplyText("");
                     setManualReplyText("");
+                    setMobileView("detail");
                   }}
                   className={`p-3.5 transition cursor-pointer flex flex-col gap-1.5 ${
                     isSelected
@@ -1189,14 +1192,23 @@ export default function ContactMessagesManager() {
         </div>
 
         {/* ── Right Pane: Active Thread & Channel Reply Desk (8 Cols) ── */}
-        <div className="lg:col-span-7 xl:col-span-8 crm-card flex flex-col justify-between overflow-hidden h-[600px] lg:h-full">
+        <div className={`lg:col-span-7 xl:col-span-8 crm-card flex flex-col justify-between overflow-hidden h-[650px] lg:h-full ${mobileView === "list" ? "hidden lg:flex" : "flex"}`}>
           {selectedMessage ? (
             <>
               {/* Header */}
-              <div className="p-4 border-b border-[var(--dash-border)] bg-[var(--dash-table-header)] flex flex-wrap items-center justify-between gap-3 shrink-0">
-                <div className="flex items-center gap-3 min-w-0">
+              <div className="p-3 sm:p-4 border-b border-[var(--dash-border)] bg-[var(--dash-table-header)] flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setMobileView("list")}
+                    className="lg:hidden p-1.5 rounded-md border border-[var(--dash-border)] bg-[var(--dash-card-bg)] text-[var(--dash-text-muted)] hover:text-indigo-600 transition shrink-0"
+                    title="Back to messages"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+
                   <div
-                    className={`w-10 h-10 rounded-md flex items-center justify-center font-bold text-white text-base shadow-sm shrink-0 ${
+                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-md flex items-center justify-center font-bold text-white text-sm sm:text-base shadow-sm shrink-0 ${
                       selectedMessage.channel === "whatsapp"
                         ? "bg-emerald-600"
                         : selectedMessage.channel === "website"
@@ -1568,41 +1580,47 @@ export default function ContactMessagesManager() {
                       ))}
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        placeholder="Type a direct WhatsApp response..."
-                        value={waReplyText}
-                        onChange={(e) => setWaReplyText(e.target.value)}
-                        className="crm-input flex-1 text-xs"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleGenerateAiFollowup}
-                        disabled={generatingFollowup}
-                        className="px-3 py-2 rounded-md bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
-                        title="Generate fast context-aware AI follow-up message"
-                      >
-                        {generatingFollowup ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <Zap className="w-3.5 h-3.5 fill-current" />
-                        )}
-                        <span>⚡ AI Follow-Up</span>
-                      </button>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <input
+                          type="text"
+                          placeholder="Type a direct WhatsApp response..."
+                          value={waReplyText}
+                          onChange={(e) => setWaReplyText(e.target.value)}
+                          className="crm-input w-full text-xs"
+                        />
+                      </div>
 
-                      <button
-                        type="submit"
-                        disabled={sendingWaReply || !waReplyText.trim()}
-                        className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 shrink-0"
-                      >
-                        {sendingWaReply ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Send className="w-4 h-4" />
-                        )}
-                        <span>Send WhatsApp</span>
-                      </button>
+                      <div className="flex items-center gap-2 shrink-0 justify-end">
+                        <button
+                          type="button"
+                          onClick={handleGenerateAiFollowup}
+                          disabled={generatingFollowup}
+                          className="px-2.5 sm:px-3 py-2 rounded-md bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+                          title="Generate fast context-aware AI follow-up message"
+                        >
+                          {generatingFollowup ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Zap className="w-3.5 h-3.5 fill-current" />
+                          )}
+                          <span className="whitespace-nowrap">⚡ AI Follow-Up</span>
+                        </button>
+
+                        <button
+                          type="submit"
+                          disabled={sendingWaReply || !waReplyText.trim()}
+                          className="px-3.5 sm:px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 shrink-0"
+                        >
+                          {sendingWaReply ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Send className="w-4 h-4" />
+                          )}
+                          <span className="whitespace-nowrap">Send</span>
+                          <span className="hidden sm:inline whitespace-nowrap"> WhatsApp</span>
+                        </button>
+                      </div>
                     </div>
                   </form>
                 )}
@@ -1624,12 +1642,12 @@ export default function ContactMessagesManager() {
                       className="crm-input w-full text-xs font-sans"
                     />
 
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-2 flex-wrap sm:flex-nowrap">
                       <button
                         type="button"
                         onClick={handleGenerateAiFollowup}
                         disabled={generatingFollowup}
-                        className="px-3 py-1.5 rounded-md bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-md bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
                         title="Generate fast context-aware AI follow-up message"
                       >
                         {generatingFollowup ? (
@@ -1637,20 +1655,20 @@ export default function ContactMessagesManager() {
                         ) : (
                           <Zap className="w-3.5 h-3.5 fill-current" />
                         )}
-                        <span>⚡ AI Follow-Up</span>
+                        <span className="whitespace-nowrap">⚡ AI Follow-Up</span>
                       </button>
 
                       <button
                         type="submit"
                         disabled={sendingManualReply || !manualReplyText.trim()}
-                        className="crm-btn-primary text-xs flex items-center gap-1.5"
+                        className="crm-btn-primary text-xs flex items-center gap-1.5 shrink-0"
                       >
                         {sendingManualReply ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         ) : (
                           <Send className="w-3.5 h-3.5" />
                         )}
-                        <span>Dispatch Email Reply</span>
+                        <span className="whitespace-nowrap">Dispatch Reply</span>
                       </button>
                     </div>
                   </form>

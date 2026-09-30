@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { Poppins } from "next/font/google";
 import { API_URL } from "@/lib/config";
@@ -29,7 +29,7 @@ export default function BlogsPage() {
         const response = await fetch(`${API_URL}/api/v1/blogs/`);
         if (response.ok) {
           const data = await response.json();
-          const active = data.filter((b: any) => b.published);
+          const active = Array.isArray(data) ? data.filter((b: any) => b.published) : [];
           setBlogs(active);
         } else {
           setBlogs([]);
@@ -45,7 +45,15 @@ export default function BlogsPage() {
     fetchBlogs();
   }, []);
 
-  const categories = ["ALL", "TECH & AI FUTURE", "AI AGENTS", "SEO", "ARCHITECTURE"];
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    blogs.forEach((b) => {
+      if (b.category && typeof b.category === "string" && b.category.trim()) {
+        set.add(b.category.trim().toUpperCase());
+      }
+    });
+    return ["ALL", ...Array.from(set)];
+  }, [blogs]);
 
   const filtered = blogs.filter((b) => {
     const matchesQuery =
@@ -81,7 +89,7 @@ export default function BlogsPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 pb-6 border-b border-border-custom">
             
             {/* Category Filter Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar flex-nowrap w-full md:w-auto">
               {categories.map((cat) => (
                 <button
                   key={cat}
