@@ -1266,7 +1266,7 @@ export default function ContactMessagesManager() {
                     title={selectedMessage.isInterested ? "Currently marked as interested — click to unmark" : "Mark as Interested"}
                   >
                     <Star className={`w-3.5 h-3.5 ${selectedMessage.isInterested || selectedMessage.status === "interested" ? "fill-amber-500 text-amber-500" : ""}`} />
-                    <span>{selectedMessage.isInterested || selectedMessage.status === "interested" ? "⭐ Interested" : "Mark Interested"}</span>
+                    <span>{selectedMessage.isInterested || selectedMessage.status === "interested" ? "Unmark ⭐" : "⭐ Mark Interested"}</span>
                   </button>
 
                   {/* Direct Phone Dialer Button */}

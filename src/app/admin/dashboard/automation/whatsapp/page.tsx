@@ -1332,9 +1332,9 @@ export default function WhatsAppOutreachPage() {
           TAB 1: LIVE CHAT WORKSPACE (CRM 3-PANE INTERFACE)
          ────────────────────────────────────────────────────────────────────────── */}
       {activeTab === "chat" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 h-[740px] crm-card p-0 overflow-hidden border border-[var(--dash-border)]">
-          {/* Left Panel: Contact Threads (4 cols) */}
-          <div className={`lg:col-span-4 border-r border-[var(--dash-border)] flex flex-col overflow-hidden bg-[var(--dash-card-bg)] ${
+        <div className="flex flex-col lg:flex-row h-[760px] crm-card p-0 overflow-hidden border border-[var(--dash-border)] w-full">
+          {/* Left Panel: Contact Threads (Fixed width on desktop, full width on mobile) */}
+          <div className={`w-full lg:w-72 xl:w-80 shrink-0 border-r border-[var(--dash-border)] flex flex-col overflow-hidden bg-[var(--dash-card-bg)] ${
             mobileView === "chat" ? "hidden lg:flex" : "flex"
           }`}>
             {/* Sidebar Header */}
@@ -1466,8 +1466,8 @@ export default function WhatsAppOutreachPage() {
             </div>
           </div>
 
-          {/* Middle Panel: Active Chat Workspace (5 cols or 8 cols if drawer closed) */}
-          <div className={`${showRightDrawer ? "lg:col-span-5" : "lg:col-span-8"} flex flex-col overflow-hidden relative border-r border-[var(--dash-border)] bg-[var(--dash-bg)] ${
+          {/* Middle Panel: Active Live Chat Window */}
+          <div className={`flex-1 min-w-0 flex flex-col overflow-hidden relative border-r border-[var(--dash-border)] bg-[var(--dash-bg)] ${
             mobileView === "list" ? "hidden lg:flex" : "flex"
           }`}>
             {selectedConv ? (
@@ -1487,16 +1487,16 @@ export default function WhatsAppOutreachPage() {
                       {selectedConv.bussiness_name ? selectedConv.bussiness_name.charAt(0).toUpperCase() : "#"}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <h2 className="font-bold text-xs sm:text-sm text-[var(--dash-text)] truncate max-w-[130px] sm:max-w-[200px] md:max-w-xs" title={selectedConv.bussiness_name}>
-                          {selectedConv.bussiness_name}
+                      <div className="flex items-center gap-2 min-w-0">
+                        <h2 className="font-bold text-xs sm:text-sm md:text-base text-[var(--dash-text)] truncate" title={selectedConv.bussiness_name}>
+                          {selectedConv.bussiness_name || format10DigitPhone(selectedConv.phone_number)}
                         </h2>
                         {selectedConv.is_interested ? (
-                          <span className="hidden sm:inline-flex bg-amber-500/10 text-amber-500 text-[10px] px-1.5 py-0.2 rounded border border-amber-500/25 font-bold shrink-0 items-center gap-0.5">
-                            ⭐ Interested
+                          <span className="hidden md:inline-flex bg-amber-500/15 text-amber-500 text-[10px] px-1.5 py-0.5 rounded border border-amber-500/30 font-bold shrink-0 items-center gap-0.5">
+                            <Star className="w-2.5 h-2.5 fill-amber-500" /> Hot Lead
                           </span>
                         ) : selectedConv.last_reply ? (
-                          <span className="hidden sm:inline-flex bg-blue-500/10 text-blue-500 text-[10px] px-1.5 py-0.2 rounded border border-blue-500/25 font-semibold shrink-0">
+                          <span className="hidden md:inline-flex bg-blue-500/15 text-blue-500 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/30 font-semibold shrink-0">
                             💬 Replied
                           </span>
                         ) : null}
@@ -1517,24 +1517,24 @@ export default function WhatsAppOutreachPage() {
                   <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                     <button
                       onClick={() => handleToggleInterest(selectedConv)}
-                      className={`crm-btn-secondary text-[11px] py-1 px-2 flex items-center gap-1 cursor-pointer transition ${
+                      className={`text-[11px] py-1 px-2 sm:px-2.5 rounded-md flex items-center gap-1 font-bold border transition cursor-pointer shrink-0 ${
                         selectedConv.is_interested
-                          ? "text-amber-500 border-amber-500/40 bg-amber-500/10 font-bold"
-                          : "text-[var(--dash-text-muted)] hover:text-amber-500"
+                          ? "bg-amber-500/15 border-amber-500/40 text-amber-500 hover:bg-amber-500/25"
+                          : "bg-[var(--dash-card-bg)] border-[var(--dash-border)] text-[var(--dash-text-muted)] hover:text-amber-500 hover:border-amber-500/30"
                       }`}
-                      title={selectedConv.is_interested ? "Currently Marked as Interested — Click to unmark" : "Mark as Interested"}
+                      title={selectedConv.is_interested ? "Click to unmark this contact as interested" : "Click to mark this contact as interested lead"}
                     >
                       <Star className={`w-3.5 h-3.5 ${selectedConv.is_interested ? "fill-amber-500 text-amber-500" : ""}`} />
-                      <span className="hidden xl:inline">{selectedConv.is_interested ? "Interested" : "Mark Star"}</span>
+                      <span className="whitespace-nowrap">{selectedConv.is_interested ? "Unmark ⭐" : "Mark Interested ⭐"}</span>
                     </button>
 
                     <button
                       onClick={() => handleCtaClick({ id: "call", label: "Call", action_type: "call", payload: "" })}
-                      className="crm-btn-secondary text-[11px] py-1 px-2 text-emerald-500 flex items-center gap-1"
+                      className="crm-btn-secondary text-[11px] py-1 px-2 text-emerald-500 flex items-center gap-1 shrink-0"
                       title="Direct Call CTA"
                     >
                       <Phone className="w-3.5 h-3.5" />
-                      <span className="hidden md:inline">Call</span>
+                      <span className="hidden sm:inline">Call</span>
                     </button>
 
                     {isValidWebsite(selectedConv.website) ? (
@@ -1856,76 +1856,77 @@ export default function WhatsAppOutreachPage() {
             )}
           </div>
 
-          {/* Right Panel: Lead CRM Profile (Overlay on mobile, col-span-3 on desktop) */}
+          {/* Right Panel: Lead CRM Profile (Overlay on mobile/tablet/desktop, fixed sidebar on 2xl) */}
           {showRightDrawer && selectedConv && (
             <>
               <div
                 onClick={() => setShowRightDrawer(false)}
-                className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-xs"
+                className="fixed inset-0 bg-black/50 z-40 2xl:hidden backdrop-blur-xs"
               />
-              <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-80 lg:static lg:z-auto lg:w-auto lg:col-span-3 border-l border-[var(--dash-border)] p-4 space-y-4 overflow-y-auto bg-[var(--dash-card-bg)] shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-200">
-              <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-2.5">
-                <h3 className="font-bold text-xs text-[var(--dash-text)] flex items-center gap-1.5">
-                  <UserCheck className="w-3.5 h-3.5 text-emerald-500" /> Lead CRM Details
-                </h3>
-                <button onClick={() => setShowRightDrawer(false)} className="text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] cursor-pointer">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Lead Avatar Card */}
-              <div className="text-center space-y-1.5 py-1 border-b border-[var(--dash-border)] pb-3">
-                <div className="w-12 h-12 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 font-bold text-lg mx-auto flex items-center justify-center shadow-sm">
-                  {selectedConv.bussiness_name ? selectedConv.bussiness_name.charAt(0).toUpperCase() : "#"}
+              <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-80 2xl:static 2xl:z-auto 2xl:w-72 shrink-0 border-l border-[var(--dash-border)] p-4 space-y-4 overflow-y-auto bg-[var(--dash-card-bg)] shadow-2xl 2xl:shadow-none animate-in slide-in-from-right duration-200">
+                <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-2.5">
+                  <h3 className="font-bold text-xs text-[var(--dash-text)] flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5 text-emerald-500" /> Lead CRM Details
+                  </h3>
+                  <button onClick={() => setShowRightDrawer(false)} className="text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] cursor-pointer">
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <h4 className="font-bold text-sm text-[var(--dash-text)]">{selectedConv.bussiness_name}</h4>
-                <p className="text-[11px] text-[var(--dash-text-muted)]">{selectedConv.category || "General Business"} • {selectedConv.scraped_city}</p>
-              </div>
 
-              {/* Quick Actions */}
-              <div className="space-y-1.5">
-                <span className="text-[9px] uppercase font-bold text-[var(--dash-text-muted)] block tracking-wider">Quick Actions</span>
-                <button
-                  onClick={() => handleCtaClick({ id: "call", label: "Call", action_type: "call", payload: "" })}
-                  className="w-full crm-btn-secondary text-xs flex items-center justify-between"
-                >
-                  <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-emerald-500" /> Call Phone</span>
-                  <span className="font-mono text-[10px] text-[var(--dash-text-muted)]">{format10DigitPhone(selectedConv.phone_number)}</span>
-                </button>
+                {/* Lead Avatar Card */}
+                <div className="text-center space-y-1.5 py-1 border-b border-[var(--dash-border)] pb-3">
+                  <div className="w-12 h-12 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 font-bold text-lg mx-auto flex items-center justify-center shadow-sm">
+                    {selectedConv.bussiness_name ? selectedConv.bussiness_name.charAt(0).toUpperCase() : "#"}
+                  </div>
+                  <h4 className="font-bold text-sm text-[var(--dash-text)]">{selectedConv.bussiness_name}</h4>
+                  <p className="text-[11px] text-[var(--dash-text-muted)]">{selectedConv.category || "General Business"} • {selectedConv.scraped_city}</p>
+                </div>
 
-                {isValidWebsite(selectedConv.website) ? (
-                  <a
-                    href={formatWebsiteUrl(selectedConv.website)!}
-                    target="_blank"
-                    rel="noreferrer"
+                {/* Quick Actions */}
+                <div className="space-y-1.5">
+                  <span className="text-[9px] uppercase font-bold text-[var(--dash-text-muted)] block tracking-wider">Quick Actions</span>
+                  <button
+                    onClick={() => handleCtaClick({ id: "call", label: "Call", action_type: "call", payload: "" })}
                     className="w-full crm-btn-secondary text-xs flex items-center justify-between"
                   >
-                    <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-blue-500" /> Open Website</span>
-                    <ExternalLink className="w-3 h-3 text-[var(--dash-text-muted)]" />
-                  </a>
-                ) : (
-                  <div className="w-full p-2 rounded-md bg-amber-500/10 border border-amber-500/20 text-xs flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-amber-500 font-medium">
-                      <Globe className="w-3.5 h-3.5" /> No Website Listed
-                    </span>
-                    <span className="text-[10px] bg-amber-500/20 text-amber-400 font-semibold px-1.5 py-0.5 rounded">
-                      Prime Prospect
-                    </span>
-                  </div>
-                )}
+                    <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-emerald-500" /> Call Phone</span>
+                    <span className="font-mono text-[10px] text-[var(--dash-text-muted)]">{format10DigitPhone(selectedConv.phone_number)}</span>
+                  </button>
 
-                <button
-                  onClick={() => handleToggleInterest(selectedConv)}
-                  className={`w-full text-xs flex items-center justify-center gap-1.5 py-2 rounded-md font-bold transition cursor-pointer ${
-                    selectedConv.is_interested
-                      ? "bg-amber-500/15 border border-amber-500/30 text-amber-500 hover:bg-amber-500/25"
-                      : "crm-btn-primary"
-                  }`}
-                >
-                  <Star className={`w-3.5 h-3.5 ${selectedConv.is_interested ? "fill-amber-500 text-amber-500" : "fill-current"}`} />
-                  <span>{selectedConv.is_interested ? "↩️ Unmark Interested" : "Mark Hot Interested ⭐"}</span>
-                </button>
-              </div>
+                  {isValidWebsite(selectedConv.website) ? (
+                    <a
+                      href={formatWebsiteUrl(selectedConv.website)!}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full crm-btn-secondary text-xs flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-blue-500" /> Open Website</span>
+                      <ExternalLink className="w-3 h-3 text-[var(--dash-text-muted)]" />
+                    </a>
+                  ) : (
+                    <div className="w-full p-2 rounded-md bg-amber-500/10 border border-amber-500/20 text-xs flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-amber-500 font-medium">
+                        <Globe className="w-3.5 h-3.5" /> No Website Listed
+                      </span>
+                      <span className="text-[10px] bg-amber-500/20 text-amber-400 font-semibold px-1.5 py-0.5 rounded">
+                        Prime Prospect
+                      </span>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => handleToggleInterest(selectedConv)}
+                    className={`w-full text-xs flex items-center justify-center gap-1.5 py-2.5 rounded-md font-bold transition cursor-pointer ${
+                      selectedConv.is_interested
+                        ? "bg-amber-500/15 border border-amber-500/30 text-amber-500 hover:bg-amber-500/25"
+                        : "crm-btn-primary"
+                    }`}
+                    title={selectedConv.is_interested ? "Click to unmark this contact as interested" : "Click to mark this contact as interested lead"}
+                  >
+                    <Star className={`w-3.5 h-3.5 ${selectedConv.is_interested ? "fill-amber-500 text-amber-500" : "fill-current"}`} />
+                    <span>{selectedConv.is_interested ? "Unmark ⭐" : "Mark as Interested ⭐"}</span>
+                  </button>
+                </div>
 
               {/* Specs */}
               <div className="space-y-2 pt-2 border-t border-[var(--dash-border)] text-xs">
