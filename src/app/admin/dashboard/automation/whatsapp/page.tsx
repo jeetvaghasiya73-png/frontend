@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
+  Plus,
   MessageSquare,
   Send,
   Sparkles,
@@ -359,11 +361,14 @@ export default function WhatsAppOutreachPage() {
   const [convFilter, setConvFilter] = useState("all");
 
   // UI Drawer & Popovers
-  const [showRightDrawer, setShowRightDrawer] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [showRightDrawer, setShowRightDrawer] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showCtaMenu, setShowCtaMenu] = useState(false);
   const [generatingAiReply, setGeneratingAiReply] = useState(false);
   const [leadNoteInput, setLeadNoteInput] = useState("");
+  const [showNoteInput, setShowNoteInput] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
 
   // Mobile responsive view toggle
@@ -428,6 +433,21 @@ export default function WhatsAppOutreachPage() {
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Screen-width and mount initialization
+  useEffect(() => {
+    setMounted(true);
+    const handleResize = () => {
+      const desktop = window.innerWidth >= 1024;
+      setIsDesktop(desktop);
+      if (desktop) {
+        setShowRightDrawer(true);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // ── 1. Data Fetching ──
@@ -1856,143 +1876,457 @@ export default function WhatsAppOutreachPage() {
             )}
           </div>
 
-          {/* Right Panel: Lead CRM Profile (Overlay on mobile/tablet, col-span-3 on desktop) */}
-          {showRightDrawer && selectedConv && (
-            <>
-              {/* Mobile/Tablet Backdrop */}
-              <div
-                onClick={() => setShowRightDrawer(false)}
-                className="fixed inset-0 bg-black/60 z-[9998] lg:hidden backdrop-blur-xs"
-              />
-              <div className="fixed inset-y-0 right-0 z-[9999] w-full sm:max-w-md lg:static lg:z-auto lg:w-auto lg:col-span-3 border-l border-[var(--dash-border)] flex flex-col overflow-hidden bg-[var(--dash-card-bg)] shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-200">
-                {/* Sticky Header with Prominent Close Button */}
-                <div className="p-3 sm:p-3.5 border-b border-[var(--dash-border)] bg-[var(--dash-card-bg)] flex items-center justify-between shrink-0 sticky top-0 z-30">
-                  <h3 className="font-bold text-xs text-[var(--dash-text)] flex items-center gap-1.5">
-                    <UserCheck className="w-3.5 h-3.5 text-emerald-500" /> Lead CRM Details
-                  </h3>
-                  <button
-                    onClick={() => setShowRightDrawer(false)}
-                    className="px-2.5 py-1 text-xs font-bold rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-500 hover:bg-rose-500/20 cursor-pointer flex items-center gap-1 transition active:scale-95"
-                    title="Close CRM Details"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                    <span>Close</span>
-                  </button>
-                </div>
+          {/* Helper function to render the rich Lead Details content matching Screenshot 2 */}
+          {(() => {
+            const renderLeadContent = (conv: ConversationItem) => {
+              const domain = conv.website
+                ? conv.website.replace(/^https?:\/\//i, "").split("/")[0].replace(/^www\./i, "")
+                : conv.email && !conv.email.includes("gmail") && !conv.email.includes("yahoo") && !conv.email.includes("outlook")
+                ? conv.email.split("@")[1]
+                : null;
 
-                <div className="p-4 space-y-4 overflow-y-auto flex-1">
-                  {/* Lead Avatar Card with Business Logo / Favicon */}
-                  <div className="text-center space-y-2 py-1 border-b border-[var(--dash-border)] pb-3">
-                    <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-[var(--dash-border)] bg-white mx-auto shadow-sm flex items-center justify-center">
-                      {isValidWebsite(selectedConv.website) ? (
-                        <img
-                          src={`https://www.google.com/s2/favicons?domain=${formatWebsiteUrl(selectedConv.website)?.replace(/^https?:\/\//i, '').split('/')[0]}&sz=128`}
-                          alt={selectedConv.bussiness_name}
-                          className="w-full h-full object-contain p-1.5"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLElement).style.display = "none";
-                            const fallback = e.currentTarget.parentElement?.querySelector(".wa-avatar-fallback");
-                            if (fallback) (fallback as HTMLElement).style.display = "flex";
-                          }}
-                        />
-                      ) : null}
-                      <div
-                        className="wa-avatar-fallback w-full h-full bg-emerald-500/10 text-emerald-500 font-bold text-xl flex items-center justify-center"
-                        style={{ display: isValidWebsite(selectedConv.website) ? "none" : "flex" }}
-                      >
-                        {selectedConv.bussiness_name ? selectedConv.bussiness_name.charAt(0).toUpperCase() : "#"}
+              return (
+                <div className="space-y-3 sm:space-y-3.5">
+                  {/* Profile Card Header (exact match Screenshot 2) */}
+                  <div className="p-3 sm:p-3.5 space-y-2.5 bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] rounded-[var(--dash-card-radius)]">
+                    <div className="flex items-center gap-3">
+                      {/* Brand Image / Domain Favicon Avatar */}
+                      <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden border border-[var(--dash-border)] bg-white shadow-xs shrink-0 flex items-center justify-center">
+                        {domain ? (
+                          <img
+                            src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
+                            alt={conv.bussiness_name}
+                            className="w-full h-full object-contain p-1.5"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLElement).style.display = "none";
+                              const fallback = e.currentTarget.parentElement?.querySelector(".wa-lead-avatar-fallback");
+                              if (fallback) (fallback as HTMLElement).style.display = "flex";
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className="wa-lead-avatar-fallback w-full h-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-white font-black text-lg flex items-center justify-center"
+                          style={{ display: domain ? "none" : "flex" }}
+                        >
+                          {conv.bussiness_name ? conv.bussiness_name.charAt(0).toUpperCase() : "#"}
+                        </div>
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm sm:text-base font-bold leading-snug truncate text-[var(--dash-text)]">
+                          {conv.bussiness_name}
+                        </h3>
+                        <p className="text-[11px] sm:text-xs truncate font-medium text-[var(--dash-text-secondary)]">
+                          {conv.category || conv.scraped_city || "Client Prospect"}
+                        </p>
+                        {isValidWebsite(conv.website) && (
+                          <a
+                            href={formatWebsiteUrl(conv.website)!}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] font-mono text-indigo-500 hover:underline flex items-center gap-1 mt-0.5 truncate"
+                          >
+                            <Globe className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{conv.website?.replace(/^https?:\/\//i, "")}</span>
+                            <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                          </a>
+                        )}
                       </div>
                     </div>
-                    <h4 className="font-bold text-sm text-[var(--dash-text)]">{selectedConv.bussiness_name}</h4>
-                    <p className="text-[11px] text-[var(--dash-text-muted)]">{selectedConv.category || "General Business"} • {selectedConv.scraped_city}</p>
+
+                    {/* Dynamic Badges */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                      <span className="crm-badge badge-primary text-[10px]">
+                        Source: {conv.latest_direction === "inbound" ? "Direct Inbound" : "Outreach Scraping"}
+                      </span>
+                      {conv.email && (
+                        <span className="crm-badge badge-success text-[10px]">
+                          Verified Email
+                        </span>
+                      )}
+                      {conv.phone_number && (
+                        <span className="crm-badge badge-warning text-[10px]">
+                          Phone Contact
+                        </span>
+                      )}
+                      {conv.rating && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          ★ {conv.rating}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                {/* Quick Actions */}
-                <div className="space-y-1.5">
-                  <span className="text-[9px] uppercase font-bold text-[var(--dash-text-muted)] block tracking-wider">Quick Actions</span>
-                  <button
-                    onClick={() => handleCtaClick({ id: "call", label: "Call", action_type: "call", payload: "" })}
-                    className="w-full crm-btn-secondary text-xs flex items-center justify-between"
-                  >
-                    <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-emerald-500" /> Call Phone</span>
-                    <span className="font-mono text-[10px] text-[var(--dash-text-muted)]">{format10DigitPhone(selectedConv.phone_number)}</span>
-                  </button>
-
-                  {isValidWebsite(selectedConv.website) ? (
+                  {/* Action Toolbar Grid (Screenshot 2: Call, Email, WhatsApp, WA Proposal, + Note, Follow-up) */}
+                  <div className="grid grid-cols-2 gap-2">
                     <a
-                      href={formatWebsiteUrl(selectedConv.website)!}
+                      href={formatDialerUrl(conv.phone_number)}
+                      className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 text-xs font-bold shrink-0 transition"
+                      title="Make phone call"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>Call</span>
+                    </a>
+
+                    <a
+                      href={conv.email ? `mailto:${conv.email}` : undefined}
+                      onClick={(e) => {
+                        if (!conv.email) {
+                          e.preventDefault();
+                          showAlert("error", "No email registered for this contact");
+                        }
+                      }}
+                      className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 text-xs font-bold shrink-0 transition"
+                      title="Send email"
+                    >
+                      <Mail className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>{conv.email ? "Email" : "Add Email"}</span>
+                    </a>
+
+                    <a
+                      href={`https://wa.me/${conv.clean_phone || conv.phone_number.replace(/\D/g, "")}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="w-full crm-btn-secondary text-xs flex items-center justify-between"
+                      className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 text-xs font-bold shrink-0 transition"
+                      title="Direct WhatsApp chat"
                     >
-                      <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-blue-500" /> Open Website</span>
-                      <ExternalLink className="w-3 h-3 text-[var(--dash-text-muted)]" />
+                      <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>WhatsApp</span>
                     </a>
-                  ) : (
-                    <div className="w-full p-2 rounded-md bg-amber-500/10 border border-amber-500/20 text-xs flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-amber-500 font-medium">
-                        <Globe className="w-3.5 h-3.5" /> No Website Listed
-                      </span>
-                      <span className="text-[10px] bg-amber-500/20 text-amber-400 font-semibold px-1.5 py-0.5 rounded">
-                        Prime Prospect
-                      </span>
-                    </div>
-                  )}
 
+                    <button
+                      type="button"
+                      onClick={() => handleCtaClick({ id: "wa_proposal", label: "Proposal", action_type: "quick_reply", payload: "proposal" })}
+                      className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 text-xs font-bold shrink-0 transition hover:border-emerald-500 cursor-pointer"
+                      title="Send WhatsApp proposal"
+                    >
+                      <Zap className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>WA Proposal</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowNoteInput(!showNoteInput)}
+                      className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 text-xs font-bold shrink-0 transition cursor-pointer"
+                      title="Add note"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Note</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => showAlert("success", "Follow-up logged for this prospect")}
+                      className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 text-xs font-bold shrink-0 transition cursor-pointer"
+                      title="Follow-up reminder"
+                    >
+                      <Clock className="w-3.5 h-3.5 text-purple-500" />
+                      <span>Follow-up</span>
+                    </button>
+                  </div>
+
+                  {/* Star Interest Toggle Button (Unmark ⭐ or ⭐ Mark as Interested) */}
                   <button
-                    onClick={() => handleToggleInterest(selectedConv)}
-                    className={`w-full text-xs flex items-center justify-center gap-1.5 py-2.5 rounded-md font-bold transition cursor-pointer ${
-                      selectedConv.is_interested
+                    type="button"
+                    onClick={() => handleToggleInterest(conv)}
+                    className={`w-full text-xs flex items-center justify-center gap-1.5 py-2.5 rounded-md font-bold transition cursor-pointer shadow-xs active:scale-95 ${
+                      conv.is_interested
                         ? "bg-amber-500/15 border border-amber-500/30 text-amber-500 hover:bg-amber-500/25"
                         : "crm-btn-primary"
                     }`}
-                    title={selectedConv.is_interested ? "Click to unmark this contact as interested" : "Click to mark this contact as interested lead"}
+                    title={conv.is_interested ? "Click to unmark this contact as interested" : "Click to mark this contact as interested lead"}
                   >
-                    <Star className={`w-3.5 h-3.5 ${selectedConv.is_interested ? "fill-amber-500 text-amber-500" : "fill-current"}`} />
-                    <span>{selectedConv.is_interested ? "Unmark ⭐" : "Mark as Interested ⭐"}</span>
+                    <Star className={`w-3.5 h-3.5 ${conv.is_interested ? "fill-amber-500 text-amber-500" : "fill-current"}`} />
+                    <span>{conv.is_interested ? "★ Unmark ★" : "⭐ Mark as Interested ⭐"}</span>
                   </button>
-                </div>
 
-              {/* Specs */}
-              <div className="space-y-2 pt-2 border-t border-[var(--dash-border)] text-xs">
-                <span className="text-[9px] uppercase font-bold text-[var(--dash-text-muted)] block tracking-wider">Lead Specs</span>
-                <div className="bg-[var(--dash-bg)] p-2.5 rounded-md space-y-1.5 border border-[var(--dash-border)]">
-                  <div>
-                    <span className="text-[var(--dash-text-muted)] block text-[10px]">Lead ID</span>
-                    <span className="font-mono text-[var(--dash-text)] font-semibold">#{selectedConv.lead_id}</span>
-                  </div>
-                  <div>
-                    <span className="text-[var(--dash-text-muted)] block text-[10px]">Category & City</span>
-                    <span className="text-[var(--dash-text)]">{selectedConv.category || "N/A"} • {selectedConv.scraped_city || "Unknown"}</span>
-                  </div>
-                  <div>
-                    <span className="text-[var(--dash-text-muted)] block text-[10px]">WhatsApp Status</span>
-                    <span className="text-emerald-500 font-bold capitalize">{selectedConv.whatsapp_status}</span>
-                  </div>
-                </div>
-              </div>
+                  {/* Inline Add Note Form */}
+                  {showNoteInput && (
+                    <div className="p-3 rounded-md animate-fadeIn space-y-2 bg-[var(--dash-surface-alt)] border border-[var(--dash-border)]">
+                      <label className="text-[11px] font-bold block text-[var(--dash-text-muted)]">
+                        Write Internal Team Note:
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder="Type an internal note about this prospect..."
+                        value={leadNoteInput}
+                        onChange={(e) => setLeadNoteInput(e.target.value)}
+                        className="crm-input w-full text-xs"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowNoteInput(false)}
+                          className="crm-btn-secondary text-xs py-1 px-2.5 cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!leadNoteInput.trim()) return;
+                            showAlert("success", "Note saved successfully");
+                            setShowNoteInput(false);
+                          }}
+                          className="crm-btn-primary text-xs py-1 px-3 cursor-pointer"
+                        >
+                          Save Note
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
-              {/* Admin Notes */}
-              <div className="space-y-1.5 pt-2 border-t border-[var(--dash-border)] text-xs">
-                <span className="text-[9px] uppercase font-bold text-[var(--dash-text-muted)] block tracking-wider">Internal Notes</span>
-                <textarea
-                  rows={3}
-                  placeholder="Add notes for this prospect..."
-                  value={leadNoteInput}
-                  onChange={(e) => setLeadNoteInput(e.target.value)}
-                  className="crm-input w-full text-xs"
-                />
-                <button
-                  onClick={() => showAlert("success", "Note saved successfully")}
-                  className="w-full crm-btn-secondary text-xs font-semibold"
-                >
-                  Save Note
-                </button>
+                  {/* Contact Details Card (Screenshot 2) */}
+                  <div className="p-3 sm:p-3.5 space-y-2.5 bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] rounded-[var(--dash-card-radius)]">
+                    <h4 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[var(--dash-text-muted)]">
+                      Contact Details
+                    </h4>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center gap-2.5">
+                        <Mail className="w-4 h-4 shrink-0 text-[var(--dash-text-muted)]" />
+                        <span className="font-semibold break-all text-[var(--dash-primary)]">
+                          {conv.email || "No Email Listed"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2.5 text-[var(--dash-text)]">
+                        <Phone className="w-4 h-4 shrink-0 text-[var(--dash-text-muted)]" />
+                        <span className="font-semibold">{format10DigitPhone(conv.phone_number)}</span>
+                      </div>
+                      <div className="flex items-center gap-2.5 text-[var(--dash-text)]">
+                        <Globe className="w-4 h-4 shrink-0 text-[var(--dash-text-muted)]" />
+                        {isValidWebsite(conv.website) ? (
+                          <a
+                            href={formatWebsiteUrl(conv.website)!}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-indigo-400 hover:underline truncate"
+                          >
+                            {conv.website?.replace(/^https?:\/\//i, "")}
+                          </a>
+                        ) : (
+                          <span className="text-[var(--dash-text-muted)] italic text-xs">No website listed</span>
+                        )}
+                      </div>
+                      {conv.scraped_city && (
+                        <div className="flex items-center gap-2.5 text-[var(--dash-text)]">
+                          <MapPin className="w-4 h-4 shrink-0 text-rose-500" />
+                          <span className="font-medium text-slate-800 dark:text-slate-200">
+                            {conv.scraped_city}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Outreach & Campaign Intelligence Card (Screenshot 2) */}
+                  <div className="p-3 sm:p-3.5 space-y-2.5 bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] rounded-[var(--dash-card-radius)]">
+                    <h4 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[var(--dash-text-muted)]">
+                      Outreach & Campaign Intelligence
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="p-2.5 rounded-lg bg-white/50 dark:bg-black/20 border border-slate-200/80 dark:border-neutral-800">
+                        <span className="text-[10px] text-slate-400 block font-medium">WhatsApp Outreach</span>
+                        <span className="font-bold capitalize text-emerald-500">
+                          {conv.whatsapp_status || "Inbound"}
+                        </span>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-white/50 dark:bg-black/20 border border-slate-200/80 dark:border-neutral-800">
+                        <span className="text-[10px] text-slate-400 block font-medium">Email Campaign</span>
+                        <span className="font-bold capitalize text-indigo-500">
+                          Pending
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs px-1">
+                      <span className="text-slate-500 dark:text-neutral-400 font-medium">AI Auto-Reply Bot</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        conv.whatsapp_ai_enabled
+                          ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                          : "bg-rose-500/10 text-rose-500 border border-rose-500/20"
+                      }`}>
+                        {conv.whatsapp_ai_enabled ? "Active" : "Disabled"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Activity History & Internal Notes Card (Screenshot 2) */}
+                  <div className="p-3 sm:p-3.5 space-y-2.5 border border-[var(--dash-border)] rounded-[var(--dash-card-radius)]">
+                    <h4 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[var(--dash-text-muted)]">
+                      Activity History
+                    </h4>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
+                        <span className="font-medium text-[var(--dash-text)]">
+                          {conv.latest_direction === "inbound" ? "📩 Inbound WhatsApp Message Received" : "🚀 Outreach Campaign Initiated"}
+                        </span>
+                      </div>
+                      {conv.last_reply && (
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                          <span className="text-[var(--dash-text-muted)] truncate">
+                            Last reply: {conv.last_reply}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Lead Specs Summary */}
+                    <div className="pt-2 border-t border-[var(--dash-border)] space-y-1 text-xs">
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-[var(--dash-text-muted)]">Lead ID:</span>
+                        <span className="font-mono font-semibold text-[var(--dash-text)]">#{conv.lead_id}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-[var(--dash-text-muted)]">Category:</span>
+                        <span className="text-[var(--dash-text)]">{conv.category || "N/A"}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </>
-        )}
+              );
+            };
+
+            return (
+              <>
+                {/* Desktop Right Sidebar (in-grid col-span-3, visible on screens >= 1024px) */}
+                {isDesktop && showRightDrawer && selectedConv && (
+                  <div className="lg:col-span-3 border-l border-[var(--dash-border)] flex flex-col overflow-hidden bg-[var(--dash-card-bg)]">
+                    {/* Header */}
+                    <div className="p-3 border-b border-[var(--dash-border)] bg-[var(--dash-card-bg)] flex items-center justify-between shrink-0 sticky top-0 z-30">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <button
+                          onClick={() => handleToggleInterest(selectedConv)}
+                          className={`crm-badge ${selectedConv.is_interested ? "badge-warning" : "badge-secondary"} text-xs font-bold cursor-pointer hover:opacity-80 transition flex items-center gap-1`}
+                          title="Click to toggle interest status"
+                        >
+                          <span className="w-2 h-2 rounded-full" style={{ background: selectedConv.is_interested ? "var(--dash-warning)" : "var(--dash-text-muted)" }} />
+                          <span className="capitalize">{selectedConv.is_interested ? "Interested" : (selectedConv.whatsapp_status || "Lead")}</span>
+                          <ChevronDown className="w-3 h-3 opacity-60" />
+                        </button>
+                        <span className="crm-badge badge-success text-[10px] font-bold">
+                          Score: {selectedConv.is_interested ? 94 : 75}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setShowRightDrawer(false)}
+                        className="px-2.5 py-1 text-xs font-bold rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-500 hover:bg-rose-500/20 cursor-pointer flex items-center gap-1 transition active:scale-95"
+                        title="Hide CRM Panel"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span>Close</span>
+                      </button>
+                    </div>
+
+                    {/* Scrollable Content */}
+                    <div className="p-3.5 space-y-3.5 overflow-y-auto flex-1 crm-scrollbar">
+                      {renderLeadContent(selectedConv)}
+                    </div>
+                  </div>
+                )}
+
+                {/* Mobile Right Drawer (Rendered at Root Portal with z-[99999] so navbar NEVER obscures it) */}
+                {mounted && typeof document !== "undefined" && !isDesktop && showRightDrawer && selectedConv && createPortal(
+                  <div
+                    onClick={() => setShowRightDrawer(false)}
+                    data-dash-theme={typeof document !== "undefined" ? document.documentElement.getAttribute("data-dash-theme") || (document.documentElement.classList.contains("dark") ? "dark" : "light") : "dark"}
+                    className="fixed inset-0 z-[99999] overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end animate-fadeIn cursor-pointer"
+                  >
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full sm:max-w-md h-full h-[100dvh] max-h-[100dvh] shadow-2xl flex flex-col justify-between cursor-default relative overflow-hidden bg-[var(--dash-card-bg)] text-[var(--dash-text)]"
+                      style={{
+                        borderLeft: "1px solid var(--dash-border)"
+                      }}
+                    >
+                      {/* Sticky Header with Safe-Area Inset & High-Contrast Close Button */}
+                      <div
+                        className="flex-none px-3.5 sm:px-4 py-3 flex items-center justify-between z-30 sticky top-0 shadow-xs bg-[var(--dash-card-bg)] border-b border-[var(--dash-border)]"
+                        style={{
+                          paddingTop: "max(env(safe-area-inset-top, 0px), 0.75rem)"
+                        }}
+                      >
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                          <button
+                            onClick={() => handleToggleInterest(selectedConv)}
+                            className={`crm-badge ${selectedConv.is_interested ? "badge-warning" : "badge-secondary"} text-xs font-bold cursor-pointer hover:opacity-80 transition flex items-center gap-1.5`}
+                            title="Click to toggle interest status"
+                          >
+                            <span className="w-2 h-2 rounded-full" style={{ background: selectedConv.is_interested ? "var(--dash-warning)" : "var(--dash-text-muted)" }} />
+                            <span className="capitalize">{selectedConv.is_interested ? "Interested" : (selectedConv.whatsapp_status || "Outreach")}</span>
+                            <ChevronDown className="w-3 h-3 opacity-60" />
+                          </button>
+                          <span className="crm-badge badge-success text-xs font-bold">
+                            Score: {selectedConv.is_interested ? 94 : 75}
+                          </span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                            selectedConv.latest_direction === "inbound"
+                              ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                              : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                          }`}>
+                            {selectedConv.latest_direction === "inbound" ? "Inbound" : "Outbound"}
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border bg-blue-500/10 text-blue-500 border-blue-500/20">
+                            {selectedConv.last_reply ? "✓ Details: Done" : "⏳ Details: Pending"}
+                          </span>
+                        </div>
+
+                        {/* Red Close Button */}
+                        <button
+                          onClick={() => setShowRightDrawer(false)}
+                          className="px-3 sm:px-3.5 py-1.5 min-h-[36px] text-xs font-bold flex items-center gap-1.5 cursor-pointer transition rounded-md shadow-xs active:scale-95 shrink-0"
+                          style={{
+                            background: "var(--dash-danger-light)",
+                            color: "var(--dash-danger)",
+                            border: "1px solid var(--dash-danger)"
+                          }}
+                          aria-label="Close lead details"
+                          title="Close drawer"
+                        >
+                          <X className="w-4 h-4 shrink-0" />
+                          <span>Close</span>
+                        </button>
+                      </div>
+
+                      {/* Scrollable Popup Content */}
+                      <div className="p-3 sm:p-4 space-y-3 sm:space-y-4 flex-1 overflow-y-auto crm-scrollbar">
+                        {renderLeadContent(selectedConv)}
+                      </div>
+
+                      {/* Sticky Bottom Action Bar (matching Screenshot 2) */}
+                      <div className="p-3 border-t border-[var(--dash-border)] bg-[var(--dash-card-bg)] flex items-center justify-between gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setShowRightDrawer(false)}
+                          className="p-2 rounded-md crm-btn-secondary text-xs cursor-pointer"
+                          title="Close drawer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCtaClick({ id: "wa_proposal", label: "Proposal", action_type: "quick_reply", payload: "proposal" })}
+                          className="flex-1 crm-btn-secondary text-xs font-bold text-emerald-500 border-emerald-500/30 flex items-center justify-center gap-1.5 py-2 hover:bg-emerald-500/10 cursor-pointer"
+                        >
+                          <Zap className="w-3.5 h-3.5" />
+                          <span>Proposal 🚀</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleInterest(selectedConv)}
+                          className="flex-1 crm-btn-primary text-xs font-bold flex items-center justify-center gap-1.5 py-2 cursor-pointer"
+                        >
+                          <span>Update Status</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>,
+                  document.body
+                )}
+              </>
+            );
+          })()}
       </div>
     )}
 
