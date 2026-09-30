@@ -624,18 +624,27 @@ export default function ContactMessagesManager() {
   const handleToggleWaAi = async () => {
     if (!selectedMessage || selectedMessage.channel !== "whatsapp") return;
     setTogglingWaAi(true);
+    const targetState = selectedMessage.aiEnabled === false; // If currently false (human), enable it (true); else disable (false)
     try {
       const res = await authFetch(`${API}/api/v1/whatsapp/chats/${selectedMessage.sourceId}/toggle-ai`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: targetState })
       });
       if (res.ok) {
         const d = await res.json();
+        const updatedAi = d.ai_enabled !== undefined ? d.ai_enabled : (d.whatsapp_ai_enabled !== undefined ? d.whatsapp_ai_enabled : targetState);
         showToast(
-          d.ai_enabled ? "🤖 AI Auto-Pilot enabled for this lead." : "👤 Human Takeover active. AI Auto-Pilot paused.",
+          updatedAi ? "🤖 AI Auto-Pilot enabled for this lead." : "👤 Human Takeover active. AI Auto-Pilot silenced.",
           "info"
         );
+        setSelectedMessage(prev => prev ? { ...prev, aiEnabled: updatedAi } : null);
+        setWaConversations(prev =>
+          prev.map(c => c.lead_id === selectedMessage.sourceId ? { ...c, whatsapp_ai_enabled: updatedAi } : c)
+        );
         fetchAllData();
+      } else {
+        showToast("Failed to toggle AI status", "error");
       }
     } catch (e) {
       console.error(e);

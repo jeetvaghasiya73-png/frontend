@@ -697,6 +697,16 @@ export default function WhatsAppOutreachPage() {
               );
             }
 
+            if (data.type === "whatsapp_ai_toggled") {
+              const updatedAi = data.whatsapp_ai_enabled;
+              setConversations(prev =>
+                prev.map(c => (c.lead_id === data.lead_id || (data.clean_10 && c.phone_number?.includes(data.clean_10))) ? { ...c, whatsapp_ai_enabled: updatedAi } : c)
+              );
+              if (selectedConvRef.current && (selectedConvRef.current.lead_id === data.lead_id || (data.clean_10 && selectedConvRef.current.phone_number?.includes(data.clean_10)))) {
+                setSelectedConv(prev => prev ? { ...prev, whatsapp_ai_enabled: updatedAi } : null);
+              }
+            }
+
             if (
               (data.type === "whatsapp_update" && data.event === "inbound_message") ||
               data.type === "lead_updated" ||
@@ -819,22 +829,25 @@ export default function WhatsAppOutreachPage() {
 
   const handleToggleAiAutoPilot = async (conv: ConversationItem) => {
     setTogglingAi(true);
+    const targetState = !conv.whatsapp_ai_enabled;
     try {
       const res = await authFetch(`${API}/api/v1/whatsapp/chats/${conv.lead_id}/toggle-ai`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: !conv.whatsapp_ai_enabled })
+        body: JSON.stringify({ enabled: targetState })
       });
       const data = await res.json();
       if (res.ok) {
-        const updatedState = data.whatsapp_ai_enabled;
-        showAlert("success", data.message || `AI Auto-Pilot status updated`);
+        const updatedState = data.whatsapp_ai_enabled !== undefined ? data.whatsapp_ai_enabled : targetState;
+        showAlert("success", data.message || (updatedState ? "🤖 AI Auto-Pilot enabled" : "👤 Human Takeover active (AI silenced)"));
         setConversations(prev =>
           prev.map(c => c.lead_id === conv.lead_id ? { ...c, whatsapp_ai_enabled: updatedState } : c)
         );
         if (selectedConv?.lead_id === conv.lead_id) {
           setSelectedConv(prev => prev ? { ...prev, whatsapp_ai_enabled: updatedState } : null);
         }
+      } else {
+        showAlert("error", data.detail || "Failed to toggle AI Auto-Pilot");
       }
     } catch (err) {
       showAlert("error", "Failed to toggle AI Auto-Pilot");
@@ -1543,13 +1556,27 @@ export default function WhatsAppOutreachPage() {
                     <button
                       onClick={() => handleToggleAiAutoPilot(selectedConv)}
                       disabled={togglingAi}
-                      className={`crm-btn-secondary text-[11px] py-1 px-2 flex items-center gap-1 ${
-                        selectedConv.whatsapp_ai_enabled ? "text-emerald-500" : "text-amber-500"
+                      className={`crm-btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1.5 font-medium border transition ${
+                        selectedConv.whatsapp_ai_enabled
+                          ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/20"
+                          : "bg-amber-500/10 text-amber-500 border-amber-500/30 hover:bg-amber-500/20"
                       }`}
-                      title="Toggle AI Autopilot"
+                      title={
+                        selectedConv.whatsapp_ai_enabled
+                          ? "AI Auto-Pilot is active. Click to switch to Human Takeover."
+                          : "Human Takeover is active (AI silenced). Click to re-enable AI Auto-Pilot."
+                      }
                     >
-                      <Bot className="w-3 h-3" />
-                      <span className="hidden sm:inline">{selectedConv.whatsapp_ai_enabled ? "AI Bot" : "Human"}</span>
+                      {togglingAi ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : selectedConv.whatsapp_ai_enabled ? (
+                        <Bot className="w-3.5 h-3.5 text-emerald-500" />
+                      ) : (
+                        <UserCheck className="w-3.5 h-3.5 text-amber-500" />
+                      )}
+                      <span className="hidden sm:inline font-semibold">
+                        {selectedConv.whatsapp_ai_enabled ? "AI Bot" : "Human"}
+                      </span>
                     </button>
 
                     <button
@@ -1569,6 +1596,25 @@ export default function WhatsAppOutreachPage() {
                     </button>
                   </div>
                 </div>
+
+                {/* Human Takeover Active Notice Banner */}
+                {!selectedConv.whatsapp_ai_enabled && (
+                  <div className="mx-4 mt-2 px-3 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-between text-xs text-amber-500 shrink-0 shadow-sm animate-in fade-in duration-200">
+                    <div className="flex items-center gap-2">
+                      <UserCheck className="w-4 h-4 shrink-0 text-amber-500" />
+                      <span>
+                        <strong>Human Takeover Active:</strong> AI auto-reply is silenced. The bot will not answer this person.
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleToggleAiAutoPilot(selectedConv)}
+                      disabled={togglingAi}
+                      className="text-[11px] font-bold underline hover:text-amber-400 cursor-pointer ml-3 shrink-0"
+                    >
+                      Re-enable AI
+                    </button>
+                  </div>
+                )}
 
                 {/* Message Stream Area */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[var(--dash-bg)]">
