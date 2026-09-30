@@ -13,6 +13,7 @@ import {
   Sparkles,
   Database,
   Globe,
+  ExternalLink,
   Star,
   ChevronLeft,
   ChevronRight,
@@ -2003,17 +2004,61 @@ export default function LeadsManager() {
                   borderRadius: "var(--dash-card-radius)"
                 }}
               >
-                <div className="flex items-center gap-2.5 sm:gap-3">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md bg-indigo-600 text-white font-extrabold text-base sm:text-lg flex items-center justify-center shadow-md shrink-0">
-                    {selectedLead.name.charAt(0).toUpperCase()}
+                <div className="flex items-center gap-3">
+                  {/* Brand Image / Domain Logo Avatar */}
+                  <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden border border-[var(--dash-border)] bg-white shadow-xs shrink-0 flex items-center justify-center">
+                    {(() => {
+                      const domain = selectedLead.website
+                        ? selectedLead.website.replace(/^https?:\/\//i, "").split("/")[0].replace(/^www\./i, "")
+                        : selectedLead.email && !selectedLead.email.includes("gmail") && !selectedLead.email.includes("yahoo") && !selectedLead.email.includes("outlook")
+                        ? selectedLead.email.split("@")[1]
+                        : null;
+
+                      if (domain) {
+                        return (
+                          <img
+                            src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
+                            alt={selectedLead.name}
+                            className="w-full h-full object-contain p-1.5"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLElement).style.display = "none";
+                              const fallback = e.currentTarget.parentElement?.querySelector(".lead-avatar-fallback");
+                              if (fallback) (fallback as HTMLElement).style.display = "flex";
+                            }}
+                          />
+                        );
+                      }
+                      return null;
+                    })()}
+                    <div
+                      className="lead-avatar-fallback w-full h-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-white font-black text-lg flex items-center justify-center"
+                      style={{
+                        display: selectedLead.website || (selectedLead.email && !selectedLead.email.includes("gmail") && !selectedLead.email.includes("yahoo")) ? "none" : "flex"
+                      }}
+                    >
+                      {selectedLead.name.charAt(0).toUpperCase()}
+                    </div>
                   </div>
+
                   <div className="min-w-0 flex-1">
                     <h3 className="text-sm sm:text-base font-bold leading-snug truncate" style={{ color: "var(--dash-text)" }}>
                       {selectedLead.name}
                     </h3>
-                    <p className="text-[11px] sm:text-xs truncate" style={{ color: "var(--dash-text-secondary)" }}>
-                      {selectedLead.company || selectedLead.city || "Client Prospect"}
+                    <p className="text-[11px] sm:text-xs truncate font-medium" style={{ color: "var(--dash-text-secondary)" }}>
+                      {selectedLead.company || selectedLead.category || selectedLead.city || "Client Prospect"}
                     </p>
+                    {selectedLead.website && (
+                      <a
+                        href={selectedLead.website.startsWith("http") ? selectedLead.website : `https://${selectedLead.website}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[11px] font-mono text-indigo-500 hover:underline flex items-center gap-1 mt-0.5 truncate"
+                      >
+                        <Globe className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{selectedLead.website.replace(/^https?:\/\//i, '')}</span>
+                        <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                      </a>
+                    )}
                   </div>
                 </div>
 

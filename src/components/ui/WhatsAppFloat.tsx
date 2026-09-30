@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 const WHATSAPP_NUMBER = "917990738939";
 const WHATSAPP_MESSAGE = "Hi! I'd like to know more about your IT services.";
 
 export default function WhatsAppFloat() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [hovered, setHovered] = useState(false);
 
@@ -14,6 +16,15 @@ export default function WhatsAppFloat() {
     const t = setTimeout(() => setVisible(true), 1200);
     return () => clearTimeout(t);
   }, []);
+
+  // Do not show on any dashboard / admin / console routes
+  if (
+    pathname?.startsWith("/admin") ||
+    pathname?.includes("dashboard") ||
+    pathname?.includes("techinfinix-console")
+  ) {
+    return null;
+  }
 
   const href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 

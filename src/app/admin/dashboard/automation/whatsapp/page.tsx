@@ -1332,9 +1332,9 @@ export default function WhatsAppOutreachPage() {
           TAB 1: LIVE CHAT WORKSPACE (CRM 3-PANE INTERFACE)
          ────────────────────────────────────────────────────────────────────────── */}
       {activeTab === "chat" && (
-        <div className="flex flex-col lg:flex-row h-[760px] crm-card p-0 overflow-hidden border border-[var(--dash-border)] w-full">
-          {/* Left Panel: Contact Threads (Fixed width on desktop, full width on mobile) */}
-          <div className={`w-full lg:w-72 xl:w-80 shrink-0 border-r border-[var(--dash-border)] flex flex-col overflow-hidden bg-[var(--dash-card-bg)] ${
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 h-[760px] crm-card p-0 overflow-hidden border border-[var(--dash-border)] w-full">
+          {/* Left Panel: Contact Threads (4 cols on desktop) */}
+          <div className={`lg:col-span-4 border-r border-[var(--dash-border)] flex flex-col overflow-hidden bg-[var(--dash-card-bg)] ${
             mobileView === "chat" ? "hidden lg:flex" : "flex"
           }`}>
             {/* Sidebar Header */}
@@ -1467,7 +1467,7 @@ export default function WhatsAppOutreachPage() {
           </div>
 
           {/* Middle Panel: Active Live Chat Window */}
-          <div className={`flex-1 min-w-0 flex flex-col overflow-hidden relative border-r border-[var(--dash-border)] bg-[var(--dash-bg)] ${
+          <div className={`${showRightDrawer ? "lg:col-span-5 xl:col-span-5" : "lg:col-span-8"} flex flex-col overflow-hidden relative border-r border-[var(--dash-border)] bg-[var(--dash-bg)] ${
             mobileView === "list" ? "hidden lg:flex" : "flex"
           }`}>
             {selectedConv ? (
@@ -1856,31 +1856,56 @@ export default function WhatsAppOutreachPage() {
             )}
           </div>
 
-          {/* Right Panel: Lead CRM Profile (Overlay on mobile/tablet/desktop, fixed sidebar on 2xl) */}
+          {/* Right Panel: Lead CRM Profile (Overlay on mobile/tablet, col-span-3 on desktop) */}
           {showRightDrawer && selectedConv && (
             <>
+              {/* Mobile/Tablet Backdrop */}
               <div
                 onClick={() => setShowRightDrawer(false)}
-                className="fixed inset-0 bg-black/50 z-40 2xl:hidden backdrop-blur-xs"
+                className="fixed inset-0 bg-black/60 z-[9998] lg:hidden backdrop-blur-xs"
               />
-              <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-80 2xl:static 2xl:z-auto 2xl:w-72 shrink-0 border-l border-[var(--dash-border)] p-4 space-y-4 overflow-y-auto bg-[var(--dash-card-bg)] shadow-2xl 2xl:shadow-none animate-in slide-in-from-right duration-200">
-                <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-2.5">
+              <div className="fixed inset-y-0 right-0 z-[9999] w-full sm:max-w-md lg:static lg:z-auto lg:w-auto lg:col-span-3 border-l border-[var(--dash-border)] flex flex-col overflow-hidden bg-[var(--dash-card-bg)] shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-200">
+                {/* Sticky Header with Prominent Close Button */}
+                <div className="p-3 sm:p-3.5 border-b border-[var(--dash-border)] bg-[var(--dash-card-bg)] flex items-center justify-between shrink-0 sticky top-0 z-30">
                   <h3 className="font-bold text-xs text-[var(--dash-text)] flex items-center gap-1.5">
                     <UserCheck className="w-3.5 h-3.5 text-emerald-500" /> Lead CRM Details
                   </h3>
-                  <button onClick={() => setShowRightDrawer(false)} className="text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] cursor-pointer">
-                    <X className="w-4 h-4" />
+                  <button
+                    onClick={() => setShowRightDrawer(false)}
+                    className="px-2.5 py-1 text-xs font-bold rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-500 hover:bg-rose-500/20 cursor-pointer flex items-center gap-1 transition active:scale-95"
+                    title="Close CRM Details"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>Close</span>
                   </button>
                 </div>
 
-                {/* Lead Avatar Card */}
-                <div className="text-center space-y-1.5 py-1 border-b border-[var(--dash-border)] pb-3">
-                  <div className="w-12 h-12 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 font-bold text-lg mx-auto flex items-center justify-center shadow-sm">
-                    {selectedConv.bussiness_name ? selectedConv.bussiness_name.charAt(0).toUpperCase() : "#"}
+                <div className="p-4 space-y-4 overflow-y-auto flex-1">
+                  {/* Lead Avatar Card with Business Logo / Favicon */}
+                  <div className="text-center space-y-2 py-1 border-b border-[var(--dash-border)] pb-3">
+                    <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-[var(--dash-border)] bg-white mx-auto shadow-sm flex items-center justify-center">
+                      {isValidWebsite(selectedConv.website) ? (
+                        <img
+                          src={`https://www.google.com/s2/favicons?domain=${formatWebsiteUrl(selectedConv.website)?.replace(/^https?:\/\//i, '').split('/')[0]}&sz=128`}
+                          alt={selectedConv.bussiness_name}
+                          className="w-full h-full object-contain p-1.5"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = "none";
+                            const fallback = e.currentTarget.parentElement?.querySelector(".wa-avatar-fallback");
+                            if (fallback) (fallback as HTMLElement).style.display = "flex";
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className="wa-avatar-fallback w-full h-full bg-emerald-500/10 text-emerald-500 font-bold text-xl flex items-center justify-center"
+                        style={{ display: isValidWebsite(selectedConv.website) ? "none" : "flex" }}
+                      >
+                        {selectedConv.bussiness_name ? selectedConv.bussiness_name.charAt(0).toUpperCase() : "#"}
+                      </div>
+                    </div>
+                    <h4 className="font-bold text-sm text-[var(--dash-text)]">{selectedConv.bussiness_name}</h4>
+                    <p className="text-[11px] text-[var(--dash-text-muted)]">{selectedConv.category || "General Business"} • {selectedConv.scraped_city}</p>
                   </div>
-                  <h4 className="font-bold text-sm text-[var(--dash-text)]">{selectedConv.bussiness_name}</h4>
-                  <p className="text-[11px] text-[var(--dash-text-muted)]">{selectedConv.category || "General Business"} • {selectedConv.scraped_city}</p>
-                </div>
 
                 {/* Quick Actions */}
                 <div className="space-y-1.5">
@@ -1963,12 +1988,13 @@ export default function WhatsAppOutreachPage() {
                 >
                   Save Note
                 </button>
+                </div>
               </div>
             </div>
-            </>
-          )}
-        </div>
-      )}
+          </>
+        )}
+      </div>
+    )}
 
       {/* ──────────────────────────────────────────────────────────────────────────
           TAB 2: CTA & CAMPAIGN ANALYTICS + SPAM & BLOCK AUDIT REPORT
