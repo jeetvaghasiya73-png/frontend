@@ -14,26 +14,26 @@ export default function HeroSection() {
 
   const stats = [
     {
-      num: "#1 Rank",
-      label: "Google Maps 3-Pack",
+      num: "50+",
+      label: "Web Apps Delivered",
       sparkline: "M0,22 Q20,6 40,18 T80,8 T120,24 T160,6 T200,16 T240,6",
       color: "stroke-emerald-500"
     },
     {
       num: "99.9%",
-      label: "Next.js Web Uptime",
+      label: "Uptime Guaranteed",
       sparkline: "M0,14 Q30,26 60,10 T120,22 T180,6 T240,14",
       color: "stroke-sky-500"
     },
     {
       num: "10M+",
-      label: "Business Records Scraped",
+      label: "Data Records Scraped",
       sparkline: "M0,24 Q25,8 50,18 T100,6 T150,22 T200,8 T240,18",
       color: "stroke-amber-500"
     },
     {
       num: "24/7",
-      label: "WhatsApp CRM Pipelines",
+      label: "WhatsApp Automation",
       sparkline: "M0,10 Q35,4 70,18 T140,8 T210,22 T240,6",
       color: "stroke-indigo-500"
     }
@@ -42,34 +42,34 @@ export default function HeroSection() {
   const servicePillars = [
     {
       id: "01",
-      title: "SEO & Search Dominance",
-      desc: "Google Page #1 dominance, high-intent keywords & organic authority.",
+      title: "SEO & Digital Marketing",
+      desc: "Local SEO and digital marketing strategies that get your business ranking on Google — and keep it there.",
       icon: TrendingUp,
       badge: "SEO",
       borderAccent: "hover:border-emerald-500/40"
     },
     {
       id: "02",
-      title: "Next.js Web Development",
-      desc: "Mobile-first, lightning-fast high-conversion web apps.",
+      title: "Web Application Development",
+      desc: "Custom web apps and business websites — fast, mobile-first, and built to convert visitors into clients.",
       icon: Globe,
       badge: "Web Dev",
       borderAccent: "hover:border-sky-500/40"
     },
     {
       id: "03",
-      title: "High-Volume Web Scraping",
-      desc: "Automated business directories & Playwright crawler nodes.",
+      title: "Web Scraping & Data Extraction",
+      desc: "Automated web scraping services that collect verified business data from public directories at scale.",
       icon: Database,
       badge: "Scraping",
       borderAccent: "hover:border-amber-500/40"
     },
     {
       id: "04",
-      title: "24/7 WhatsApp Automations",
-      desc: "Evolution API Baileys bots, n8n workflows & CRM syncing.",
+      title: "WhatsApp & Workflow Automation",
+      desc: "WhatsApp automation software and workflow automation services that respond to leads 24/7 without manual effort.",
       icon: Bot,
-      badge: "Automations",
+      badge: "Automation",
       borderAccent: "hover:border-indigo-500/40"
     }
   ];
@@ -110,12 +110,12 @@ export default function HeroSection() {
       <div className="w-full border-b border-border-custom bg-surface/30 backdrop-blur-md py-1.5 px-4 text-center z-20 overflow-hidden hidden sm:block">
         <p className="text-[10px] uppercase tracking-widest font-mono text-secondary-custom flex items-center justify-center gap-2 whitespace-nowrap">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-          <span className="truncate">TECH INFINIX &bull; SYSTEMS ARCHITECTURE FOR SEO, MODERN WEB, SCRAPING & AUTOMATIONS</span>
+          <span className="truncate">TECH INFINIX &bull; IT SOLUTIONS PROVIDER &mdash; WEB APPS, SEO, SCRAPING &amp; AUTOMATION</span>
           <Link
             href="/contact"
             className="text-foreground hover:underline inline-flex items-center gap-0.5 font-bold ml-1.5 shrink-0"
           >
-            <span>Request Quote</span>
+            <span>Get Free Quote</span>
             <ArrowUpRight className="w-3 h-3" />
           </Link>
         </p>
@@ -131,42 +131,39 @@ export default function HeroSection() {
           <div className="hero-smooth-reveal inline-flex items-center gap-2 border border-border-custom bg-surface px-3 py-1 rounded-full mb-4 sm:mb-5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             <span className="text-[10px] uppercase tracking-widest font-mono font-bold text-foreground">
-              Autonomous Agency & Growth Engine
+              IT Solutions Provider &bull; Ahmedabad, India
             </span>
           </div>
 
           {/* Balanced Display Headline (Dual Opacity Contrast - MadeWithGSAP Style) */}
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-bold tracking-tight leading-[1.18] mb-4 sm:mb-5 text-foreground max-w-2xl">
             <span className="text-foreground block">
-              <SplitText text="Engineered Systems for Growth." type="words" />
-            </span>
-            <span className="text-secondary-custom font-medium text-2xl sm:text-3xl md:text-4xl block mt-1">
-              SEO, high-performance web, data scraping &amp; 24/7 automations.
+              <SplitText text="Trusted IT Solutions Provider: Web Apps, SEO, Scraping & Automation That Grow Your Business" type="words" />
             </span>
           </h1>
 
           {/* Clean Description */}
           <p className="hero-smooth-reveal text-xs sm:text-sm text-secondary-custom max-w-lg mb-5 sm:mb-6 leading-relaxed">
-            We build Google Page #1 SEO ranking systems, mobile-first Next.js web applications, high-volume directory scrapers, and autonomous WhatsApp CRM pipelines.
+            We are a full-service IT solutions provider based in Ahmedabad. From custom web application development and local SEO to professional web scraping services and WhatsApp automation — everything your business needs to grow online, handled by one dedicated team.
           </p>
 
           {/* Service Pillar Micro-Badges */}
           <div className="hero-smooth-reveal flex flex-wrap gap-1.5 mb-5 sm:mb-7">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[11px] font-mono border border-border-custom bg-surface text-foreground">
               <span className="w-1 h-1 rounded-full bg-emerald-500" />
-              SEO Dominance
+              SEO & Digital Marketing
             </span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[11px] font-mono border border-border-custom bg-surface text-foreground">
               <span className="w-1 h-1 rounded-full bg-sky-500" />
-              Next.js Full-Stack
+              Web App Development
             </span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[11px] font-mono border border-border-custom bg-surface text-foreground">
               <span className="w-1 h-1 rounded-full bg-amber-500" />
-              Data Scraping
+              Web Scraping & Data
             </span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[11px] font-mono border border-border-custom bg-surface text-foreground">
               <span className="w-1 h-1 rounded-full bg-indigo-500" />
-              WhatsApp & AI Bot
+              WhatsApp Automation
             </span>
           </div>
 
@@ -176,7 +173,7 @@ export default function HeroSection() {
               href="/contact"
               className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-foreground text-background hover:opacity-90 text-xs font-mono uppercase tracking-wider font-bold transition duration-200 group shadow-xs cursor-pointer text-center"
             >
-              <span>Get Architecture Quote</span>
+              <span>Get a Free Quote</span>
               <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Link>
             
@@ -185,7 +182,7 @@ export default function HeroSection() {
               onClick={handleScrollToServices}
               className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full border border-border-custom bg-surface hover:bg-surface/80 text-foreground text-xs font-mono uppercase tracking-wider font-semibold transition duration-200 group shadow-xs cursor-pointer text-center"
             >
-              <span>Explore 4 Pillars</span>
+              <span>Explore Our Services</span>
               <ArrowDown className="w-3.5 h-3.5 group-hover:translate-y-0.5 transition-transform" />
             </a>
           </div>

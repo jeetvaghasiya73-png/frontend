@@ -90,7 +90,7 @@ export default function FooterSection() {
               </span>
             </Link>
             <p className="text-secondary-custom text-sm leading-relaxed max-w-sm">
-              We engineer enterprise-grade SEO search dominance, full-stack Next.js web applications, automated web scrapers, and 24/7 WhatsApp workflow pipelines.
+              Tech Infinix is a full-service IT solutions provider based in Ahmedabad, offering web application development, SEO, web scraping, and WhatsApp automation services.
             </p>
             <div className="mt-4 flex items-center gap-2 text-xs text-foreground font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -230,11 +230,44 @@ export default function FooterSection() {
                 <Mail className="w-3.5 h-3.5 text-secondary-custom shrink-0" />
                 <span>contact@techinfinix.com</span>
               </a>
+
+              {/* Social Links */}
+              <div className="flex items-center gap-3 pt-2">
+                <a
+                  href="https://www.instagram.com/techinfinix1/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Tech Infinix on Instagram"
+                  className="w-8 h-8 rounded-sm border border-border-custom bg-background flex items-center justify-center text-secondary-custom hover:text-foreground hover:border-foreground/40 transition-all duration-200"
+                >
+                  {/* Instagram SVG */}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                    <circle cx="12" cy="12" r="4" />
+                    <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
+                  </svg>
+                </a>
+                <a
+                  href="https://www.linkedin.com/company/tech-infinix1/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Tech Infinix on LinkedIn"
+                  className="w-8 h-8 rounded-sm border border-border-custom bg-background flex items-center justify-center text-secondary-custom hover:text-sky-400 hover:border-sky-400/40 transition-all duration-200"
+                >
+                  {/* LinkedIn SVG */}
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                    <rect x="2" y="9" width="4" height="12" />
+                    <circle cx="4" cy="4" r="2" />
+                  </svg>
+                </a>
+              </div>
+
               <Link
                 href="/contact"
                 className="hover:text-indigo-400 font-semibold transition-colors pt-1 text-foreground"
               >
-                Get Architecture Audit &rarr;
+                Get a Free Quote &rarr;
               </Link>
             </div>
           </div>

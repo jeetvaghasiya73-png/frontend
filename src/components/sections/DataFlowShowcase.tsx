@@ -29,74 +29,74 @@ const blueprints = [
   {
     id: "seo",
     stepNum: "01",
-    tabLabel: "SEO & Search",
-    badge: "Search Dominance",
-    title: "Google Page #1 SEO Dominance",
-    subtitle: "Capture daily high-intent customers actively searching for your services.",
+    tabLabel: "SEO & Marketing",
+    badge: "Local SEO & Search",
+    title: "SEO & Digital Marketing That Gets You Found",
+    subtitle: "Get in front of customers who are already searching for your services — with local SEO and digital marketing built for real results.",
     icon: TrendingUp,
     timeline: "2–3 weeks launch",
     accentColor: "emerald",
     deliverables: [
-      "Comprehensive Technical & On-Page SEO Overhaul",
-      "High-Intent Keyword Research & Content Architecture",
-      "Authority Backlink Acquisition & Domain Health Sync",
-      "Monthly Organic Traffic & Keyword Position Tracking"
+      "Full Technical & On-Page SEO Audit & Fix",
+      "Local SEO & Google Business Profile Setup",
+      "Keyword Research, Content Plan & Backlink Strategy",
+      "Monthly Ranking Reports & Continuous Optimization"
     ],
-    clientBenefit: "Consistently rank on Google Page #1 for high-intent commercial keywords."
+    clientBenefit: "Rank on Google Page #1 for the keywords your customers actually search."
   },
   {
     id: "web",
     stepNum: "02",
-    tabLabel: "Modern Web Dev",
-    badge: "Conversion Platform",
-    title: "High-Performance Business Websites",
-    subtitle: "Ultra-fast, mobile-first websites engineered to turn visitors into booked clients.",
+    tabLabel: "Web Development",
+    badge: "Web App & Design",
+    title: "Web Application Development That Converts",
+    subtitle: "Custom web apps and business websites built fast, designed clean, and engineered to turn visitors into paying customers.",
     icon: Globe,
     timeline: "3–4 weeks delivery",
     accentColor: "sky",
     deliverables: [
-      "Mobile-First Responsive Wireframing & Clean Modern Layout",
-      "Sub-Second Page Load Speeds (98+ Google Performance)",
-      "High-Converting Inbound Consultation & Booking Forms",
-      "Full Search Engine Indexing & On-Page SEO Structure"
+      "Custom Web App & PHP Development",
+      "Mobile-First Responsive Web Design & Clean UI",
+      "Sub-Second Page Speeds (98+ Lighthouse Score)",
+      "Lead Capture Forms, Booking Flows & On-Page SEO"
     ],
-    clientBenefit: "An authoritative storefront that builds credibility and converts."
+    clientBenefit: "A professional online presence that builds trust and fills your pipeline."
   },
   {
     id: "scraping",
     stepNum: "03",
-    tabLabel: "Web & Lead Scraping",
+    tabLabel: "Web Scraping",
     badge: "Data Extraction",
-    title: "Targeted Public Directory Scraping",
-    subtitle: "Automated business lead lists gathered from public directories without manual effort.",
+    title: "Professional Web Scraping & Data Extraction",
+    subtitle: "Collect thousands of verified business records from public websites and directories — automatically, accurately, and without the manual work.",
     icon: Database,
     timeline: "1–2 weeks setup",
     accentColor: "amber",
     deliverables: [
-      "Automated Directory, Maps & Industry Listing Extraction",
-      "Phone Number, Email & Business Address Verification",
-      "Data Cleaning, Formatting & Duplicate Elimination",
-      "Direct Export to Clean Spreadsheets or Your CRM"
+      "Automated Website & Directory Scraping",
+      "Phone, Email & Business Address Verification",
+      "Data Cleaning, Deduplication & Structured Formatting",
+      "Export to Clean Spreadsheets, CSV or Your CRM"
     ],
-    clientBenefit: "Eliminate hundreds of prospecting hours with verified lead records."
+    clientBenefit: "Save hundreds of prospecting hours with clean, verified data delivered on demand."
   },
   {
     id: "automation",
     stepNum: "04",
-    tabLabel: "WhatsApp & Workflows",
-    badge: "24/7 Operations",
-    title: "24/7 WhatsApp & Lead Automations",
-    subtitle: "Never let an inbound prospect wait or slip through the cracks.",
+    tabLabel: "Automation",
+    badge: "WhatsApp & Workflows",
+    title: "WhatsApp & Workflow Automation Services",
+    subtitle: "Respond to every inbound inquiry instantly — even while you sleep. Our WhatsApp automation software handles it all.",
     icon: Bot,
     timeline: "1–2 weeks setup",
     accentColor: "purple",
     deliverables: [
-      "Instant WhatsApp Reply to Inbound Customer Inquiries",
-      "Automated Lead Qualification Questions & Flow",
-      "Instant SMS & Email Alerts Directly to Your Team",
-      "Centralized Lead Activity Tracking & Follow-Up Sync"
+      "WhatsApp Auto-Reply to Every Inbound Inquiry",
+      "Automated Lead Qualification Questions & Flows",
+      "Instant Email & SMS Alerts Sent to Your Team",
+      "Custom Workflow Automation & CRM Activity Sync"
     ],
-    clientBenefit: "Immediate 24/7 response time that turns cold inquiries into meetings."
+    clientBenefit: "24/7 instant response time that turns inquiries into booked consultations."
   }
 ];
 
@@ -384,7 +384,7 @@ export default function DataFlowShowcase() {
                 <span className="text-[10px] uppercase tracking-widest font-mono font-bold text-foreground">[02] &bull; Service Execution Architecture</span>
               </div>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
-                <SplitText text="How We Deliver Tangible Value." type="words" />
+                <SplitText text="How We Deliver Measurable IT Solutions." type="words" />
               </h2>
             </div>
             <div className="flex items-center gap-1.5 bg-surface border border-border-custom px-2.5 py-1 rounded-xs text-xs font-mono">

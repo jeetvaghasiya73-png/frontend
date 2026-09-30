@@ -17,29 +17,29 @@ export default function FaqSection() {
 
   const fallbackFaqs: FAQItem[] = [
     {
-      category: "Search Engine Optimization (SEO)",
-      q: "How does your Google ranking & organic SEO system work?",
-      a: "We audit and optimize your website architecture, target high-intent commercial search queries, build high-authority backlinks, and deploy technical SEO fixes. This elevates your domain to Google Page #1, driving high-converting inbound traffic within 30 to 60 days."
+      category: "IT Solutions & Outsourcing",
+      q: "What IT services does Tech Infinix provide?",
+      a: "Tech Infinix is a full-service IT solutions provider based in Ahmedabad. We offer web application development, SEO and digital marketing, web scraping and data extraction, and WhatsApp automation software. Whether you need to outsource IT services for a one-time project or want a long-term IT consultancy partner, we handle the full scope from planning to delivery and support."
     },
     {
-      category: "Web Development",
-      q: "What technologies do you use for full-stack web development?",
-      a: "We develop ultra-fast, mobile-first web applications using Next.js 15, React 19, TypeScript, Tailwind CSS, and Python FastAPI backends. Our sites achieve 98+ Google Lighthouse performance scores and feature conversion-engineered layouts."
+      category: "Web Application Development",
+      q: "What does your web application development process look like?",
+      a: "We build custom web applications and business websites from scratch — no templates. Our web design and development process starts with understanding your goals, then we plan, build, and review with you at every milestone. We work with PHP, React, Next.js, and Python backends depending on what your project needs. Most projects launch within 3 to 4 weeks."
     },
     {
-      category: "Web Scraping & APIs",
-      q: "Can your web scrapers bypass Cloudflare, rate limits, and captchas?",
-      a: "Yes. We build distributed Playwright clusters with automated residential proxy rotation, fingerprint masking, and captcha handling. We can extract thousands of structured business records (names, phones, reviews, websites) from Google Maps, directories, and commerce platforms daily."
+      category: "SEO & Digital Marketing",
+      q: "How do your local SEO services help businesses rank on Google?",
+      a: "Our SEO and digital marketing approach combines technical site fixes, local SEO optimization, Google Business Profile setup, targeted keyword strategy, and backlink building. As a local SEO company, we focus on what actually drives rankings and traffic — not vanity metrics. Most clients start seeing meaningful ranking improvements within 30 to 60 days of campaign launch."
     },
     {
-      category: "Workflow & WhatsApp Automations",
-      q: "How does the 24/7 WhatsApp AI Bot and CRM automation work?",
-      a: "Our WhatsApp bot connects via Evolution API (Baileys) and deep reasoning AI models. When a prospect messages or clicks a proposal button, the bot responds in seconds, answers questions, qualifies business requirements, updates your CRM, and alerts you via instant email/SMS."
+      category: "Web Scraping & Data Extraction",
+      q: "Do you provide web scraping services in India for business data?",
+      a: "Yes. Our web scraping service is built for businesses that need verified contact data at scale. We scrape public websites, business directories, and listing platforms to extract names, phone numbers, emails, and addresses. Our website scraping service handles everything from data collection and verification to deduplication and clean CSV or CRM-ready export. We serve clients across India and globally."
     },
     {
-      category: "Delivery & Engagement",
-      q: "What is your standard delivery timeline for custom systems?",
-      a: "SEO pipelines and automated WhatsApp bots are launched in 1 to 2 weeks. Custom Next.js web applications, scraping engines, and full CRM integrations typically deploy in 3 to 5 weeks with complete staging, documentation, and continuous support."
+      category: "WhatsApp & Workflow Automation",
+      q: "How does your WhatsApp automation software work for businesses?",
+      a: "Our WhatsApp automation software connects to your WhatsApp Business number and handles inbound inquiries automatically — 24/7. When a customer messages you, they receive an instant reply, get asked qualification questions, and your team gets alerted in real time. We also build full workflow automation services and custom automation consulting to connect your existing tools, CRMs, and pipelines."
     }
   ];
 
@@ -107,10 +107,10 @@ export default function FaqSection() {
             </span>
           </div>
           <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-3 text-foreground">
-            <SplitText text="Clear Answers to Technical Questions." type="words" />
+            <SplitText text="Common Questions About Our IT Services." type="words" />
           </h2>
           <p className="text-sm md:text-base text-secondary-custom leading-relaxed">
-            Everything you need to know about our organic SEO, modern web development, high-volume scrapers, and WhatsApp automations.
+            Everything you need to know about outsourcing IT services, web application development, local SEO, web scraping in India, and WhatsApp automation — answered honestly.
           </p>
         </div>
 
@@ -132,16 +132,9 @@ export default function FaqSection() {
                   className="w-full p-5 sm:p-6 flex items-center justify-between gap-4 text-left cursor-pointer"
                   aria-expanded={isOpen}
                 >
-                  <div className="space-y-1.5 flex-1">
-                    {faq.category && (
-                      <span className={`inline-block text-[10px] font-mono font-medium px-2 py-0.5 rounded-xs border ${getCategoryClass(faq.category)}`}>
-                        {faq.category}
-                      </span>
-                    )}
-                    <h3 className="text-sm sm:text-base font-bold text-foreground">
-                      {faq.q}
-                    </h3>
-                  </div>
+                  <h3 className="text-sm sm:text-base font-bold text-foreground flex-1">
+                    {faq.q}
+                  </h3>
 
                   <div className="w-7 h-7 rounded-sm border border-border-custom bg-background flex items-center justify-center text-foreground shrink-0">
                     {isOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}

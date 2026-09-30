@@ -10,31 +10,31 @@ export default function TestimonialsSection() {
   const guarantees = [
     {
       num: "01",
-      title: "100% Direct Founder Focus",
+      title: "You Work Directly With Our Team",
       icon: UserCheck,
-      desc: "As a dedicated new agency, you work directly with the lead engineer on every detail. Your project gets our undivided personal attention—never handed off to junior account managers.",
-      badge: "Personal Execution"
+      desc: "No account managers, no middlemen. When you work with Tech Infinix, you're talking directly to the people building your solution — every step of the way.",
+      badge: "Direct Access"
     },
     {
       num: "02",
-      title: "Milestone-Based Approvals",
+      title: "Milestone-Based Delivery",
       icon: ShieldCheck,
-      desc: "We build transparently. You review and approve interactive previews and working blueprints at every milestone before anything is deployed live to the public.",
+      desc: "We share working previews and progress updates at every milestone before anything goes live. You review and approve — nothing is pushed without your sign-off.",
       badge: "Zero Surprises"
     },
     {
       num: "03",
-      title: "Fast 14-Day Delivery Sprints",
+      title: "Fast Turnaround on Every Project",
       icon: Clock,
-      desc: "SEO setups, lead scraping pipelines, and WhatsApp bots launch within 7 to 14 days. Custom web platforms deploy in 3 to 4 weeks with full documentation.",
-      badge: "Rapid Turnaround"
+      desc: "SEO setups, web scraping pipelines, and WhatsApp automation systems typically launch within 7–14 days. Custom web application development deploys in 3–4 weeks.",
+      badge: "Rapid Delivery"
     },
     {
       num: "04",
-      title: "Direct Post-Launch Support",
+      title: "Support After Launch",
       icon: MessageSquare,
-      desc: "We stand behind everything we build. You have direct WhatsApp and email access for ongoing questions, tweaks, and continuous guidance as your business grows.",
-      badge: "Dedicated Access"
+      desc: "We don't hand over the project and walk away. You get direct WhatsApp and email access for ongoing questions, tweaks, and guidance long after the project is live.",
+      badge: "Ongoing Support"
     }
   ];
 
@@ -61,10 +61,10 @@ export default function TestimonialsSection() {
               </span>
             </div>
             <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-3 text-foreground">
-              <SplitText text="Why Partner With Us As Your Founding Agency?" type="words" />
+              <SplitText text="Why Businesses Choose Tech Infinix as Their IT Partner" type="words" />
             </h2>
             <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed">
-              We are actively building our founding client portfolio. You receive elite, focused execution, transparent pricing, and direct communication every step of the way.
+              We are an IT outsourcing company and IT consultancy service that keeps things simple: honest timelines, direct communication, and results you can actually measure.
             </p>
           </div>
 

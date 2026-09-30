@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "@/components/ui/Providers";
 import CursorGlow from "@/components/ui/CursorGlow";
 import PageLoader from "@/components/ui/PageLoader";
+import WhatsAppFloat from "@/components/ui/WhatsAppFloat";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,23 +31,32 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Tech Infinix | Autonomous AI Automation, SEO & Modern Web Engineering",
+    default: "IT Solutions Provider | Web Application Development",
     template: "%s | Tech Infinix",
   },
   description:
-    "Tech Infinix engineers autonomous AI agent swarms, Google Page #1 SEO dominance, high-performance Next.js web applications, high-volume directory scrapers, and 24/7 WhatsApp automation pipelines.",
+    "Tech Infinix is an IT solutions provider offering web application development, SEO, web scraping and WhatsApp automation. Get a free quote today.",
   keywords: [
-    "AI Automation Agency",
-    "Autonomous AI Agents",
-    "Search Engine Optimization",
-    "SEO Automation",
-    "Next.js Web Development",
-    "Enterprise Web Scraping",
-    "WhatsApp CRM Bot",
-    "FastAPI Python Architecture",
+    "IT solutions provider",
+    "web application development",
+    "it outsourcing company",
+    "outsource it services",
+    "it consultancy services",
+    "web development company Ahmedabad",
+    "web design and development",
+    "php development",
+    "seo digital marketing company",
+    "local seo companies",
+    "whatsapp automation software",
+    "automation services",
+    "workflow automation services",
+    "automation consultant",
+    "web scraping in india",
+    "web scraping service",
+    "website scraping service",
+    "web data extraction",
     "Tech Infinix",
     "techinfinix",
-    "B2B Lead Generation",
   ],
   authors: [{ name: "Tech Infinix Engineering Team", url: siteUrl }],
   creator: "Tech Infinix",
@@ -63,24 +73,24 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: siteUrl,
-    title: "Tech Infinix | Autonomous AI Automation, SEO & Modern Web Engineering",
+    title: "IT Solutions Provider | Web Application Development — Tech Infinix",
     description:
-      "Enterprise systems engineered for growth: Google Page #1 SEO rankings, lightning-fast Next.js apps, 10M+ lead scraping pipelines, and 24/7 autonomous WhatsApp bots.",
+      "Tech Infinix is an IT solutions provider offering web application development, SEO, web scraping and WhatsApp automation. Get a free quote today.",
     siteName: "Tech Infinix",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Tech Infinix — Engineered Systems for Growth",
+        alt: "Tech Infinix — IT Solutions Provider & Web Application Development Company",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Tech Infinix | Autonomous AI Automation & Web Engineering",
+    title: "IT Solutions Provider | Web Application Development — Tech Infinix",
     description:
-      "We design and deploy enterprise-grade AI automation, Google Maps Top 3 SEO engines, custom Next.js web apps, and autonomous WhatsApp bots.",
+      "Tech Infinix is an IT solutions provider offering web application development, SEO, web scraping and WhatsApp automation. Get a free quote today.",
     creator: "@TechInfinix",
     images: ["/og-image.png"],
   },
@@ -120,7 +130,7 @@ export default function RootLayout({
         url: siteUrl,
         logo: `${siteUrl}/favicon.ico`,
         description:
-          "Enterprise AI automation agency engineering autonomous agent networks, Google Maps Top 3 SEO, web applications, and scraping systems.",
+          "Tech Infinix is an IT solutions provider and web application development company based in Ahmedabad, offering IT outsourcing, SEO, web scraping, and WhatsApp automation services.",
         contactPoint: {
           "@type": "ContactPoint",
           telephone: "+91-79907-38939",
@@ -141,49 +151,49 @@ export default function RootLayout({
       {
         "@type": "ProfessionalService",
         "@id": `${siteUrl}/#service`,
-        name: "Tech Infinix Systems Engineering",
+        name: "Tech Infinix — IT Solutions Provider",
         url: siteUrl,
         priceRange: "$$",
         image: `${siteUrl}/og-image.png`,
         telephone: "+91-79907-38939",
         hasOfferCatalog: {
           "@type": "OfferCatalog",
-          name: "Autonomous AI & Digital Growth Services",
+          name: "IT Solutions & Digital Growth Services",
           itemListElement: [
             {
               "@type": "Offer",
               itemOffered: {
                 "@type": "Service",
-                name: "Search Engine Optimization (SEO) Dominance",
+                name: "Web Application Development & Web Design",
                 description:
-                  "Google Page #1 placement, keyword gap optimization, and organic search authority.",
+                  "Custom web application development, web design and development, and PHP development for businesses of all sizes.",
               },
             },
             {
               "@type": "Offer",
               itemOffered: {
                 "@type": "Service",
-                name: "High-Performance Next.js Web Development",
+                name: "SEO & Digital Marketing",
                 description:
-                  "Mobile-first, conversion-focused enterprise web applications.",
+                  "Local SEO, on-page and off-page SEO, and digital marketing services to help businesses rank higher on Google.",
               },
             },
             {
               "@type": "Offer",
               itemOffered: {
                 "@type": "Service",
-                name: "High-Volume Directory & Web Scraping",
+                name: "Web Scraping & Data Extraction",
                 description:
-                  "Playwright crawler nodes and verified business data extraction pipelines.",
+                  "Professional web scraping service and web data extraction for businesses in India and globally.",
               },
             },
             {
               "@type": "Offer",
               itemOffered: {
                 "@type": "Service",
-                name: "24/7 WhatsApp AI Bot Automations",
+                name: "WhatsApp Automation & Workflow Automation",
                 description:
-                  "Evolution API & Baileys bot workflows with instant CRM integration.",
+                  "WhatsApp automation software, workflow automation services, and automation consulting for modern businesses.",
               },
             },
           ],
@@ -212,6 +222,7 @@ export default function RootLayout({
           <div className="relative z-10 flex-1 flex flex-col">
             {children}
           </div>
+          <WhatsAppFloat />
         </Providers>
       </body>
     </html>

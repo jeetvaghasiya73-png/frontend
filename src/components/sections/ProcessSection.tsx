@@ -16,23 +16,23 @@ export default function ProcessSection() {
   const steps = [
     {
       num: "01",
-      title: "Discovery & Audit",
-      desc: "We analyze your current local Google Maps visibility, website user experience, or manual workflow bottlenecks to identify the highest-impact opportunities."
+      title: "Discovery & Requirement Audit",
+      desc: "We start by understanding your business, your goals, and where the gaps are — whether that's SEO visibility, a weak web presence, missing data, or manual processes that should be automated."
     },
     {
       num: "02",
-      title: "Custom Blueprint & Proposal",
-      desc: "We present a structured architecture plan with exact deliverables, transparent pricing, and predictable delivery dates with zero hidden surprises."
+      title: "Custom Proposal & Clear Scope",
+      desc: "You'll receive a detailed proposal with exact deliverables, a realistic timeline, and transparent pricing. No vague promises, no hidden costs — just a clear plan you can actually hold us to."
     },
     {
       num: "03",
-      title: "Focused Build & Preview",
-      desc: "We engineer your custom system with dedicated founder focus. You review working prototypes and blueprints at every milestone before public launch."
+      title: "Build, Review & Refine",
+      desc: "We build your solution — whether it's a web application, SEO campaign, scraping pipeline, or automation workflow — and walk you through working previews at every major milestone before anything goes live."
     },
     {
       num: "04",
-      title: "Launch & Direct Support",
-      desc: "We deploy your system live, configure your team notifications, and provide ongoing direct WhatsApp and email assistance to ensure continuous results."
+      title: "Launch & Ongoing Support",
+      desc: "Once live, we don't disappear. You have direct access to our team for questions, updates, and continuous improvements as your business grows — via WhatsApp, email, or a call."
     }
   ];
 
@@ -91,10 +91,10 @@ export default function ProcessSection() {
               </span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3 text-foreground">
-              <SplitText text="A Transparent 4-Step Journey." type="words" />
+              <SplitText text="How We Work: A Simple 4-Step Process." type="words" />
             </h2>
             <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed max-w-sm">
-              From our first audit call to final handover, you know exactly what is being built, when it will launch, and how it will drive results.
+              From your first call to launch day, we keep things simple, transparent, and focused on results — so you always know what's happening and why.
             </p>
           </div>
 

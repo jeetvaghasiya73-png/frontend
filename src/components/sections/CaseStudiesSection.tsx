@@ -16,39 +16,39 @@ export default function CaseStudiesSection() {
   const blueprints = [
     {
       blueprintNum: "01",
-      title: "Google Page #1 Organic SEO Ranking Blueprint",
-      targetIndustry: "High-Growth B2B & Modern Enterprises",
+      title: "Local SEO & Digital Marketing System",
+      targetIndustry: "Service Businesses & Local Companies",
       type: "SEO System",
       description:
-        "Engineered to dominate organic Google search results. Incorporates comprehensive technical SEO audits, high-intent keyword alignment, content cluster architecture, and authority backlink syndication.",
-      servicesList: ["Organic Google SEO", "Competitor Keyword Gap", "Authority Backlinks"],
+        "A comprehensive local SEO and digital marketing setup designed to get your business ranking on Google — and in front of customers who are ready to buy. Includes technical audits, Google Business Profile optimization, keyword targeting, and backlink strategy.",
+      servicesList: ["Local SEO", "Google Business Profile", "Backlink Strategy"],
     },
     {
       blueprintNum: "02",
-      title: "High-Performance Business Web Platform",
-      targetIndustry: "Modern Service Providers & Agencies",
+      title: "Custom Web Application Development",
+      targetIndustry: "Startups, SMBs & Service Providers",
       type: "Web Development",
       description:
-        "A lightning-fast, mobile-first business website built to establish authority and convert visitors into qualified consultation requests through streamlined booking forms.",
-      servicesList: ["Mobile-First UX", "Sub-Second Speed", "Conversion Flows"],
+        "A fully custom web application or business website built with modern technology — fast, mobile-friendly, and designed to convert visitors. Whether you need PHP development or a React-based web app, we build it to fit your goals.",
+      servicesList: ["Web App Development", "PHP Development", "Mobile-First UI"],
     },
     {
       blueprintNum: "03",
-      title: "Automated Directory & Lead Scraper",
-      targetIndustry: "B2B Sales & Outreach Operations",
-      type: "Data Extraction",
+      title: "Web Scraping & Data Extraction Pipeline",
+      targetIndustry: "B2B Sales Teams & Data-Driven Businesses",
+      type: "Web Scraping",
       description:
-        "Automated data crawler pipeline that extracts thousands of verified local business records (phone numbers, addresses, and websites) from public web directories into clean spreadsheets.",
-      servicesList: ["Directory Scraping", "Phone Verification", "Clean CSV Exports"],
+        "A production-ready web scraping and website scraping system that pulls verified business contacts — phone numbers, emails, addresses — from public directories and exports them into clean, usable formats for your team or CRM.",
+      servicesList: ["Website Scraping", "Web Data Extraction", "CSV Export"],
     },
     {
       blueprintNum: "04",
-      title: "24/7 WhatsApp Inquiry & Auto-Qualification Bot",
-      targetIndustry: "High-Inquiry Service Businesses",
-      type: "Workflow Automation",
+      title: "WhatsApp Automation & Workflow Setup",
+      targetIndustry: "High-Inquiry Businesses & Service Companies",
+      type: "Automation",
       description:
-        "Autonomous WhatsApp messaging pipeline that answers inbound customer questions 24/7, qualifies their requirements, and sends instant alert notifications directly to your team.",
-      servicesList: ["WhatsApp Bot", "Instant Auto-Reply", "Team Notification Alerts"],
+        "A complete WhatsApp automation software setup that handles inbound inquiries 24/7 — sending instant replies, qualifying leads, and alerting your team in real time. Includes full workflow automation integration so nothing slips through.",
+      servicesList: ["WhatsApp Automation", "Workflow Automation", "Team Alerts"],
     }
   ];
 
@@ -75,10 +75,10 @@ export default function CaseStudiesSection() {
               </span>
             </div>
             <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-3 text-foreground">
-              <SplitText text="Verified Blueprints Ready for Deployment." type="words" />
+              <SplitText text="Real Solutions. Ready to Deploy for Your Business." type="words" />
             </h2>
             <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed">
-              We design every system from scratch. Here are the core production blueprints ready to be customized and launched for your business.
+              We are an IT outsourcing company and IT consultancy service built around what actually moves the needle. Here are the four core systems we build and deploy for clients.
             </p>
           </div>
 

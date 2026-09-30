@@ -38,71 +38,71 @@ export default function WhatWeBuildSection() {
   const corePillars: ServiceCardData[] = [
     {
       num: "01",
-      title: "Search Engine Optimization (SEO) Dominance",
-      badge: "Organic SEO & Search",
+      title: "SEO & Digital Marketing",
+      badge: "Local SEO & Search",
       category: "seo",
       icon: TrendingUp,
-      desc: "We rank businesses on Google Page #1 to capture high-intent commercial searchers, outperform industry competitors, and establish lasting organic market authority.",
+      desc: "Whether you're looking to rank locally or dominate industry-wide, our SEO and digital marketing services are built around what your customers are actually searching for. We handle everything from technical fixes to content and backlinks.",
       features: [
-        "Comprehensive Technical & On-Page SEO Overhaul",
-        "Competitor Keyword Gap & Search Intent Analysis",
-        "High-Authority Backlink & Content Architecture",
-        "Core Web Vitals & Speed Index Optimization"
+        "Technical On-Page SEO & Site Structure Audit",
+        "Local SEO & Google Business Profile Optimization",
+        "Competitor Keyword Research & Content Strategy",
+        "High-Authority Backlink Building & Monthly Reporting"
       ],
-      keyOutcomes: ["Google Page #1 Rankings", "Organic Traffic Surge", "Sustainable Inbound Leads"],
+      keyOutcomes: ["Google Page #1 Rankings", "Local Search Visibility", "Organic Traffic Growth"],
       borderHover: "hover:border-emerald-500/50",
       ctaText: "Inquire on SEO"
     },
     {
       num: "02",
-      title: "High-Performance Web Development",
-      badge: "Modern Web Platform",
+      title: "Web Application Development",
+      badge: "Web Design & Development",
       category: "web",
       icon: Globe,
-      desc: "Mobile-first, ultra-fast business websites engineered to showcase your brand, establish immediate credibility, and turn visitors into booked consultations.",
+      desc: "We build custom web applications and business websites that actually perform. Fast load times, clean design, and a structure built to convert visitors into paying customers. PHP, React, Next.js — we work with what fits your project best.",
       features: [
-        "Mobile-First Responsive Layout & Clean Design",
-        "Sub-Second Page Load Optimization",
-        "High-Conversion Inbound Lead & Booking Forms",
-        "Complete Search Engine Structure & Metadata"
+        "Custom Web App & PHP Development",
+        "Mobile-First Responsive Web Design",
+        "Sub-Second Page Speeds & Core Web Vitals",
+        "Lead Capture Forms, Booking Flows & CRM Integration"
       ],
-      keyOutcomes: ["Instant Page Speed", "Mobile Friendly", "Lead Capture Flow"],
+      keyOutcomes: ["Fast, Scalable Web Apps", "Mobile-Friendly Design", "Higher Conversion Rates"],
       borderHover: "hover:border-sky-500/50",
       ctaText: "Inquire on Web Development"
     },
     {
       num: "03",
-      title: "High-Volume Web Scraping & Data",
-      badge: "Automated Data Extraction",
+      title: "Web Scraping & Data Extraction",
+      badge: "Web Data Extraction",
       category: "scraping",
       icon: Database,
-      desc: "Custom data extraction pipelines that collect verified business contact records from public web directories, Google Maps, and industry listings without manual effort.",
+      desc: "Need verified business data without spending weeks collecting it manually? Our web scraping service in India handles everything — from public directory extraction to website scraping and structured data exports ready for your CRM or spreadsheet.",
       features: [
-        "Automated Public Directory & Maps Scraping",
-        "Phone, Email & Business Address Verification",
-        "Data Deduplication & Structured Formatting",
-        "Direct Export to Spreadsheet or CRM"
+        "Automated Website & Directory Scraping",
+        "Phone, Email & Business Contact Verification",
+        "Data Deduplication, Cleaning & Formatting",
+        "Export to CSV, Excel or Direct CRM Upload"
       ],
-      keyOutcomes: ["Automated Lists", "Zero Manual Copying", "Clean Spreadsheets"],
+      keyOutcomes: ["Verified Lead Lists", "Zero Manual Effort", "Clean, Structured Data"],
       borderHover: "hover:border-amber-500/50",
       ctaText: "Inquire on Web Scraping"
     },
     {
       num: "04",
-      title: "24/7 WhatsApp & Workflow Automations",
-      badge: "Autonomous Pipelines",
+      title: "WhatsApp & Workflow Automation",
+      badge: "Automation Services",
       category: "automation",
       icon: Bot,
-      desc: "24/7 intelligent WhatsApp auto-responders and workflow integrations that greet prospects within seconds, qualify requirements, and alert you instantly.",
+      desc: "Stop losing leads because you couldn't respond fast enough. Our WhatsApp automation software and workflow automation services keep your business running 24/7 — greeting prospects, qualifying requirements, and notifying your team instantly.",
       features: [
-        "Instant WhatsApp Reply to Inbound Prospects",
-        "Automated Lead Qualification Questions",
-        "Instant Team Alerts via SMS & Email",
-        "Centralized Dashboard to Monitor All Inquiries"
+        "WhatsApp Auto-Reply for Inbound Inquiries",
+        "Automated Lead Qualification Flows",
+        "Instant Team Alerts via Email & SMS",
+        "Custom Workflow Automation & CRM Sync"
       ],
-      keyOutcomes: ["Instant 24/7 Response", "Zero Dropped Inquiries", "Automatic Alerts"],
+      keyOutcomes: ["24/7 Auto-Response", "No Dropped Leads", "Fully Automated Workflows"],
       borderHover: "hover:border-indigo-500/50",
-      ctaText: "Inquire on Automations"
+      ctaText: "Inquire on Automation"
     }
   ];
 
@@ -147,14 +147,14 @@ export default function WhatWeBuildSection() {
             <div className="inline-flex items-center gap-2 border border-border-custom bg-surface px-3 py-1 rounded-full mb-4">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span className="text-[10px] uppercase tracking-widest font-mono font-bold text-foreground">
-                [01] &bull; Core Service Offerings
+                [01] &bull; IT Solutions & Services
               </span>
             </div>
             <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-3 text-foreground">
-              <SplitText text="Clear Services. Real Business Outcomes." type="words" />
+              <SplitText text="Four Services. One IT Partner. Real Results." type="words" />
             </h2>
             <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed">
-              We specialize in four focused growth services. Every project is built from scratch with dedicated personal execution.
+              As a trusted IT solutions provider, we focus on four core areas where businesses see the biggest return. Every project is built from scratch by our team — no templates, no outsourcing.
             </p>
           </div>
 
@@ -163,7 +163,7 @@ export default function WhatWeBuildSection() {
             onClick={handleNavigateToContact}
             className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-mono font-bold text-foreground hover:underline self-start md:self-end shrink-0"
           >
-            <span>Request Architecture Quote</span>
+            <span>Get a Free IT Consultation</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
           </a>
         </div>
