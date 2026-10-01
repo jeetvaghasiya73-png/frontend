@@ -20,6 +20,15 @@ import {
   MessageCircle,
   Mail,
   Sparkles,
+  ChevronDown,
+  ChevronRight,
+  Search,
+  Target,
+  Zap,
+  Layers,
+  MapPin,
+  ShoppingCart,
+  ArrowRight,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -27,6 +36,23 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
+  const [mobileServicesExpanded, setMobileServicesExpanded] = useState(false);
+  const dropdownTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnterServices = () => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+      dropdownTimeoutRef.current = null;
+    }
+    setServicesDropdownOpen(true);
+  };
+
+  const handleMouseLeaveServices = () => {
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setServicesDropdownOpen(false);
+    }, 150);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -106,10 +132,10 @@ export default function Navbar() {
     {
       id: "02",
       name: "Services",
-      href: "/#services",
-      desc: "Autonomous AI Agents & Pipelines",
+      href: "/services/seo",
+      desc: "SEO Topical Authority & AI Automation",
       icon: Bot,
-      badge: "Core AI",
+      badge: "SEO Hub",
     },
     {
       id: "03",
@@ -142,6 +168,59 @@ export default function Navbar() {
       desc: "Security, Tech Stack & Timelines",
       icon: HelpCircle,
       badge: "Knowledge",
+    },
+  ];
+
+  // Most linked core SEO landing pages for the Services dropdown
+  const mainSeoDropdownLinks = [
+    {
+      name: "All SEO Services",
+      href: "/services/seo",
+      desc: "Full service directory & topical authority cluster",
+      badge: "Hub",
+      icon: Search,
+    },
+    {
+      name: "Local SEO Services",
+      href: "/services/seo/local-seo-services",
+      desc: "Google Maps, local 3-pack & verified citations",
+      badge: "Popular",
+      icon: Target,
+    },
+    {
+      name: "Technical SEO Audit",
+      href: "/services/seo/seo-audit-services",
+      desc: "Core Web Vitals, crawl budget & code diagnostics",
+      badge: "Core",
+      icon: Zap,
+    },
+    {
+      name: "E-Commerce SEO",
+      href: "/services/seo/ecommerce-seo-services",
+      desc: "Shopify & custom store catalog revenue growth",
+      badge: "Retail",
+      icon: ShoppingCart,
+    },
+    {
+      name: "On-Page SEO Services",
+      href: "/services/seo/on-page-seo-services",
+      desc: "Search intent matching, schemas & internal linking",
+      badge: "On-Page",
+      icon: Layers,
+    },
+    {
+      name: "Professional SEO",
+      href: "/services/seo/professional-seo-services",
+      desc: "Full-funnel enterprise organic growth roadmap",
+      badge: "Enterprise",
+      icon: TrendingUp,
+    },
+    {
+      name: "25 Indian City Directory",
+      href: "/services/seo#indian-cities-directory",
+      desc: "Local SEO across Mumbai, Delhi, Bengaluru & more",
+      badge: "25 Cities",
+      icon: MapPin,
     },
   ];
 
@@ -193,20 +272,134 @@ export default function Navbar() {
 
           {/* Center: Desktop Nav Links (MadeWithGSAP Style) */}
           <nav className="hidden md:flex items-center gap-5 lg:gap-6 text-xs font-medium tracking-wider uppercase">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                onClick={(e) => handleHashLink(e, link.href)}
-                className="text-secondary-custom hover:text-foreground relative py-1 transition-colors duration-200 group flex items-center gap-1.5"
-              >
-                {link.badge === "3D Film" && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse inline-block shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
-                )}
-                <span>{link.name}</span>
-                <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-foreground group-hover:w-full transition-all duration-300" />
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              if (link.name === "Services") {
+                return (
+                  <div
+                    key={link.name}
+                    className="relative py-1"
+                    onMouseEnter={handleMouseEnterServices}
+                    onMouseLeave={handleMouseLeaveServices}
+                  >
+                    <Link
+                      href="/services/seo"
+                      className={`text-secondary-custom hover:text-foreground relative transition-colors duration-200 group flex items-center gap-1 cursor-pointer ${
+                        servicesDropdownOpen ? "text-foreground" : ""
+                      }`}
+                    >
+                      <span>{link.name}</span>
+                      <ChevronDown
+                        className={`w-3 h-3 text-secondary-custom transition-transform duration-200 ${
+                          servicesDropdownOpen ? "rotate-180 text-foreground" : "group-hover:text-foreground"
+                        }`}
+                      />
+                      <span
+                        className={`absolute bottom-0 left-0 h-[1px] bg-foreground transition-all duration-300 ${
+                          servicesDropdownOpen ? "w-full" : "w-0 group-hover:w-full"
+                        }`}
+                      />
+                    </Link>
+
+                    {/* Desktop Mega Dropdown */}
+                    {servicesDropdownOpen && (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-[560px] pointer-events-auto animate-in fade-in-0 zoom-in-95 duration-150 z-50">
+                        <div className="rounded-2xl border border-border-custom bg-background/95 dark:bg-[#0c0d12]/95 backdrop-blur-2xl shadow-2xl p-4 text-left normal-case tracking-normal">
+                          {/* Header */}
+                          <div className="flex items-center justify-between px-2.5 pb-2.5 mb-2 border-b border-border-custom/50">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                              <span className="text-[11px] font-mono font-semibold tracking-wider uppercase text-foreground">
+                                Organic Search &amp; Growth Solutions
+                              </span>
+                            </div>
+                            <Link
+                              href="/services/seo"
+                              onClick={() => setServicesDropdownOpen(false)}
+                              className="text-[11px] font-mono font-semibold text-emerald-500 hover:underline flex items-center gap-1"
+                            >
+                              <span>All SEO Services</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </Link>
+                          </div>
+
+                          {/* 2-Column Grid of Most Linked Pages */}
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {mainSeoDropdownLinks.map((item) => {
+                              const ItemIcon = item.icon;
+                              return (
+                                <Link
+                                  key={item.name}
+                                  href={item.href}
+                                  onClick={() => setServicesDropdownOpen(false)}
+                                  className="group flex items-start gap-2.5 p-2 rounded-xl border border-transparent hover:border-border-custom hover:bg-surface/50 transition-all duration-150"
+                                >
+                                  <div className="w-7 h-7 rounded-lg bg-surface border border-border-custom/60 flex items-center justify-center text-secondary-custom group-hover:text-emerald-500 group-hover:border-emerald-500/40 transition-colors shrink-0 mt-0.5">
+                                    <ItemIcon className="w-3.5 h-3.5" />
+                                  </div>
+                                  <div className="flex flex-col min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-xs font-semibold text-foreground group-hover:text-emerald-500 transition-colors truncate">
+                                        {item.name}
+                                      </span>
+                                      {item.badge && (
+                                        <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-surface border border-border-custom/60 text-secondary-custom shrink-0">
+                                          {item.badge}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="text-[10px] text-secondary-custom leading-tight line-clamp-1">
+                                      {item.desc}
+                                    </span>
+                                  </div>
+                                </Link>
+                              );
+                            })}
+                          </div>
+
+                          {/* Bottom Quick Row */}
+                          <div className="mt-2.5 pt-2.5 border-t border-border-custom/50 px-2 flex items-center justify-between text-xs">
+                            <Link
+                              href="/#services"
+                              onClick={(e) => {
+                                setServicesDropdownOpen(false);
+                                handleHashLink(e, "/#services");
+                              }}
+                              className="text-secondary-custom hover:text-foreground text-[11px] font-mono flex items-center gap-1.5 transition-colors"
+                            >
+                              <Bot className="w-3.5 h-3.5 text-indigo-400" />
+                              <span>Autonomous AI &amp; Software</span>
+                            </Link>
+                            <Link
+                              href="/contact?service=seo"
+                              onClick={() => setServicesDropdownOpen(false)}
+                              className="text-emerald-500 font-semibold text-[11px] hover:underline flex items-center gap-1"
+                            >
+                              <span>Request SEO Strategy</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  onClick={(e) => handleHashLink(e, link.href)}
+                  className="text-secondary-custom hover:text-foreground relative py-1 transition-colors duration-200 group flex items-center gap-1.5"
+                >
+                  {link.badge === "3D Film" && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse inline-block shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+                  )}
+                  <span>{link.name}</span>
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-foreground group-hover:w-full transition-all duration-300" />
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Right: Theme Toggle & Get Quote CTA Button */}
@@ -321,6 +514,91 @@ export default function Navbar() {
               <nav className="flex flex-col gap-2">
                 {navLinks.map((link) => {
                   const Icon = link.icon;
+
+                  if (link.name === "Services") {
+                    return (
+                      <div
+                        key={link.name}
+                        className="flex flex-col rounded-xl border border-border-custom/40 bg-surface/40 overflow-hidden"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setMobileServicesExpanded(!mobileServicesExpanded)}
+                          className="w-full group flex items-center justify-between p-3 text-left transition-all duration-200"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg border border-border-custom/60 bg-surface/80 flex items-center justify-center text-foreground group-hover:border-accent-custom/50 group-hover:text-accent-custom transition-colors">
+                              <Icon className="w-4 h-4" />
+                            </div>
+                            <div className="flex flex-col text-left">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-[10px] text-secondary-custom font-semibold">
+                                  {link.id}
+                                </span>
+                                <span className="text-sm font-semibold text-foreground tracking-tight group-hover:text-accent-custom transition-colors">
+                                  {link.name}
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-secondary-custom line-clamp-1 font-sans">
+                                SEO Services &amp; AI Automation
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-surface border border-border-custom text-emerald-500 font-semibold">
+                              SEO Hub
+                            </span>
+                            <ChevronDown
+                              className={`w-4 h-4 text-secondary-custom transition-transform duration-200 ${
+                                mobileServicesExpanded ? "rotate-180 text-foreground" : ""
+                              }`}
+                            />
+                          </div>
+                        </button>
+
+                        {/* Collapsible Mobile Sub-Menu */}
+                        {mobileServicesExpanded && (
+                          <div className="px-3 pb-3 pt-1 border-t border-border-custom/30 space-y-1.5 animate-in fade-in-0 duration-200">
+                            {mainSeoDropdownLinks.map((subItem) => {
+                              const SubIcon = subItem.icon;
+                              return (
+                                <Link
+                                  key={subItem.name}
+                                  href={subItem.href}
+                                  onClick={() => setMobileMenuOpen(false)}
+                                  className="flex items-center justify-between p-2 rounded-lg bg-surface/60 border border-border-custom/30 hover:border-emerald-500/40 text-xs font-medium text-foreground transition-colors"
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <SubIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                                    <span className="truncate">{subItem.name}</span>
+                                  </div>
+                                  <span className="text-[9px] font-mono text-secondary-custom uppercase shrink-0">
+                                    {subItem.badge}
+                                  </span>
+                                </Link>
+                              );
+                            })}
+                            <Link
+                              href="/#services"
+                              onClick={(e) => {
+                                setMobileMenuOpen(false);
+                                handleHashLink(e, "/#services");
+                              }}
+                              className="flex items-center justify-between p-2 rounded-lg bg-surface/30 border border-border-custom/20 text-xs font-medium text-secondary-custom hover:text-foreground transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Bot className="w-3.5 h-3.5 text-indigo-400" />
+                                <span>Autonomous AI &amp; Software</span>
+                              </div>
+                              <ArrowRight className="w-3 h-3 text-secondary-custom" />
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
                   return (
                     <Link
                       key={link.name}
