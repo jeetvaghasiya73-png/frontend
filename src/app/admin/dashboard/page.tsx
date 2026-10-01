@@ -1664,10 +1664,8 @@ export default function SuperAdminDashboard() {
       {/* ── Database Explorer Data Table ── */}
       <section className="crm-card-flat flex flex-col w-full max-w-full overflow-visible relative">
         
-        {/* Toolbar & Segmented Tabs */}
-        <div className="p-3.5 sm:p-4 flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-3 max-w-full relative z-20" style={{ borderBottom: "1px solid var(--dash-border)" }}>
-          
-          {/* Segmented View Tabs - ALWAYS IN ONE ROW */}
+        {/* Tier 1: Segmented Tabs Bar */}
+        <div className="px-3.5 sm:px-4 py-2.5 flex items-center justify-between gap-3 max-w-full overflow-x-auto scrollbar-none" style={{ borderBottom: "1px solid var(--dash-border)", background: "rgba(255,255,255,0.02)" }}>
           <div className="flex flex-nowrap items-center gap-1 p-1 max-w-full overflow-x-auto scrollbar-none shrink-0" style={{ background: "var(--dash-surface-alt)", border: "1px solid var(--dash-border)", borderRadius: "var(--dash-btn-radius)" }}>
             <button
               onClick={() => { setActiveTableTab("scraped"); setTablePage(1); }}
@@ -1738,61 +1736,62 @@ export default function SuperAdminDashboard() {
               </span>
             </button>
           </div>
+        </div>
 
-          {/* Search & Action Buttons - ALL IN ONE CLEAN RESPONSIVE ROW */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full 2xl:w-auto">
-            <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--dash-text-muted)" }} />
-              <input
-                type="text"
-                placeholder="Search leads..."
-                value={tableSearch}
-                onChange={(e) => {
-                  setTableSearch(e.target.value);
-                  setTablePage(1);
-                }}
-                className="crm-input w-full !pl-9 pr-12 py-1.5 text-xs"
-              />
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono px-1 py-0.5" style={{ color: "var(--dash-text-muted)", border: "1px solid var(--dash-border)", borderRadius: "var(--dash-badge-radius)" }}>
-                ⌘K
-              </span>
-            </div>
+        {/* Tier 2: Search & Action Buttons Toolbar */}
+        <div className="p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 max-w-full relative z-20" style={{ borderBottom: "1px solid var(--dash-border)" }}>
+          <div className="relative flex-1 min-w-[200px] max-w-md w-full">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--dash-text-muted)" }} />
+            <input
+              type="text"
+              placeholder="Search leads..."
+              value={tableSearch}
+              onChange={(e) => {
+                setTableSearch(e.target.value);
+                setTablePage(1);
+              }}
+              className="crm-input w-full !pl-9 pr-12 py-2 text-xs"
+            />
+            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono px-1 py-0.5" style={{ color: "var(--dash-text-muted)", border: "1px solid var(--dash-border)", borderRadius: "var(--dash-badge-radius)" }}>
+              ⌘K
+            </span>
+          </div>
 
-            {/* Action Buttons: ALWAYS in ONE single row on mobile & desktop */}
-            <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap shrink-0">
+          {/* Action Buttons: Neatly aligned with ample spacing */}
+          <div className="flex items-center gap-2 w-full md:w-auto flex-wrap sm:flex-nowrap shrink-0 justify-between md:justify-end">
+            <button
+              type="button"
+              className="crm-btn-secondary flex-1 sm:flex-none inline-flex items-center justify-center gap-1 sm:gap-1.5 px-3 py-2 text-xs whitespace-nowrap"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
+              <span>Filters</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="crm-btn-secondary flex-1 sm:flex-none inline-flex items-center justify-center gap-1 sm:gap-1.5 px-3 py-2 text-xs whitespace-nowrap"
+            >
+              <Download className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
+              <span>Export</span>
+            </button>
+
+            {/* Multi-Option Deletion Menu */}
+            <div className="relative flex-1 sm:flex-none z-30 shrink-0">
               <button
                 type="button"
-                className="crm-btn-secondary flex-1 sm:flex-none inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs whitespace-nowrap"
+                onClick={() => setShowDeleteMenu(!showDeleteMenu)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-sm bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer whitespace-nowrap shrink-0"
               >
-                <SlidersHorizontal className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
-                <span>Filters</span>
+                <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap font-medium">Delete Options</span>
+                {selectedRows.size > 0 && (
+                  <span className="bg-white/20 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-xs shrink-0">
+                    {selectedRows.size}
+                  </span>
+                )}
+                <ChevronDown className="w-3.5 h-3.5 opacity-80 shrink-0" />
               </button>
-
-              <button
-                type="button"
-                onClick={handleExportCSV}
-                className="crm-btn-secondary flex-1 sm:flex-none inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs whitespace-nowrap"
-              >
-                <Download className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
-                <span>Export</span>
-              </button>
-
-              {/* Multi-Option Deletion Menu */}
-              <div className="relative flex-1 sm:flex-none z-30 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteMenu(!showDeleteMenu)}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-sm bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer whitespace-nowrap shrink-0"
-                >
-                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                  <span className="whitespace-nowrap font-medium">Delete Options</span>
-                  {selectedRows.size > 0 && (
-                    <span className="bg-white/20 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-xs shrink-0">
-                      {selectedRows.size}
-                    </span>
-                  )}
-                  <ChevronDown className="w-3.5 h-3.5 opacity-80 shrink-0" />
-                </button>
 
               {showDeleteMenu && (
                 <>
@@ -1867,7 +1866,6 @@ export default function SuperAdminDashboard() {
             </div>
           </div>
         </div>
-      </div>
 
         {/* Desktop / Tablet Lead Table Content */}
         <div className="hidden md:block w-full overflow-x-auto">

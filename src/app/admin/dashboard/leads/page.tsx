@@ -1412,11 +1412,9 @@ export default function LeadsManager() {
       {/* Segmented Filter Bar & Lead Table Container */}
       <section className="crm-card p-0 flex flex-col w-full max-w-full overflow-visible relative">
         
-        {/* Controls Deck */}
-        <div className="p-3 sm:p-4 border-b border-[var(--dash-border)] flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-3 w-full max-w-full relative z-20">
-          
-          {/* Segmented View Tabs */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-1 p-1 rounded-md bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] max-w-full overflow-x-auto scrollbar-none shrink-0">
+        {/* Tier 1: Segmented View Tabs */}
+        <div className="px-3 sm:px-4 py-2.5 border-b border-[var(--dash-border)] flex items-center justify-between gap-3 w-full max-w-full overflow-x-auto scrollbar-none bg-[var(--dash-surface-alt)]/30">
+          <div className="flex items-center gap-1.5 p-1 rounded-md bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] shrink-0">
             <button
               onClick={() => setSourceFilter("all")}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 ${
@@ -1471,70 +1469,72 @@ export default function LeadsManager() {
               )}
             </button>
           </div>
+        </div>
 
-          {/* Search & Status Controls */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full 2xl:w-auto">
-            <div className="relative w-full sm:w-60 md:w-64 shrink">
-              <Search className="w-3.5 h-3.5 text-[var(--dash-text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search name, email, city..."
-                value={searchQuery}
+        {/* Tier 2: Search, Filter, and Action Controls */}
+        <div className="p-3 sm:p-4 border-b border-[var(--dash-border)] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 w-full max-w-full relative z-20">
+          {/* Search Box - Flexibly fills space with a comfortable max width */}
+          <div className="relative flex-1 min-w-[200px] max-w-md w-full">
+            <Search className="w-3.5 h-3.5 text-[var(--dash-text-muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search name, email, city..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="crm-input !pl-9 py-2 text-xs w-full"
+            />
+          </div>
+
+          {/* Action Row: Status Filter & Delete Options with plenty of breathing room */}
+          <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0 justify-between md:justify-end">
+            <div className="relative flex-1 md:flex-none min-w-[150px] sm:min-w-[170px]">
+              <select
+                value={statusFilter}
                 onChange={(e) => {
-                  setSearchQuery(e.target.value);
+                  const newStatus = e.target.value;
+                  setStatusFilter(newStatus);
                   setCurrentPage(1);
+                  fetchLeads(1, pageSize, newStatus);
                 }}
-                className="crm-input !pl-9 py-1.5 text-xs w-full"
-              />
+                className="crm-input !pl-8 !pr-8 py-2 text-xs font-semibold cursor-pointer appearance-none w-full"
+              >
+                <option value="all">All Status</option>
+                <option value="message_sent">💬 Messages Sent (All)</option>
+                <option value="whatsapp_sent">📱 WhatsApp Sent</option>
+                <option value="email_sent">✉️ Email Sent</option>
+                <option value="pending">⏳ Pending (Not Contacted)</option>
+                <option value="interested">⭐ Interested</option>
+                <option value="qualified">Qualified</option>
+                <option value="failed">Failed</option>
+              </select>
+              <Filter className="w-3.5 h-3.5 text-[var(--dash-text-muted)] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-[var(--dash-text-muted)] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
-            {/* Action Row: Status Filter & Delete Options in ONE row on mobile */}
-            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-              <div className="relative flex-1 sm:flex-none sm:w-auto min-w-[145px] shrink-0">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => {
-                    const newStatus = e.target.value;
-                    setStatusFilter(newStatus);
-                    setCurrentPage(1);
-                    fetchLeads(1, pageSize, newStatus);
-                  }}
-                  className="crm-input !pl-8 !pr-8 py-1.5 text-xs font-semibold cursor-pointer appearance-none w-full sm:w-auto"
-                >
-                  <option value="all">All Status</option>
-                  <option value="message_sent">💬 Messages Sent (All)</option>
-                  <option value="whatsapp_sent">📱 WhatsApp Sent</option>
-                  <option value="email_sent">✉️ Email Sent</option>
-                  <option value="pending">⏳ Pending (Not Contacted)</option>
-                  <option value="interested">⭐ Interested</option>
-                  <option value="qualified">Qualified</option>
-                  <option value="failed">Failed</option>
-                </select>
-                <Filter className="w-3.5 h-3.5 text-[var(--dash-text-muted)] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <ChevronDown className="w-3.5 h-3.5 text-[var(--dash-text-muted)] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
+            {/* Multi-Option Deletion Menu */}
+            <div className="relative flex-1 md:flex-none shrink-0 z-30">
+              <button
+                type="button"
+                onClick={() => setShowDeleteMenu(!showDeleteMenu)}
+                className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer w-full md:w-auto shrink-0 whitespace-nowrap"
+              >
+                <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap font-semibold">Delete Options</span>
+                {selectedLeadIds.size > 0 && (
+                  <span className="bg-white/25 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-full shrink-0">
+                    {selectedLeadIds.size}
+                  </span>
+                )}
+                <ChevronDown className="w-3.5 h-3.5 opacity-80 shrink-0 ml-0.5" />
+              </button>
 
-              {/* Multi-Option Deletion Menu */}
-              <div className="relative flex-1 sm:flex-none sm:w-auto z-30 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteMenu(!showDeleteMenu)}
-                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer w-full sm:w-auto shrink-0 whitespace-nowrap"
-                >
-                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                  <span className="whitespace-nowrap font-medium">Delete Options</span>
-                  {selectedLeadIds.size > 0 && (
-                    <span className="bg-white/20 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-full shrink-0">
-                      {selectedLeadIds.size}
-                    </span>
-                  )}
-                  <ChevronDown className="w-3.5 h-3.5 opacity-80 shrink-0 ml-0.5" />
-                </button>
-
-                {showDeleteMenu && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowDeleteMenu(false)} />
-                    <div className="absolute right-0 top-full mt-1.5 w-72 sm:w-80 max-w-[90vw] bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-xl shadow-2xl z-50 overflow-y-auto max-h-[85vh] py-1 text-xs animate-fadeIn">
+              {showDeleteMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowDeleteMenu(false)} />
+                  <div className="absolute right-0 top-full mt-1.5 w-72 sm:w-80 max-w-[90vw] bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-xl shadow-2xl z-50 overflow-y-auto max-h-[85vh] py-1 text-xs animate-fadeIn">
                       {/* Clear Selected Chats */}
                       <button
                         type="button"
@@ -1635,7 +1635,6 @@ export default function LeadsManager() {
               </div>
             </div>
           </div>
-        </div>
 
         {/* Lead Table (Desktop / Tablet) */}
         <div className="hidden md:block w-full overflow-x-auto">
