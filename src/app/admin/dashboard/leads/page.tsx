@@ -89,9 +89,14 @@ export default function LeadsManager() {
   const [mounted, setMounted] = useState(false);
   const [allLeads, setAllLeads] = useState<NormalizedLead[]>([]);
   const [totalLeadsFromAPI, setTotalLeadsFromAPI] = useState<number>(0);
+  const [totalScrapedCount, setTotalScrapedCount] = useState<number>(0);
+  const [totalInquiriesCount, setTotalInquiriesCount] = useState<number>(0);
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
+  const sourceFilterRef = useRef<SourceFilter>(sourceFilter);
+  sourceFilterRef.current = sourceFilter;
+  const isMountedRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
-  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(20);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -443,8 +448,17 @@ export default function LeadsManager() {
         };
       });
 
-      const merged = [...normalizedInquiries, ...normalizedScraped];
-      merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const currentFilter = sourceFilterRef.current;
+      let pageLeads: NormalizedLead[] = [];
+      if (currentFilter === "inquiry") {
+        pageLeads = normalizedInquiries;
+      } else if (pageNum === 1 && currentFilter === "all") {
+        pageLeads = [...normalizedInquiries, ...normalizedScraped];
+      } else {
+        pageLeads = normalizedScraped;
+      }
+
+      pageLeads.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       // Deduplicate by phone and email across tables so 1 contact = exactly 1 row
       const seenKeys = new Set<string>();
@@ -452,7 +466,7 @@ export default function LeadsManager() {
       const seenEmailMap = new Map<string, NormalizedLead>();
       const uniqueLeads: NormalizedLead[] = [];
 
-      for (const lead of merged) {
+      for (const lead of pageLeads) {
         const key = `${lead.source}_${lead.rawId}`;
         if (seenKeys.has(key)) continue;
         seenKeys.add(key);
@@ -485,6 +499,8 @@ export default function LeadsManager() {
       }
 
       setAllLeads(uniqueLeads);
+      setTotalScrapedCount(scrapedTotal || 0);
+      setTotalInquiriesCount(inquiryData.length || 0);
       setTotalLeadsFromAPI(scrapedTotal || uniqueLeads.length);
     } catch (err) {
       console.error("Failed to load leads:", err);
@@ -533,9 +549,14 @@ export default function LeadsManager() {
   }, [fetchLeads, debouncedFetchLeads]);
 
   useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      return;
+    }
     setCurrentPage(1);
     setStatusFilter("all");
-  }, [sourceFilter]);
+    fetchLeads(1, pageSize);
+  }, [sourceFilter, pageSize, fetchLeads]);
 
   const handleStatusUpdate = async (leadId: number, newStatus: string) => {
     setUpdatingId(leadId);
@@ -965,8 +986,9 @@ export default function LeadsManager() {
 
   // 3. Delete ALL Database Leads
   const handleDeleteAllLeads = async () => {
-    if (allLeads.length === 0) return;
-    if (!confirm(`🚨 CRITICAL ACTION:\nAre you sure you want to PERMANENTLY DELETE ALL ${allLeads.length} leads from the database?\nThis action cannot be undone!`)) return;
+    const totalCount = (totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount;
+    if (totalCount === 0) return;
+    if (!confirm(`🚨 CRITICAL ACTION:\nAre you sure you want to PERMANENTLY DELETE ALL ${totalCount} leads from the database?\nThis action cannot be undone!`)) return;
 
     try {
       await Promise.allSettled([
@@ -1187,14 +1209,30 @@ export default function LeadsManager() {
     return result;
   }, [allLeads, sourceFilter, statusFilter, searchQuery]);
 
-  const totalPages = Math.max(1, Math.ceil((totalLeadsFromAPI || filteredLeads.length) / pageSize));
-  const paginatedLeads = useMemo(() => {
-    if (allLeads.length <= pageSize) {
-      return filteredLeads;
+  const currentTotal = useMemo(() => {
+    if (sourceFilter === "inquiry") {
+      return totalInquiriesCount;
     }
-    const start = (currentPage - 1) * pageSize;
-    return filteredLeads.slice(start, start + pageSize);
-  }, [allLeads.length, filteredLeads, currentPage, pageSize]);
+    if (sourceFilter === "scraped") {
+      return totalScrapedCount || totalLeadsFromAPI;
+    }
+    return (totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount;
+  }, [sourceFilter, totalScrapedCount, totalInquiriesCount, totalLeadsFromAPI]);
+
+  const totalPages = Math.max(1, Math.ceil(currentTotal / pageSize));
+
+  const paginatedLeads = useMemo(() => {
+    if (sourceFilter === "inquiry") {
+      const start = (currentPage - 1) * pageSize;
+      return filteredLeads.slice(start, start + pageSize);
+    }
+    // For "all" and "scraped", data is ALREADY server-paginated for currentPage!
+    // If page 1 has inquiries merged in, slice to pageSize to maintain 20 items per page
+    if (currentPage === 1 && filteredLeads.length > pageSize) {
+      return filteredLeads.slice(0, pageSize);
+    }
+    return filteredLeads;
+  }, [filteredLeads, sourceFilter, currentPage, pageSize]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
@@ -1238,7 +1276,7 @@ export default function LeadsManager() {
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold tracking-tight text-[var(--dash-text)]">Leads Database</h1>
               <span className="px-2 py-0.5 rounded-md bg-[var(--dash-primary)] text-white font-bold text-xs font-mono">
-                {totalLeadsFromAPI || allLeads.length} Total
+                {(totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount} Total
               </span>
             </div>
             <p className="text-xs text-[var(--dash-text-muted)] mt-0.5">Manage, qualify, and inspect inbound &amp; outbound prospect records</p>
@@ -1299,7 +1337,7 @@ export default function LeadsManager() {
         <div className="crm-card p-3 sm:p-4 flex flex-col justify-between">
           <span className="text-[11px] sm:text-xs font-semibold text-[var(--dash-text-muted)] uppercase tracking-wider truncate">Total Prospects</span>
           <div className="mt-1 sm:mt-2 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">{totalLeadsFromAPI || allLeads.length}</span>
+            <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">{(totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount}</span>
             <span className="text-[10px] sm:text-xs font-bold text-emerald-500 bg-emerald-500/10 px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">+14.2%</span>
           </div>
         </div>
@@ -1308,7 +1346,7 @@ export default function LeadsManager() {
           <span className="text-[11px] sm:text-xs font-semibold text-[var(--dash-text-muted)] uppercase tracking-wider truncate">Outbound Scraped</span>
           <div className="mt-1 sm:mt-2 flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">
-              {allLeads.filter(l => !isOrganicInbound(l)).length}
+              {totalScrapedCount || totalLeadsFromAPI}
             </span>
             <span className="text-[10px] sm:text-xs font-bold text-indigo-500 bg-indigo-500/10 px-1.5 sm:px-2 py-0.5 rounded-md border border-indigo-500/20 shrink-0 truncate">Google Maps</span>
           </div>
@@ -1318,7 +1356,7 @@ export default function LeadsManager() {
           <span className="text-[11px] sm:text-xs font-semibold text-[var(--dash-text-muted)] uppercase tracking-wider truncate">Inbound Inquiries</span>
           <div className="mt-1 sm:mt-2 flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">
-              {allLeads.filter(l => isOrganicInbound(l)).length}
+              {totalInquiriesCount}
             </span>
             <span className="text-[10px] sm:text-xs font-bold text-purple-500 bg-purple-500/10 px-1.5 sm:px-2 py-0.5 rounded-md border border-purple-500/20 shrink-0 truncate">Web Forms</span>
           </div>
@@ -1351,7 +1389,7 @@ export default function LeadsManager() {
                   : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
               }`}
             >
-              All Leads ({allLeads.length})
+              All Leads ({(totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount})
             </button>
             <button
               onClick={() => setSourceFilter("scraped")}
@@ -1361,7 +1399,7 @@ export default function LeadsManager() {
                   : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
               }`}
             >
-              Outbound Scraped ({allLeads.filter(l => !isOrganicInbound(l)).length})
+              Outbound Scraped ({totalScrapedCount || totalLeadsFromAPI})
             </button>
             <button
               onClick={() => setSourceFilter("inquiry")}
@@ -1371,7 +1409,7 @@ export default function LeadsManager() {
                   : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
               }`}
             >
-              Inbound Inquiries ({allLeads.filter(l => isOrganicInbound(l)).length})
+              Inbound Inquiries ({totalInquiriesCount})
             </button>
           </div>
 
@@ -1526,7 +1564,7 @@ export default function LeadsManager() {
                           <span className="truncate">Delete ALL Leads</span>
                         </span>
                         <span className="font-bold font-mono text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded shadow-xs shrink-0 ml-2">
-                          ALL ({allLeads.length})
+                          ALL ({(totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount})
                         </span>
                       </button>
                     </div>
@@ -1874,9 +1912,9 @@ export default function LeadsManager() {
         )}
 
         {/* Pagination Controls */}
-        {filteredLeads.length > 0 && (() => {
-          const startItem = (currentPage - 1) * pageSize + 1;
-          const endItem = Math.min(currentPage * pageSize, totalLeadsFromAPI || filteredLeads.length);
+        {(currentTotal > 0 || filteredLeads.length > 0) && (() => {
+          const startItem = currentTotal === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+          const endItem = Math.min(currentPage * pageSize, currentTotal);
           // Smart sliding window pagination: currentPage - 2 to currentPage + 2
           const getPageNumbers = () => {
             const pages: (number | string)[] = [];
@@ -1920,7 +1958,7 @@ export default function LeadsManager() {
             <div className="hidden sm:flex items-center gap-3 flex-wrap">
               <span className="text-xs text-slate-500 dark:text-neutral-400">
                 Showing <span className="font-semibold text-slate-900 dark:text-white">{startItem}-{endItem}</span> of{" "}
-                <span className="font-semibold text-slate-900 dark:text-white">{totalLeadsFromAPI || filteredLeads.length}</span> leads
+                <span className="font-semibold text-slate-900 dark:text-white">{currentTotal}</span> leads
               </span>
 
               <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-neutral-400">
@@ -1987,7 +2025,7 @@ export default function LeadsManager() {
             <div className="flex sm:hidden flex-col gap-2.5 w-full">
               <div className="flex items-center justify-between text-xs text-slate-500 dark:text-neutral-400">
                 <span>
-                  Showing <strong className="font-semibold text-slate-900 dark:text-white">{startItem}-{endItem}</strong> of <strong className="font-semibold text-slate-900 dark:text-white">{totalLeadsFromAPI || filteredLeads.length}</strong>
+                  Showing <strong className="font-semibold text-slate-900 dark:text-white">{startItem}-{endItem}</strong> of <strong className="font-semibold text-slate-900 dark:text-white">{currentTotal}</strong>
                 </span>
                 <div className="flex items-center gap-1 text-[11px]">
                   <span>Limit:</span>
