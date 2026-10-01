@@ -35,8 +35,10 @@ import {
   ChevronRight,
   ChevronUp,
   Layers,
-  ExternalLink
+  ExternalLink,
+  MapPin
 } from "lucide-react";
+import { citiesByRegion } from "@/app/services/seo/seo-cities-data";
 
 export default function SeoMainPage() {
   // State for interactive SERP tracker simulator (kept from original as it's highly effective)
@@ -863,6 +865,121 @@ export default function SeoMainPage() {
                     <div>
                       <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">{item.name}</div>
                       <div className="text-[11px] text-secondary-custom leading-tight">{item.desc}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* SECTION 7.6: SEO SERVICES ACROSS MAJOR INDIAN CITIES */}
+        <section id="indian-cities-directory" className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-28">
+          <div className="mb-12 text-center max-w-3xl mx-auto">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-3">
+              Regional Local Search Directory
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-foreground mb-4">
+              SEO Services Across Major Indian Cities
+            </h2>
+            <p className="text-sm sm:text-base text-secondary-custom leading-relaxed">
+              Explore our city-specific SEO services tailored for 25 major commercial and industrial hubs across India. Each page details regional business ecosystems, local search dynamics, sector-specific opportunities, and data-backed organic strategies.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            {/* REGION 1: WEST INDIA */}
+            <div className="seo-directory-group">
+              <div className="flex items-center justify-between mb-4">
+                <span className="seo-directory-badge">West India</span>
+                <span className="text-xs font-mono text-secondary-custom">{citiesByRegion.westIndia.length} Cities</span>
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-4">Commercial &amp; Trade Hubs</h3>
+              <div className="seo-directory-list">
+                {citiesByRegion.westIndia.map(city => (
+                  <Link key={city.slug} href={`/services/seo/${city.slug}`} className="seo-directory-item group">
+                    <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
+                    <div>
+                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">
+                        {city.primaryKeyword}
+                      </div>
+                      <div className="text-[11px] text-secondary-custom leading-tight">
+                        {city.city}, {city.state}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* REGION 2: NORTH INDIA */}
+            <div className="seo-directory-group">
+              <div className="flex items-center justify-between mb-4">
+                <span className="seo-directory-badge">North India</span>
+                <span className="text-xs font-mono text-secondary-custom">{citiesByRegion.northIndia.length} Cities</span>
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-4">NCR &amp; Northern Capitals</h3>
+              <div className="seo-directory-list">
+                {citiesByRegion.northIndia.map(city => (
+                  <Link key={city.slug} href={`/services/seo/${city.slug}`} className="seo-directory-item group">
+                    <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
+                    <div>
+                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">
+                        {city.primaryKeyword}
+                      </div>
+                      <div className="text-[11px] text-secondary-custom leading-tight">
+                        {city.city}, {city.state}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* REGION 3: SOUTH INDIA */}
+            <div className="seo-directory-group">
+              <div className="flex items-center justify-between mb-4">
+                <span className="seo-directory-badge">South India</span>
+                <span className="text-xs font-mono text-secondary-custom">{citiesByRegion.southIndia.length} Cities</span>
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-4">Tech &amp; Manufacturing Corridors</h3>
+              <div className="seo-directory-list">
+                {citiesByRegion.southIndia.map(city => (
+                  <Link key={city.slug} href={`/services/seo/${city.slug}`} className="seo-directory-item group">
+                    <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
+                    <div>
+                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">
+                        {city.primaryKeyword}
+                      </div>
+                      <div className="text-[11px] text-secondary-custom leading-tight">
+                        {city.city}, {city.state}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* REGION 4: EAST & CENTRAL INDIA */}
+            <div className="seo-directory-group">
+              <div className="flex items-center justify-between mb-4">
+                <span className="seo-directory-badge">East &amp; Central India</span>
+                <span className="text-xs font-mono text-secondary-custom">{citiesByRegion.eastAndCentralIndia.length} Cities</span>
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-4">Emerging Tech &amp; Logistics Hubs</h3>
+              <div className="seo-directory-list">
+                {citiesByRegion.eastAndCentralIndia.map(city => (
+                  <Link key={city.slug} href={`/services/seo/${city.slug}`} className="seo-directory-item group">
+                    <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
+                    <div>
+                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">
+                        {city.primaryKeyword}
+                      </div>
+                      <div className="text-[11px] text-secondary-custom leading-tight">
+                        {city.city}, {city.state}
+                      </div>
                     </div>
                   </Link>
                 ))}
