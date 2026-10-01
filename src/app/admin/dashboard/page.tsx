@@ -42,6 +42,7 @@ import {
   UserCheck,
   Zap,
   ChevronRight,
+  ChevronLeft,
   UserPlus,
   User,
   FileSpreadsheet,
@@ -651,6 +652,22 @@ export default function SuperAdminDashboard() {
       pages.push(total);
     }
     return pages;
+  }, [tablePage, totalTablePages]);
+
+  // Compact 3-page numbers strictly for mobile responsive view (never wraps)
+  const mobilePageNumbers = useMemo(() => {
+    const total = totalTablePages;
+    const current = tablePage;
+    if (total <= 3) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    if (current <= 1) {
+      return [1, 2, 3];
+    }
+    if (current >= total) {
+      return [total - 2, total - 1, total];
+    }
+    return [current - 1, current, current + 1];
   }, [tablePage, totalTablePages]);
 
   const paginatedTable = useMemo(() => {
@@ -2065,8 +2082,10 @@ export default function SuperAdminDashboard() {
 
         {/* Table Footer & Pagination */}
         {tableDataset.length > 0 && (
-          <div className="p-4 flex flex-col sm:flex-row items-center justify-between gap-3 w-full" style={{ borderTop: "1px solid var(--dash-border)" }}>
-            <div className="flex items-center gap-3 flex-wrap">
+          <div className="p-3 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full" style={{ borderTop: "1px solid var(--dash-border)" }}>
+            
+            {/* Desktop / Tablet Info & Limit Bar (>= sm) */}
+            <div className="hidden sm:flex items-center gap-3 flex-wrap">
               <span className="text-xs" style={{ color: "var(--dash-text-secondary)" }}>
                 Showing <span className="font-semibold" style={{ color: "var(--dash-text)" }}>{(tablePage - 1) * tableLimit + 1}</span> to{" "}
                 <span className="font-semibold" style={{ color: "var(--dash-text)" }}>{Math.min(tablePage * tableLimit, totalLeadsForTab)}</span> of{" "}
@@ -2095,7 +2114,8 @@ export default function SuperAdminDashboard() {
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+            {/* Desktop / Tablet Sliding Window Pagination Buttons (>= sm) */}
+            <div className="hidden sm:flex items-center gap-1.5 flex-wrap justify-end">
               <button
                 disabled={tablePage === 1}
                 onClick={() => handleTablePageChange(Math.max(1, tablePage - 1))}
@@ -2134,6 +2154,78 @@ export default function SuperAdminDashboard() {
                 Next
               </button>
             </div>
+
+            {/* Mobile Responsive Pagination Bar (< sm) - NEVER WRAPS */}
+            <div className="flex sm:hidden flex-col gap-2.5 w-full">
+              <div className="flex items-center justify-between text-xs" style={{ color: "var(--dash-text-secondary)" }}>
+                <span>
+                  Showing <strong className="font-semibold" style={{ color: "var(--dash-text)" }}>{(tablePage - 1) * tableLimit + 1}</strong>–<strong className="font-semibold" style={{ color: "var(--dash-text)" }}>{Math.min(tablePage * tableLimit, totalLeadsForTab)}</strong> of <strong className="font-semibold" style={{ color: "var(--dash-text)" }}>{totalLeadsForTab}</strong>
+                </span>
+                <div className="flex items-center gap-1 text-[11px] text-[var(--dash-text-muted)]">
+                  <span>Limit:</span>
+                  <select
+                    value={tableLimit}
+                    onChange={(e) => {
+                      const newLimit = Number(e.target.value);
+                      setTableLimit(newLimit);
+                      setTablePage(1);
+                      if (activeTableTab === "scraped" || activeTableTab === "all") {
+                        fetchTableLeads(1, newLimit);
+                      }
+                    }}
+                    className="px-1.5 py-0.5 bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded text-xs font-semibold cursor-pointer text-[var(--dash-text)]"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Mobile Single-Row Controls (Prev + 3 numbered buttons + /55 + Next) */}
+              <div className="flex items-center justify-between gap-1 w-full pt-0.5">
+                <button
+                  disabled={tablePage === 1}
+                  onClick={() => handleTablePageChange(Math.max(1, tablePage - 1))}
+                  className="crm-btn-secondary text-xs px-2.5 py-2 flex items-center justify-center gap-1 font-semibold disabled:opacity-30 cursor-pointer shrink-0"
+                  title="Previous Page"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span className="text-[11px]">Prev</span>
+                </button>
+
+                <div className="flex items-center gap-1 justify-center flex-1 min-w-0">
+                  {mobilePageNumbers.map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => handleTablePageChange(p)}
+                      className={`text-xs min-w-[32px] h-8 px-1.5 rounded-md font-bold flex items-center justify-center cursor-pointer transition ${
+                        tablePage === p
+                          ? "crm-btn-primary shadow-xs"
+                          : "crm-btn-secondary"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                  <span className="text-[11px] font-mono shrink-0 ml-0.5" style={{ color: "var(--dash-text-muted)" }}>
+                    /{totalTablePages}
+                  </span>
+                </div>
+
+                <button
+                  disabled={tablePage >= totalTablePages}
+                  onClick={() => handleTablePageChange(tablePage + 1)}
+                  className="crm-btn-secondary text-xs px-2.5 py-2 flex items-center justify-center gap-1 font-semibold disabled:opacity-30 cursor-pointer shrink-0"
+                  title="Next Page"
+                >
+                  <span className="text-[11px]">Next</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
           </div>
         )}
       </section>

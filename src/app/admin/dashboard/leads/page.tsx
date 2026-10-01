@@ -1901,9 +1901,23 @@ export default function LeadsManager() {
             }
             return pages;
           };
+          const getMobilePageNumbers = () => {
+            if (totalPages <= 3) {
+              return Array.from({ length: totalPages }, (_, i) => i + 1);
+            }
+            if (currentPage <= 1) {
+              return [1, 2, 3];
+            }
+            if (currentPage >= totalPages) {
+              return [totalPages - 2, totalPages - 1, totalPages];
+            }
+            return [currentPage - 1, currentPage, currentPage + 1];
+          };
+
           return (
-          <div className="p-4 border-t border-slate-200/80 dark:border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
-            <div className="flex items-center gap-3 flex-wrap">
+          <div className="p-3 sm:p-4 border-t border-slate-200/80 dark:border-neutral-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+            {/* Desktop / Tablet Info & Controls */}
+            <div className="hidden sm:flex items-center gap-3 flex-wrap">
               <span className="text-xs text-slate-500 dark:text-neutral-400">
                 Showing <span className="font-semibold text-slate-900 dark:text-white">{startItem}-{endItem}</span> of{" "}
                 <span className="font-semibold text-slate-900 dark:text-white">{totalLeadsFromAPI || filteredLeads.length}</span> leads
@@ -1929,8 +1943,9 @@ export default function LeadsManager() {
               </div>
             </div>
 
+            {/* Desktop / Tablet Sliding Window Pagination (>= sm) */}
             {totalPages > 1 && (
-              <div className="flex items-center gap-1 flex-wrap justify-center">
+              <div className="hidden sm:flex items-center gap-1 flex-wrap justify-end">
                 <button
                   disabled={currentPage === 1}
                   onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
@@ -1966,6 +1981,76 @@ export default function LeadsManager() {
                 </button>
               </div>
             )}
+
+            {/* Mobile Responsive Pagination Bar (< sm) - NEVER WRAPS */}
+            <div className="flex sm:hidden flex-col gap-2.5 w-full">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-neutral-400">
+                <span>
+                  Showing <strong className="font-semibold text-slate-900 dark:text-white">{startItem}-{endItem}</strong> of <strong className="font-semibold text-slate-900 dark:text-white">{totalLeadsFromAPI || filteredLeads.length}</strong>
+                </span>
+                <div className="flex items-center gap-1 text-[11px]">
+                  <span>Limit:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      const newSize = Number(e.target.value);
+                      setPageSize(newSize);
+                      setCurrentPage(1);
+                      fetchLeads(1, newSize);
+                    }}
+                    className="px-1.5 py-0.5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded text-xs font-semibold text-slate-700 dark:text-neutral-200 cursor-pointer"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between gap-1 w-full pt-0.5">
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    className="px-2.5 py-2 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-neutral-200 disabled:opacity-30 cursor-pointer flex items-center justify-center gap-1 shrink-0"
+                    title="Previous page"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span className="text-[11px]">Prev</span>
+                  </button>
+
+                  <div className="flex items-center gap-1 justify-center flex-1 min-w-0">
+                    {getMobilePageNumbers().map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => handlePageChange(p)}
+                        className={`text-xs min-w-[32px] h-8 px-1.5 rounded-md font-bold flex items-center justify-center cursor-pointer transition ${
+                          currentPage === p
+                            ? "bg-indigo-600 text-white shadow-xs"
+                            : "bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-300"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                    <span className="text-[11px] font-mono shrink-0 ml-0.5 text-slate-400 dark:text-neutral-500">
+                      /{totalPages}
+                    </span>
+                  </div>
+
+                  <button
+                    disabled={currentPage >= totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className="px-2.5 py-2 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-neutral-200 disabled:opacity-30 cursor-pointer flex items-center justify-center gap-1 shrink-0"
+                    title="Next page"
+                  >
+                    <span className="text-[11px]">Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           );
         })()}
