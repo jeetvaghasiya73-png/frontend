@@ -93,7 +93,7 @@ export default function LeadsManager() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState<number>(50);
+  const [pageSize, setPageSize] = useState<number>(20);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -1912,7 +1912,7 @@ export default function LeadsManager() {
                   className="px-2 py-1 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-md text-xs font-semibold text-slate-700 dark:text-neutral-200 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                 >
                   <option value={10}>10</option>
-                  <option value={25}>25</option>
+                  <option value={20}>20</option>
                   <option value={50}>50</option>
                   <option value={100}>100</option>
                 </select>

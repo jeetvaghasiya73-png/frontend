@@ -273,7 +273,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 
 const EMOJI_LIST = ["😊", "👍", "🔥", "📞", "📅", "🚀", "🎯", "⭐", "💬", "💼", "✨", "✅", "📍", "🎉", "🤝", "⚡"];
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 20;
 
 export default function WhatsAppOutreachPage() {
   const [activeTab, setActiveTab] = useState<"chat" | "analytics" | "leads" | "logs">("chat");

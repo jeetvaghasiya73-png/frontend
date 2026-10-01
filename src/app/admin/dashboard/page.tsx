@@ -143,7 +143,8 @@ export default function SuperAdminDashboard() {
   // Table Controls
   const [tableSearch, setTableSearch] = useState("");
   const [tablePage, setTablePage] = useState(1);
-  const [tableLimit, setTableLimit] = useState(10);
+  const [tableLimit, setTableLimit] = useState(20);
+  const [totalScrapedCount, setTotalScrapedCount] = useState(0);
   const [selectedRows, setSelectedRows] = useState<Set<string | number>>(new Set());
   const [showDeleteMenu, setShowDeleteMenu] = useState(false);
 
@@ -160,14 +161,14 @@ export default function SuperAdminDashboard() {
   const hasMountedRef = useRef(false);
 
   // Fetch all data from database endpoints (parallel, deduplicated)
-  const fetchData = async () => {
+  const fetchData = async (pageNum = tablePage, limitNum = tableLimit) => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
     setLoading(true);
     try {
       const [statsRes, scrapedRes, leadsRes, portfolioRes, blogsRes, msgRes] = await Promise.allSettled([
         authFetch(`${API}/api/v1/scraped-leads/stats`),
-        authFetch(`${API}/api/v1/scraped-leads/?page=1&limit=1000`),
+        authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${limitNum}`),
         authFetch(`${API}/api/v1/leads/`),
         authFetch(`${API}/api/v1/portfolio/`),
         authFetch(`${API}/api/v1/blogs/`),
@@ -179,7 +180,8 @@ export default function SuperAdminDashboard() {
       }
       if (scrapedRes.status === "fulfilled" && scrapedRes.value.ok) {
         const scrapedJson = await scrapedRes.value.json();
-        const rawList = scrapedJson.leads || [];
+        const rawList = scrapedJson.leads || scrapedJson.items || (Array.isArray(scrapedJson) ? scrapedJson : []);
+        setTotalScrapedCount(Number(scrapedJson.total ?? rawList.length));
         setScrapedLeads(rawList.filter((lead: any) => {
           if (!lead) return false;
           const p = String(lead.bussiness_number || "").trim().toLowerCase();
@@ -350,7 +352,7 @@ export default function SuperAdminDashboard() {
   // 100% Dynamic Deals Pipeline Funnel calculation
   const pipelineFunnel = useMemo(() => {
     const allCurrentLeads = [...filteredData.currentScraped, ...filteredData.currentInquiries];
-    const totalCount = allCurrentLeads.length || 1;
+    const totalCount = (scrapedStats?.total ?? (totalScrapedCount > 0 ? totalScrapedCount : allCurrentLeads.length)) || 1;
 
     let newCount = 0;
     let contactedCount = 0;
@@ -386,19 +388,19 @@ export default function SuperAdminDashboard() {
       converted: { count: convertedCount, pct: Math.round((convertedCount / totalCount) * 100) || 0 },
       lost: { count: lostCount, pct: Math.round((lostCount / totalCount) * 100) || 0 }
     };
-  }, [filteredData]);
+  }, [filteredData, scrapedStats, totalScrapedCount]);
 
   // 100% Dynamic Metrics calculation
   const metrics = useMemo(() => {
-    const totalScraped = filteredData.currentScraped.length;
+    const totalScraped = scrapedStats?.total ?? (totalScrapedCount > 0 ? totalScrapedCount : filteredData.currentScraped.length);
     const inquiriesCount = filteredData.currentInquiries.length;
     const scrapedGrowth = scrapedStats?.growth || 12.5;
 
-    const uniqueCities = new Set(filteredData.currentScraped.map(l => l.scraped_city).filter(Boolean)).size;
-    const uniqueCategories = new Set(filteredData.currentScraped.map(l => l.scraped_service).filter(Boolean)).size;
+    const uniqueCities = scrapedStats?.unique_cities || new Set(filteredData.currentScraped.map(l => l.scraped_city).filter(Boolean)).size;
+    const uniqueCategories = scrapedStats?.unique_categories || new Set(filteredData.currentScraped.map(l => l.scraped_service).filter(Boolean)).size;
 
     const verifiedEmailsCount = filteredData.currentScraped.filter(l => l.bussiness_email).length;
-    const capturePct = totalScraped > 0 ? Math.round((verifiedEmailsCount / totalScraped) * 100) : 0;
+    const capturePct = totalScraped > 0 ? Math.round((verifiedEmailsCount / Math.max(1, filteredData.currentScraped.length)) * 100) : 0;
 
     return {
       totalScraped,
@@ -411,7 +413,7 @@ export default function SuperAdminDashboard() {
       contactedCount: pipelineFunnel.contacted.count,
       conversionRate: `${capturePct}%`
     };
-  }, [scrapedStats, filteredData, pipelineFunnel]);
+  }, [scrapedStats, totalScrapedCount, filteredData, pipelineFunnel]);
 
   // Analytics Chart Data
   const sectionsData = useMemo(() => {
@@ -600,11 +602,29 @@ export default function SuperAdminDashboard() {
     }
   }, [filteredData, activeTableTab, tableSearch, portfolios, user]);
 
-  const totalTablePages = Math.ceil(tableDataset.length / tableLimit);
+  const totalLeadsForTab = activeTableTab === "inbound"
+    ? filteredData.currentInquiries.length
+    : activeTableTab === "portfolio"
+    ? portfolios.length
+    : (totalScrapedCount || scrapedStats?.total || 1093);
+
+  const totalTablePages = Math.max(1, Math.ceil(totalLeadsForTab / tableLimit));
+
   const paginatedTable = useMemo(() => {
+    if (activeTableTab === "scraped" || activeTableTab === "all") {
+      // Scraped leads are already server-paginated to tableLimit items
+      return tableDataset;
+    }
     const offset = (tablePage - 1) * tableLimit;
     return tableDataset.slice(offset, offset + tableLimit);
-  }, [tableDataset, tablePage, tableLimit]);
+  }, [tableDataset, tablePage, tableLimit, activeTableTab]);
+
+  const handleTablePageChange = (newPage: number) => {
+    setTablePage(newPage);
+    if (activeTableTab === "scraped" || activeTableTab === "all") {
+      fetchData(newPage, tableLimit);
+    }
+  };
 
   const isDark = theme === "dark";
 
@@ -1547,7 +1567,7 @@ export default function SuperAdminDashboard() {
               <Database className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-primary)" }} />
               <span>All Scraped Leads</span>
               <span className="crm-badge badge-primary text-[10px] ml-0.5">
-                {filteredData.currentScraped.length}
+                {totalScrapedCount || scrapedStats?.total || 1093}
               </span>
             </button>
 
@@ -1991,16 +2011,37 @@ export default function SuperAdminDashboard() {
         {/* Table Footer & Pagination */}
         {tableDataset.length > 0 && (
           <div className="p-4 flex flex-col sm:flex-row items-center justify-between gap-3 w-full" style={{ borderTop: "1px solid var(--dash-border)" }}>
-            <span className="text-xs" style={{ color: "var(--dash-text-secondary)" }}>
-              Showing <span className="font-semibold" style={{ color: "var(--dash-text)" }}>{(tablePage - 1) * tableLimit + 1}</span> to{" "}
-              <span className="font-semibold" style={{ color: "var(--dash-text)" }}>{Math.min(tablePage * tableLimit, tableDataset.length)}</span> of{" "}
-              <span className="font-semibold" style={{ color: "var(--dash-text)" }}>{tableDataset.length}</span> leads
-            </span>
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-xs" style={{ color: "var(--dash-text-secondary)" }}>
+                Showing <span className="font-semibold" style={{ color: "var(--dash-text)" }}>{(tablePage - 1) * tableLimit + 1}</span> to{" "}
+                <span className="font-semibold" style={{ color: "var(--dash-text)" }}>{Math.min(tablePage * tableLimit, totalLeadsForTab)}</span> of{" "}
+                <span className="font-semibold" style={{ color: "var(--dash-text)" }}>{totalLeadsForTab}</span> leads
+              </span>
+
+              <div className="flex items-center gap-1.5 text-xs text-[var(--dash-text-muted)]">
+                <span>Per page:</span>
+                <select
+                  value={tableLimit}
+                  onChange={(e) => {
+                    const newLimit = Number(e.target.value);
+                    setTableLimit(newLimit);
+                    setTablePage(1);
+                    fetchData(1, newLimit);
+                  }}
+                  className="px-2 py-1 bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-md text-xs font-semibold cursor-pointer text-[var(--dash-text)]"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
 
             <div className="flex items-center gap-1.5 flex-wrap justify-center">
               <button
                 disabled={tablePage === 1}
-                onClick={() => setTablePage(prev => Math.max(1, prev - 1))}
+                onClick={() => handleTablePageChange(Math.max(1, tablePage - 1))}
                 className="crm-btn-secondary text-xs px-3 py-1.5 cursor-pointer disabled:opacity-40"
               >
                 Previous
@@ -2008,7 +2049,7 @@ export default function SuperAdminDashboard() {
               {Array.from({ length: Math.min(5, totalTablePages) }, (_, i) => i + 1).map(p => (
                 <button
                   key={p}
-                  onClick={() => setTablePage(p)}
+                  onClick={() => handleTablePageChange(p)}
                   className={`text-xs px-3 py-1.5 font-semibold cursor-pointer transition ${
                     tablePage === p
                       ? "crm-btn-primary"
@@ -2020,7 +2061,7 @@ export default function SuperAdminDashboard() {
               ))}
               <button
                 disabled={tablePage >= totalTablePages}
-                onClick={() => setTablePage(prev => prev + 1)}
+                onClick={() => handleTablePageChange(tablePage + 1)}
                 className="crm-btn-secondary text-xs px-3 py-1.5 cursor-pointer disabled:opacity-40"
               >
                 Next
