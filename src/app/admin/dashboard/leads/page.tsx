@@ -1629,7 +1629,9 @@ export default function LeadsManager() {
                   </td>
 
                   <td className="py-3.5 px-3 font-semibold text-[var(--dash-text)]">
-                    {lead.company || lead.city || "—"}
+                    <div className="truncate max-w-[180px]" title={lead.company || lead.city || "—"}>
+                      {lead.company || lead.city || "—"}
+                    </div>
                   </td>
 
                   <td className="py-3.5 px-3 text-[var(--dash-text-secondary)]">
@@ -1880,13 +1882,21 @@ export default function LeadsManager() {
             const pages: (number | string)[] = [];
             if (totalPages <= 7) {
               for (let i = 1; i <= totalPages; i++) pages.push(i);
+            } else if (currentPage <= 4) {
+              for (let i = 1; i <= Math.min(6, totalPages); i++) pages.push(i);
+              if (totalPages > 6) {
+                pages.push("...");
+                pages.push(totalPages);
+              }
+            } else if (currentPage >= totalPages - 3) {
+              pages.push(1);
+              pages.push("...");
+              for (let i = totalPages - 5; i <= totalPages; i++) pages.push(i);
             } else {
               pages.push(1);
-              const start = Math.max(2, currentPage - 2);
-              const end = Math.min(totalPages - 1, currentPage + 2);
-              if (start > 2) pages.push("...");
-              for (let i = start; i <= end; i++) pages.push(i);
-              if (end < totalPages - 1) pages.push("...");
+              pages.push("...");
+              for (let i = currentPage - 2; i <= currentPage + 2; i++) pages.push(i);
+              pages.push("...");
               pages.push(totalPages);
             }
             return pages;

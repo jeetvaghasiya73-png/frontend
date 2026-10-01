@@ -621,6 +621,38 @@ export default function SuperAdminDashboard() {
 
   const totalTablePages = Math.max(1, Math.ceil(totalLeadsForTab / tableLimit));
 
+  // Dynamic sliding window pagination (shows current, adjacent pages, and handles jumps)
+  const tablePageNumbers = useMemo(() => {
+    const total = totalTablePages;
+    const current = tablePage;
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+
+    const pages: (number | string)[] = [];
+    if (current <= 4) {
+      // Near start: show 1, 2, 3, 4, 5, 6, ..., total
+      for (let i = 1; i <= Math.min(6, total); i++) pages.push(i);
+      if (total > 6) {
+        pages.push("...");
+        pages.push(total);
+      }
+    } else if (current >= total - 3) {
+      // Near end: show 1, ..., total-5, total-4, total-3, total-2, total-1, total
+      pages.push(1);
+      pages.push("...");
+      for (let i = total - 5; i <= total; i++) pages.push(i);
+    } else {
+      // Middle (e.g. on page 5, 6, 7, 8): show 1, ..., current-2, current-1, current, current+1, current+2, ..., total
+      pages.push(1);
+      pages.push("...");
+      for (let i = current - 2; i <= current + 2; i++) pages.push(i);
+      pages.push("...");
+      pages.push(total);
+    }
+    return pages;
+  }, [tablePage, totalTablePages]);
+
   const paginatedTable = useMemo(() => {
     if (activeTableTab === "scraped" || activeTableTab === "all") {
       // Scraped leads are already server-paginated to tableLimit items
@@ -1800,22 +1832,34 @@ export default function SuperAdminDashboard() {
                       />
                     </td>
                     <td className="py-3.5 px-3">
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <div className={`w-8 h-8 ${item.avatarColor} text-white font-bold flex items-center justify-center text-xs shadow-sm shrink-0`} style={{ borderRadius: "var(--dash-card-radius)" }}>
                           {item.title?.charAt(0)?.toUpperCase() || "?"}
                         </div>
-                        <div>
-                          <div className="font-semibold flex items-center gap-1.5" style={{ color: "var(--dash-text)" }}>
-                            {item.title}
-                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--dash-primary)" }} />
+                        <div className="min-w-0 max-w-[190px]">
+                          <div className="font-semibold flex items-center gap-1.5 truncate" title={item.title} style={{ color: "var(--dash-text)" }}>
+                            <span className="truncate">{item.title}</span>
+                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--dash-primary)" }} />
                           </div>
-                          <div className="text-[11px] truncate max-w-[180px]" style={{ color: "var(--dash-text-muted)" }}>{item.email || "No Email"}</div>
+                          <div className="text-[11px] truncate max-w-[180px]" title={item.email || "No Email"} style={{ color: "var(--dash-text-muted)" }}>{item.email || "No Email"}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3.5 px-3 font-semibold" style={{ color: "var(--dash-text)" }}>{item.company}</td>
-                    <td className="py-3.5 px-3" style={{ color: "var(--dash-text-secondary)" }}>{item.industry}</td>
-                    <td className="py-3.5 px-3" style={{ color: "var(--dash-text-secondary)" }}>{item.location}</td>
+                    <td className="py-3.5 px-3 font-semibold" style={{ color: "var(--dash-text)" }}>
+                      <div className="truncate max-w-[180px]" title={item.company}>
+                        {item.company}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-3" style={{ color: "var(--dash-text-secondary)" }}>
+                      <div className="truncate max-w-[200px]" title={item.industry}>
+                        {item.industry}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-3" style={{ color: "var(--dash-text-secondary)" }}>
+                      <div className="truncate max-w-[160px]" title={item.location}>
+                        {item.location}
+                      </div>
+                    </td>
                     <td className="py-3.5 px-3">
                       <span className="crm-badge badge-neutral text-[10px]">
                         {item.source}
@@ -2059,18 +2103,28 @@ export default function SuperAdminDashboard() {
               >
                 Previous
               </button>
-              {Array.from({ length: Math.min(5, totalTablePages) }, (_, i) => i + 1).map(p => (
-                <button
-                  key={p}
-                  onClick={() => handleTablePageChange(p)}
-                  className={`text-xs px-3 py-1.5 font-semibold cursor-pointer transition ${
-                    tablePage === p
-                      ? "crm-btn-primary"
-                      : "crm-btn-secondary"
-                  }`}
-                >
-                  {p}
-                </button>
+              {tablePageNumbers.map((p, idx) => (
+                typeof p === "string" ? (
+                  <span
+                    key={`ellipsis-${idx}`}
+                    className="px-2 py-1 text-xs select-none opacity-50 font-mono"
+                    style={{ color: "var(--dash-text-muted)" }}
+                  >
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => handleTablePageChange(p)}
+                    className={`text-xs px-3 py-1.5 font-semibold cursor-pointer transition ${
+                      tablePage === p
+                        ? "crm-btn-primary"
+                        : "crm-btn-secondary"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
               ))}
               <button
                 disabled={tablePage >= totalTablePages}
