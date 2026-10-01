@@ -1197,7 +1197,7 @@ export default function LeadsManager() {
   }, [allLeads.length, filteredLeads, currentPage, pageSize]);
 
   const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > totalPages) return;
+    if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
     setCurrentPage(newPage);
     fetchLeads(newPage, pageSize);
     if (typeof window !== "undefined") {
@@ -1960,11 +1960,12 @@ export default function LeadsManager() {
                   ) : (
                     <button
                       key={p}
+                      disabled={currentPage === p}
                       onClick={() => handlePageChange(p)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         currentPage === p
-                          ? "bg-indigo-600 text-white font-bold shadow-md shadow-indigo-500/30"
-                          : "bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-neutral-800"
+                          ? "bg-indigo-600 text-white font-bold shadow-md shadow-indigo-500/30 cursor-default pointer-events-none"
+                          : "bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-neutral-800 cursor-pointer"
                       }`}
                     >
                       {p}
@@ -2024,11 +2025,12 @@ export default function LeadsManager() {
                     {getMobilePageNumbers().map((p) => (
                       <button
                         key={p}
+                        disabled={currentPage === p}
                         onClick={() => handlePageChange(p)}
-                        className={`text-xs min-w-[32px] h-8 px-1.5 rounded-md font-bold flex items-center justify-center cursor-pointer transition ${
+                        className={`text-xs min-w-[32px] h-8 px-1.5 rounded-md font-bold flex items-center justify-center transition ${
                           currentPage === p
-                            ? "bg-indigo-600 text-white shadow-xs"
-                            : "bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-300"
+                            ? "bg-indigo-600 text-white shadow-xs cursor-default pointer-events-none"
+                            : "bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-300 cursor-pointer"
                         }`}
                       >
                         {p}

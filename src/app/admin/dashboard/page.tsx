@@ -159,6 +159,7 @@ export default function SuperAdminDashboard() {
 
   // Guard against duplicate concurrent fetches
   const isFetchingRef = useRef(false);
+  const isTableFetchingRef = useRef(false);
   const hasMountedRef = useRef(false);
 
   // Fetch initial overall datasets (stats, inquiries, portfolio, blogs, contacts + page 1 leads)
@@ -215,6 +216,8 @@ export default function SuperAdminDashboard() {
 
   // Fetch ONLY paginated leads without re-fetching or reloading stats
   const fetchTableLeads = async (pageNum = tablePage, limitNum = tableLimit) => {
+    if (isTableFetchingRef.current) return;
+    isTableFetchingRef.current = true;
     try {
       const res = await authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${limitNum}`);
       if (res.ok) {
@@ -231,6 +234,8 @@ export default function SuperAdminDashboard() {
       }
     } catch (err) {
       console.error("Failed to load paginated leads:", err);
+    } finally {
+      isTableFetchingRef.current = false;
     }
   };
 
@@ -680,6 +685,10 @@ export default function SuperAdminDashboard() {
   }, [tableDataset, tablePage, tableLimit, activeTableTab]);
 
   const handleTablePageChange = (newPage: number) => {
+    // If user is already on this page or page is out of bounds, do nothing
+    if (newPage === tablePage || newPage < 1 || newPage > totalTablePages) {
+      return;
+    }
     setTablePage(newPage);
     if (activeTableTab === "scraped" || activeTableTab === "all") {
       fetchTableLeads(newPage, tableLimit);
@@ -2135,11 +2144,12 @@ export default function SuperAdminDashboard() {
                 ) : (
                   <button
                     key={p}
+                    disabled={tablePage === p}
                     onClick={() => handleTablePageChange(p)}
-                    className={`text-xs px-3 py-1.5 font-semibold cursor-pointer transition ${
+                    className={`text-xs px-3 py-1.5 font-semibold transition ${
                       tablePage === p
-                        ? "crm-btn-primary"
-                        : "crm-btn-secondary"
+                        ? "crm-btn-primary cursor-default pointer-events-none"
+                        : "crm-btn-secondary cursor-pointer"
                     }`}
                   >
                     {p}
@@ -2199,11 +2209,12 @@ export default function SuperAdminDashboard() {
                   {mobilePageNumbers.map((p) => (
                     <button
                       key={p}
+                      disabled={tablePage === p}
                       onClick={() => handleTablePageChange(p)}
-                      className={`text-xs min-w-[32px] h-8 px-1.5 rounded-md font-bold flex items-center justify-center cursor-pointer transition ${
+                      className={`text-xs min-w-[32px] h-8 px-1.5 rounded-md font-bold flex items-center justify-center transition ${
                         tablePage === p
-                          ? "crm-btn-primary shadow-xs"
-                          : "crm-btn-secondary"
+                          ? "crm-btn-primary shadow-xs cursor-default pointer-events-none"
+                          : "crm-btn-secondary cursor-pointer"
                       }`}
                     >
                       {p}
