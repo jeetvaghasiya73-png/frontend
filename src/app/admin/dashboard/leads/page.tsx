@@ -86,6 +86,7 @@ export default function LeadsManager() {
   const { accessToken } = useAuthStore();
   const isFetchingRef = useRef(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const inquiriesCacheRef = useRef<any[] | null>(null);
   const [mounted, setMounted] = useState(false);
   const [allLeads, setAllLeads] = useState<NormalizedLead[]>([]);
   const [totalLeadsFromAPI, setTotalLeadsFromAPI] = useState<number>(0);
@@ -293,15 +294,17 @@ export default function LeadsManager() {
     const statusParam = curStatus && curStatus !== "all" ? `&status=${encodeURIComponent(curStatus)}` : "";
     try {
       setLoading(true);
+      const shouldFetchInquiries = !inquiriesCacheRef.current || pageNum === 1 || sourceFilterRef.current === "inquiry";
       const [inquiryRes, scrapedRes] = await Promise.allSettled([
-        authFetch(`${API}/api/v1/leads/`),
+        shouldFetchInquiries ? authFetch(`${API}/api/v1/leads/`) : Promise.resolve(null as any),
         authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${limitNum}${statusParam}`)
       ]);
 
-      let inquiryData: any[] = [];
-      if (inquiryRes.status === "fulfilled" && inquiryRes.value.ok) {
+      let inquiryData: any[] = inquiriesCacheRef.current || [];
+      if (shouldFetchInquiries && inquiryRes.status === "fulfilled" && inquiryRes.value && inquiryRes.value.ok) {
         try {
           inquiryData = await inquiryRes.value.json();
+          inquiriesCacheRef.current = inquiryData;
         } catch (e) {
           console.error("Error parsing inquiry data:", e);
         }
@@ -558,9 +561,8 @@ export default function LeadsManager() {
       return;
     }
     setCurrentPage(1);
-    setStatusFilter("all");
-    fetchLeads(1, pageSize);
-  }, [sourceFilter, pageSize, fetchLeads]);
+    fetchLeads(1, pageSize, statusFilterRef.current);
+  }, [sourceFilter]);
 
   const handleStatusUpdate = async (leadId: number, newStatus: string) => {
     setUpdatingId(leadId);
@@ -1241,6 +1243,9 @@ export default function LeadsManager() {
   }, [allLeads, sourceFilter, statusFilter, searchQuery]);
 
   const currentTotal = useMemo(() => {
+    if (searchQuery.trim()) {
+      return filteredLeads.length;
+    }
     if (sourceFilter === "inquiry") {
       return totalInquiriesCount;
     }
@@ -1248,7 +1253,7 @@ export default function LeadsManager() {
       return totalScrapedCount || totalLeadsFromAPI;
     }
     return (totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount;
-  }, [sourceFilter, totalScrapedCount, totalInquiriesCount, totalLeadsFromAPI]);
+  }, [searchQuery, filteredLeads.length, sourceFilter, totalScrapedCount, totalInquiriesCount, totalLeadsFromAPI]);
 
   const totalPages = Math.max(1, Math.ceil(currentTotal / pageSize));
 
@@ -1268,7 +1273,7 @@ export default function LeadsManager() {
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
     setCurrentPage(newPage);
-    fetchLeads(newPage, pageSize);
+    fetchLeads(newPage, pageSize, statusFilter);
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -1408,10 +1413,10 @@ export default function LeadsManager() {
       <section className="crm-card p-0 flex flex-col w-full max-w-full overflow-visible relative">
         
         {/* Controls Deck */}
-        <div className="p-3 sm:p-4 border-b border-[var(--dash-border)] flex flex-col xl:flex-row xl:items-center justify-between gap-3 w-full max-w-full relative z-20">
+        <div className="p-3 sm:p-4 border-b border-[var(--dash-border)] flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-3 w-full max-w-full relative z-20">
           
           {/* Segmented View Tabs */}
-          <div className="flex flex-nowrap items-center gap-1 p-1 rounded-md bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] max-w-full overflow-x-auto scrollbar-none shrink-0">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-1 p-1 rounded-md bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] max-w-full overflow-x-auto scrollbar-none shrink-0">
             <button
               onClick={() => setSourceFilter("all")}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 ${
@@ -1468,8 +1473,8 @@ export default function LeadsManager() {
           </div>
 
           {/* Search & Status Controls */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full xl:w-auto">
-            <div className="relative w-full sm:w-64">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full 2xl:w-auto">
+            <div className="relative w-full sm:w-60 md:w-64 shrink">
               <Search className="w-3.5 h-3.5 text-[var(--dash-text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -1484,8 +1489,8 @@ export default function LeadsManager() {
             </div>
 
             {/* Action Row: Status Filter & Delete Options in ONE row on mobile */}
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="relative flex-1 sm:flex-none sm:w-auto min-w-[140px]">
+            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+              <div className="relative flex-1 sm:flex-none sm:w-auto min-w-[145px] shrink-0">
                 <select
                   value={statusFilter}
                   onChange={(e) => {
@@ -1510,28 +1515,26 @@ export default function LeadsManager() {
               </div>
 
               {/* Multi-Option Deletion Menu */}
-              <div className="relative flex-1 sm:flex-none sm:w-auto z-30">
+              <div className="relative flex-1 sm:flex-none sm:w-auto z-30 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowDeleteMenu(!showDeleteMenu)}
-                  className="inline-flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer w-full sm:w-auto"
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer w-full sm:w-auto shrink-0 whitespace-nowrap"
                 >
-                  <div className="flex items-center gap-1.5 truncate">
-                    <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate">Delete Options</span>
-                    {selectedLeadIds.size > 0 && (
-                      <span className="bg-white/20 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-full shrink-0">
-                        {selectedLeadIds.size}
-                      </span>
-                    )}
-                  </div>
-                  <ChevronDown className="w-3.5 h-3.5 opacity-80 shrink-0 ml-1" />
+                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                  <span className="whitespace-nowrap font-medium">Delete Options</span>
+                  {selectedLeadIds.size > 0 && (
+                    <span className="bg-white/20 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-full shrink-0">
+                      {selectedLeadIds.size}
+                    </span>
+                  )}
+                  <ChevronDown className="w-3.5 h-3.5 opacity-80 shrink-0 ml-0.5" />
                 </button>
 
                 {showDeleteMenu && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setShowDeleteMenu(false)} />
-                    <div className="absolute right-0 top-full mt-1.5 w-72 sm:w-80 bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-xl shadow-2xl z-50 overflow-y-auto max-h-[85vh] py-1 text-xs animate-fadeIn">
+                    <div className="absolute right-0 top-full mt-1.5 w-72 sm:w-80 max-w-[90vw] bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-xl shadow-2xl z-50 overflow-y-auto max-h-[85vh] py-1 text-xs animate-fadeIn">
                       {/* Clear Selected Chats */}
                       <button
                         type="button"
@@ -1974,10 +1977,10 @@ export default function LeadsManager() {
         {(currentTotal > 0 || filteredLeads.length > 0) && (() => {
           const startItem = currentTotal === 0 ? 0 : (currentPage - 1) * pageSize + 1;
           const endItem = Math.min(currentPage * pageSize, currentTotal);
-          // Smart sliding window pagination: currentPage - 2 to currentPage + 2
+          // Smart sliding window pagination: direct pages when <= 10, otherwise windowed with ellipsis
           const getPageNumbers = () => {
             const pages: (number | string)[] = [];
-            if (totalPages <= 7) {
+            if (totalPages <= 10) {
               for (let i = 1; i <= totalPages; i++) pages.push(i);
             } else if (currentPage <= 4) {
               for (let i = 1; i <= Math.min(6, totalPages); i++) pages.push(i);
@@ -2028,7 +2031,7 @@ export default function LeadsManager() {
                     const newSize = Number(e.target.value);
                     setPageSize(newSize);
                     setCurrentPage(1);
-                    fetchLeads(1, newSize);
+                    fetchLeads(1, newSize, statusFilter);
                   }}
                   className="px-2 py-1 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-md text-xs font-semibold text-slate-700 dark:text-neutral-200 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                 >
@@ -2094,7 +2097,7 @@ export default function LeadsManager() {
                       const newSize = Number(e.target.value);
                       setPageSize(newSize);
                       setCurrentPage(1);
-                      fetchLeads(1, newSize);
+                      fetchLeads(1, newSize, statusFilter);
                     }}
                     className="px-1.5 py-0.5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded text-xs font-semibold text-slate-700 dark:text-neutral-200 cursor-pointer"
                   >

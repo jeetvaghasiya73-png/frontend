@@ -1665,7 +1665,7 @@ export default function SuperAdminDashboard() {
       <section className="crm-card-flat flex flex-col w-full max-w-full overflow-visible relative">
         
         {/* Toolbar & Segmented Tabs */}
-        <div className="p-3.5 sm:p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-3 max-w-full relative z-20" style={{ borderBottom: "1px solid var(--dash-border)" }}>
+        <div className="p-3.5 sm:p-4 flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-3 max-w-full relative z-20" style={{ borderBottom: "1px solid var(--dash-border)" }}>
           
           {/* Segmented View Tabs - ALWAYS IN ONE ROW */}
           <div className="flex flex-nowrap items-center gap-1 p-1 max-w-full overflow-x-auto scrollbar-none shrink-0" style={{ background: "var(--dash-surface-alt)", border: "1px solid var(--dash-border)", borderRadius: "var(--dash-btn-radius)" }}>
@@ -1740,7 +1740,7 @@ export default function SuperAdminDashboard() {
           </div>
 
           {/* Search & Action Buttons - ALL IN ONE CLEAN RESPONSIVE ROW */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full xl:w-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full 2xl:w-auto">
             <div className="relative w-full sm:w-64">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--dash-text-muted)" }} />
               <input
@@ -1759,7 +1759,7 @@ export default function SuperAdminDashboard() {
             </div>
 
             {/* Action Buttons: ALWAYS in ONE single row on mobile & desktop */}
-            <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap shrink-0">
               <button
                 type="button"
                 className="crm-btn-secondary flex-1 sm:flex-none inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs whitespace-nowrap"
@@ -1778,16 +1778,16 @@ export default function SuperAdminDashboard() {
               </button>
 
               {/* Multi-Option Deletion Menu */}
-              <div className="relative flex-1 sm:flex-none z-30">
+              <div className="relative flex-1 sm:flex-none z-30 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowDeleteMenu(!showDeleteMenu)}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-sm bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer whitespace-nowrap"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-sm bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer whitespace-nowrap shrink-0"
                 >
                   <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">Delete Options</span>
+                  <span className="whitespace-nowrap font-medium">Delete Options</span>
                   {selectedRows.size > 0 && (
-                    <span className="bg-white/20 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-xs">
+                    <span className="bg-white/20 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-xs shrink-0">
                       {selectedRows.size}
                     </span>
                   )}
