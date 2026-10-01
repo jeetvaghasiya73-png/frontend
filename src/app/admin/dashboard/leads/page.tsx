@@ -93,7 +93,7 @@ export default function LeadsManager() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageSize, setPageSize] = useState<number>(50);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -277,14 +277,16 @@ export default function LeadsManager() {
     }
   };
 
-  const fetchLeads = useCallback(async () => {
+  const fetchLeads = useCallback(async (pageToFetch?: number, limitToFetch?: number) => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
+    const pageNum = pageToFetch ?? currentPage;
+    const limitNum = limitToFetch ?? pageSize;
     try {
       setLoading(true);
       const [inquiryRes, scrapedRes] = await Promise.allSettled([
         authFetch(`${API}/api/v1/leads/`),
-        authFetch(`${API}/api/v1/scraped-leads/?page=1&limit=1000`)
+        authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${limitNum}`)
       ]);
 
       let inquiryData: any[] = [];
@@ -306,9 +308,9 @@ export default function LeadsManager() {
             scrapedData = scrapedJson;
             scrapedTotal = scrapedJson.length;
             scrapedOk = true;
-          } else if (scrapedJson && Array.isArray(scrapedJson.leads)) {
-            scrapedData = scrapedJson.leads;
-            scrapedTotal = scrapedJson.total || scrapedJson.leads.length;
+          } else if (scrapedJson && (Array.isArray(scrapedJson.leads) || Array.isArray(scrapedJson.items))) {
+            scrapedData = scrapedJson.leads || scrapedJson.items;
+            scrapedTotal = Number(scrapedJson.total ?? scrapedData.length);
             scrapedOk = true;
           }
         } catch (e) {
@@ -318,18 +320,18 @@ export default function LeadsManager() {
 
       // Resilient fallback in case a server validator enforces smaller limit
       if (!scrapedOk) {
-        for (const fallbackLimit of [500, 100, 20]) {
+        for (const fallbackLimit of [50, 20]) {
           try {
-            const fallbackRes = await authFetch(`${API}/api/v1/scraped-leads/?page=1&limit=${fallbackLimit}`);
+            const fallbackRes = await authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${fallbackLimit}`);
             if (fallbackRes.ok) {
               const fbJson = await fallbackRes.json();
               if (Array.isArray(fbJson)) {
                 scrapedData = fbJson;
                 scrapedTotal = fbJson.length;
                 break;
-              } else if (fbJson && Array.isArray(fbJson.leads)) {
-                scrapedData = fbJson.leads;
-                scrapedTotal = fbJson.total || fbJson.leads.length;
+              } else if (fbJson && (Array.isArray(fbJson.leads) || Array.isArray(fbJson.items))) {
+                scrapedData = fbJson.leads || fbJson.items;
+                scrapedTotal = Number(fbJson.total ?? scrapedData.length);
                 break;
               }
             }
@@ -483,7 +485,7 @@ export default function LeadsManager() {
       }
 
       setAllLeads(uniqueLeads);
-      setTotalLeadsFromAPI(uniqueLeads.length);
+      setTotalLeadsFromAPI(scrapedTotal || uniqueLeads.length);
     } catch (err) {
       console.error("Failed to load leads:", err);
     } finally {
@@ -1185,11 +1187,23 @@ export default function LeadsManager() {
     return result;
   }, [allLeads, sourceFilter, statusFilter, searchQuery]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredLeads.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil((totalLeadsFromAPI || filteredLeads.length) / pageSize));
   const paginatedLeads = useMemo(() => {
+    if (allLeads.length <= pageSize) {
+      return filteredLeads;
+    }
     const start = (currentPage - 1) * pageSize;
     return filteredLeads.slice(start, start + pageSize);
-  }, [filteredLeads, currentPage, pageSize]);
+  }, [allLeads.length, filteredLeads, currentPage, pageSize]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setCurrentPage(newPage);
+    fetchLeads(newPage, pageSize);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   if (loading) {
     return (
@@ -1591,7 +1605,25 @@ export default function LeadsManager() {
                         <div className="font-semibold text-[var(--dash-text)] hover:text-indigo-600 flex items-center gap-1.5">
                           {lead.name}
                         </div>
-                        <div className="text-[var(--dash-text-muted)] text-[11px] truncate max-w-[200px]">{lead.email || "No Email"}</div>
+                        {lead.email ? (
+                          <div className="text-[var(--dash-text-muted)] text-[11px] truncate max-w-[200px]" title={lead.email}>
+                            {lead.email}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-[11px]">
+                            <span className="text-[var(--dash-text-muted)] italic">Not provided</span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenLeadDrawer(lead);
+                              }}
+                              className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline px-1 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 cursor-pointer"
+                            >
+                              + Add Email
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -1765,9 +1797,19 @@ export default function LeadsManager() {
                       <span className="truncate">{lead.email}</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 text-[11px] text-amber-500/80">
-                      <Mail className="w-3.5 h-3.5 shrink-0" />
-                      <span>No email listed</span>
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <Mail className="w-3.5 h-3.5 shrink-0 text-[var(--dash-text-muted)]" />
+                      <span className="text-[var(--dash-text-muted)] italic">Not provided</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenLeadDrawer(lead);
+                        }}
+                        className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 cursor-pointer"
+                      >
+                        + Add Email
+                      </button>
                     </div>
                   )}
                   <div className="flex items-center justify-between text-[11px] text-[var(--dash-text-muted)]">
@@ -1832,7 +1874,7 @@ export default function LeadsManager() {
         {/* Pagination Controls */}
         {filteredLeads.length > 0 && (() => {
           const startItem = (currentPage - 1) * pageSize + 1;
-          const endItem = Math.min(currentPage * pageSize, filteredLeads.length);
+          const endItem = Math.min(currentPage * pageSize, totalLeadsFromAPI || filteredLeads.length);
           // Smart sliding window pagination: currentPage - 2 to currentPage + 2
           const getPageNumbers = () => {
             const pages: (number | string)[] = [];
@@ -1854,10 +1896,7 @@ export default function LeadsManager() {
             <div className="flex items-center gap-3 flex-wrap">
               <span className="text-xs text-slate-500 dark:text-neutral-400">
                 Showing <span className="font-semibold text-slate-900 dark:text-white">{startItem}-{endItem}</span> of{" "}
-                <span className="font-semibold text-slate-900 dark:text-white">{filteredLeads.length}</span> leads
-                {filteredLeads.length < (totalLeadsFromAPI || allLeads.length) && (
-                  <span className="ml-1 text-slate-400">({totalLeadsFromAPI || allLeads.length} total)</span>
-                )}
+                <span className="font-semibold text-slate-900 dark:text-white">{totalLeadsFromAPI || filteredLeads.length}</span> leads
               </span>
 
               <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-neutral-400">
@@ -1865,8 +1904,10 @@ export default function LeadsManager() {
                 <select
                   value={pageSize}
                   onChange={(e) => {
-                    setPageSize(Number(e.target.value));
+                    const newSize = Number(e.target.value);
+                    setPageSize(newSize);
                     setCurrentPage(1);
+                    fetchLeads(1, newSize);
                   }}
                   className="px-2 py-1 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-md text-xs font-semibold text-slate-700 dark:text-neutral-200 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                 >
@@ -1882,7 +1923,7 @@ export default function LeadsManager() {
               <div className="flex items-center gap-1 flex-wrap justify-center">
                 <button
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                   className="px-3 py-1.5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-neutral-200 disabled:opacity-40 cursor-pointer hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
                   title="Previous page"
                 >
@@ -1894,7 +1935,7 @@ export default function LeadsManager() {
                   ) : (
                     <button
                       key={p}
-                      onClick={() => setCurrentPage(p)}
+                      onClick={() => handlePageChange(p)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
                         currentPage === p
                           ? "bg-indigo-600 text-white font-bold shadow-md shadow-indigo-500/30"
@@ -1907,7 +1948,7 @@ export default function LeadsManager() {
                 ))}
                 <button
                   disabled={currentPage >= totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
+                  onClick={() => handlePageChange(currentPage + 1)}
                   className="px-3 py-1.5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-neutral-200 disabled:opacity-40 cursor-pointer hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
                   title="Next page"
                 >

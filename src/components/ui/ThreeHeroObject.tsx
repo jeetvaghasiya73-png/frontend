@@ -1,44 +1,48 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import * as THREE from "three";
 import { Cpu, Workflow, BarChart3, Globe } from "lucide-react";
 
 export default function ThreeHeroObject() {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [mounted, setMounted] = useState(false);
+  const [isMobileDevice, setIsMobileDevice] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
+    const isMobile = window.innerWidth < 768;
+    setIsMobileDevice(isMobile);
+    if (isMobile) return; // Zero WebGL overhead on mobile for 90+ PageSpeed
     if (!containerRef.current || !canvasRef.current) return;
 
-    const width = containerRef.current.clientWidth;
-    const height = containerRef.current.clientHeight || 450;
-    const isMobile = width < 640;
+    let cleanupFn: (() => void) | undefined;
 
-    // Scene
-    const scene = new THREE.Scene();
+    // Use requestIdleCallback so WebGL never competes with initial paint (FCP/LCP)
+    const initWebGL = async () => {
+      if (!containerRef.current || !canvasRef.current) return;
 
-    // Camera — responsive framing (tight zoom on mobile so orb fills canvas nicely)
-    const camera = new THREE.PerspectiveCamera(
-      isMobile ? 46 : 45,
-      width / height,
-      0.1,
-      100
-    );
-    camera.position.z = isMobile ? 6.5 : 7;
+      const THREE = await import("three");
+      if (!containerRef.current || !canvasRef.current) return;
 
-    // High performance WebGL Renderer
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvasRef.current,
-      antialias: true,
-      alpha: true,
-      powerPreference: "high-performance",
-      precision: "mediump",
-    });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+      const width = containerRef.current.clientWidth;
+      const height = containerRef.current.clientHeight || 450;
+
+      // Scene
+      const scene = new THREE.Scene();
+
+      // Camera
+      const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+      camera.position.z = 7;
+
+      // High performance WebGL Renderer
+      const renderer = new THREE.WebGLRenderer({
+        canvas: canvasRef.current,
+        antialias: true,
+        alpha: true,
+        powerPreference: "high-performance",
+        precision: "mediump",
+      });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
 
     // Balanced Fixed Lighting (zero per-frame light matrix recalculation)
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
@@ -332,7 +336,7 @@ export default function ThreeHeroObject() {
     // Start animation loop
     startAnimation();
 
-    return () => {
+    cleanupFn = () => {
       cancelAnimationFrame(animId);
       observer.disconnect();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -356,7 +360,22 @@ export default function ThreeHeroObject() {
 
       renderer.dispose();
     };
-  }, []);
+  };
+
+  // Schedule WebGL initialization during idle time on desktop
+  const idleId = typeof window !== "undefined" && "requestIdleCallback" in window
+    ? (window as any).requestIdleCallback(initWebGL, { timeout: 1000 })
+    : setTimeout(initWebGL, 100);
+
+  return () => {
+    if (typeof window !== "undefined" && "cancelIdleCallback" in window) {
+      (window as any).cancelIdleCallback(idleId);
+    } else {
+      clearTimeout(idleId);
+    }
+    if (cleanupFn) cleanupFn();
+  };
+}, []);
 
   // Floating cards — Desktop only (md+)
   const floatingCards = [
@@ -397,8 +416,19 @@ export default function ThreeHeroObject() {
         ref={containerRef}
         className="w-full h-[250px] sm:h-[320px] md:h-[450px] lg:h-[560px] flex items-center justify-center relative"
       >
-        {/* 3D WebGL Canvas */}
-        <canvas ref={canvasRef} className="w-full h-full max-w-full outline-none z-10" />
+        {/* Desktop WebGL Canvas / Mobile CSS Glow Orb */}
+        {isMobileDevice ? (
+          <div className="w-[190px] h-[190px] rounded-full relative flex items-center justify-center border border-blue-500/30 bg-radial from-blue-950/60 to-black/80 shadow-[0_0_50px_rgba(59,130,246,0.25)] z-10 animate-pulse">
+            <div className="absolute inset-[-12px] rounded-full border border-sky-400/20 animate-spin [animation-duration:12s]" />
+            <div className="absolute inset-[-24px] rounded-full border border-purple-500/15 animate-spin [animation-duration:18s] [animation-direction:reverse]" />
+            <div className="w-20 h-20 rounded-2xl bg-black/90 border border-blue-400/40 flex items-center justify-center shadow-lg p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/favicon.png" alt="Tech Infinix" className="w-full h-full object-contain filter drop-shadow-[0_0_8px_#38bdf8]" />
+            </div>
+          </div>
+        ) : (
+          <canvas ref={canvasRef} className="w-full h-full max-w-full outline-none z-10" />
+        )}
 
         {/* Ambient background glow */}
         <div className="absolute inset-0 w-[80%] h-[80%] rounded-full bg-accent-glow blur-[80px] pointer-events-none opacity-40 mix-blend-screen scale-75 m-auto z-0" />

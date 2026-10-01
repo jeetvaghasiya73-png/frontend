@@ -54,7 +54,8 @@ import {
   ShieldAlert,
   Ban,
   Smartphone,
-  PieChart as PieIcon
+  PieChart as PieIcon,
+  MoreVertical
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
 import { isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTTime, formatISTDateTime } from "@/lib/formatters";
@@ -352,6 +353,7 @@ export default function WhatsAppOutreachPage() {
   const [leadNoteInput, setLeadNoteInput] = useState("");
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
 
   // Mobile responsive view toggle
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
@@ -397,6 +399,7 @@ export default function WhatsAppOutreachPage() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const ctaMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const showAlert = (type: "success" | "error", text: string) => {
     setActionAlert({ type, text });
@@ -411,6 +414,9 @@ export default function WhatsAppOutreachPage() {
       }
       if (ctaMenuRef.current && !ctaMenuRef.current.contains(e.target as Node)) {
         setShowCtaMenu(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+        setShowMobileMoreMenu(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -1475,26 +1481,26 @@ export default function WhatsAppOutreachPage() {
             {selectedConv ? (
               <>
                 {/* Active Chat Header */}
-                <div className="p-2.5 sm:p-3 border-b border-[var(--dash-border)] bg-[var(--dash-card-bg)] flex items-center justify-between gap-2 shadow-sm min-w-0">
-                  <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
+                <div className="p-2 sm:p-2.5 border-b border-[var(--dash-border)] bg-[var(--dash-card-bg)] flex items-center justify-between gap-1.5 sm:gap-2 shadow-sm min-w-0 relative z-20">
+                  <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 flex-1">
                     <button
                       onClick={() => setMobileView("list")}
-                      className="lg:hidden p-1.5 rounded-md crm-btn-secondary text-xs shrink-0 cursor-pointer"
+                      className="lg:hidden p-1 sm:p-1.5 rounded-md crm-btn-secondary text-xs shrink-0 cursor-pointer"
                       title="Back to conversation list"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
 
-                    <div className="w-8 h-8 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 flex items-center justify-center font-bold text-xs shrink-0">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 flex items-center justify-center font-bold text-xs shrink-0">
                       {selectedConv.bussiness_name ? selectedConv.bussiness_name.charAt(0).toUpperCase() : "#"}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 min-w-0">
-                        <h2 className="font-bold text-xs sm:text-sm md:text-base text-[var(--dash-text)] truncate" title={selectedConv.bussiness_name}>
+                        <h2 className="font-bold text-xs sm:text-sm md:text-base text-[var(--dash-text)] truncate max-w-[130px] sm:max-w-[240px] md:max-w-none" title={selectedConv.bussiness_name}>
                           {selectedConv.bussiness_name || format10DigitPhone(selectedConv.phone_number)}
                         </h2>
                       </div>
-                      <p className="text-[10px] text-[var(--dash-text-muted)] truncate flex items-center gap-1 font-mono">
+                      <p className="text-[9px] sm:text-[10px] text-[var(--dash-text-muted)] truncate flex items-center gap-1 font-mono">
                         <span>{format10DigitPhone(selectedConv.phone_number)}</span>
                         {selectedConv.scraped_city && (
                           <>
@@ -1510,7 +1516,7 @@ export default function WhatsAppOutreachPage() {
                   <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                     <button
                       onClick={() => handleToggleInterest(selectedConv)}
-                      className={`text-[11px] py-1 px-2 sm:px-2.5 rounded-md flex items-center gap-1 font-bold border transition cursor-pointer shrink-0 ${
+                      className={`text-[11px] p-1.5 sm:py-1 sm:px-2.5 rounded-md flex items-center gap-1 font-bold border transition cursor-pointer shrink-0 ${
                         selectedConv.is_interested
                           ? "bg-amber-500/15 border-amber-500/40 text-amber-500 hover:bg-amber-500/25"
                           : "bg-[var(--dash-card-bg)] border-[var(--dash-border)] text-[var(--dash-text-muted)] hover:text-amber-500 hover:border-amber-500/30"
@@ -1518,42 +1524,22 @@ export default function WhatsAppOutreachPage() {
                       title={selectedConv.is_interested ? "Click to unmark this contact as interested" : "Click to mark this contact as interested lead"}
                     >
                       <Star className={`w-3.5 h-3.5 ${selectedConv.is_interested ? "fill-amber-500 text-amber-500" : ""}`} />
-                      <span className="whitespace-nowrap">{selectedConv.is_interested ? "Unmark ⭐" : "Mark Interested ⭐"}</span>
+                      <span className="hidden sm:inline whitespace-nowrap">{selectedConv.is_interested ? "Unmark ⭐" : "Mark Interested ⭐"}</span>
                     </button>
 
                     <button
                       onClick={() => handleCtaClick({ id: "call", label: "Call", action_type: "call", payload: "" })}
-                      className="crm-btn-secondary text-[11px] py-1 px-2 text-emerald-500 flex items-center gap-1 shrink-0"
+                      className="crm-btn-secondary text-[11px] p-1.5 sm:py-1 sm:px-2 text-emerald-500 flex items-center gap-1 shrink-0"
                       title="Direct Call CTA"
                     >
                       <Phone className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">Call</span>
                     </button>
 
-                    {isValidWebsite(selectedConv.website) ? (
-                      <a
-                        href={formatWebsiteUrl(selectedConv.website)!}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="crm-btn-secondary text-[11px] py-1 px-2 text-blue-500 flex items-center gap-1"
-                        title="Open Business Website"
-                      >
-                        <Globe className="w-3.5 h-3.5" />
-                        <span className="hidden md:inline">Site</span>
-                      </a>
-                    ) : (
-                      <span
-                        className="crm-btn-secondary text-[11px] py-1 px-1.5 text-[var(--dash-text-muted)] opacity-50 cursor-not-allowed flex items-center gap-1"
-                        title="No registered website for this business"
-                      >
-                        <Globe className="w-3.5 h-3.5" />
-                      </span>
-                    )}
-
                     <button
                       onClick={() => handleToggleAiAutoPilot(selectedConv)}
                       disabled={togglingAi}
-                      className={`crm-btn-secondary text-[11px] py-1 px-2 sm:px-2.5 flex items-center gap-1.5 font-medium border transition ${
+                      className={`crm-btn-secondary text-[11px] p-1.5 sm:py-1 sm:px-2.5 flex items-center gap-1 sm:gap-1.5 font-medium border transition shrink-0 ${
                         selectedConv.whatsapp_ai_enabled
                           ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/20"
                           : "bg-amber-500/10 text-amber-500 border-amber-500/30 hover:bg-amber-500/20"
@@ -1576,37 +1562,114 @@ export default function WhatsAppOutreachPage() {
                       </span>
                     </button>
 
-                    <button
-                      onClick={handleExportChatLog}
-                      className="crm-btn-secondary text-[11px] p-1.5"
-                      title="Export Chat Transcript"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                    </button>
+                    {/* Desktop Actions */}
+                    <div className="hidden sm:flex items-center gap-1 sm:gap-1.5">
+                      {isValidWebsite(selectedConv.website) ? (
+                        <a
+                          href={formatWebsiteUrl(selectedConv.website)!}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="crm-btn-secondary text-[11px] py-1 px-2 text-blue-500 flex items-center gap-1"
+                          title="Open Business Website"
+                        >
+                          <Globe className="w-3.5 h-3.5" />
+                          <span className="hidden md:inline">Site</span>
+                        </a>
+                      ) : (
+                        <span
+                          className="crm-btn-secondary text-[11px] py-1 px-1.5 text-[var(--dash-text-muted)] opacity-50 cursor-not-allowed flex items-center gap-1"
+                          title="No registered website for this business"
+                        >
+                          <Globe className="w-3.5 h-3.5" />
+                        </span>
+                      )}
 
-                    <button
-                      onClick={() => setShowRightDrawer(!showRightDrawer)}
-                      className={`crm-btn-secondary text-[11px] p-1.5 ${showRightDrawer ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30" : ""}`}
-                      title="Toggle Lead CRM Details"
-                    >
-                      <Info className="w-3.5 h-3.5" />
-                    </button>
+                      <button
+                        onClick={handleExportChatLog}
+                        className="crm-btn-secondary text-[11px] p-1.5"
+                        title="Export Chat Transcript"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => setShowRightDrawer(!showRightDrawer)}
+                        className={`crm-btn-secondary text-[11px] p-1.5 ${showRightDrawer ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30" : ""}`}
+                        title="Toggle Lead CRM Details"
+                      >
+                        <Info className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Mobile More Actions Menu */}
+                    <div className="relative sm:hidden">
+                      <button
+                        onClick={() => setShowMobileMoreMenu(!showMobileMoreMenu)}
+                        className={`crm-btn-secondary p-1.5 rounded-md cursor-pointer ${showMobileMoreMenu ? "bg-emerald-500/10 text-emerald-500" : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"}`}
+                        title="More chat options"
+                      >
+                        <MoreVertical className="w-3.5 h-3.5" />
+                      </button>
+
+                      {showMobileMoreMenu && (
+                        <div
+                          ref={mobileMenuRef}
+                          className="absolute right-0 top-full mt-1.5 w-44 rounded-lg bg-[var(--dash-card-bg)] border border-[var(--dash-border)] shadow-xl p-1 z-50 text-xs space-y-0.5 animate-in fade-in zoom-in-95 duration-150"
+                        >
+                          {isValidWebsite(selectedConv.website) ? (
+                            <a
+                              href={formatWebsiteUrl(selectedConv.website)!}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={() => setShowMobileMoreMenu(false)}
+                              className="w-full text-left px-2.5 py-1.5 hover:bg-slate-500/10 rounded-md text-blue-500 flex items-center gap-2 cursor-pointer"
+                            >
+                              <Globe className="w-3.5 h-3.5" /> Open Website
+                            </a>
+                          ) : (
+                            <span className="w-full text-left px-2.5 py-1.5 rounded-md text-[var(--dash-text-muted)] opacity-50 cursor-not-allowed flex items-center gap-2">
+                              <Globe className="w-3.5 h-3.5" /> No Website
+                            </span>
+                          )}
+
+                          <button
+                            onClick={() => {
+                              handleExportChatLog();
+                              setShowMobileMoreMenu(false);
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 hover:bg-slate-500/10 rounded-md text-[var(--dash-text)] flex items-center gap-2 cursor-pointer"
+                          >
+                            <Download className="w-3.5 h-3.5 text-emerald-500" /> Export Chat Log
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setShowRightDrawer(!showRightDrawer);
+                              setShowMobileMoreMenu(false);
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 hover:bg-slate-500/10 rounded-md text-[var(--dash-text)] flex items-center gap-2 cursor-pointer"
+                          >
+                            <Info className="w-3.5 h-3.5 text-blue-400" /> {showRightDrawer ? "Hide Details" : "Lead Details"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Human Takeover Active Notice Banner */}
+                {/* Human Takeover Active Notice Banner - Slim Inline Pill */}
                 {!selectedConv.whatsapp_ai_enabled && (
-                  <div className="mx-4 mt-2 px-3 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-between text-xs text-amber-500 shrink-0 shadow-sm animate-in fade-in duration-200">
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="w-4 h-4 shrink-0 text-amber-500" />
-                      <span>
-                        <strong>Human Takeover Active:</strong> AI auto-reply is silenced. The bot will not answer this person.
+                  <div className="mx-2 sm:mx-4 my-1 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 flex items-center justify-between text-[11px] text-amber-500 shrink-0 shadow-sm animate-in fade-in duration-200">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <UserCheck className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                      <span className="truncate">
+                        <strong>Human Takeover:</strong> <span className="hidden sm:inline">AI auto-reply silenced.</span>
                       </span>
                     </div>
                     <button
                       onClick={() => handleToggleAiAutoPilot(selectedConv)}
                       disabled={togglingAi}
-                      className="text-[11px] font-bold underline hover:text-amber-400 cursor-pointer ml-3 shrink-0"
+                      className="text-[10px] sm:text-[11px] font-bold underline hover:text-amber-400 cursor-pointer ml-2 shrink-0"
                     >
                       Re-enable AI
                     </button>
@@ -1614,7 +1677,7 @@ export default function WhatsAppOutreachPage() {
                 )}
 
                 {/* Message Stream Area */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[var(--dash-bg)]">
+                <div className="flex-1 min-h-0 overflow-y-auto p-2.5 sm:p-4 space-y-2 sm:space-y-3 bg-[var(--dash-bg)]">
                   {loadingConvMessages ? (
                     <div className="h-full flex items-center justify-center text-[var(--dash-text-muted)] gap-2 font-medium text-xs">
                       <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
@@ -1632,23 +1695,23 @@ export default function WhatsAppOutreachPage() {
                     <>
                       {/* Load Earlier Messages Button */}
                       {hasMoreMessages && !showAllMessages && (
-                        <div className="flex justify-center py-2 mb-2 sticky top-0 z-10">
+                        <div className="flex justify-center py-1 mb-1 sticky top-0 z-10">
                           <button
                             onClick={() => {
                               setShowAllMessages(true);
                               fetchChatMessages(selectedConv.lead_id, true);
                             }}
                             disabled={loadingMoreMessages}
-                            className="px-3.5 py-1.5 text-xs font-semibold rounded-full bg-[var(--dash-card-bg)] hover:bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-60 cursor-pointer"
+                            className="px-2.5 py-0.5 text-[10px] font-medium rounded-full bg-[var(--dash-card-bg)] hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 flex items-center gap-1 transition-all shadow-sm disabled:opacity-60 cursor-pointer"
                           >
                             {loadingMoreMessages ? (
                               <>
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                <Loader2 className="w-3 h-3 animate-spin" />
                                 <span>Loading earlier messages...</span>
                               </>
                             ) : (
                               <>
-                                <History className="w-3.5 h-3.5" />
+                                <History className="w-3 h-3" />
                                 <span>Load earlier messages ({totalMessageCount - convMessages.length} more)</span>
                               </>
                             )}
@@ -1657,7 +1720,7 @@ export default function WhatsAppOutreachPage() {
                       )}
 
                       {showAllMessages && totalMessageCount > 5 && (
-                        <div className="flex justify-center py-1.5 mb-2">
+                        <div className="flex justify-center py-1 mb-1">
                           <span className="px-2.5 py-0.5 text-[10px] font-medium rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                             Showing all {totalMessageCount} messages
                           </span>

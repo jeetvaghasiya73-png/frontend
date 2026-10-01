@@ -31,11 +31,19 @@ export default function SplitText({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Check for reduced motion settings
+    // Check for reduced motion settings or mobile screen (avoids main-thread blocking on initial paint)
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
-    if (prefersReducedMotion) return;
+    const isMobile = window.innerWidth < 768;
+    if (prefersReducedMotion || isMobile) {
+      const elements = containerRef.current.querySelectorAll(".split-item");
+      elements.forEach((el) => {
+        (el as HTMLElement).style.opacity = "1";
+        (el as HTMLElement).style.transform = "none";
+      });
+      return;
+    }
 
     const ctx = gsap.context(() => {
       const elements = containerRef.current?.querySelectorAll(".split-item");
