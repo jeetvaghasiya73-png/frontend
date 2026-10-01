@@ -14,14 +14,14 @@ export default function HeroSection() {
 
   const stats = [
     {
-      num: "50+",
-      label: "Web Apps Delivered",
+      num: "< 1.2s",
+      label: "Page Load Speed",
       sparkline: "M0,22 Q20,6 40,18 T80,8 T120,24 T160,6 T200,16 T240,6",
       color: "stroke-emerald-500"
     },
     {
-      num: "99.9%",
-      label: "Uptime Guaranteed",
+      num: "Top 3",
+      label: "Google Search Rankings",
       sparkline: "M0,14 Q30,26 60,10 T120,22 T180,6 T240,14",
       color: "stroke-sky-500"
     },
