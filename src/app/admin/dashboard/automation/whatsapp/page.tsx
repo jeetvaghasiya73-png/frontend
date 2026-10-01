@@ -2681,6 +2681,7 @@ export default function WhatsAppOutreachPage() {
                 className="crm-input text-xs py-1.5"
               >
                 <option value="all">All Statuses</option>
+                <option value="message_sent">💬 Messages Sent (All Contacted)</option>
                 <option value="replied">💬 Replied (Awaiting Interest)</option>
                 <option value="interested">⭐ Interested (High Intent)</option>
                 <option value="combined">🔥 Combined (Replied + Interested)</option>

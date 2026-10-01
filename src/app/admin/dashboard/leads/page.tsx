@@ -100,6 +100,8 @@ export default function LeadsManager() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(20);
   const [statusFilter, setStatusFilter] = useState("all");
+  const statusFilterRef = useRef(statusFilter);
+  statusFilterRef.current = statusFilter;
   const [searchQuery, setSearchQuery] = useState("");
 
   // Helper to accurately classify organic WhatsApp inbound leads vs cold outreach scraped leads
@@ -282,16 +284,18 @@ export default function LeadsManager() {
     }
   };
 
-  const fetchLeads = useCallback(async (pageToFetch?: number, limitToFetch?: number) => {
+  const fetchLeads = useCallback(async (pageToFetch?: number, limitToFetch?: number, statusToFetch?: string) => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
     const pageNum = pageToFetch ?? currentPage;
     const limitNum = limitToFetch ?? pageSize;
+    const curStatus = statusToFetch !== undefined ? statusToFetch : statusFilterRef.current;
+    const statusParam = curStatus && curStatus !== "all" ? `&status=${encodeURIComponent(curStatus)}` : "";
     try {
       setLoading(true);
       const [inquiryRes, scrapedRes] = await Promise.allSettled([
         authFetch(`${API}/api/v1/leads/`),
-        authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${limitNum}`)
+        authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${limitNum}${statusParam}`)
       ]);
 
       let inquiryData: any[] = [];
@@ -327,7 +331,7 @@ export default function LeadsManager() {
       if (!scrapedOk) {
         for (const fallbackLimit of [50, 20]) {
           try {
-            const fallbackRes = await authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${fallbackLimit}`);
+            const fallbackRes = await authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${fallbackLimit}${statusParam}`);
             if (fallbackRes.ok) {
               const fbJson = await fallbackRes.json();
               if (Array.isArray(fbJson)) {
@@ -1176,6 +1180,18 @@ export default function LeadsManager() {
     triggerToast(`Exported ${allLeads.length} leads to CSV file`);
   };
 
+  const isMessageSent = (l: NormalizedLead) => {
+    const waStatus = String(l.whatsapp_status || "").toLowerCase();
+    const emailStatus = String(l.email_status || "").toLowerCase();
+    const mainStatus = String(l.status || "").toLowerCase();
+    const hasWaSent = Boolean(l.whatsapp_sent_at || l.raw?.whatsapp_sent_at) ||
+      ["sent", "delivered", "read", "replied", "interested", "contacted"].includes(waStatus);
+    const hasEmailSent = Boolean(l.raw?.email_sent_at) ||
+      ["sent", "contacted"].includes(emailStatus);
+    const hasStatusContacted = ["contacted", "sent", "interested"].includes(mainStatus);
+    return hasWaSent || hasEmailSent || hasStatusContacted;
+  };
+
   const filteredLeads = useMemo(() => {
     let result = allLeads;
 
@@ -1192,6 +1208,21 @@ export default function LeadsManager() {
         const leadStatus = (l.status || "").toLowerCase();
         const emailStatus = (l.email_status || "").toLowerCase();
         const waStatus = (l.whatsapp_status || "").toLowerCase();
+
+        if (sf === "message_sent" || sf === "messages_sent" || sf === "sent_all") {
+          return isMessageSent(l);
+        }
+        if (sf === "whatsapp_sent") {
+          return Boolean(l.whatsapp_sent_at || l.raw?.whatsapp_sent_at) ||
+            ["sent", "delivered", "read", "replied", "interested", "contacted"].includes(waStatus);
+        }
+        if (sf === "email_sent") {
+          return Boolean(l.raw?.email_sent_at) ||
+            ["sent", "contacted"].includes(emailStatus);
+        }
+        if (sf === "pending") {
+          return !isMessageSent(l) && (waStatus === "pending" || leadStatus === "pending");
+        }
         return leadStatus === sf || emailStatus === sf || waStatus === sf;
       });
     }
@@ -1411,6 +1442,29 @@ export default function LeadsManager() {
             >
               Inbound Inquiries ({totalInquiriesCount})
             </button>
+
+            {/* Quick Filter: Messages Sent */}
+            <button
+              type="button"
+              onClick={() => {
+                const nextStatus = statusFilter === "message_sent" ? "all" : "message_sent";
+                setStatusFilter(nextStatus);
+                setCurrentPage(1);
+                fetchLeads(1, pageSize, nextStatus);
+              }}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 border ${
+                statusFilter === "message_sent"
+                  ? "bg-emerald-600 border-emerald-500 text-white shadow-xs font-bold"
+                  : "bg-white/60 dark:bg-neutral-900/60 border-[var(--dash-border)] text-[var(--dash-text-muted)] hover:text-emerald-500 hover:border-emerald-500/40"
+              }`}
+              title="Filter leads who were sent a WhatsApp or email message"
+            >
+              <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+              <span>Messages Sent</span>
+              {statusFilter === "message_sent" && (
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              )}
+            </button>
           </div>
 
           {/* Search & Status Controls */}
@@ -1431,18 +1485,23 @@ export default function LeadsManager() {
 
             {/* Action Row: Status Filter & Delete Options in ONE row on mobile */}
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="relative flex-1 sm:flex-none sm:w-auto min-w-[125px]">
+              <div className="relative flex-1 sm:flex-none sm:w-auto min-w-[140px]">
                 <select
                   value={statusFilter}
                   onChange={(e) => {
-                    setStatusFilter(e.target.value);
+                    const newStatus = e.target.value;
+                    setStatusFilter(newStatus);
                     setCurrentPage(1);
+                    fetchLeads(1, pageSize, newStatus);
                   }}
                   className="crm-input !pl-8 !pr-8 py-1.5 text-xs font-semibold cursor-pointer appearance-none w-full sm:w-auto"
                 >
                   <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="sent">Sent / Contacted</option>
+                  <option value="message_sent">💬 Messages Sent (All)</option>
+                  <option value="whatsapp_sent">📱 WhatsApp Sent</option>
+                  <option value="email_sent">✉️ Email Sent</option>
+                  <option value="pending">⏳ Pending (Not Contacted)</option>
+                  <option value="interested">⭐ Interested</option>
                   <option value="qualified">Qualified</option>
                   <option value="failed">Failed</option>
                 </select>

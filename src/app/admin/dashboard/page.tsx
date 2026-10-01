@@ -83,7 +83,7 @@ export default function SuperAdminDashboard() {
   const [dateFilter, setDateFilter] = useState("Last 30 days");
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [disableAnalytics, setDisableAnalytics] = useState(false);
-  const [activeTableTab, setActiveTableTab] = useState<"scraped" | "inbound" | "portfolio">("scraped");
+  const [activeTableTab, setActiveTableTab] = useState<"scraped" | "inbound" | "messages_sent" | "portfolio">("scraped");
 
   // Lead Detail Right Drawer & Interactive Dialog States
   const [selectedLead, setSelectedLead] = useState<any | null>(null);
@@ -584,6 +584,51 @@ export default function SuperAdminDashboard() {
           notes: []
         };
       });
+    } else if (activeTableTab === "messages_sent") {
+      let data = [...filteredData.currentScraped, ...filteredData.currentInquiries].filter(l => {
+        const waStatus = String(l.whatsapp_status || "").toLowerCase();
+        const emailStatus = String(l.email_status || "").toLowerCase();
+        const mainStatus = String(l.status || "").toLowerCase();
+        return Boolean(l.whatsapp_sent_at || l.email_sent_at) ||
+          ["sent", "delivered", "read", "replied", "interested", "contacted"].includes(waStatus) ||
+          ["sent", "contacted"].includes(emailStatus) ||
+          ["contacted", "sent", "interested"].includes(mainStatus);
+      });
+      if (q) {
+        data = data.filter(l =>
+          (l.bussiness_name || l.name)?.toLowerCase().includes(q) ||
+          (l.bussiness_email || l.email)?.toLowerCase().includes(q) ||
+          (l.scraped_city || l.city || l.location)?.toLowerCase().includes(q)
+        );
+      }
+      return data.map((l, idx) => {
+        const baseScore = (l.bussiness_email || l.email) ? 85 : 60;
+        const ratingBonus = l.rating ? Math.round(parseFloat(l.rating) * 3) : 5;
+        const computedScore = Math.min(99, baseScore + ratingBonus);
+        const savedFollowup = typeof window !== "undefined" ? localStorage.getItem(`crm_lead_followup_${l.id}`) : null;
+        const rawFollowup = l.next_followup_at ? formatISTDate(l.next_followup_at) : null;
+        const titleName = l.bussiness_name || l.name || "Client Prospect";
+        return {
+          raw: l,
+          rawId: l.id,
+          id: l.id || `msg-${idx}`,
+          title: titleName,
+          email: l.bussiness_email || l.email || "",
+          company: l.bussiness_name || l.company || l.scraped_city || "Company",
+          industry: formatServiceText(l.scraped_service || l.category) || "Services",
+          location: l.scraped_city || l.location || "Surat",
+          source: l.source || (l.bussiness_number ? "scraped" : "inquiry"),
+          phone: l.bussiness_number || l.phone || "",
+          status: l.email_status ? l.email_status.charAt(0).toUpperCase() + l.email_status.slice(1) : (l.whatsapp_status || "Contacted"),
+          score: computedScore,
+          followupDate: savedFollowup || rawFollowup || null,
+          date: l.created_at || new Date().toISOString(),
+          assignedTo: l.assigned_to || user?.username || "Main Admin",
+          assignedAvatar: (l.assigned_to || user?.username || "Main Admin").slice(0, 2).toUpperCase(),
+          avatarColor: "bg-emerald-600",
+          notes: l.custom_notes || []
+        };
+      });
     } else {
       let data = portfolios;
       if (q) {
@@ -623,6 +668,8 @@ export default function SuperAdminDashboard() {
     ? filteredData.currentInquiries.length
     : activeTableTab === "portfolio"
     ? portfolios.length
+    : activeTableTab === "messages_sent"
+    ? tableDataset.length
     : (totalScrapedCount || scrapedStats?.total || 1093);
 
   const totalTablePages = Math.max(1, Math.ceil(totalLeadsForTab / tableLimit));
@@ -1656,6 +1703,21 @@ export default function SuperAdminDashboard() {
               <span className="crm-badge badge-success text-[10px] ml-0.5">
                 {filteredData.currentInquiries.length}
               </span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTableTab("messages_sent"); setTablePage(1); }}
+              className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0"
+              style={{
+                borderRadius: "var(--dash-badge-radius)",
+                background: activeTableTab === "messages_sent" ? "var(--dash-surface)" : "transparent",
+                color: activeTableTab === "messages_sent" ? "var(--dash-text)" : "var(--dash-text-muted)",
+                border: activeTableTab === "messages_sent" ? "1px solid var(--dash-border)" : "1px solid transparent",
+                boxShadow: activeTableTab === "messages_sent" ? "var(--dash-card-shadow)" : "none"
+              }}
+            >
+              <MessageSquare className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
+              <span>Messages Sent</span>
             </button>
 
             <button
