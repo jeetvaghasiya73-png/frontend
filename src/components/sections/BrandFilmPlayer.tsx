@@ -18,8 +18,8 @@ export default function BrandFilmPlayer() {
   const [controlsVisible, setControlsVisible] = useState(true);
   const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  // Auto-hide floating navigation header on mouse inactivity for full cinema mode
-  const handleMouseMove = () => {
+  // Auto-hide floating navigation header on mouse inactivity or touch for full cinema mode
+  const handleInteraction = () => {
     setControlsVisible(true);
     if (hideTimeout) clearTimeout(hideTimeout);
     const timeout = setTimeout(() => {
@@ -51,23 +51,27 @@ export default function BrandFilmPlayer() {
   return (
     <div
       ref={containerRef}
-      onMouseMove={handleMouseMove}
-      className="relative w-full h-screen overflow-hidden bg-[#0b0c0e] select-none"
+      onMouseMove={handleInteraction}
+      onTouchStart={handleInteraction}
+      onClick={handleInteraction}
+      className="relative w-full h-[100dvh] min-h-[100dvh] overflow-hidden bg-[#0b0c0e] select-none"
     >
       {/* Top Floating Cinema Bar */}
       <header
-        className={`fixed top-0 left-0 right-0 z-50 p-4 sm:p-6 flex items-center justify-between pointer-events-none transition-opacity duration-500 ${
+        className={`fixed top-0 left-0 right-0 z-50 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 px-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:p-6 flex items-center justify-between pointer-events-none transition-opacity duration-500 ${
           controlsVisible ? "opacity-100" : "opacity-0"
         }`}
       >
         {/* Left: Back to Site */}
-        <div className="pointer-events-auto flex items-center gap-3">
+        <div className="pointer-events-auto flex items-center gap-2 sm:gap-3">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-white/20 bg-black/60 hover:bg-white/15 backdrop-blur-xl text-xs font-mono text-white/90 hover:text-white transition duration-200 shadow-lg group cursor-pointer"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full border border-white/20 bg-black/60 hover:bg-white/15 backdrop-blur-xl text-[11px] sm:text-xs font-mono text-white/90 hover:text-white transition duration-200 shadow-lg group cursor-pointer"
           >
-            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-            <span className="font-semibold">Exit to Site</span>
+            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform shrink-0" />
+            <span className="font-semibold whitespace-nowrap">
+              Exit<span className="hidden sm:inline"> to Site</span>
+            </span>
           </Link>
 
           <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-[11px] font-mono text-white/80">
@@ -98,10 +102,10 @@ export default function BrandFilmPlayer() {
         </div>
 
         {/* Right: Quick Action CTAs & Fullscreen Toggle */}
-        <div className="pointer-events-auto flex items-center gap-2.5">
+        <div className="pointer-events-auto flex items-center gap-2 sm:gap-2.5">
           <Link
             href="/contact"
-            className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-amber-400 hover:bg-amber-300 text-black text-xs font-bold uppercase tracking-wider transition duration-200 shadow-md shadow-amber-400/20 cursor-pointer"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-amber-400 hover:bg-amber-300 text-black text-xs font-bold uppercase tracking-wider transition duration-200 shadow-md shadow-amber-400/20 cursor-pointer"
           >
             <span>Get Quote</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -110,12 +114,12 @@ export default function BrandFilmPlayer() {
           <button
             onClick={toggleFullscreen}
             aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-            className="w-9 h-9 rounded-full border border-white/20 bg-black/60 hover:bg-white/15 backdrop-blur-xl text-white flex items-center justify-center transition cursor-pointer shadow-lg"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/20 bg-black/60 hover:bg-white/15 backdrop-blur-xl text-white flex items-center justify-center transition cursor-pointer shadow-lg shrink-0"
           >
             {isFullscreen ? (
-              <Minimize2 className="w-4 h-4" />
+              <Minimize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             ) : (
-              <Maximize2 className="w-4 h-4" />
+              <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             )}
           </button>
         </div>

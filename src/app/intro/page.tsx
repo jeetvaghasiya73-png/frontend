@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function IntroPage() {
   return (
-    <main className="relative w-full h-screen bg-[#0b0c0e] overflow-hidden">
+    <main className="relative w-full h-[100dvh] min-h-[100dvh] bg-[#0b0c0e] overflow-hidden">
       {/* Semantic Accessible SEO Hierarchy */}
       <div className="sr-only">
         <h1>Tech Infinix: The Technology Behind Your Business — 3D Brand Film</h1>
