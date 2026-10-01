@@ -7,6 +7,7 @@ import Navbar from "@/components/layout/Navbar";
 import FooterSection from "@/components/layout/FooterSection";
 import ContactSection from "@/components/sections/ContactSection";
 import SplitText from "@/components/animations/SplitText";
+import "@/app/services/seo/seo-cluster.css";
 import {
   Search,
   Gauge,
@@ -32,7 +33,9 @@ import {
   Monitor,
   Smartphone,
   ChevronRight,
-  ChevronUp
+  ChevronUp,
+  Layers,
+  ExternalLink
 } from "lucide-react";
 
 export default function SeoMainPage() {
@@ -103,8 +106,113 @@ export default function SeoMainPage() {
     }
   ];
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "@id": "https://www.techinfinix.com/services/seo#service",
+        name: "Search Engine Optimization (SEO) Services",
+        serviceType: "Search Engine Optimization",
+        provider: {
+          "@type": "Organization",
+          name: "Tech Infinix",
+          url: "https://www.techinfinix.com",
+          logo: "https://www.techinfinix.com/icon.png",
+          contactPoint: {
+            "@type": "ContactPoint",
+            telephone: "+91-79907-38939",
+            contactType: "customer service",
+            areaServed: "Worldwide",
+            availableLanguage: ["English", "Hindi", "Gujarati"],
+          },
+        },
+        description:
+          "Professional SEO services including on-page SEO, off-page SEO, technical SEO, e-commerce SEO, and white-label SEO services.",
+        hasOfferCatalog: {
+          "@type": "OfferCatalog",
+          name: "SEO Services Overview",
+          itemListElement: [
+            {
+              "@type": "Offer",
+              itemOffered: {
+                "@type": "Service",
+                name: "On-Page SEO Service",
+                description: "Keyword mapping, title tag optimization, internal linking, and search intent alignment.",
+              },
+            },
+            {
+              "@type": "Offer",
+              itemOffered: {
+                "@type": "Service",
+                name: "Off-Page SEO Services",
+                description: "High-quality link acquisition, digital PR, and authority building.",
+              },
+            },
+            {
+              "@type": "Offer",
+              itemOffered: {
+                "@type": "Service",
+                name: "Technical SEO",
+                description: "Crawlability fixes, XML sitemaps, Core Web Vitals optimization, and structured data implementation.",
+              },
+            },
+            {
+              "@type": "Offer",
+              itemOffered: {
+                "@type": "Service",
+                name: "White Label SEO Services",
+                description: "Reliable SEO fulfillment and delivery support for digital marketing agencies.",
+              },
+            }
+          ],
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://www.techinfinix.com/services/seo#breadcrumb",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://www.techinfinix.com",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Services",
+            item: "https://www.techinfinix.com/services",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: "SEO Services",
+            item: "https://www.techinfinix.com/services/seo",
+          },
+        ],
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://www.techinfinix.com/services/seo#faq",
+        mainEntity: faqs.map(f => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: f.a
+          }
+        }))
+      },
+    ],
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Navbar />
       <main className="flex-1 bg-background text-foreground pt-28 sm:pt-32 pb-24 text-left overflow-hidden">
         
@@ -143,16 +251,14 @@ export default function SeoMainPage() {
             </Link>
 
             <a
-              href="#seo-services"
+              href="#seo-solutions"
               className="border border-border-custom bg-surface/40 hover:bg-surface/70 text-foreground px-6 py-4 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer"
             >
-              Explore Our SEO Services
+              Explore Our SEO Solutions
               <ChevronDown className="w-4 h-4 text-secondary-custom" />
             </a>
           </div>
         </section>
-
-
 
         {/* SECTION 2: SEO SERVICES */}
         <section id="seo-services" className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-28">
@@ -173,7 +279,7 @@ export default function SeoMainPage() {
               <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed mb-6">
                 Our on page SEO service ensures search engines understand your website's content and visitors find relevant information instantly. We focus on aligning your site architecture with actual user behavior.
               </p>
-              <ul className="space-y-2 mt-auto">
+              <ul className="space-y-2 mb-6">
                 {["Keyword research and mapping", "Search intent analysis", "Title tag & meta description optimization", "Heading structure & internal linking", "Content & image optimization", "URL structure refinement"].map(item => (
                   <li key={item} className="flex items-start gap-2 text-xs text-foreground/90">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
@@ -181,6 +287,13 @@ export default function SeoMainPage() {
                   </li>
                 ))}
               </ul>
+              <Link 
+                href="/services/seo/on-page-seo-services" 
+                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline pt-4 border-t border-border-custom/50"
+              >
+                <span>Explore On-Page SEO Services</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
 
             <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-emerald-500/50 hover:bg-surface/30 transition-all duration-300">
@@ -189,7 +302,7 @@ export default function SeoMainPage() {
               <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed mb-6">
                 Our off page SEO services help businesses build authority, trust, and external visibility. We rely strictly on ethical, high-quality placements rather than automated or spammy link schemes.
               </p>
-              <ul className="space-y-2 mt-auto">
+              <ul className="space-y-2 mb-6">
                 {["Quality link acquisition", "Digital PR & brand mentions", "Relevant industry placements", "Competitor backlink analysis", "Link profile monitoring", "Ethical authority-building strategies"].map(item => (
                   <li key={item} className="flex items-start gap-2 text-xs text-foreground/90">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
@@ -197,6 +310,21 @@ export default function SeoMainPage() {
                   </li>
                 ))}
               </ul>
+              <div className="mt-auto flex flex-col gap-2 pt-4 border-t border-border-custom/50">
+                <Link 
+                  href="/services/seo/seo-link-building" 
+                  className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline"
+                >
+                  <span>Explore SEO Link Building</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+                <Link 
+                  href="/services/seo/backlinks-in-seo" 
+                  className="inline-flex items-center gap-1.5 text-xs font-mono text-secondary-custom hover:text-foreground"
+                >
+                  <span>Read Backlinks in SEO Guide →</span>
+                </Link>
+              </div>
             </div>
 
             <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-emerald-500/50 hover:bg-surface/30 transition-all duration-300">
@@ -205,7 +333,7 @@ export default function SeoMainPage() {
               <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed mb-6">
                 Technical SEO improves the accessibility, crawlability, and indexability of a website. We translate complex engineering concepts into smooth, easily navigable experiences for search engine bots.
               </p>
-              <ul className="space-y-2 mt-auto">
+              <ul className="space-y-2 mb-6">
                 {["Technical website audits", "Crawlability & indexability", "XML sitemaps & Robots.txt", "Canonical tags & broken links", "Core Web Vitals & mobile usability", "Structured data & architecture"].map(item => (
                   <li key={item} className="flex items-start gap-2 text-xs text-foreground/90">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
@@ -213,6 +341,13 @@ export default function SeoMainPage() {
                   </li>
                 ))}
               </ul>
+              <Link 
+                href="/services/seo/seo-audit-services" 
+                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline pt-4 border-t border-border-custom/50"
+              >
+                <span>Explore Technical SEO Audits</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
 
             <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-emerald-500/50 hover:bg-surface/30 transition-all duration-300">
@@ -221,6 +356,13 @@ export default function SeoMainPage() {
               <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed mb-6">
                 Our organic search engine optimization services build sustainable strategies to attract relevant visitors. We focus on qualified leads and long-term visibility over short-term paid traffic bursts.
               </p>
+              <Link 
+                href="/services/seo/organic-seo-services" 
+                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline pt-4 border-t border-border-custom/50"
+              >
+                <span>Explore Organic SEO Services</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
 
             <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-emerald-500/50 hover:bg-surface/30 transition-all duration-300">
@@ -229,6 +371,13 @@ export default function SeoMainPage() {
               <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed mb-6">
                 Our Google search engine optimization approach strictly follows Google Search Central guidelines, optimizing for helpful content, page experience, and technical accessibility without outdated practices.
               </p>
+              <Link 
+                href="/services/seo/google-seo" 
+                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline pt-4 border-t border-border-custom/50"
+              >
+                <span>Explore Google SEO Compliance</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
 
             <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-emerald-500/50 hover:bg-surface/30 transition-all duration-300">
@@ -237,6 +386,13 @@ export default function SeoMainPage() {
               <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed mb-6">
                 As a dedicated Google ranking expert team, we analyze ranking opportunities and implement strategic improvements. We set realistic expectations, as long-term rankings depend on consistent, quality work.
               </p>
+              <Link 
+                href="/services/seo/google-ranking-expert" 
+                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline pt-4 border-t border-border-custom/50"
+              >
+                <span>Consult a Google Ranking Expert</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
 
           </div>
@@ -262,21 +418,27 @@ export default function SeoMainPage() {
                 title: "E-commerce SEO",
                 keyword: "E-commerce SEO services",
                 desc: "As a leading e-commerce SEO agency, we specialize in SEO in e-commerce, tackling complex store architectures.",
-                details: "We handle product page optimization, category page structuring, product schema integration, faceted navigation issues, duplicate content, and deep product keyword research to drive organic discovery."
+                details: "We handle product page optimization, category page structuring, product schema integration, faceted navigation issues, duplicate content, and deep product keyword research to drive organic discovery.",
+                link: "/services/seo/ecommerce-seo-services",
+                linkText: "Explore E-Commerce SEO Services"
               },
               {
                 id: "realestate",
                 icon: <Building className="w-5 h-5" />,
                 title: "Real Estate SEO",
                 desc: "Drive highly targeted local buyer and seller traffic to your brokerage or property portfolios.",
-                details: "We optimize property listings, implement location-based keywords, build neighborhood landing pages, and optimize for local SEO to generate qualified real estate leads."
+                details: "We optimize property listings, implement location-based keywords, build neighborhood landing pages, and optimize for local SEO to generate qualified real estate leads.",
+                link: "/services/seo/real-estate-seo",
+                linkText: "Explore Real Estate SEO Services"
               },
               {
                 id: "restaurant",
                 icon: <Utensils className="w-5 h-5" />,
                 title: "Restaurant SEO",
                 desc: "Improve local visibility so hungry customers in your proximity find your menu first.",
-                details: "Our focus includes local SEO, Google Business Profile optimization, menu page structuring, and review reputation management to dominate local dining search visibility."
+                details: "Our focus includes local SEO, Google Business Profile optimization, menu page structuring, and review reputation management to dominate local dining search visibility.",
+                link: "/services/seo/local-seo-services",
+                linkText: "Explore Local Search SEO Services"
               },
               {
                 id: "dental",
@@ -284,28 +446,36 @@ export default function SeoMainPage() {
                 title: "Dental SEO",
                 keyword: "Dental SEO services",
                 desc: "Our dental SEO services target patient search intent for high-value procedures in your city.",
-                details: "We build dedicated dental treatment pages, optimize dentist location hubs, and focus on appointment-driven content aligned with local dental search intent."
+                details: "We build dedicated dental treatment pages, optimize dentist location hubs, and focus on appointment-driven content aligned with local dental search intent.",
+                link: "/services/seo/dental-seo",
+                linkText: "Explore Dental SEO Services"
               },
               {
                 id: "pharma",
                 icon: <Pill className="w-5 h-5" />,
                 title: "Pharmaceutical SEO",
                 desc: "Navigate regulatory complexities while ensuring accurate, discoverable medical content.",
-                details: "We handle product category structuring, regulatory awareness compliance, technical SEO, and educational content accuracy tailored for strict pharma search intent."
+                details: "We handle product category structuring, regulatory awareness compliance, technical SEO, and educational content accuracy tailored for strict pharma search intent.",
+                link: "/services/seo/google-seo",
+                linkText: "Explore Healthcare & Google SEO Guidelines"
               },
               {
                 id: "architecture",
                 icon: <HardHat className="w-5 h-5" />,
                 title: "Architecture SEO",
                 desc: "Showcase your portfolio to high-net-worth clients searching for local design firms.",
-                details: "We focus on architecture portfolio optimization, specific project pages, image SEO, and location-based searches for specific architectural services."
+                details: "We focus on architecture portfolio optimization, specific project pages, image SEO, and location-based searches for specific architectural services.",
+                link: "/services/seo/local-seo-services",
+                linkText: "Explore Local Architecture Firm SEO"
               },
               {
                 id: "healthcare",
                 icon: <Activity className="w-5 h-5" />,
                 title: "Healthcare SEO",
                 desc: "Build authority and trust signals necessary for sensitive YMYL (Your Money or Your Life) queries.",
-                details: "We optimize healthcare service pages, ensure medical content quality, implement technical trust signals, and improve local search visibility for clinics and hospitals."
+                details: "We optimize healthcare service pages, ensure medical content quality, implement technical trust signals, and improve local search visibility for clinics and hospitals.",
+                link: "/services/seo/dental-seo",
+                linkText: "Explore Medical & Clinical Practice SEO"
               },
               {
                 id: "legal",
@@ -313,14 +483,18 @@ export default function SeoMainPage() {
                 title: "Legal SEO",
                 keyword: "Search engine optimization for lawyers",
                 desc: "Search engine optimization for lawyers requires aggressive local and practice-area targeting.",
-                details: "We develop comprehensive law firm service pages, optimize location-based legal keywords, and create structured contact conversion paths without promising guaranteed legal leads."
+                details: "We develop comprehensive law firm service pages, optimize location-based legal keywords, and create structured contact conversion paths without promising guaranteed legal leads.",
+                link: "/services/seo/seo-for-lawyers",
+                linkText: "Explore Search Engine Optimization for Lawyers"
               },
               {
                 id: "other",
                 icon: <Globe2 className="w-5 h-5" />,
                 title: "Other Industries",
                 desc: "We adapt our proven SEO methodologies to any B2B or B2C market.",
-                details: "Whether you're in manufacturing, SaaS, logistics, or education, our SEO strategies can be adapted to your industry depending on the website, competition, and business objectives."
+                details: "Whether you're in manufacturing, SaaS, logistics, or education, our SEO strategies can be adapted to your industry depending on the website, competition, and business objectives.",
+                link: "/services/seo/professional-seo-services",
+                linkText: "Explore Professional SEO Solutions"
               }
             ].map((industry) => (
               <div 
@@ -353,6 +527,17 @@ export default function SeoMainPage() {
                   <p className="text-xs sm:text-sm text-foreground/80 leading-relaxed border-t border-border-custom/50 pt-3">
                     {industry.details}
                   </p>
+                  {industry.link && (
+                    <div className="pt-3 border-t border-border-custom/50 mt-3">
+                      <Link
+                        href={industry.link}
+                        className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline"
+                      >
+                        <span>{industry.linkText}</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -405,6 +590,13 @@ export default function SeoMainPage() {
                   <p className="text-sm text-secondary-custom leading-relaxed mb-6">
                     We navigate WordPress technical SEO to ensure your site stays fast and indexable. This includes structuring SEO-friendly URLs, extensive metadata optimization, configuring caching plugins for website speed, implementing XML sitemaps, structured data logic, and rigorous content optimization.
                   </p>
+                  <Link
+                    href="/services/seo/wordpress-seo"
+                    className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline"
+                  >
+                    <span>Explore Dedicated WordPress SEO Services</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
               )}
               {activePlatform === "shopify" && (
@@ -415,6 +607,13 @@ export default function SeoMainPage() {
                   <p className="text-sm text-secondary-custom leading-relaxed mb-6">
                     Shopify stores require specific technical handling. We focus on Shopify product page optimization, collection page structuring, automated product schema, resolving native duplicate URL management issues, canonical tags, store architecture refinement, and page speed improvements.
                   </p>
+                  <Link
+                    href="/services/seo/shopify-seo"
+                    className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline"
+                  >
+                    <span>Explore Dedicated Shopify SEO Agency Solutions</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
               )}
               {activePlatform === "other" && (
@@ -456,13 +655,21 @@ export default function SeoMainPage() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background text-sm font-semibold rounded-xl hover:opacity-90 transition-opacity"
-                >
-                  Discuss a White Label SEO Partnership
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+                <div className="flex flex-wrap items-center gap-4">
+                  <Link
+                    href="/services/seo/white-label-seo"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background text-sm font-semibold rounded-xl hover:opacity-90 transition-opacity"
+                  >
+                    Explore White Label SEO
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href="/services/seo/white-label-link-building"
+                    className="inline-flex items-center gap-2 px-6 py-3 border border-border-custom bg-surface/50 text-foreground text-sm font-semibold rounded-xl hover:bg-surface/80 transition-colors"
+                  >
+                    White Label Link Building →
+                  </Link>
+                </div>
               </div>
 
               <div className="flex-1 bg-surface/50 border border-border-custom rounded-2xl p-6 sm:p-8 w-full">
@@ -547,6 +754,121 @@ export default function SeoMainPage() {
                 ))}
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* SECTION 7.5: EXPLORE OUR SEO SOLUTIONS (CLUSTER DIRECTORY) */}
+        <section id="seo-solutions" className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-28">
+          <div className="mb-12 text-center max-w-3xl mx-auto">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-3">
+              Topical Authority Cluster
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-foreground mb-4">
+              Explore Our SEO Solutions
+            </h2>
+            <p className="text-sm sm:text-base text-secondary-custom leading-relaxed">
+              Explore our specialized SEO services and resources to find the solutions that match your website architecture, industry vertical, and organic growth objectives.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            {/* GROUP 1: GENERAL SEO SERVICES */}
+            <div className="seo-directory-group">
+              <span className="seo-directory-badge">Group A</span>
+              <h3 className="text-lg font-bold text-foreground mb-4">General SEO Services</h3>
+              <div className="seo-directory-list">
+                {[
+                  { slug: "professional-seo-services", name: "Professional SEO Services", desc: "Structured, full-funnel search strategy" },
+                  { slug: "seo-packages", name: "SEO Packages", desc: "Tiered scopes & clear deliverables" },
+                  { slug: "seo-pricing", name: "SEO Pricing Guide", desc: "Cost drivers & transparent budgeting" },
+                  { slug: "best-seo-agency", name: "Best SEO Agency Evaluation", desc: "Framework for selecting an agency partner" },
+                  { slug: "google-ranking-expert", name: "Google Ranking Specialists", desc: "Intent, entities & ranking signals" },
+                  { slug: "organic-seo-services", name: "Organic SEO Services", desc: "Compounding non-paid search traffic" },
+                  { slug: "google-seo", name: "Google SEO Compliance", desc: "Google Search Central best practices" },
+                  { slug: "search-engine-marketing-analysis", name: "SEM & Search Analysis", desc: "Market share & competitor search audit" },
+                  { slug: "seo-audit-services", name: "Technical SEO Audits", desc: "Deep crawl, index & code diagnostics" },
+                  { slug: "seo-for-small-businesses", name: "Small Business SEO", desc: "High-ROI local & niche optimization" },
+                  { slug: "backlinks-in-seo", name: "Backlinks in SEO", desc: "Link equity, authority & safety guide" },
+                ].map(item => (
+                  <Link key={item.slug} href={`/services/seo/${item.slug}`} className="seo-directory-item group">
+                    <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
+                    <div>
+                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">{item.name}</div>
+                      <div className="text-[11px] text-secondary-custom leading-tight">{item.desc}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* GROUP 2: ON-PAGE AND LINK BUILDING */}
+            <div className="seo-directory-group">
+              <span className="seo-directory-badge">Group B</span>
+              <h3 className="text-lg font-bold text-foreground mb-4">On-Page & Link Building</h3>
+              <div className="seo-directory-list">
+                {[
+                  { slug: "on-page-seo-services", name: "On-Page SEO Services", desc: "Metadata, heading tags & internal links" },
+                  { slug: "seo-link-building", name: "SEO Link Building Services", desc: "Ethical editorial outreach & digital PR" },
+                  { slug: "white-label-link-building", name: "White Label Link Building", desc: "Unbranded fulfillment for agencies" },
+                  { slug: "white-label-seo", name: "White Label SEO Services", desc: "End-to-end outsourced agency SEO" },
+                ].map(item => (
+                  <Link key={item.slug} href={`/services/seo/${item.slug}`} className="seo-directory-item group">
+                    <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
+                    <div>
+                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">{item.name}</div>
+                      <div className="text-[11px] text-secondary-custom leading-tight">{item.desc}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* GROUP 3: PLATFORM-SPECIFIC SEO */}
+            <div className="seo-directory-group">
+              <span className="seo-directory-badge">Group C</span>
+              <h3 className="text-lg font-bold text-foreground mb-4">Platform-Specific SEO</h3>
+              <div className="seo-directory-list">
+                {[
+                  { slug: "wordpress-seo", name: "WordPress SEO Services", desc: "Speed, taxonomy & WooCommerce fixes" },
+                  { slug: "shopify-seo", name: "Shopify SEO Agency", desc: "Liquid templates & duplicate URL fixes" },
+                  { slug: "ecommerce-seo-services", name: "E-Commerce SEO Services", desc: "Category architectures & product schema" },
+                  { slug: "ecommerce-seo-agency", name: "E-Commerce SEO Agency", desc: "Specialist retail agency selection" },
+                  { slug: "seo-for-ecommerce", name: "SEO in E-Commerce Guide", desc: "Catalog crawl budget & filter mechanics" },
+                ].map(item => (
+                  <Link key={item.slug} href={`/services/seo/${item.slug}`} className="seo-directory-item group">
+                    <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
+                    <div>
+                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">{item.name}</div>
+                      <div className="text-[11px] text-secondary-custom leading-tight">{item.desc}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* GROUP 4: INDUSTRY-SPECIFIC SEO */}
+            <div className="seo-directory-group">
+              <span className="seo-directory-badge">Group D</span>
+              <h3 className="text-lg font-bold text-foreground mb-4">Industry-Specific SEO</h3>
+              <div className="seo-directory-list">
+                {[
+                  { slug: "real-estate-seo", name: "Real Estate SEO Services", desc: "Neighborhood guides & IDX optimizations" },
+                  { slug: "dental-seo", name: "Dental SEO Services", desc: "High-value procedure & patient acquisition" },
+                  { slug: "seo-for-lawyers", name: "SEO for Lawyers", desc: "Practice area hubs & bar-compliant SEO" },
+                  { slug: "local-seo-services", name: "Local Search SEO Services", desc: "Google Maps, local 3-pack & citations" },
+                ].map(item => (
+                  <Link key={item.slug} href={`/services/seo/${item.slug}`} className="seo-directory-item group">
+                    <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
+                    <div>
+                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">{item.name}</div>
+                      <div className="text-[11px] text-secondary-custom leading-tight">{item.desc}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
           </div>
         </section>
 
