@@ -507,6 +507,13 @@ export default function WhatsAppOutreachPage() {
           }
         }
 
+        // Strictly sort conversations by latest_timestamp descending so today's & newest messages are on top
+        deduped.sort((a, b) => {
+          const timeA = a.latest_timestamp ? new Date(a.latest_timestamp).getTime() : 0;
+          const timeB = b.latest_timestamp ? new Date(b.latest_timestamp).getTime() : 0;
+          return timeB - timeA;
+        });
+
         setConversations(deduped);
         setTotalConversations(deduped.length);
 
@@ -691,18 +698,29 @@ export default function WhatsAppOutreachPage() {
                 });
               }
 
-              setConversations((prev) =>
-                prev.map((c) =>
-                  c.lead_id === data.chat.lead_id || (data.chat.phone_number && c.phone_number && data.chat.phone_number.includes(c.phone_number.slice(-10)))
-                    ? {
-                        ...c,
-                        latest_message: data.chat.message_text,
-                        latest_direction: data.chat.direction,
-                        latest_timestamp: data.chat.created_at,
-                      }
-                    : c
-                )
-              );
+              setConversations((prev) => {
+                const matchLeadId = data.chat.lead_id;
+                const matchPhone = data.chat.phone_number ? data.chat.phone_number.slice(-10) : "";
+                const existingIndex = prev.findIndex(c =>
+                  (matchLeadId && c.lead_id === matchLeadId) ||
+                  (matchPhone && c.phone_number && c.phone_number.includes(matchPhone))
+                );
+
+                if (existingIndex >= 0) {
+                  const existing = prev[existingIndex];
+                  const updated: ConversationItem = {
+                    ...existing,
+                    latest_message: data.chat.message_text,
+                    latest_direction: data.chat.direction,
+                    latest_timestamp: data.chat.created_at,
+                  };
+                  const rest = prev.filter((_, idx) => idx !== existingIndex);
+                  return [updated, ...rest];
+                } else {
+                  fetchConversations();
+                  return prev;
+                }
+              });
             }
 
             if (data.type === "whatsapp_ai_toggled") {
@@ -733,6 +751,9 @@ export default function WhatsAppOutreachPage() {
               if (data.sent_today !== undefined) setSentToday(data.sent_today);
               if (data.daily_limit !== undefined) setDailyLimit(data.daily_limit);
               if (data.is_limit_reached !== undefined) setIsLimitReached(data.is_limit_reached);
+              if (data.item_status === "sent") {
+                fetchConversations();
+              }
             }
           } catch (err) {
             // ignore
@@ -782,6 +803,22 @@ export default function WhatsAppOutreachPage() {
       if (res.ok && data.success) {
         setManualMessageText("");
         showAlert("success", `Message sent to ${selectedConv.bussiness_name}`);
+        setConversations((prev) => {
+          const existingIndex = prev.findIndex(c => c.lead_id === selectedConv.lead_id);
+          const updated: ConversationItem = {
+            ...selectedConv,
+            latest_message: finalMsg,
+            latest_direction: "outbound",
+            latest_timestamp: new Date().toISOString(),
+          };
+          if (existingIndex >= 0) {
+            const rest = prev.filter((_, idx) => idx !== existingIndex);
+            return [updated, ...rest];
+          }
+          return [updated, ...prev];
+        });
+        fetchChatMessages(selectedConv.lead_id, false, true);
+        fetchConversations();
       } else {
         showAlert("error", data.error || data.detail || "Failed to send message");
       }
@@ -1028,6 +1065,8 @@ export default function WhatsAppOutreachPage() {
       if (res.ok && data.success) {
         showAlert("success", `Test WhatsApp message sent to ${data.recipient}`);
         setTestModalOpen(false);
+        fetchConversations();
+        fetchOverview();
       } else {
         showAlert("error", data.detail || data.api_response?.message || "Failed to send test message.");
       }

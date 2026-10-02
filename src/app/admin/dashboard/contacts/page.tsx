@@ -300,7 +300,7 @@ export default function ContactMessagesManager() {
         category: wa.category || matchingCrm?.category,
         subject: wa.category ? `WhatsApp Outreach: ${wa.category}` : "WhatsApp Chat",
         snippet: wa.latest_message || wa.last_reply || "No messages yet",
-        timestamp: wa.latest_timestamp || wa.reply_at || new Date().toISOString(),
+        timestamp: wa.latest_timestamp || wa.reply_at || wa.sent_at || (matchingCrm ? matchingCrm.created_at : null) || wa.created_at || new Date().toISOString(),
         status: wa.is_interested ? "interested" : (wa.whatsapp_status || "pending"),
         isInterested: wa.is_interested || matchingCrm?.status?.toLowerCase() === "interested",
         aiEnabled: wa.whatsapp_ai_enabled,
@@ -542,6 +542,16 @@ export default function ContactMessagesManager() {
                   return [...prev, newMsg];
                 });
               }
+              // Refresh inbox list so newly sent/received message appears on top immediately
+              fetchAllData();
+            }
+
+            if (
+              data.type === "whatsapp_update" ||
+              data.type === "lead_updated" ||
+              (data.type === "queue_progress" && data.item_status === "sent")
+            ) {
+              fetchAllData();
             }
           } catch (err) {
             // ignore

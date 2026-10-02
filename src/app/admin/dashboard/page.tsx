@@ -723,7 +723,7 @@ export default function SuperAdminDashboard() {
   }, [tablePage, totalTablePages]);
 
   const paginatedTable = useMemo(() => {
-    if (activeTableTab === "scraped" || activeTableTab === "all") {
+    if (activeTableTab === "scraped") {
       // Scraped leads are already server-paginated to tableLimit items
       return tableDataset;
     }
@@ -737,7 +737,7 @@ export default function SuperAdminDashboard() {
       return;
     }
     setTablePage(newPage);
-    if (activeTableTab === "scraped" || activeTableTab === "all") {
+    if (activeTableTab === "scraped") {
       fetchTableLeads(newPage, tableLimit);
     }
   };
@@ -2169,7 +2169,7 @@ export default function SuperAdminDashboard() {
                     const newLimit = Number(e.target.value);
                     setTableLimit(newLimit);
                     setTablePage(1);
-                    if (activeTableTab === "scraped" || activeTableTab === "all") {
+                    if (activeTableTab === "scraped") {
                       fetchTableLeads(1, newLimit);
                     }
                   }}
@@ -2239,7 +2239,7 @@ export default function SuperAdminDashboard() {
                       const newLimit = Number(e.target.value);
                       setTableLimit(newLimit);
                       setTablePage(1);
-                      if (activeTableTab === "scraped" || activeTableTab === "all") {
+                      if (activeTableTab === "scraped") {
                         fetchTableLeads(1, newLimit);
                       }
                     }}
