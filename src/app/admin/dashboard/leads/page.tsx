@@ -483,6 +483,15 @@ export default function LeadsManager() {
       const uniqueLeads: NormalizedLead[] = [];
 
       for (const lead of pageLeads) {
+        // Fix Test Mode Phone Number Discrepancy:
+        // Extract real phone from WhatsApp Client (+<number>) title
+        if (lead.name) {
+          const match = lead.name.match(/\(\+?(\d+)\)/);
+          if (match && match[1]) {
+            lead.phone = match[1];
+          }
+        }
+
         const key = `${lead.source}_${lead.rawId}`;
         if (seenKeys.has(key)) continue;
         seenKeys.add(key);
