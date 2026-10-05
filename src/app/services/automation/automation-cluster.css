@@ -1,0 +1,462 @@
+/* ==========================================================================
+   TECH INFINIX - AUTOMATION CLUSTER UNIQUE DESIGN SYSTEM
+   Theme: Pure Monochrome, Enterprise, Minimal, Geometric (WebDataCrawler style)
+   ========================================================================== */
+
+/* Scoped Container */
+.auto-cluster-page {
+  width: 100%;
+  color: var(--foreground);
+  background-color: var(--background);
+  position: relative;
+  overflow-x: hidden;
+  font-family: var(--font-sans);
+}
+
+/* ── Enterprise Grid Background ── */
+.auto-grid-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(to right, var(--border-custom) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border-custom) 1px, transparent 1px);
+  background-size: 64px 64px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+  mask-image: radial-gradient(circle at center 20%, black, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle at center 20%, black, transparent 70%);
+}
+
+/* ── Typography & Tags ── */
+.auto-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px; /* Pill shape */
+  background: var(--surface);
+  border: 1px solid var(--border-custom);
+  color: var(--foreground);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── Hero Section ── */
+.auto-hero {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.auto-hero-title {
+  font-size: 2.75rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--foreground);
+  margin-top: 2rem;
+  max-width: 900px;
+}
+
+@media (min-width: 768px) {
+  .auto-hero-title { font-size: 4.5rem; }
+}
+
+.auto-hero-subtitle {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--secondary-custom);
+  max-width: 700px;
+  margin-top: 1.5rem;
+  font-weight: 400;
+}
+
+/* ── Strict Minimal Buttons ── */
+.auto-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--foreground);
+  color: var(--background);
+  padding: 1rem 2.5rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  border: 1px solid var(--foreground);
+}
+
+.auto-btn-primary:hover {
+  background: transparent;
+  color: var(--foreground);
+}
+
+.auto-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: transparent;
+  color: var(--foreground);
+  padding: 1rem 2.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border-custom);
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.auto-btn-secondary:hover {
+  border-color: var(--foreground);
+  background: var(--surface);
+}
+
+/* ── Data Panels (Clean Cards) ── */
+.auto-panel {
+  background: var(--surface);
+  border: 1px solid var(--border-custom);
+  padding: 3rem;
+  position: relative;
+  transition: border-color 0.3s ease;
+  border-radius: 8px;
+}
+
+.auto-panel:hover {
+  border-color: var(--foreground);
+}
+
+.auto-panel-label {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+  color: var(--secondary-custom);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.auto-panel-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 0.75rem;
+}
+
+.auto-panel-desc {
+  font-size: 0.875rem;
+  color: var(--secondary-custom);
+  line-height: 1.6;
+}
+
+/* ── Monochrome Graphs / Charts ── */
+.auto-bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 2rem;
+  border-top: 1px solid var(--border-custom);
+  padding-top: 2rem;
+}
+
+.auto-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.auto-bar-label {
+  width: 120px;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--secondary-custom);
+}
+
+.auto-bar-track {
+  flex: 1;
+  height: 4px;
+  background: var(--border-custom);
+  position: relative;
+}
+
+.auto-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--foreground);
+  animation: growBar 1.5s ease-out forwards;
+  transform-origin: left;
+}
+
+@keyframes growBar {
+  0% { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+/* ── Graph Diagram (Node Connector) ── */
+.auto-graph-container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 4rem 0;
+}
+
+.auto-graph-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: var(--border-custom);
+  transform: translateX(-50%);
+  z-index: 0;
+}
+
+.auto-graph-node {
+  position: relative;
+  z-index: 2;
+  background: var(--surface);
+  border: 1px solid var(--border-custom);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 600px;
+  margin: 1.5rem auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  border-radius: 8px;
+}
+
+.auto-graph-node::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -24px;
+  width: 24px;
+  height: 1px;
+  background: var(--border-custom);
+}
+
+.auto-graph-node:nth-child(even)::before {
+  left: auto;
+  right: -24px;
+}
+
+.auto-graph-icon {
+  width: 4rem;
+  height: 4rem;
+  border: 1px solid var(--border-custom);
+  background: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--foreground);
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.auto-graph-content h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 0.5rem;
+}
+
+.auto-graph-content p {
+  font-size: 0.95rem;
+  color: var(--secondary-custom);
+  line-height: 1.6;
+}
+
+/* ── Interactive Animated SVG Graph CSS ── */
+@keyframes pulseNode {
+  0% { box-shadow: 0 0 0 0 rgba(100, 100, 100, 0.2); transform: scale(1); }
+  70% { box-shadow: 0 0 0 10px rgba(100, 100, 100, 0); transform: scale(1.05); }
+  100% { box-shadow: 0 0 0 0 rgba(100, 100, 100, 0); transform: scale(1); }
+}
+
+@keyframes drawPath {
+  0% { stroke-dasharray: 0, 1000; }
+  100% { stroke-dasharray: 1000, 0; }
+}
+
+.auto-node-pulse {
+  animation: pulseNode 3s infinite;
+}
+
+.auto-hub-pulse {
+  animation: pulseNode 2s infinite;
+}
+
+.auto-path-anim {
+  animation: drawPath 3s linear forwards;
+}
+
+
+/* ── Split Compare Matrix (Minimal) ── */
+.auto-matrix {
+  display: grid;
+  grid-template-columns: 1fr;
+  background: var(--border-custom);
+  gap: 1px;
+  border: 1px solid var(--border-custom);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .auto-matrix {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.auto-matrix-panel {
+  background: var(--surface);
+  padding: 3.5rem;
+}
+
+.auto-matrix-header {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--foreground);
+}
+
+.auto-matrix-row {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--border-custom);
+}
+
+.auto-matrix-label {
+  font-size: 0.75rem;
+  color: var(--secondary-custom);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.auto-matrix-value {
+  font-size: 1.1rem;
+  color: var(--foreground);
+  font-weight: 400;
+}
+
+/* ── Section Headings ── */
+.auto-section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+@media (min-width: 768px) {
+  .auto-section-title { font-size: 3rem; }
+}
+
+.auto-section-desc {
+  font-size: 1.125rem;
+  color: var(--secondary-custom);
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+/* ── Links Directory ── */
+.auto-directory-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--border-custom);
+  color: var(--foreground);
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.auto-directory-link:hover {
+  opacity: 0.7;
+}
+
+.auto-directory-title {
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.auto-directory-desc {
+  font-size: 0.875rem;
+  color: var(--secondary-custom);
+  margin-top: 0.25rem;
+}
+
+/* ── Data Boxes ── */
+.auto-data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1px;
+  background: var(--border-custom);
+  border: 1px solid var(--border-custom);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.auto-data-box {
+  background: var(--surface);
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.auto-data-number {
+  font-size: 3rem;
+  font-weight: 300;
+  color: var(--foreground);
+  margin-bottom: 1rem;
+  font-family: var(--font-mono), monospace;
+}
+
+/* ── FAQ ── */
+.auto-faq-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.75rem 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-custom);
+  color: var(--foreground);
+  font-size: 1.125rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.auto-faq-icon {
+  color: var(--secondary-custom);
+  transition: transform 0.3s ease;
+}
+
+.auto-faq-btn[aria-expanded="true"] .auto-faq-icon {
+  transform: rotate(45deg);
+}
+
+.auto-faq-content {
+  padding: 1rem 0 2rem;
+  color: var(--secondary-custom);
+  font-size: 1rem;
+  line-height: 1.7;
+}

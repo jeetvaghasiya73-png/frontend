@@ -590,9 +590,9 @@ export default function SuperAdminDashboard() {
         const emailStatus = String(l.email_status || "").toLowerCase();
         const mainStatus = String(l.status || "").toLowerCase();
         return Boolean(l.whatsapp_sent_at || l.email_sent_at) ||
-          ["sent", "delivered", "read", "replied", "interested", "contacted"].includes(waStatus) ||
-          ["sent", "contacted"].includes(emailStatus) ||
-          ["contacted", "sent", "interested"].includes(mainStatus);
+          ["outreach_sent", "sent", "delivered", "read", "reply", "replied", "interested", "contacted"].includes(waStatus) ||
+          ["outreach_sent", "sent", "contacted"].includes(emailStatus) ||
+          ["outreach_sent", "contacted", "sent", "interested", "reply", "qualified", "closed"].includes(mainStatus);
       });
       if (q) {
         data = data.filter(l =>

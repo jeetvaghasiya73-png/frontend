@@ -366,9 +366,16 @@ export default function LeadsManager() {
           company: bizName,
           services: lead.services || [],
           message: lead.message || "",
-          status: (!lead.status || lead.status.toLowerCase() === "pending" || lead.status.toLowerCase() === "new" || lead.status.toLowerCase() === "interested")
-            ? "Interested"
-            : (lead.status.charAt(0).toUpperCase() + lead.status.slice(1)),
+          status: (() => {
+            const s = (lead.status || "pending").toLowerCase();
+            if (s === "outreach_sent") return "Outreach Sent";
+            if (s === "interested") return "Interested";
+            if (s === "reply") return "Reply";
+            if (s === "qualified") return "Qualified";
+            if (s === "closed") return "Closed";
+            if (s === "new") return "Pending";
+            return s.charAt(0).toUpperCase() + s.slice(1);
+          })(),
           created_at: lead.created_at || new Date().toISOString(),
           source: "inquiry" as const,
           score: 94,
@@ -406,17 +413,19 @@ export default function LeadsManager() {
         const savedFollowup = typeof window !== "undefined" ? localStorage.getItem(`crm_lead_followup_${lead.id}`) : null;
         const rawFollowup = lead.next_followup_at ? formatISTDate(lead.next_followup_at) : null;
 
-        // For WhatsApp leads, derive status from whatsapp_status whenever user engaged/replied
         const waStatus = String(lead.whatsapp_status || "").toLowerCase();
-        const isInterested = Boolean(lead.is_interested) || waStatus === "interested";
-        const isInboundWa = isOrganicInbound(lead);
-        let displayStatus = lead.email_status ? (lead.email_status.charAt(0).toUpperCase() + lead.email_status.slice(1)) : "Contacted";
-        if (isInterested) {
-          displayStatus = "Interested";
-        } else if (waStatus === "replied") {
-          displayStatus = "Pending";
-        } else if (isInboundWa) {
-          displayStatus = waStatus ? (waStatus.charAt(0).toUpperCase() + waStatus.slice(1)) : "Contacted";
+        const emStatus = String(lead.email_status || "").toLowerCase();
+        
+        let displayStatus = "Pending";
+        const primaryStatus = waStatus || emStatus;
+        if (primaryStatus) {
+          if (primaryStatus === "outreach_sent") displayStatus = "Outreach Sent";
+          else if (primaryStatus === "interested") displayStatus = "Interested";
+          else if (primaryStatus === "reply") displayStatus = "Reply";
+          else if (primaryStatus === "qualified") displayStatus = "Qualified";
+          else if (primaryStatus === "closed") displayStatus = "Closed";
+          else if (primaryStatus === "sent") displayStatus = "Outreach Sent";
+          else displayStatus = primaryStatus.charAt(0).toUpperCase() + primaryStatus.slice(1);
         }
 
         return {
@@ -1187,10 +1196,10 @@ export default function LeadsManager() {
     const emailStatus = String(l.email_status || "").toLowerCase();
     const mainStatus = String(l.status || "").toLowerCase();
     const hasWaSent = Boolean(l.whatsapp_sent_at || l.raw?.whatsapp_sent_at) ||
-      ["sent", "delivered", "read", "replied", "interested", "contacted"].includes(waStatus);
+      ["outreach_sent", "sent", "delivered", "read", "replied", "interested", "contacted"].includes(waStatus);
     const hasEmailSent = Boolean(l.raw?.email_sent_at) ||
-      ["sent", "contacted"].includes(emailStatus);
-    const hasStatusContacted = ["contacted", "sent", "interested"].includes(mainStatus);
+      ["outreach_sent", "sent", "contacted"].includes(emailStatus);
+    const hasStatusContacted = ["outreach_sent", "contacted", "sent", "interested", "reply", "qualified", "closed"].includes(mainStatus);
     return hasWaSent || hasEmailSent || hasStatusContacted;
   };
 
@@ -1216,16 +1225,16 @@ export default function LeadsManager() {
         }
         if (sf === "whatsapp_sent") {
           return Boolean(l.whatsapp_sent_at || l.raw?.whatsapp_sent_at) ||
-            ["sent", "delivered", "read", "replied", "interested", "contacted"].includes(waStatus);
+            ["outreach_sent", "sent", "delivered", "read", "reply", "replied", "interested", "contacted"].includes(waStatus);
         }
         if (sf === "email_sent") {
           return Boolean(l.raw?.email_sent_at) ||
-            ["sent", "contacted"].includes(emailStatus);
+            ["outreach_sent", "sent", "contacted"].includes(emailStatus);
         }
         if (sf === "pending") {
-          return !isMessageSent(l) && (waStatus === "pending" || leadStatus === "pending");
+          return leadStatus === "pending";
         }
-        return leadStatus === sf || emailStatus === sf || waStatus === sf;
+        return leadStatus.replace(" ", "_") === sf || emailStatus.replace(" ", "_") === sf || waStatus.replace(" ", "_") === sf;
       });
     }
 
@@ -1757,20 +1766,32 @@ export default function LeadsManager() {
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
                         lead.status.toLowerCase() === "interested"
                           ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                          : lead.status.toLowerCase() === "outreach sent" || lead.status.toLowerCase() === "outreach_sent"
+                          ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                          : lead.status.toLowerCase() === "reply"
+                          ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                          : lead.status.toLowerCase() === "qualified"
+                          ? "bg-purple-500/10 text-purple-600 border-purple-500/20"
+                          : lead.status.toLowerCase() === "closed"
+                          ? "bg-indigo-500/10 text-indigo-600 border-indigo-500/20"
                           : lead.status.toLowerCase() === "pending"
-                          ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
-                          : lead.status.toLowerCase() === "opted_out" || lead.status.toLowerCase() === "opted out"
-                          ? "bg-slate-500/10 text-slate-400 border-slate-500/20"
-                          : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                          ? "bg-slate-500/10 text-slate-500 border-slate-500/20"
+                          : "bg-rose-500/10 text-rose-500 border-rose-500/20"
                       }`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${
                           lead.status.toLowerCase() === "interested"
                             ? "bg-emerald-500"
+                            : lead.status.toLowerCase() === "outreach sent" || lead.status.toLowerCase() === "outreach_sent"
+                            ? "bg-blue-500"
+                            : lead.status.toLowerCase() === "reply"
+                            ? "bg-amber-500"
+                            : lead.status.toLowerCase() === "qualified"
+                            ? "bg-purple-500"
+                            : lead.status.toLowerCase() === "closed"
+                            ? "bg-indigo-500"
                             : lead.status.toLowerCase() === "pending"
-                            ? "bg-rose-500"
-                            : lead.status.toLowerCase() === "opted_out" || lead.status.toLowerCase() === "opted out"
-                            ? "bg-slate-400"
-                            : "bg-emerald-500"
+                            ? "bg-slate-500"
+                            : "bg-rose-500"
                         }`} />
                         {lead.status}
                       </span>
@@ -1868,8 +1889,36 @@ export default function LeadsManager() {
 
                 {/* Badges Row */}
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border ${
+                    lead.status.toLowerCase() === "interested"
+                      ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                      : lead.status.toLowerCase() === "outreach sent" || lead.status.toLowerCase() === "outreach_sent"
+                      ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                      : lead.status.toLowerCase() === "reply"
+                      ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                      : lead.status.toLowerCase() === "qualified"
+                      ? "bg-purple-500/10 text-purple-600 border-purple-500/20"
+                      : lead.status.toLowerCase() === "closed"
+                      ? "bg-indigo-500/10 text-indigo-600 border-indigo-500/20"
+                      : lead.status.toLowerCase() === "pending"
+                      ? "bg-slate-500/10 text-slate-500 border-slate-500/20"
+                      : "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      lead.status.toLowerCase() === "interested"
+                        ? "bg-emerald-500"
+                        : lead.status.toLowerCase() === "outreach sent" || lead.status.toLowerCase() === "outreach_sent"
+                        ? "bg-blue-500"
+                        : lead.status.toLowerCase() === "reply"
+                        ? "bg-amber-500"
+                        : lead.status.toLowerCase() === "qualified"
+                        ? "bg-purple-500"
+                        : lead.status.toLowerCase() === "closed"
+                        ? "bg-indigo-500"
+                        : lead.status.toLowerCase() === "pending"
+                        ? "bg-slate-500"
+                        : "bg-rose-500"
+                    }`} />
                     {lead.status}
                   </span>
                   <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 font-bold text-[10px] border border-emerald-500/20">
