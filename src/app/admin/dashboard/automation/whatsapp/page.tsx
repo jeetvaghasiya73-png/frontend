@@ -498,7 +498,21 @@ export default function WhatsAppOutreachPage() {
         const seen = new Set<string>();
         const deduped: ConversationItem[] = [];
 
-        for (const c of rawList) {
+        for (const raw of rawList) {
+          const c = { ...raw };
+          
+          // Fix Test Mode Phone Number Discrepancy:
+          // If the message was redirected to test number (e.g. admin phone), the conversation's physical `phone_number`
+          // will reflect the test number. But the UI must display the real lead's phone number!
+          // We can reliably extract the real phone number from the generated title/name: "WhatsApp Client (+919173739080)"
+          if (c.bussiness_name) {
+            const match = c.bussiness_name.match(/\(\+?(\d+)\)/);
+            if (match && match[1]) {
+              c.phone_number = match[1];
+              c.clean_phone = match[1];
+            }
+          }
+
           const digits = (c.clean_phone || c.phone_number || "").replace(/\D/g, "");
           const key = digits.length >= 10 ? digits.slice(-10) : (c.clean_phone || c.phone_number || String(c.lead_id));
           if (!seen.has(key)) {
