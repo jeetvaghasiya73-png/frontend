@@ -458,7 +458,7 @@ export default function LeadsManager() {
           whatsapp_last_reply: lead.whatsapp_last_reply || null,
           whatsapp_reply_at: lead.whatsapp_reply_at || null,
           whatsapp_ai_enabled: lead.whatsapp_ai_enabled !== false,
-          is_interested: isInterested,
+          is_interested: lead.is_interested || false,
           score,
           followupDate: savedFollowup || rawFollowup || null,
         };
