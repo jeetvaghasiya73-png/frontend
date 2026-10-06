@@ -31,6 +31,7 @@ import {
   Mail,
   CheckCircle2,
   ExternalLink,
+  PhoneCall,
 } from "lucide-react";
 
 import { authFetch } from "@/lib/authFetch";
@@ -399,6 +400,7 @@ export default function DashboardLayout({
     { title: "CORE CRM", links: [
       { name: "Dashboard", href: `${ADMIN_PATH}/dashboard`, icon: LayoutDashboard },
       { name: "Leads Database", href: `${ADMIN_PATH}/dashboard/leads`, icon: Users },
+      { name: "Sales Calling", href: `${ADMIN_PATH}/dashboard/sales-calls`, icon: PhoneCall, badge: "NEW" },
       { name: "Messages Inbox", href: `${ADMIN_PATH}/dashboard/contacts`, icon: MessageSquare },
     ]},
     { title: "AUTOMATION & TOOLS", links: [
