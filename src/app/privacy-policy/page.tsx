@@ -1,6 +1,9 @@
 import React from 'react';
 import { Metadata } from 'next';
 
+import Navbar from "@/components/layout/Navbar";
+import FooterSection from "@/components/layout/FooterSection";
+
 export const metadata: Metadata = {
   title: 'Privacy Policy | Tech Infinix',
   description: 'Privacy Policy for Tech Infinix services and applications.',
@@ -8,12 +11,20 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-20">
-      <div className="max-w-4xl mx-auto px-6 lg:px-8">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-8">Privacy Policy</h1>
-        <p className="text-sm text-gray-500 mb-8">Last updated: October 2026</p>
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-gray-50 dark:bg-[#030303] py-24 md:py-32 relative overflow-hidden">
+        {/* Glow Effects */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
+        
+        <div className="max-w-4xl mx-auto px-6 lg:px-8 relative z-10 bg-white/50 dark:bg-black/20 backdrop-blur-sm p-8 md:p-12 rounded-3xl border border-gray-200 dark:border-white/10 shadow-2xl">
+          <div className="mb-12 border-b border-gray-200 dark:border-white/10 pb-8">
+            <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 mb-4 tracking-tight">Privacy Policy</h1>
+            <p className="text-sm font-medium text-primary uppercase tracking-widest">Last updated: October 2026</p>
+          </div>
 
-        <div className="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-6">
+          <div className="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-8 prose-headings:font-semibold prose-headings:tracking-tight prose-a:text-primary hover:prose-a:text-primary/80 transition-colors">
           <section>
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">1. Introduction</h2>
             <p>
@@ -89,6 +100,8 @@ export default function PrivacyPolicyPage() {
           </section>
         </div>
       </div>
-    </div>
+      </main>
+      <FooterSection />
+    </>
   );
 }
