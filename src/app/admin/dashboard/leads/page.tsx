@@ -909,15 +909,14 @@ export default function LeadsManager() {
         ? `${API}/api/v1/leads/${lead.rawId}`
         : `${API}/api/v1/scraped-leads/${lead.rawId}`;
 
-      const phoneParam = lead.phone ? `?phone=${encodeURIComponent(lead.phone)}` : "";
-      let res = await authFetch(`${endpoint}${phoneParam}`, { method: "DELETE" });
+      let res = await authFetch(endpoint, { method: "DELETE" });
 
-      // Fallback: If 404 or failed on primary endpoint, try the alternate endpoint with phone param
+      // Fallback: If 404 or failed on primary endpoint, try the alternate endpoint
       if (!res.ok && res.status === 404) {
         const altEndpoint = lead.source === "inquiry"
           ? `${API}/api/v1/scraped-leads/${lead.rawId}`
           : `${API}/api/v1/leads/${lead.rawId}`;
-        res = await authFetch(`${altEndpoint}${phoneParam}`, { method: "DELETE" });
+        res = await authFetch(altEndpoint, { method: "DELETE" });
       }
 
       if (res.ok) {
