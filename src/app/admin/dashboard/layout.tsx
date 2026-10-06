@@ -299,6 +299,9 @@ export default function DashboardLayout({
           .replace(/^http/, "ws") + "/api/v1/whatsapp/ws";
         ws = new WebSocket(wsUrl);
         ws.onopen = () => { reconnectDelay = 1000; };
+        
+        let wsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+        
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
@@ -326,7 +329,10 @@ export default function DashboardLayout({
               }
             }
             if (isAnyUpdate) {
-              loadCountsAndNotifications(true);
+              if (wsDebounceTimer) clearTimeout(wsDebounceTimer);
+              wsDebounceTimer = setTimeout(() => {
+                loadCountsAndNotifications(true);
+              }, 500);
             }
           } catch (err) {}
         };

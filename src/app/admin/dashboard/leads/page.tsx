@@ -905,17 +905,18 @@ export default function LeadsManager() {
   const handleDeleteLead = async (lead: NormalizedLead) => {
     if (!confirm(`Are you sure you want to delete "${lead.name}"?`)) return;
     try {
+      const phoneParam = lead.phone ? `?phone=${encodeURIComponent(lead.phone)}` : "";
       const endpoint = lead.source === "inquiry"
-        ? `${API}/api/v1/leads/${lead.rawId}`
-        : `${API}/api/v1/scraped-leads/${lead.rawId}`;
+        ? `${API}/api/v1/leads/${lead.rawId}${phoneParam}`
+        : `${API}/api/v1/scraped-leads/${lead.rawId}${phoneParam}`;
 
       let res = await authFetch(endpoint, { method: "DELETE" });
 
       // Fallback: If 404 or failed on primary endpoint, try the alternate endpoint
       if (!res.ok && res.status === 404) {
         const altEndpoint = lead.source === "inquiry"
-          ? `${API}/api/v1/scraped-leads/${lead.rawId}`
-          : `${API}/api/v1/leads/${lead.rawId}`;
+          ? `${API}/api/v1/scraped-leads/${lead.rawId}${phoneParam}`
+          : `${API}/api/v1/leads/${lead.rawId}${phoneParam}`;
         res = await authFetch(altEndpoint, { method: "DELETE" });
       }
 
