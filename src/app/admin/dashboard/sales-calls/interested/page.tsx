@@ -95,8 +95,12 @@ export default function InterestedLeadsDashboard() {
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight">
                       {lead.business_name || "Unknown Business"}
                     </h3>
+                    <div className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1">
+                      {lead.normalized_phone ? `+${format10DigitPhone(lead.normalized_phone)}` : "No Number"}
+                    </div>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-medium">
                       {lead.city && <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3 text-slate-400" /> {lead.city}</span>}
+                      {lead.interested_by_user_id && <span className="text-slate-400">By Admin #{lead.interested_by_user_id}</span>}
                     </div>
                   </div>
                 </div>
@@ -133,6 +137,19 @@ export default function InterestedLeadsDashboard() {
                   >
                     <MessageSquare className="w-3 h-3" /> Message
                   </a>
+                </div>
+                <div className="flex gap-2 w-full">
+                   <button
+                      onClick={async () => {
+                         try {
+                           await authFetch(`${API}/api/v1/leads/${lead.id}/mark-uninterested`, { method: "POST" });
+                           setLeads(prev => prev.filter(l => l.id !== lead.id));
+                         } catch (e) { console.error(e) }
+                      }}
+                      className="w-full flex justify-center items-center gap-1.5 py-2 bg-rose-50 dark:bg-rose-900/10 hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40 rounded-[6px] font-bold text-xs transition-all"
+                    >
+                      Remove (Not Interested)
+                   </button>
                 </div>
               </div>
 

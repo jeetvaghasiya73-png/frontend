@@ -139,6 +139,9 @@ export default function SalesCallingDashboard() {
                       <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight" title={lead.bussiness_name || "Unknown Business"}>
                         {lead.bussiness_name || "Unknown Business"}
                       </h3>
+                      <div className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mt-1">
+                        {lead.bussiness_number ? `+${format10DigitPhone(lead.bussiness_number)}` : "No Number"}
+                      </div>
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-medium">
                         {lead.scraped_city && <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3 text-slate-400" /> {lead.scraped_city}</span>}
                         {lead.rating && lead.rating !== "0" && (
