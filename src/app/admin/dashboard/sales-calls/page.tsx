@@ -21,6 +21,7 @@ interface ScrapedLead {
   bussiness_address: string;
   whatsapp_status: string | null;
   whatsapp_sent_at: string | null;
+  is_interested?: boolean;
 }
 
 export default function SalesCallingDashboard() {
@@ -31,40 +32,47 @@ export default function SalesCallingDashboard() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalLeads, setTotalLeads] = useState(0);
+  const [statusFilter, setStatusFilter] = useState("pending");
 
-  const fetchUncontactedLeads = useCallback(async (pageNumber: number) => {
+  const fetchLeads = useCallback(async (pageNumber: number, filter: string) => {
     setLoading(true);
     try {
-      // Use status=pending to only get leads who have NOT been sent any messages
-      const res = await authFetch(`${API}/api/v1/scraped-leads/?page=${pageNumber}&limit=12&status=pending`);
+      const res = await authFetch(`${API}/api/v1/scraped-leads/?page=${pageNumber}&limit=12&status=${filter}`);
       if (res.ok) {
         const data = await res.json();
         setLeads(data.leads || []);
-        setTotalPages(data.pages || 1);
+        setTotalPages(data.pages || data.total_pages || 1);
         setTotalLeads(data.total || 0);
       }
     } catch (err) {
-      console.error("Failed to fetch uncontacted leads", err);
+      console.error("Failed to fetch leads", err);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchUncontactedLeads(page);
-  }, [fetchUncontactedLeads, page]);
+    fetchLeads(page, statusFilter);
+  }, [fetchLeads, page, statusFilter]);
+
+  const handleFilterChange = (filter: string) => {
+    setStatusFilter(filter);
+    setPage(1);
+  };
 
   const handleMarkContacted = async (id: number) => {
     setProcessingId(id);
     try {
-      await authFetch(`${API}/api/v1/scraped-leads/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ whatsapp_status: "sent", whatsapp_sent_at: new Date().toISOString() })
+      await authFetch(`${API}/api/v1/scraped-leads/${id}/mark-uninterested`, {
+        method: "POST"
       });
-      // Remove from current view
-      setLeads((prev) => prev.filter(l => l.id !== id));
-      setTotalLeads((prev) => prev > 0 ? prev - 1 : 0);
+      // Remove from current view if filtering by a specific status
+      if (statusFilter !== "all" && statusFilter !== "contacted") {
+        setLeads((prev) => prev.filter(l => l.id !== id));
+        setTotalLeads((prev) => prev > 0 ? prev - 1 : 0);
+      } else {
+        setLeads(prev => prev.map(l => l.id === id ? { ...l, whatsapp_status: "contacted", is_interested: false } : l));
+      }
     } catch (err) {
       console.error("Failed to mark contacted", err);
     } finally {
@@ -76,19 +84,28 @@ export default function SalesCallingDashboard() {
     if (!user) return;
     setProcessingId(id);
     try {
-      await authFetch(`${API}/api/v1/leads/${id}/mark-interested`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: "SALES_CALL", user_id: user.id })
+      await authFetch(`${API}/api/v1/scraped-leads/${id}/mark-interested`, {
+        method: "POST"
       });
-      setLeads((prev) => prev.filter(l => l.id !== id));
-      setTotalLeads((prev) => prev > 0 ? prev - 1 : 0);
+      if (statusFilter !== "all" && statusFilter !== "interested") {
+        setLeads((prev) => prev.filter(l => l.id !== id));
+        setTotalLeads((prev) => prev > 0 ? prev - 1 : 0);
+      } else {
+        setLeads(prev => prev.map(l => l.id === id ? { ...l, whatsapp_status: "interested", is_interested: true } : l));
+      }
     } catch (err) {
       console.error("Failed to mark interested", err);
     } finally {
       setProcessingId(null);
     }
   };
+
+  const filterTabs = [
+    { key: "pending", label: "Pending (New)", color: "indigo" },
+    { key: "contacted", label: "Contacted", color: "blue" },
+    { key: "interested", label: "Interested", color: "emerald" },
+    { key: "all", label: "All Leads", color: "slate" },
+  ];
 
   return (
     <div className="space-y-6 animate-fadeIn pb-20">
@@ -99,16 +116,32 @@ export default function SalesCallingDashboard() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Sales Calling</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Quick-dial uncontacted leads</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Filter by Contacted, Interested, or Pending call queue</p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {filterTabs.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => handleFilterChange(tab.key)}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-[6px] border transition-colors cursor-pointer ${
+                statusFilter === tab.key
+                  ? tab.color === "indigo" ? "bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/20"
+                  : tab.color === "blue" ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20"
+                  : tab.color === "emerald" ? "bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-500/20"
+                  : "bg-slate-700 text-white border-slate-700 shadow-sm"
+                  : "bg-slate-50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-slate-700/40 hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
           <a href={`${ADMIN_PATH}/dashboard/sales-calls/interested`} className="text-xs font-semibold px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-[6px] border border-emerald-200/60 dark:border-emerald-800/40 hover:bg-emerald-100 transition-colors">
-            View Interested
+            Interested Page →
           </a>
           <div className="text-xs font-semibold px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 rounded-[6px] border border-indigo-200/60 dark:border-indigo-800/40 flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-            {totalLeads} Pending
+            {totalLeads} Total
           </div>
         </div>
       </header>
@@ -136,9 +169,24 @@ export default function SalesCallingDashboard() {
                       <Building className="w-4 h-4" />
                     </div>
                     <div className="w-full pr-1">
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight" title={lead.bussiness_name || "Unknown Business"}>
-                        {lead.bussiness_name || "Unknown Business"}
-                      </h3>
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight" title={lead.bussiness_name || "Unknown Business"}>
+                          {lead.bussiness_name || "Unknown Business"}
+                        </h3>
+                        {lead.is_interested || lead.whatsapp_status === "interested" ? (
+                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 rounded-full border border-emerald-200 dark:border-emerald-800/40">
+                            Interested
+                          </span>
+                        ) : lead.whatsapp_status === "contacted" || lead.whatsapp_status === "sent" ? (
+                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 rounded-full border border-blue-200 dark:border-blue-800/40">
+                            Contacted
+                          </span>
+                        ) : (
+                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 rounded-full border border-slate-200 dark:border-slate-700">
+                            Pending
+                          </span>
+                        )}
+                      </div>
                       <div className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mt-1">
                         {lead.bussiness_number ? `+${format10DigitPhone(lead.bussiness_number)}` : "No Number"}
                       </div>
@@ -223,7 +271,7 @@ export default function SalesCallingDashboard() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-4 pb-2">
               <span className="text-xs text-slate-500 font-medium">
-                Showing {leads.length} of {totalLeads} uncontacted leads
+                Showing {leads.length} of {totalLeads} {statusFilter} leads
               </span>
               <div className="flex items-center gap-2">
                 <button 
