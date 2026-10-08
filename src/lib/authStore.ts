@@ -7,6 +7,7 @@ interface AuthUser {
   username: string;
   is_superadmin: boolean;
   is_main_admin?: boolean;
+  role?: string;
   permissions?: string[];
 }
 
@@ -41,6 +42,7 @@ function buildUser(token: string): AuthUser | null {
     username: (payload.username as string) || "",
     is_superadmin: Boolean(payload.is_superadmin),
     is_main_admin: Boolean(payload.is_main_admin),
+    role: (payload.role as string) || (payload.is_superadmin ? "superadmin" : "admin"),
     permissions: Array.isArray(payload.permissions) ? (payload.permissions as string[]) : [],
   };
 }

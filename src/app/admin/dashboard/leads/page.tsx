@@ -94,6 +94,11 @@ export default function LeadsManager() {
     user?.is_main_admin ||
     user?.permissions?.includes("send_whatsapp")
   );
+  const canManageLeads = Boolean(
+    user?.is_superadmin ||
+    user?.is_main_admin ||
+    user?.permissions?.includes("manage_leads")
+  );
   const isFetchingRef = useRef(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const inquiriesCacheRef = useRef<any[] | null>(null);
@@ -1409,22 +1414,26 @@ export default function LeadsManager() {
             <Download className="w-3.5 h-3.5 text-slate-500 shrink-0" />
             <span className="truncate">Export</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setShowImportModal(true)}
-            className="crm-btn-secondary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-            <span className="truncate">Import</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAddLeadModal(true)}
-            className="crm-btn-primary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center shadow-xs"
-          >
-            <Plus className="w-4 h-4 shrink-0" />
-            <span className="truncate">Add Lead</span>
-          </button>
+          {canManageLeads && (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowImportModal(true)}
+                className="crm-btn-secondary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                <span className="truncate">Import</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddLeadModal(true)}
+                className="crm-btn-primary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center shadow-xs"
+              >
+                <Plus className="w-4 h-4 shrink-0" />
+                <span className="truncate">Add Lead</span>
+              </button>
+            </>
+          )}
         </div>
       </header>
 

@@ -151,7 +151,11 @@ interface WhatsAppChatMessage {
 }
 
 export default function ContactMessagesManager() {
-  const { accessToken } = useAuthStore();
+  const { accessToken, user } = useAuthStore();
+  const isSuperAdmin = user?.role === "superadmin" || (user?.permissions?.includes("all") ?? false);
+  const canSendWhatsapp = isSuperAdmin || (user?.permissions?.includes("send_whatsapp") ?? false);
+  const canDeleteLeads = isSuperAdmin || (user?.permissions?.includes("delete_lead") ?? false);
+  const canManageLeads = isSuperAdmin || (user?.permissions?.includes("view_leads") ?? false);
 
   // Channels Tab: "all" | "whatsapp" | "website" | "email"
   const [channelTab, setChannelTab] = useState<"all" | "whatsapp" | "website" | "email">("all");
@@ -585,6 +589,10 @@ export default function ContactMessagesManager() {
   // ── WhatsApp Actions ──
   const handleSendWaReply = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!canSendWhatsapp) {
+      showToast("Unauthorized: You do not have permission to send WhatsApp messages.", "error");
+      return;
+    }
     if (!selectedMessage || !waReplyText.trim()) return;
 
     setSendingWaReply(true);
@@ -635,6 +643,10 @@ export default function ContactMessagesManager() {
 
   const handleToggleWaAi = async () => {
     if (!selectedMessage || selectedMessage.channel !== "whatsapp") return;
+    if (!canSendWhatsapp) {
+      showToast("Unauthorized: You do not have permission to manage WhatsApp AI.", "error");
+      return;
+    }
     setTogglingWaAi(true);
     const targetState = selectedMessage.aiEnabled === false; // If currently false (human), enable it (true); else disable (false)
     try {
@@ -693,6 +705,10 @@ export default function ContactMessagesManager() {
 
   const handleDeleteLeadChats = async () => {
     if (!selectedMessage) return;
+    if (!canDeleteLeads) {
+      showToast("Unauthorized: You do not have permission to delete chat records.", "error");
+      return;
+    }
     if (!confirm(`Are you sure you want to delete all recorded chat history for ${selectedMessage.senderName}?`)) return;
     try {
       const res = await authFetch(`${API}/api/v1/whatsapp/chats/${selectedMessage.sourceId}`, {
@@ -714,6 +730,10 @@ export default function ContactMessagesManager() {
 
   const handleDeleteContact = async () => {
     if (!selectedMessage) return;
+    if (!canDeleteLeads) {
+      showToast("Unauthorized: You do not have permission to delete inquiry records.", "error");
+      return;
+    }
     if (!confirm(`Are you sure you want to delete inquiry "${selectedMessage.senderName}"?`)) return;
     try {
       const res = await authFetch(`${API}/api/v1/contacts/${selectedMessage.sourceId}`, {
@@ -1324,14 +1344,16 @@ export default function ContactMessagesManager() {
                         <span>Open Web</span>
                       </a>
 
-                      <button
-                        onClick={handleDeleteLeadChats}
-                        className="px-3 py-1.5 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
-                        title="Delete chat history for this lead"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Clear Chat</span>
-                      </button>
+                      {canDeleteLeads && (
+                        <button
+                          onClick={handleDeleteLeadChats}
+                          className="px-3 py-1.5 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                          title="Delete chat history for this lead"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Clear Chat</span>
+                        </button>
+                      )}
                     </>
                   )}
 
@@ -1341,20 +1363,23 @@ export default function ContactMessagesManager() {
                       <select
                         value={selectedMessage.status}
                         onChange={(e) => handleUpdateContactStatus(e.target.value)}
-                        className="crm-input text-xs py-1 px-2 font-semibold"
+                        disabled={!canManageLeads}
+                        className="crm-input text-xs py-1 px-2 font-semibold disabled:opacity-60"
                       >
                         <option value="unread">Status: Unread</option>
                         <option value="read">Status: Read</option>
                         <option value="replied">Status: Replied</option>
                       </select>
 
-                      <button
-                        onClick={handleDeleteContact}
-                        className="p-2 rounded-md border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
-                        title="Delete Inquiry"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {canDeleteLeads && (
+                        <button
+                          onClick={handleDeleteContact}
+                          className="p-2 rounded-md border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                          title="Delete Inquiry"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </>
                   )}
 
@@ -1571,68 +1596,74 @@ export default function ContactMessagesManager() {
               <div className="p-4 border-t border-[var(--dash-border)] bg-[var(--dash-table-header)] shrink-0">
                 {/* WhatsApp Reply Composer */}
                 {(selectedMessage.channel === "whatsapp" || selectedMessage.channel === "website") && (
-                  <form onSubmit={handleSendWaReply} className="space-y-2">
-                    {/* Quick Reply Presets */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-[10px]">
-                      {[
-                        "Thanks for your reply! When is a good time for a quick 5-min call?",
-                        "Here is our work portfolio: https://techinfinix.com",
-                        "Would tomorrow at 3:00 PM work for an intro session?"
-                      ].map((prompt, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setWaReplyText(prompt)}
-                          className="px-2.5 py-1 rounded-md bg-[var(--dash-card-bg)] border border-[var(--dash-border)] text-[var(--dash-text-muted)] hover:text-indigo-500 hover:border-indigo-500 transition cursor-pointer whitespace-nowrap"
-                        >
-                          {prompt}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                      <div className="flex-1 min-w-0">
-                        <input
-                          type="text"
-                          placeholder="Type a direct WhatsApp response..."
-                          value={waReplyText}
-                          onChange={(e) => setWaReplyText(e.target.value)}
-                          className="crm-input w-full text-xs"
-                        />
+                  canSendWhatsapp ? (
+                    <form onSubmit={handleSendWaReply} className="space-y-2">
+                      {/* Quick Reply Presets */}
+                      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-[10px]">
+                        {[
+                          "Thanks for your reply! When is a good time for a quick 5-min call?",
+                          "Here is our work portfolio: https://techinfinix.com",
+                          "Would tomorrow at 3:00 PM work for an intro session?"
+                        ].map((prompt, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setWaReplyText(prompt)}
+                            className="px-2.5 py-1 rounded-md bg-[var(--dash-card-bg)] border border-[var(--dash-border)] text-[var(--dash-text-muted)] hover:text-indigo-500 hover:border-indigo-500 transition cursor-pointer whitespace-nowrap"
+                          >
+                            {prompt}
+                          </button>
+                        ))}
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0 justify-end">
-                        <button
-                          type="button"
-                          onClick={handleGenerateAiFollowup}
-                          disabled={generatingFollowup}
-                          className="px-2.5 sm:px-3 py-2 rounded-md bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
-                          title="Generate fast context-aware AI follow-up message"
-                        >
-                          {generatingFollowup ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <Zap className="w-3.5 h-3.5 fill-current" />
-                          )}
-                          <span className="whitespace-nowrap">⚡ AI Follow-Up</span>
-                        </button>
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <input
+                            type="text"
+                            placeholder="Type a direct WhatsApp response..."
+                            value={waReplyText}
+                            onChange={(e) => setWaReplyText(e.target.value)}
+                            className="crm-input w-full text-xs"
+                          />
+                        </div>
 
-                        <button
-                          type="submit"
-                          disabled={sendingWaReply || !waReplyText.trim()}
-                          className="px-3.5 sm:px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 shrink-0"
-                        >
-                          {sendingWaReply ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Send className="w-4 h-4" />
-                          )}
-                          <span className="whitespace-nowrap">Send</span>
-                          <span className="hidden sm:inline whitespace-nowrap"> WhatsApp</span>
-                        </button>
+                        <div className="flex items-center gap-2 shrink-0 justify-end">
+                          <button
+                            type="button"
+                            onClick={handleGenerateAiFollowup}
+                            disabled={generatingFollowup}
+                            className="px-2.5 sm:px-3 py-2 rounded-md bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+                            title="Generate fast context-aware AI follow-up message"
+                          >
+                            {generatingFollowup ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Zap className="w-3.5 h-3.5 fill-current" />
+                            )}
+                            <span className="whitespace-nowrap">⚡ AI Follow-Up</span>
+                          </button>
+
+                          <button
+                            type="submit"
+                            disabled={sendingWaReply || !waReplyText.trim()}
+                            className="px-3.5 sm:px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 shrink-0"
+                          >
+                            {sendingWaReply ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Send className="w-4 h-4" />
+                            )}
+                            <span className="whitespace-nowrap">Send</span>
+                            <span className="hidden sm:inline whitespace-nowrap"> WhatsApp</span>
+                          </button>
+                        </div>
                       </div>
+                    </form>
+                  ) : (
+                    <div className="py-2 text-center text-xs font-mono text-[var(--dash-text-muted)]">
+                      Read-only Mode: Outbound replies require WhatsApp authorization.
                     </div>
-                  </form>
+                  )
                 )}
 
                 {/* Email / Website Inquiry Composer */}

@@ -278,7 +278,7 @@ const ITEMS_PER_PAGE = 20;
 
 export default function WhatsAppOutreachPage() {
   const user = useAuthStore((s) => s.user);
-  const isSuperAdmin = Boolean(user?.is_superadmin || user?.is_main_admin);
+  const isSuperAdmin = Boolean(user?.is_superadmin || user?.is_main_admin || user?.role === "superadmin" || user?.permissions?.includes("all"));
   const canSendWhatsapp = isSuperAdmin || (user?.permissions?.includes("send_whatsapp") ?? false);
 
   const [activeTab, setActiveTab] = useState<"chat" | "analytics" | "leads" | "logs">("chat");
@@ -807,6 +807,10 @@ export default function WhatsAppOutreachPage() {
   // ── 2. WhatsApp Actions ──
 
   const handleSendManualReply = async (textToSend?: string) => {
+    if (!canSendWhatsapp) {
+      showAlert("error", "Permission Denied: You do not have permission to send WhatsApp messages.");
+      return;
+    }
     const finalMsg = (textToSend || manualMessageText).trim();
     if (!selectedConv || !finalMsg) return;
 
@@ -978,6 +982,10 @@ export default function WhatsAppOutreachPage() {
   };
 
   const handleSaveDailyLimit = async () => {
+    if (!canSendWhatsapp) {
+      showAlert("error", "Permission Denied: You do not have permission to modify daily limit.");
+      return;
+    }
     setSavingLimit(true);
     try {
       const res = await authFetch(`${API}/api/v1/whatsapp/daily-limit`, {
@@ -999,6 +1007,10 @@ export default function WhatsAppOutreachPage() {
   };
 
   const handleGenerateQueue = async () => {
+    if (!canSendWhatsapp) {
+      showAlert("error", "Permission Denied: You do not have permission to generate WhatsApp queue.");
+      return;
+    }
     setGeneratingQueue(true);
     try {
       const res = await authFetch(`${API}/api/v1/whatsapp/queue/generate`, {
@@ -1020,6 +1032,10 @@ export default function WhatsAppOutreachPage() {
   };
 
   const handleStartBot = async () => {
+    if (!canSendWhatsapp) {
+      showAlert("error", "Permission Denied: You do not have permission to start WhatsApp Bot.");
+      return;
+    }
     setStartingBot(true);
     try {
       const res = await authFetch(`${API}/api/v1/whatsapp/queue/start`, { method: "POST" });
@@ -1038,6 +1054,10 @@ export default function WhatsAppOutreachPage() {
   };
 
   const handleStopBot = async () => {
+    if (!canSendWhatsapp) {
+      showAlert("error", "Permission Denied: You do not have permission to stop WhatsApp Bot.");
+      return;
+    }
     setStoppingBot(true);
     try {
       const res = await authFetch(`${API}/api/v1/whatsapp/queue/stop`, { method: "POST" });

@@ -66,6 +66,11 @@ import {
 
 export default function SuperAdminDashboard() {
   const { accessToken, user } = useAuthStore();
+  const isSuperAdmin = Boolean(user?.is_superadmin || user?.is_main_admin);
+  const userPermissions = user?.permissions || [];
+  const canManageLeads = isSuperAdmin || userPermissions.includes("manage_leads");
+  const canDeleteLeads = isSuperAdmin || userPermissions.includes("delete_lead");
+  const canSendWhatsapp = isSuperAdmin || userPermissions.includes("send_whatsapp");
   const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -1541,25 +1546,29 @@ export default function SuperAdminDashboard() {
               <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
             </button>
 
-            {/* Secondary Action: Import Leads */}
-            <button
-              type="button"
-              onClick={() => setShowImportModal(true)}
-              className="crm-btn-secondary inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 text-xs whitespace-nowrap"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-primary)" }} />
-              <span className="truncate">Import</span>
-            </button>
+          {canManageLeads && (
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
+              {/* Secondary Action: Import Leads */}
+              <button
+                type="button"
+                onClick={() => setShowImportModal(true)}
+                className="crm-btn-secondary inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 text-xs whitespace-nowrap"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-primary)" }} />
+                <span className="truncate">Import</span>
+              </button>
 
-            {/* Primary Action: Add Lead */}
-            <button
-              type="button"
-              onClick={() => setShowAddLeadModal(true)}
-              className="crm-btn-primary inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 text-xs whitespace-nowrap"
-            >
-              <Plus className="w-4 h-4 shrink-0" />
-              <span>Add Lead</span>
-            </button>
+              {/* Primary Action: Add Lead */}
+              <button
+                type="button"
+                onClick={() => setShowAddLeadModal(true)}
+                className="crm-btn-primary inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 text-xs whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4 shrink-0" />
+                <span>Add Lead</span>
+              </button>
+            </div>
+          )}
           </div>
         </div>
       </header>
@@ -1777,93 +1786,95 @@ export default function SuperAdminDashboard() {
             </button>
 
             {/* Multi-Option Deletion Menu */}
-            <div className="relative flex-1 sm:flex-none z-30 shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowDeleteMenu(!showDeleteMenu)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-sm bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer whitespace-nowrap shrink-0"
-              >
-                <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                <span className="whitespace-nowrap font-medium">Delete Options</span>
-                {selectedRows.size > 0 && (
-                  <span className="bg-white/20 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-xs shrink-0">
-                    {selectedRows.size}
-                  </span>
-                )}
-                <ChevronDown className="w-3.5 h-3.5 opacity-80 shrink-0" />
-              </button>
-
-              {showDeleteMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowDeleteMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1.5 w-64 z-50 overflow-y-auto max-h-[85vh] py-1 text-xs animate-scaleIn crm-card shadow-2xl" style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}>
-                  {/* Remove Selected */}
-                  <button
-                    type="button"
-                    disabled={selectedRows.size === 0}
-                    onClick={() => {
-                      setShowDeleteMenu(false);
-                      handleDeleteSelected();
-                    }}
-                    className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
-                    style={{ color: "var(--dash-text)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--dash-surface-alt)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                      <span>Remove Selected</span>
-                    </span>
-                    <span className="crm-badge badge-danger text-[10px]">
+            {canDeleteLeads && (
+              <div className="relative flex-1 sm:flex-none z-30 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteMenu(!showDeleteMenu)}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-sm bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-xs font-semibold text-white shadow-sm shadow-rose-600/30 transition cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                  <span className="whitespace-nowrap font-medium">Delete Options</span>
+                  {selectedRows.size > 0 && (
+                    <span className="bg-white/20 text-white font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-xs shrink-0">
                       {selectedRows.size}
                     </span>
-                  </button>
+                  )}
+                  <ChevronDown className="w-3.5 h-3.5 opacity-80 shrink-0" />
+                </button>
 
-                  {/* Remove Current Page */}
-                  <button
-                    type="button"
-                    disabled={paginatedTable.length === 0}
-                    onClick={() => {
-                      setShowDeleteMenu(false);
-                      handleDeleteCurrentPage();
-                    }}
-                    className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
-                    style={{ color: "var(--dash-text)", borderTop: "1px solid var(--dash-border)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--dash-surface-alt)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Trash2 className="w-3.5 h-3.5 text-amber-500" />
-                      <span>Remove Current Page</span>
-                    </span>
-                    <span className="crm-badge badge-warning text-[10px]">
-                      Page {tablePage} ({paginatedTable.length})
-                    </span>
-                  </button>
+                {showDeleteMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowDeleteMenu(false)} />
+                    <div className="absolute right-0 top-full mt-1.5 w-64 z-50 overflow-y-auto max-h-[85vh] py-1 text-xs animate-scaleIn crm-card shadow-2xl" style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}>
+                    {/* Remove Selected */}
+                    <button
+                      type="button"
+                      disabled={selectedRows.size === 0}
+                      onClick={() => {
+                        setShowDeleteMenu(false);
+                        handleDeleteSelected();
+                      }}
+                      className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
+                      style={{ color: "var(--dash-text)" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "var(--dash-surface-alt)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                        <span>Remove Selected</span>
+                      </span>
+                      <span className="crm-badge badge-danger text-[10px]">
+                        {selectedRows.size}
+                      </span>
+                    </button>
 
-                  {/* Delete ALL Leads */}
-                  <button
-                    type="button"
-                    disabled={scrapedLeads.length + inquiryLeads.length === 0}
-                    onClick={() => {
-                      setShowDeleteMenu(false);
-                      handleDeleteAllLeads();
-                    }}
-                    className="w-full text-left px-3.5 py-2.5 font-bold flex items-center justify-between cursor-pointer transition"
-                    style={{ color: "var(--dash-danger)", background: "var(--dash-danger-light)", borderTop: "1px solid var(--dash-border)" }}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                      <span>Delete ALL Leads</span>
-                    </span>
-                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-xs" style={{ background: "var(--dash-danger)", color: "#FFFFFF" }}>
-                      ALL ({scrapedLeads.length + inquiryLeads.length})
-                    </span>
-                  </button>
-                </div>
-              </>
+                    {/* Remove Current Page */}
+                    <button
+                      type="button"
+                      disabled={paginatedTable.length === 0}
+                      onClick={() => {
+                        setShowDeleteMenu(false);
+                        handleDeleteCurrentPage();
+                      }}
+                      className="w-full text-left px-3.5 py-2.5 font-medium flex items-center justify-between disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
+                      style={{ color: "var(--dash-text)", borderTop: "1px solid var(--dash-border)" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "var(--dash-surface-alt)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Trash2 className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Remove Current Page</span>
+                      </span>
+                      <span className="crm-badge badge-warning text-[10px]">
+                        Page {tablePage} ({paginatedTable.length})
+                      </span>
+                    </button>
+
+                    {/* Delete ALL Leads */}
+                    <button
+                      type="button"
+                      disabled={scrapedLeads.length + inquiryLeads.length === 0}
+                      onClick={() => {
+                        setShowDeleteMenu(false);
+                        handleDeleteAllLeads();
+                      }}
+                      className="w-full text-left px-3.5 py-2.5 font-bold flex items-center justify-between cursor-pointer transition"
+                      style={{ color: "var(--dash-danger)", background: "var(--dash-danger-light)", borderTop: "1px solid var(--dash-border)" }}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                        <span>Delete ALL Leads</span>
+                      </span>
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-xs" style={{ background: "var(--dash-danger)", color: "#FFFFFF" }}>
+                        ALL ({scrapedLeads.length + inquiryLeads.length})
+                      </span>
+                    </button>
+                  </div>
+                </>
+              )}
+              </div>
             )}
-            </div>
           </div>
         </div>
 
@@ -2741,36 +2752,40 @@ export default function SuperAdminDashboard() {
                   <span className="hidden sm:inline">Close</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={handleDeleteLead}
-                  className="text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer py-2 px-2.5 transition shrink-0"
-                  style={{
-                    borderRadius: "var(--dash-btn-radius)",
-                    color: "var(--dash-danger)",
-                    background: "var(--dash-danger-light)",
-                    border: "1px solid var(--dash-danger)"
-                  }}
-                  title="Delete lead record"
-                  aria-label="Delete lead record"
-                >
-                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                  <span className="hidden md:inline">Delete</span>
-                </button>
+                {canDeleteLeads && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteLead}
+                    className="text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer py-2 px-2.5 transition shrink-0"
+                    style={{
+                      borderRadius: "var(--dash-btn-radius)",
+                      color: "var(--dash-danger)",
+                      background: "var(--dash-danger-light)",
+                      border: "1px solid var(--dash-danger)"
+                    }}
+                    title="Delete lead record"
+                    aria-label="Delete lead record"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                    <span className="hidden md:inline">Delete</span>
+                  </button>
+                )}
               </div>
 
               {/* Primary Actions: Proposal & Update Status (Flexible & Never Overflow) */}
               <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 justify-end">
-                <button
-                  type="button"
-                  onClick={() => openWaModalForLead(selectedLead)}
-                  disabled={!selectedLead.phone}
-                  className="flex-1 min-w-0 px-2 sm:px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center justify-center gap-1 shrink-0 disabled:opacity-50 active:scale-[0.98]"
-                  title="Send WhatsApp proposal"
-                >
-                  <Zap className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">Proposal 🚀</span>
-                </button>
+                {canSendWhatsapp && (
+                  <button
+                    type="button"
+                    onClick={() => openWaModalForLead(selectedLead)}
+                    disabled={!selectedLead.phone}
+                    className="flex-1 min-w-0 px-2 sm:px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center justify-center gap-1 shrink-0 disabled:opacity-50 active:scale-[0.98]"
+                    title="Send WhatsApp proposal"
+                  >
+                    <Zap className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">Proposal 🚀</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setShowStatusModal(true)}

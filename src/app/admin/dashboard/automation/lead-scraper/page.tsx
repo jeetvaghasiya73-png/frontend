@@ -17,6 +17,7 @@ import {
   ShieldAlert
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
+import { useAuthStore } from "@/lib/authStore";
 import { ADMIN_PATH } from "@/lib/config";
 
 // Helper to format any error object into a safe human-readable string
@@ -81,6 +82,10 @@ class ErrorBoundary extends React.Component<
 
 function LeadScraperUploadContent() {
   const router = useRouter();
+  const { user } = useAuthStore();
+  const isSuperAdmin = Boolean(user?.is_superadmin || user?.is_main_admin || user?.role === "superadmin" || user?.permissions?.includes("all"));
+  const canManageLeads = isSuperAdmin || (user?.permissions?.includes("view_leads") ?? false);
+
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -134,6 +139,10 @@ function LeadScraperUploadContent() {
   };
 
   const handleUpload = async () => {
+    if (!canManageLeads) {
+      setErrorMsg("Permission Denied: You do not have permission to import leads.");
+      return;
+    }
     if (!file) {
       setErrorMsg("Please select a valid Excel (.xlsx) file first.");
       return;
@@ -327,14 +336,20 @@ function LeadScraperUploadContent() {
 
         {/* Submit Button */}
         {!uploading && !resultData && (
-          <button
-            onClick={handleUpload}
-            disabled={!file}
-            className="mt-6 w-full max-w-xl bg-accent-custom hover:bg-blue-600 text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider cursor-pointer transition-all duration-300 shadow-md shadow-blue-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-          >
-            <UploadCloud className="w-4 h-4" />
-            Upload &amp; Import Scraped Leads
-          </button>
+          canManageLeads ? (
+            <button
+              onClick={handleUpload}
+              disabled={!file}
+              className="mt-6 w-full max-w-xl bg-accent-custom hover:bg-blue-600 text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider cursor-pointer transition-all duration-300 shadow-md shadow-blue-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+            >
+              <UploadCloud className="w-4 h-4" />
+              Upload &amp; Import Scraped Leads
+            </button>
+          ) : (
+            <div className="mt-6 p-4 rounded-xl bg-gray-500/10 border border-gray-500/20 text-gray-400 text-xs font-mono text-center w-full max-w-xl">
+              Read-only Mode: Uploading new leads requires Leads Management permission.
+            </div>
+          )
         )}
       </div>
 

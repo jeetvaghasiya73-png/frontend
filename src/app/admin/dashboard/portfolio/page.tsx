@@ -20,6 +20,7 @@ import {
   SlidersHorizontal
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
+import { useAuthStore } from "@/lib/authStore";
 
 interface PortfolioItem {
   id: number;
@@ -36,6 +37,10 @@ interface PortfolioItem {
 }
 
 export default function PortfolioManager() {
+  const { user } = useAuthStore();
+  const isSuperAdmin = user?.role === "superadmin" || (user?.permissions?.includes("all") ?? false);
+  const canManagePortfolio = isSuperAdmin || (user?.permissions?.includes("manage_portfolio") ?? false);
+
   const [portfolios, setPortfolios] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -108,6 +113,10 @@ export default function PortfolioManager() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canManagePortfolio) {
+      setFormError("Unauthorized: You do not have permission to manage portfolio items.");
+      return;
+    }
     setFormError("");
     setSubmitting(true);
 
@@ -167,6 +176,10 @@ export default function PortfolioManager() {
   };
 
   const handleDelete = async (portId: number) => {
+    if (!canManagePortfolio) {
+      alert("Unauthorized: You do not have permission to delete portfolio items.");
+      return;
+    }
     if (!confirm("Permanently delete this project case study?")) return;
     try {
       const response = await authFetch(`${API}/api/v1/portfolio/${portId}`, {
@@ -181,6 +194,10 @@ export default function PortfolioManager() {
   };
 
   const handleToggleFeatured = async (port: PortfolioItem) => {
+    if (!canManagePortfolio) {
+      alert("Unauthorized: You do not have permission to modify portfolio items.");
+      return;
+    }
     try {
       const updatedFeatured = !port.featured;
       const response = await authFetch(`${API}/api/v1/portfolio/${port.id}`, {
@@ -264,16 +281,18 @@ export default function PortfolioManager() {
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }}
-          className="px-3.5 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Case Study</span>
-        </button>
+        {canManagePortfolio && (
+          <button
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
+            className="px-3.5 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Case Study</span>
+          </button>
+        )}
       </div>
 
       {/* KPI Stats Bar - Crisp Rectangular Tiles */}
@@ -374,12 +393,14 @@ export default function PortfolioManager() {
               ? "No case studies match your active search criteria."
               : "No project showcases added yet. Click 'New Case Study' to register your first project."}
           </p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="mt-2 px-3.5 py-1.5 rounded-md bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition"
-          >
-            Create First Showcase
-          </button>
+          {canManagePortfolio && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="mt-2 px-3.5 py-1.5 rounded-md bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition"
+            >
+              Create First Showcase
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -409,33 +430,39 @@ export default function PortfolioManager() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleToggleFeatured(port)}
-                      className={`w-7 h-7 rounded-md border flex items-center justify-center transition cursor-pointer ${
-                        port.featured
-                          ? "bg-amber-500/10 border-amber-500/30 text-amber-500"
-                          : "border-[var(--dash-border)] bg-[var(--dash-bg)] text-[var(--dash-text-muted)] hover:text-amber-500"
-                      }`}
-                      title={port.featured ? "Remove featured status" : "Mark as featured"}
-                    >
-                      <Star className={`w-3 h-3 ${port.featured ? "fill-current" : ""}`} />
-                    </button>
-                    <button
-                      onClick={() => handleEditClick(port)}
-                      className="w-7 h-7 rounded-md border border-[var(--dash-border)] bg-[var(--dash-bg)] flex items-center justify-center text-[var(--dash-text-muted)] hover:text-indigo-500 hover:border-indigo-500/40 cursor-pointer transition"
-                      title="Edit project"
-                    >
-                      <Edit2 className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(port.id)}
-                      className="w-7 h-7 rounded-md border border-[var(--dash-border)] bg-[var(--dash-bg)] flex items-center justify-center text-[var(--dash-text-muted)] hover:text-red-500 hover:border-red-500/40 cursor-pointer transition"
-                      title="Delete project"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
+                  {canManagePortfolio ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleToggleFeatured(port)}
+                        className={`w-7 h-7 rounded-md border flex items-center justify-center transition cursor-pointer ${
+                          port.featured
+                            ? "bg-amber-500/10 border-amber-500/30 text-amber-500"
+                            : "border-[var(--dash-border)] bg-[var(--dash-bg)] text-[var(--dash-text-muted)] hover:text-amber-500"
+                        }`}
+                        title={port.featured ? "Remove featured status" : "Mark as featured"}
+                      >
+                        <Star className={`w-3 h-3 ${port.featured ? "fill-current" : ""}`} />
+                      </button>
+                      <button
+                        onClick={() => handleEditClick(port)}
+                        className="w-7 h-7 rounded-md border border-[var(--dash-border)] bg-[var(--dash-bg)] flex items-center justify-center text-[var(--dash-text-muted)] hover:text-indigo-500 hover:border-indigo-500/40 cursor-pointer transition"
+                        title="Edit project"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(port.id)}
+                        className="w-7 h-7 rounded-md border border-[var(--dash-border)] bg-[var(--dash-bg)] flex items-center justify-center text-[var(--dash-text-muted)] hover:text-red-500 hover:border-red-500/40 cursor-pointer transition"
+                        title="Delete project"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] font-mono text-[var(--dash-text-muted)] bg-[var(--dash-bg)] px-2 py-0.5 rounded border border-[var(--dash-border)]">
+                      View Only
+                    </span>
+                  )}
                 </div>
 
                 {/* Project Title & Client */}

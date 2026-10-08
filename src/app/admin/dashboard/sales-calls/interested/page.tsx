@@ -23,6 +23,8 @@ interface InterestedLead {
 
 export default function InterestedLeadsDashboard() {
   const { user } = useAuthStore();
+  const isSuperAdmin = Boolean(user?.is_superadmin || user?.is_main_admin);
+  const canSalesCall = isSuperAdmin || (user?.permissions?.includes("sales_calling") ?? false);
   const [leads, setLeads] = useState<InterestedLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("interested");
@@ -96,6 +98,7 @@ export default function InterestedLeadsDashboard() {
   }, [fetchLeads, statusFilter]);
 
   const handleMarkUninterested = async (lead: InterestedLead) => {
+    if (!canSalesCall) return;
     setActionId(lead.id);
     try {
       if (lead.is_scraped) {
@@ -116,6 +119,7 @@ export default function InterestedLeadsDashboard() {
   };
 
   const handleMarkInterested = async (lead: InterestedLead) => {
+    if (!canSalesCall) return;
     setActionId(lead.id);
     try {
       if (lead.is_scraped) {
@@ -284,24 +288,30 @@ export default function InterestedLeadsDashboard() {
                 </div>
 
                 <div className="flex gap-2 w-full">
-                  {lead.status === "interested" ? (
-                    <button
-                      onClick={() => handleMarkUninterested(lead)}
-                      disabled={actionId === lead.id}
-                      className="w-full flex justify-center items-center gap-1.5 py-2 bg-rose-50 dark:bg-rose-900/10 hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40 rounded-[6px] font-bold text-xs transition-all disabled:opacity-50 cursor-pointer"
-                    >
-                      {actionId === lead.id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-                      Move to Contacted (Not Interested)
-                    </button>
+                  {canSalesCall ? (
+                    lead.status === "interested" ? (
+                      <button
+                        onClick={() => handleMarkUninterested(lead)}
+                        disabled={actionId === lead.id}
+                        className="w-full flex justify-center items-center gap-1.5 py-2 bg-rose-50 dark:bg-rose-900/10 hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40 rounded-[6px] font-bold text-xs transition-all disabled:opacity-50 cursor-pointer"
+                      >
+                        {actionId === lead.id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                        Move to Contacted (Not Interested)
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleMarkInterested(lead)}
+                        disabled={actionId === lead.id}
+                        className="w-full flex justify-center items-center gap-1.5 py-2 bg-emerald-50 dark:bg-emerald-900/10 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 rounded-[6px] font-bold text-xs transition-all disabled:opacity-50 cursor-pointer"
+                      >
+                        {actionId === lead.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                        Mark as Interested
+                      </button>
+                    )
                   ) : (
-                    <button
-                      onClick={() => handleMarkInterested(lead)}
-                      disabled={actionId === lead.id}
-                      className="w-full flex justify-center items-center gap-1.5 py-2 bg-emerald-50 dark:bg-emerald-900/10 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 rounded-[6px] font-bold text-xs transition-all disabled:opacity-50 cursor-pointer"
-                    >
-                      {actionId === lead.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-                      Mark as Interested
-                    </button>
+                    <div className="w-full text-center py-1.5 px-2 bg-slate-50 dark:bg-slate-800/40 text-slate-400 text-[11px] font-medium rounded border border-slate-100 dark:border-slate-800">
+                      View Only
+                    </div>
                   )}
                 </div>
               </div>
