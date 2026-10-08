@@ -235,6 +235,15 @@ function AdminUsersTab() {
 
   useEffect(() => {
     fetchUsers();
+
+    const handleWsEvent = (e: any) => {
+      const type = e.detail?.type;
+      if (type === "user_updated" || type === "user_deleted") {
+        fetchUsers();
+      }
+    };
+    window.addEventListener("crm_ws_event", handleWsEvent);
+    return () => window.removeEventListener("crm_ws_event", handleWsEvent);
   }, [fetchUsers]);
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -287,6 +296,7 @@ function AdminUsersTab() {
   const handleDelete = async () => {
     if (!deleteModalUser) return;
     setDeleting(true);
+    setError("");
     try {
       const res = await authFetch(`${API}/api/v1/users/admin-users/${deleteModalUser.id}`, {
         method: "DELETE",
@@ -295,7 +305,7 @@ function AdminUsersTab() {
         setDeleteModalUser(null);
         fetchUsers();
       } else {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({ detail: "Failed to delete user" }));
         setError(err.detail || "Failed to delete user");
       }
     } catch {
