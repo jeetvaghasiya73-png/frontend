@@ -451,7 +451,7 @@ export default function DashboardLayout({
     { title: "ADMINISTRATION", links: [
       { name: "FAQ Management", href: `${ADMIN_PATH}/dashboard/faqs`, icon: HelpCircle },
       { name: "System Settings", href: `${ADMIN_PATH}/dashboard/settings`, icon: Settings },
-      ...(isSuperAdmin ? [{ name: "Security & Roles", href: `${ADMIN_PATH}/dashboard/security`, icon: Shield }] : []),
+      { name: "Security & Roles", href: `${ADMIN_PATH}/dashboard/security`, icon: Shield },
     ]}
   ];
 
