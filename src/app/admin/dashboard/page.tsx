@@ -1530,8 +1530,8 @@ export default function SuperAdminDashboard() {
             </div>
           </div>
 
-          {/* Action Buttons Row: Refresh, Import, Add Lead in one row on mobile */}
-          <div className="grid grid-cols-3 sm:flex sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
+          {/* Action Buttons Row: Refresh, Import, Add Lead */}
+          <div className={`grid ${canManageLeads ? "grid-cols-3" : "grid-cols-1"} sm:flex sm:items-center gap-2 w-full sm:w-auto`}>
             {/* Refresh Action */}
             <button
               onClick={() => {
@@ -1539,36 +1539,38 @@ export default function SuperAdminDashboard() {
                 fetchInitialData();
               }}
               disabled={refreshing || loading}
-              className="crm-btn-secondary inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 text-xs disabled:opacity-50 whitespace-nowrap"
+              className="crm-btn-secondary inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold disabled:opacity-50 whitespace-nowrap cursor-pointer w-full sm:w-auto"
               title="Refresh Real-time Data"
             >
               <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${refreshing || loading ? "animate-spin" : ""}`} style={{ color: refreshing || loading ? "var(--dash-primary)" : "var(--dash-text-muted)" }} />
               <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
             </button>
 
-          {canManageLeads && (
-            <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
-              {/* Secondary Action: Import Leads */}
-              <button
-                type="button"
-                onClick={() => setShowImportModal(true)}
-                className="crm-btn-secondary inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 text-xs whitespace-nowrap"
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-primary)" }} />
-                <span className="truncate">Import</span>
-              </button>
+            {canManageLeads && (
+              <>
+                {/* Secondary Action: Import Leads */}
+                <button
+                  type="button"
+                  onClick={() => setShowImportModal(true)}
+                  className="crm-btn-secondary inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold whitespace-nowrap cursor-pointer w-full sm:w-auto"
+                  title="Import Leads Spreadsheet"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-primary)" }} />
+                  <span>Import</span>
+                </button>
 
-              {/* Primary Action: Add Lead */}
-              <button
-                type="button"
-                onClick={() => setShowAddLeadModal(true)}
-                className="crm-btn-primary inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 text-xs whitespace-nowrap"
-              >
-                <Plus className="w-4 h-4 shrink-0" />
-                <span>Add Lead</span>
-              </button>
-            </div>
-          )}
+                {/* Primary Action: Add Lead */}
+                <button
+                  type="button"
+                  onClick={() => setShowAddLeadModal(true)}
+                  className="crm-btn-primary inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold whitespace-nowrap shadow-sm cursor-pointer w-full sm:w-auto"
+                  title="Add New Lead Prospect"
+                >
+                  <Plus className="w-4 h-4 shrink-0" />
+                  <span>Add Lead</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
