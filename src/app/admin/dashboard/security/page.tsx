@@ -286,6 +286,20 @@ function AdminUsersTab() {
                       >
                         {u.is_active ? <ToggleRight className="w-5 h-5 text-emerald-500" /> : <ToggleLeft className="w-5 h-5 text-slate-400" />}
                       </button>
+                      <button
+                        onClick={() => {
+                          setNewUsername(u.username);
+                          setNewJobTitle(u.job_title || "");
+                          setNewPermissions(u.permissions || []);
+                          setNewIsSuperadmin(u.is_superadmin);
+                          // Needs a dedicated edit modal but we'll use a prompt for now or custom logic.
+                          alert("Editing users will be available in the detailed edit modal");
+                        }}
+                        className={`p-1.5 rounded-lg transition cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-500`}
+                        title="Edit User"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                      </button>
                       {currentUser?.is_main_admin && (
                         <button
                           onClick={() => setDeleteModalUser(u)}

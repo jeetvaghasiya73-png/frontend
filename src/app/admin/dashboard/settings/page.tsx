@@ -208,7 +208,7 @@ export default function SettingsPage() {
       const res = await authFetch(`${API}/api/v1/settings/admin-emails`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: newAdminEmail.trim() }),
+        body: JSON.stringify({ emails: [...adminEmails, newAdminEmail.trim()] }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -234,8 +234,11 @@ export default function SettingsPage() {
     }
     setRemovingEmail(emailToRemove);
     try {
-      const res = await authFetch(`${API}/api/v1/settings/admin-emails/${encodeURIComponent(emailToRemove)}`, {
-        method: "DELETE",
+      const updatedEmails = adminEmails.filter(e => e !== emailToRemove);
+      const res = await authFetch(`${API}/api/v1/settings/admin-emails`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emails: updatedEmails }),
       });
       if (res.ok) {
         const data = await res.json();
