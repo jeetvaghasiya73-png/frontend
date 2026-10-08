@@ -23,7 +23,7 @@ interface ScrapedLead {
 }
 
 export default function SalesCallingDashboard() {
-  const { accessToken } = useAuthStore();
+  const { accessToken, user } = useAuthStore();
   const [leads, setLeads] = useState<ScrapedLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<number | null>(null);
@@ -64,13 +64,16 @@ export default function SalesCallingDashboard() {
     }
   };
 
-  const handleMarkInterested = async (id: number) => {
-    setProcessingId(id);
+  const handleMarkInterested = async (id: number | string) => {
+    if (!user) return;
+    setProcessingId(Number(id));
     try {
-      await authFetch(`${API}/api/v1/whatsapp/mark-interested/${id}`, {
-        method: "POST"
+      await authFetch(`${API}/api/v1/leads/${id}/mark-interested`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: "SALES_CALL", user_id: user.id })
       });
-      setLeads((prev) => prev.filter(l => l.id !== id));
+      setLeads((prev) => prev.filter(l => l.id !== Number(id)));
     } catch (err) {
       console.error("Failed to mark interested", err);
     } finally {
@@ -91,6 +94,9 @@ export default function SalesCallingDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <a href="/admin/dashboard/sales-calls/interested" className="text-sm font-semibold px-4 py-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full border border-emerald-200 dark:border-emerald-800/50 hover:bg-emerald-100 transition-colors">
+            View Interested
+          </a>
           <div className="text-sm font-semibold px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded-full border border-indigo-200 dark:border-indigo-800/50 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
             {leads.length} Pending Calls

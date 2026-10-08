@@ -42,6 +42,8 @@ interface AdminUser {
   is_admin: boolean;
   is_superadmin: boolean;
   is_main_admin?: boolean;
+  job_title?: string;
+  permissions?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -115,6 +117,8 @@ function AdminUsersTab() {
   const [showCreate, setShowCreate] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [newJobTitle, setNewJobTitle] = useState("");
+  const [newPermissions, setNewPermissions] = useState<string[]>([]);
   const [newIsSuperadmin, setNewIsSuperadmin] = useState(false);
   const [creating, setCreating] = useState(false);
 
@@ -152,6 +156,8 @@ function AdminUsersTab() {
           username: newUsername,
           password: newPassword,
           is_superadmin: newIsSuperadmin,
+          job_title: newJobTitle,
+          permissions: newPermissions
         }),
       });
       if (!res.ok) {
@@ -161,6 +167,8 @@ function AdminUsersTab() {
       setShowCreate(false);
       setNewUsername("");
       setNewPassword("");
+      setNewJobTitle("");
+      setNewPermissions([]);
       setNewIsSuperadmin(false);
       fetchUsers();
     } catch (err: any) {
@@ -258,6 +266,7 @@ function AdminUsersTab() {
                   </td>
                   <td className="py-3.5 px-5">
                     <RoleBadge isSuperadmin={u.is_superadmin} isMainAdmin={u.is_main_admin} />
+                    {u.job_title && <span className="block mt-1 text-[10px] text-slate-500">{u.job_title}</span>}
                   </td>
                   <td className="py-3.5 px-5">
                     <Badge active={u.is_active} />
@@ -340,6 +349,46 @@ function AdminUsersTab() {
                   className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Job Title (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. SEO Manager"
+                  value={newJobTitle}
+                  onChange={(e) => setNewJobTitle(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
+                />
+              </div>
+
+              {!newIsSuperadmin && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Permissions</label>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {[
+                      { id: "delete_lead", label: "Delete Leads" },
+                      { id: "send_whatsapp", label: "Send WhatsApp" },
+                      { id: "sales_calling", label: "Sales Calling Access" },
+                    ].map(perm => (
+                      <div key={perm.id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id={`perm-${perm.id}`}
+                          checked={newPermissions.includes(perm.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) setNewPermissions(prev => [...prev, perm.id]);
+                            else setNewPermissions(prev => prev.filter(p => p !== perm.id));
+                          }}
+                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <label htmlFor={`perm-${perm.id}`} className="text-xs text-slate-600 dark:text-slate-400">
+                          {perm.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center gap-2 pt-1">
                 <input
