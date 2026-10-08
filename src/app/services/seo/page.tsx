@@ -225,7 +225,7 @@ export default function SeoMainPage() {
             <span>/</span>
             <Link href="/services" className="hover:text-foreground transition-colors">Services</Link>
             <span>/</span>
-            <span className="text-emerald-500 font-semibold">SEO Services</span>
+            <span className="text-foreground font-semibold">SEO Services</span>
           </nav>
         </div>
 
@@ -275,8 +275,8 @@ export default function SeoMainPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
-            <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-emerald-500/50 hover:bg-surface/30 transition-all duration-300">
-              <FileCode2 className="w-8 h-8 text-emerald-500 mb-6" />
+            <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-border-custom hover:bg-surface/30 transition-all duration-300">
+              <FileCode2 className="w-8 h-8 text-foreground mb-6" />
               <h3 className="text-xl font-bold text-foreground mb-3">On-Page SEO Service</h3>
               <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed mb-6">
                 Our on page SEO service ensures search engines understand your website's content and visitors find relevant information instantly. We focus on aligning your site architecture with actual user behavior.
@@ -284,22 +284,22 @@ export default function SeoMainPage() {
               <ul className="space-y-2 mb-6">
                 {["Keyword research and mapping", "Search intent analysis", "Title tag & meta description optimization", "Heading structure & internal linking", "Content & image optimization", "URL structure refinement"].map(item => (
                   <li key={item} className="flex items-start gap-2 text-xs text-foreground/90">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-foreground shrink-0 mt-0.5" />
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
               <Link 
                 href="/services/seo/on-page-seo-services" 
-                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline pt-4 border-t border-border-custom/50"
+                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-foreground hover:underline pt-4 border-t border-border-custom/50"
               >
                 <span>Explore On-Page SEO Services</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-emerald-500/50 hover:bg-surface/30 transition-all duration-300">
-              <Link2 className="w-8 h-8 text-emerald-500 mb-6" />
+            <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-border-custom hover:bg-surface/30 transition-all duration-300">
+              <Link2 className="w-8 h-8 text-foreground mb-6" />
               <h3 className="text-xl font-bold text-foreground mb-3">Off-Page SEO Services</h3>
               <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed mb-6">
                 Our off page SEO services help businesses build authority, trust, and external visibility. We rely strictly on ethical, high-quality placements rather than automated or spammy link schemes.
@@ -307,7 +307,7 @@ export default function SeoMainPage() {
               <ul className="space-y-2 mb-6">
                 {["Quality link acquisition", "Digital PR & brand mentions", "Relevant industry placements", "Competitor backlink analysis", "Link profile monitoring", "Ethical authority-building strategies"].map(item => (
                   <li key={item} className="flex items-start gap-2 text-xs text-foreground/90">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-foreground shrink-0 mt-0.5" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -315,7 +315,7 @@ export default function SeoMainPage() {
               <div className="mt-auto flex flex-col gap-2 pt-4 border-t border-border-custom/50">
                 <Link 
                   href="/services/seo/seo-link-building" 
-                  className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline"
+                  className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-foreground hover:underline"
                 >
                   <span>Explore SEO Link Building</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -329,8 +329,8 @@ export default function SeoMainPage() {
               </div>
             </div>
 
-            <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-emerald-500/50 hover:bg-surface/30 transition-all duration-300">
-              <Gauge className="w-8 h-8 text-emerald-500 mb-6" />
+            <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-border-custom hover:bg-surface/30 transition-all duration-300">
+              <Gauge className="w-8 h-8 text-foreground mb-6" />
               <h3 className="text-xl font-bold text-foreground mb-3">Technical SEO</h3>
               <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed mb-6">
                 Technical SEO improves the accessibility, crawlability, and indexability of a website. We translate complex engineering concepts into smooth, easily navigable experiences for search engine bots.
@@ -338,59 +338,59 @@ export default function SeoMainPage() {
               <ul className="space-y-2 mb-6">
                 {["Technical website audits", "Crawlability & indexability", "XML sitemaps & Robots.txt", "Canonical tags & broken links", "Core Web Vitals & mobile usability", "Structured data & architecture"].map(item => (
                   <li key={item} className="flex items-start gap-2 text-xs text-foreground/90">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-foreground shrink-0 mt-0.5" />
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
               <Link 
                 href="/services/seo/seo-audit-services" 
-                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline pt-4 border-t border-border-custom/50"
+                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-foreground hover:underline pt-4 border-t border-border-custom/50"
               >
                 <span>Explore Technical SEO Audits</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-emerald-500/50 hover:bg-surface/30 transition-all duration-300">
-              <Globe2 className="w-8 h-8 text-emerald-500 mb-6" />
+            <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-border-custom hover:bg-surface/30 transition-all duration-300">
+              <Globe2 className="w-8 h-8 text-foreground mb-6" />
               <h3 className="text-xl font-bold text-foreground mb-3">Organic SEO</h3>
               <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed mb-6">
                 Our organic search engine optimization services build sustainable strategies to attract relevant visitors. We focus on qualified leads and long-term visibility over short-term paid traffic bursts.
               </p>
               <Link 
                 href="/services/seo/organic-seo-services" 
-                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline pt-4 border-t border-border-custom/50"
+                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-foreground hover:underline pt-4 border-t border-border-custom/50"
               >
                 <span>Explore Organic SEO Services</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-emerald-500/50 hover:bg-surface/30 transition-all duration-300">
-              <Search className="w-8 h-8 text-emerald-500 mb-6" />
+            <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-border-custom hover:bg-surface/30 transition-all duration-300">
+              <Search className="w-8 h-8 text-foreground mb-6" />
               <h3 className="text-xl font-bold text-foreground mb-3">Google SEO</h3>
               <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed mb-6">
                 Our Google search engine optimization approach strictly follows Google Search Central guidelines, optimizing for helpful content, page experience, and technical accessibility without outdated practices.
               </p>
               <Link 
                 href="/services/seo/google-seo" 
-                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline pt-4 border-t border-border-custom/50"
+                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-foreground hover:underline pt-4 border-t border-border-custom/50"
               >
                 <span>Explore Google SEO Compliance</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-emerald-500/50 hover:bg-surface/30 transition-all duration-300">
-              <Target className="w-8 h-8 text-emerald-500 mb-6" />
+            <div className="border border-border-custom bg-surface/20 p-8 rounded-2xl flex flex-col hover:border-border-custom hover:bg-surface/30 transition-all duration-300">
+              <Target className="w-8 h-8 text-foreground mb-6" />
               <h3 className="text-xl font-bold text-foreground mb-3">Ranking Specialists</h3>
               <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed mb-6">
                 As a dedicated Google ranking expert team, we analyze ranking opportunities and implement strategic improvements. We set realistic expectations, as long-term rankings depend on consistent, quality work.
               </p>
               <Link 
                 href="/services/seo/google-ranking-expert" 
-                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline pt-4 border-t border-border-custom/50"
+                className="mt-auto inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-foreground hover:underline pt-4 border-t border-border-custom/50"
               >
                 <span>Consult a Google Ranking Expert</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -501,14 +501,14 @@ export default function SeoMainPage() {
             ].map((industry) => (
               <div 
                 key={industry.id}
-                className="border border-border-custom bg-surface/30 rounded-xl overflow-hidden transition-all duration-300 hover:border-emerald-500/30"
+                className="border border-border-custom bg-surface/30 rounded-xl overflow-hidden transition-all duration-300 hover:border-border-custom"
               >
                 <div 
                   className="p-5 flex items-center justify-between cursor-pointer select-none"
                   onClick={() => toggleIndustry(industry.id)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="text-emerald-500">{industry.icon}</div>
+                    <div className="text-foreground">{industry.icon}</div>
                     <h3 className="font-bold text-foreground text-sm sm:text-base">{industry.title}</h3>
                   </div>
                   {expandedIndustry === industry.id ? (
@@ -533,7 +533,7 @@ export default function SeoMainPage() {
                     <div className="pt-3 border-t border-border-custom/50 mt-3">
                       <Link
                         href={industry.link}
-                        className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline"
+                        className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-foreground hover:underline"
                       >
                         <span>{industry.linkText}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -587,14 +587,14 @@ export default function SeoMainPage() {
               {activePlatform === "wordpress" && (
                 <div className="animate-in fade-in zoom-in-95 duration-300">
                   <h3 className="text-xl font-bold text-foreground mb-3 flex items-center gap-2">
-                    <FileCode2 className="w-5 h-5 text-emerald-500" /> WordPress SEO
+                    <FileCode2 className="w-5 h-5 text-foreground" /> WordPress SEO
                   </h3>
                   <p className="text-sm text-secondary-custom leading-relaxed mb-6">
                     We navigate WordPress technical SEO to ensure your site stays fast and indexable. This includes structuring SEO-friendly URLs, extensive metadata optimization, configuring caching plugins for website speed, implementing XML sitemaps, structured data logic, and rigorous content optimization.
                   </p>
                   <Link
                     href="/services/seo/wordpress-seo"
-                    className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline"
+                    className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-foreground hover:underline"
                   >
                     <span>Explore Dedicated WordPress SEO Services</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -604,14 +604,14 @@ export default function SeoMainPage() {
               {activePlatform === "shopify" && (
                 <div className="animate-in fade-in zoom-in-95 duration-300">
                   <h3 className="text-xl font-bold text-foreground mb-3 flex items-center gap-2">
-                    <ShoppingCart className="w-5 h-5 text-emerald-500" /> Shopify SEO
+                    <ShoppingCart className="w-5 h-5 text-foreground" /> Shopify SEO
                   </h3>
                   <p className="text-sm text-secondary-custom leading-relaxed mb-6">
                     Shopify stores require specific technical handling. We focus on Shopify product page optimization, collection page structuring, automated product schema, resolving native duplicate URL management issues, canonical tags, store architecture refinement, and page speed improvements.
                   </p>
                   <Link
                     href="/services/seo/shopify-seo"
-                    className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-500 hover:underline"
+                    className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-foreground hover:underline"
                   >
                     <span>Explore Dedicated Shopify SEO Agency Solutions</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -621,7 +621,7 @@ export default function SeoMainPage() {
               {activePlatform === "other" && (
                 <div className="animate-in fade-in zoom-in-95 duration-300">
                   <h3 className="text-xl font-bold text-foreground mb-3 flex items-center gap-2">
-                    <Monitor className="w-5 h-5 text-emerald-500" /> Custom-Built & Next.js SEO
+                    <Monitor className="w-5 h-5 text-foreground" /> Custom-Built & Next.js SEO
                   </h3>
                   <p className="text-sm text-secondary-custom leading-relaxed mb-6">
                     For custom-built websites, Next.js applications, PHP websites, or other CMS platforms, the SEO strategy must adapt to the underlying architecture. We work directly with your codebase to implement server-side rendering optimizations, headless CMS metadata structuring, and custom technical requirements.
@@ -634,12 +634,12 @@ export default function SeoMainPage() {
 
         {/* SECTION 5: WHITE-LABEL SEO SERVICES */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-28">
-          <div className="relative border border-emerald-500/30 bg-emerald-500/5 rounded-3xl p-8 sm:p-12 lg:p-16 overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px]" />
+          <div className="relative border border-border-custom bg-foreground/5 rounded-3xl p-8 sm:p-12 lg:p-16 overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-foreground/5 rounded-full blur-[80px]" />
             
             <div className="relative z-10 flex flex-col lg:flex-row gap-12 items-center">
               <div className="flex-1">
-                <span className="text-[10px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-3">
+                <span className="text-[10px] font-mono font-bold tracking-widest text-foreground uppercase block mb-3">
                   Agency Partnerships
                 </span>
                 <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground mb-5">
@@ -652,7 +652,7 @@ export default function SeoMainPage() {
                 <ul className="space-y-3 mb-8">
                   {["White-label keyword research & strategy", "On-page & Technical SEO audits", "Content optimization & execution", "Off-page SEO & link building", "Monthly unbranded reporting"].map(item => (
                     <li key={item} className="flex items-center gap-2 text-sm text-foreground/90 font-medium">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      <CheckCircle2 className="w-4 h-4 text-foreground" />
                       {item}
                     </li>
                   ))}
@@ -684,10 +684,10 @@ export default function SeoMainPage() {
                     { title: "Execution & Reporting", desc: "We begin SEO execution and provide regular progress reports." }
                   ].map((step, idx) => (
                     <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-                      <div className="flex items-center justify-center w-7 h-7 rounded-full border-2 border-surface bg-emerald-500 text-background text-xs font-bold shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-md">
+                      <div className="flex items-center justify-center w-7 h-7 rounded-full border-2 border-surface bg-foreground text-background text-xs font-bold shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-md">
                         {idx + 1}
                       </div>
-                      <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2rem)] p-4 rounded-xl border border-border-custom bg-background shadow-sm group-hover:border-emerald-500/40 transition-colors">
+                      <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2rem)] p-4 rounded-xl border border-border-custom bg-background shadow-sm group-hover:border-border-custom transition-colors">
                         <h4 className="text-sm font-bold text-foreground mb-1">{step.title}</h4>
                         <p className="text-xs text-secondary-custom">{step.desc}</p>
                       </div>
@@ -718,7 +718,7 @@ export default function SeoMainPage() {
               { num: "04", title: "Content & Authority", desc: "Improve relevant website content and develop appropriate external authority-building activities." },
               { num: "05", title: "Monitoring & Improvement", desc: "Monitor available search performance data and continually refine the strategy based on empirical results." }
             ].map((step) => (
-              <div key={step.num} className="bg-surface/20 border border-border-custom rounded-xl p-5 hover:border-emerald-500/30 transition-colors">
+              <div key={step.num} className="bg-surface/20 border border-border-custom rounded-xl p-5 hover:border-border-custom transition-colors">
                 <span className="text-3xl font-black text-border-custom block mb-3">{step.num}</span>
                 <h4 className="text-sm font-bold text-foreground mb-2">{step.title}</h4>
                 <p className="text-[11px] sm:text-xs text-secondary-custom leading-relaxed">{step.desc}</p>
@@ -747,7 +747,7 @@ export default function SeoMainPage() {
                   { title: "Transparent Communication", desc: "We maintain clear, honest dialogue regarding SEO deliverables, timelines, and progress." }
                 ].map(reason => (
                   <div key={reason.title} className="flex gap-4">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                    <CheckCircle2 className="w-5 h-5 text-foreground shrink-0" />
                     <div>
                       <h4 className="text-sm font-bold text-foreground mb-1">{reason.title}</h4>
                       <p className="text-xs text-secondary-custom leading-relaxed">{reason.desc}</p>
@@ -762,7 +762,7 @@ export default function SeoMainPage() {
         {/* SECTION 7.5: EXPLORE OUR SEO SOLUTIONS (CLUSTER DIRECTORY) */}
         <section id="seo-solutions" className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-28">
           <div className="mb-12 text-center max-w-3xl mx-auto">
-            <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-3">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-3">
               Topical Authority Cluster
             </span>
             <h2 className="text-3xl sm:text-5xl font-extrabold text-foreground mb-4">
@@ -796,7 +796,7 @@ export default function SeoMainPage() {
                   <Link key={item.slug} href={`/services/seo/${item.slug}`} className="seo-directory-item group">
                     <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
                     <div>
-                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">{item.name}</div>
+                      <div className="font-semibold group-hover:text-foreground transition-colors leading-snug">{item.name}</div>
                       <div className="text-[11px] text-secondary-custom leading-tight">{item.desc}</div>
                     </div>
                   </Link>
@@ -818,7 +818,7 @@ export default function SeoMainPage() {
                   <Link key={item.slug} href={`/services/seo/${item.slug}`} className="seo-directory-item group">
                     <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
                     <div>
-                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">{item.name}</div>
+                      <div className="font-semibold group-hover:text-foreground transition-colors leading-snug">{item.name}</div>
                       <div className="text-[11px] text-secondary-custom leading-tight">{item.desc}</div>
                     </div>
                   </Link>
@@ -841,7 +841,7 @@ export default function SeoMainPage() {
                   <Link key={item.slug} href={`/services/seo/${item.slug}`} className="seo-directory-item group">
                     <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
                     <div>
-                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">{item.name}</div>
+                      <div className="font-semibold group-hover:text-foreground transition-colors leading-snug">{item.name}</div>
                       <div className="text-[11px] text-secondary-custom leading-tight">{item.desc}</div>
                     </div>
                   </Link>
@@ -863,7 +863,7 @@ export default function SeoMainPage() {
                   <Link key={item.slug} href={`/services/seo/${item.slug}`} className="seo-directory-item group">
                     <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
                     <div>
-                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">{item.name}</div>
+                      <div className="font-semibold group-hover:text-foreground transition-colors leading-snug">{item.name}</div>
                       <div className="text-[11px] text-secondary-custom leading-tight">{item.desc}</div>
                     </div>
                   </Link>
@@ -877,7 +877,7 @@ export default function SeoMainPage() {
         {/* SECTION 7.6: SEO SERVICES ACROSS MAJOR INDIAN CITIES */}
         <section id="indian-cities-directory" className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-28">
           <div className="mb-12 text-center max-w-3xl mx-auto">
-            <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-3">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-3">
               Regional Local Search Directory
             </span>
             <h2 className="text-3xl sm:text-5xl font-extrabold text-foreground mb-4">
@@ -902,7 +902,7 @@ export default function SeoMainPage() {
                   <Link key={city.slug} href={`/services/seo/${city.slug}`} className="seo-directory-item group">
                     <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
                     <div>
-                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">
+                      <div className="font-semibold group-hover:text-foreground transition-colors leading-snug">
                         {city.primaryKeyword}
                       </div>
                       <div className="text-[11px] text-secondary-custom leading-tight">
@@ -926,7 +926,7 @@ export default function SeoMainPage() {
                   <Link key={city.slug} href={`/services/seo/${city.slug}`} className="seo-directory-item group">
                     <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
                     <div>
-                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">
+                      <div className="font-semibold group-hover:text-foreground transition-colors leading-snug">
                         {city.primaryKeyword}
                       </div>
                       <div className="text-[11px] text-secondary-custom leading-tight">
@@ -950,7 +950,7 @@ export default function SeoMainPage() {
                   <Link key={city.slug} href={`/services/seo/${city.slug}`} className="seo-directory-item group">
                     <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
                     <div>
-                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">
+                      <div className="font-semibold group-hover:text-foreground transition-colors leading-snug">
                         {city.primaryKeyword}
                       </div>
                       <div className="text-[11px] text-secondary-custom leading-tight">
@@ -974,7 +974,7 @@ export default function SeoMainPage() {
                   <Link key={city.slug} href={`/services/seo/${city.slug}`} className="seo-directory-item group">
                     <ChevronRight className="w-3.5 h-3.5 seo-directory-item-bullet group-hover:translate-x-0.5 transition-transform" />
                     <div>
-                      <div className="font-semibold group-hover:text-emerald-500 transition-colors leading-snug">
+                      <div className="font-semibold group-hover:text-foreground transition-colors leading-snug">
                         {city.primaryKeyword}
                       </div>
                       <div className="text-[11px] text-secondary-custom leading-tight">

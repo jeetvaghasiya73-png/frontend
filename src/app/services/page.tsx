@@ -15,7 +15,7 @@ const COLOR_CYCLE = [
   "text-blue-400 border-blue-500/20 bg-blue-500/5",
   "text-purple-400 border-purple-500/20 bg-purple-500/5",
   "text-cyan-400 border-cyan-500/20 bg-cyan-500/5",
-  "text-emerald-400 border-emerald-500/20 bg-emerald-500/5",
+  "text-foreground border-border-custom bg-foreground/5",
   "text-pink-400 border-pink-500/20 bg-pink-500/5",
   "text-amber-400 border-amber-500/20 bg-amber-500/5",
 ];

@@ -146,7 +146,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
             <span className="seo-breadcrumb-separator">/</span>
             <Link href="/services" className="seo-breadcrumb-link">Services</Link>
             <span className="seo-breadcrumb-separator">/</span>
-            <Link href="/services/seo" className="seo-breadcrumb-link hover:text-emerald-500">
+            <Link href="/services/seo" className="seo-breadcrumb-link hover:text-foreground">
               SEO Services
             </Link>
             <span className="seo-breadcrumb-separator">/</span>
@@ -162,11 +162,11 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full relative mb-16 md:mb-24">
           <div className="flex flex-wrap items-center gap-3 mb-6">
             <div className="seo-hero-badge">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+              <Sparkles className="w-3.5 h-3.5 text-foreground" />
               <span>{pageData.heroBadge}</span>
             </div>
             <div className="seo-city-region-badge">
-              <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+              <MapPin className="w-3.5 h-3.5 text-foreground" />
               <span>{pageData.city}, {pageData.state} ({pageData.region})</span>
             </div>
           </div>
@@ -200,19 +200,19 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
           {/* Trust Highlights Strip */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 border-t border-border-custom/60">
             <div className="flex items-center gap-2.5 text-xs text-secondary-custom font-mono">
-              <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-foreground shrink-0" />
               <span>Google Local Search Essentials</span>
             </div>
             <div className="flex items-center gap-2.5 text-xs text-secondary-custom font-mono">
-              <Target className="w-4 h-4 text-emerald-500 shrink-0" />
+              <Target className="w-4 h-4 text-foreground shrink-0" />
               <span>Commercial Intent Mapping</span>
             </div>
             <div className="flex items-center gap-2.5 text-xs text-secondary-custom font-mono">
-              <Zap className="w-4 h-4 text-emerald-500 shrink-0" />
+              <Zap className="w-4 h-4 text-foreground shrink-0" />
               <span>Full-Stack SEO Engineering</span>
             </div>
             <div className="flex items-center gap-2.5 text-xs text-secondary-custom font-mono">
-              <TrendingUp className="w-4 h-4 text-emerald-500 shrink-0" />
+              <TrendingUp className="w-4 h-4 text-foreground shrink-0" />
               <span>Transparent Organic Growth</span>
             </div>
           </div>
@@ -222,7 +222,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
         <section id="local-context" className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-20 md:mb-28">
           <div className="bg-surface/20 border border-border-custom rounded-2xl p-6 sm:p-10 lg:p-12">
             <div className="max-w-3xl">
-              <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-3">
+              <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-3">
                 Local Business Landscape & Market Context
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mb-6">
@@ -254,7 +254,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
               {/* Transparent Delivery Note */}
               <div className="seo-city-disclosure-box mb-6">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <AlertCircle className="w-5 h-5 text-foreground shrink-0 mt-0.5" />
                   <div className="text-xs sm:text-sm text-secondary-custom leading-relaxed">
                     <strong className="text-foreground block mb-1">
                       Transparent Service Delivery:
@@ -266,7 +266,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
 
               <div className="pt-4 border-t border-border-custom/50 flex flex-wrap items-center gap-2 text-xs text-secondary-custom">
                 <span>Looking for broader strategic frameworks? Explore our comprehensive</span>
-                <Link href="/services/seo" className="text-emerald-500 font-semibold hover:underline inline-flex items-center gap-1">
+                <Link href="/services/seo" className="text-foreground font-semibold hover:underline inline-flex items-center gap-1">
                   Search Engine Optimization Services
                   <ExternalLink className="w-3 h-3" />
                 </Link>
@@ -279,7 +279,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
         {/* SECTION 4: FULL-STACK SEO SERVICES */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-20 md:mb-28">
           <div className="mb-12">
-            <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-2">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-2">
               Capabilities & Execution
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground mb-4">
@@ -293,78 +293,78 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="seo-card">
               <div className="seo-card-icon">
-                <Target className="w-6 h-6 text-emerald-500" />
+                <Target className="w-6 h-6 text-foreground" />
               </div>
               <h3 className="seo-card-title">Local SEO & Google Maps</h3>
               <p className="seo-card-desc mb-4">
                 Optimize your Google Business Profile, capture high-intent local map pack rankings, and build location-verified citations to win nearby customers.
               </p>
-              <Link href="/services/seo/local-seo-services" className="text-xs font-mono font-semibold text-emerald-500 hover:underline inline-flex items-center gap-1 mt-auto">
+              <Link href="/services/seo/local-seo-services" className="text-xs font-mono font-semibold text-foreground hover:underline inline-flex items-center gap-1 mt-auto">
                 Explore Local SEO Services <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
 
             <div className="seo-card">
               <div className="seo-card-icon">
-                <Zap className="w-6 h-6 text-emerald-500" />
+                <Zap className="w-6 h-6 text-foreground" />
               </div>
               <h3 className="seo-card-title">Technical SEO & Core Web Vitals</h3>
               <p className="seo-card-desc mb-4">
                 Eliminate crawl bottlenecks, optimize mobile render latency, implement structured JSON-LD schemas, and build lightning-fast web experiences.
               </p>
-              <Link href="/services/seo/seo-audit-services" className="text-xs font-mono font-semibold text-emerald-500 hover:underline inline-flex items-center gap-1 mt-auto">
+              <Link href="/services/seo/seo-audit-services" className="text-xs font-mono font-semibold text-foreground hover:underline inline-flex items-center gap-1 mt-auto">
                 Explore SEO Audit Services <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
 
             <div className="seo-card">
               <div className="seo-card-icon">
-                <Layers className="w-6 h-6 text-emerald-500" />
+                <Layers className="w-6 h-6 text-foreground" />
               </div>
               <h3 className="seo-card-title">On-Page & Intent Architecture</h3>
               <p className="seo-card-desc mb-4">
                 Structure commercial landing pages to directly fulfill search intent, optimize internal link pathways, and improve organic conversion rates.
               </p>
-              <Link href="/services/seo/on-page-seo-services" className="text-xs font-mono font-semibold text-emerald-500 hover:underline inline-flex items-center gap-1 mt-auto">
+              <Link href="/services/seo/on-page-seo-services" className="text-xs font-mono font-semibold text-foreground hover:underline inline-flex items-center gap-1 mt-auto">
                 Explore On-Page SEO <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
 
             <div className="seo-card">
               <div className="seo-card-icon">
-                <TrendingUp className="w-6 h-6 text-emerald-500" />
+                <TrendingUp className="w-6 h-6 text-foreground" />
               </div>
               <h3 className="seo-card-title">E-Commerce Search Optimization</h3>
               <p className="seo-card-desc mb-4">
                 Scale organic transaction volume for Shopify, WooCommerce, and custom web stores with faceted navigation cleanup and product schema markup.
               </p>
-              <Link href="/services/seo/ecommerce-seo-services" className="text-xs font-mono font-semibold text-emerald-500 hover:underline inline-flex items-center gap-1 mt-auto">
+              <Link href="/services/seo/ecommerce-seo-services" className="text-xs font-mono font-semibold text-foreground hover:underline inline-flex items-center gap-1 mt-auto">
                 Explore E-Commerce SEO <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
 
             <div className="seo-card">
               <div className="seo-card-icon">
-                <ShieldCheck className="w-6 h-6 text-emerald-500" />
+                <ShieldCheck className="w-6 h-6 text-foreground" />
               </div>
               <h3 className="seo-card-title">White-Hat Authority & Digital PR</h3>
               <p className="seo-card-desc mb-4">
                 Acquire authentic editorial backlinks and brand mentions from recognized industry publications without risking algorithmic penalties.
               </p>
-              <Link href="/services/seo/backlinks-in-seo" className="text-xs font-mono font-semibold text-emerald-500 hover:underline inline-flex items-center gap-1 mt-auto">
+              <Link href="/services/seo/backlinks-in-seo" className="text-xs font-mono font-semibold text-foreground hover:underline inline-flex items-center gap-1 mt-auto">
                 Explore Link Building <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
 
             <div className="seo-card">
               <div className="seo-card-icon">
-                <BarChart3 className="w-6 h-6 text-emerald-500" />
+                <BarChart3 className="w-6 h-6 text-foreground" />
               </div>
               <h3 className="seo-card-title">Analytics & Revenue Attribution</h3>
               <p className="seo-card-desc mb-4">
                 Track real business metrics—qualified pipeline leads, customer inquiries, and conversion events—with verified Google Search Console and GA4 data.
               </p>
-              <Link href="/services/seo/search-engine-marketing-analysis" className="text-xs font-mono font-semibold text-emerald-500 hover:underline inline-flex items-center gap-1 mt-auto">
+              <Link href="/services/seo/search-engine-marketing-analysis" className="text-xs font-mono font-semibold text-foreground hover:underline inline-flex items-center gap-1 mt-auto">
                 Explore SEM Analysis <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
@@ -374,7 +374,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
         {/* SECTION 5: INDUSTRY-SPECIFIC SEO OPPORTUNITIES */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-20 md:mb-28">
           <div className="mb-12">
-            <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-2">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-2">
               Sector Specialization
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground mb-4">
@@ -390,7 +390,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
               <div key={idx} className="seo-city-industry-card">
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-mono font-bold text-emerald-500 uppercase tracking-wider">
+                    <span className="text-xs font-mono font-bold text-foreground uppercase tracking-wider">
                       {opp.industry}
                     </span>
                     <Building2 className="w-4 h-4 text-secondary-custom" />
@@ -420,7 +420,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-20 md:mb-28">
           <div className="border border-border-custom bg-surface/30 rounded-2xl p-6 sm:p-10 lg:p-12">
             <div className="mb-10 max-w-3xl">
-              <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-2">
+              <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-2">
                 Hyperlocal Execution
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mb-4">
@@ -433,7 +433,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="bg-background/60 border border-border-custom rounded-xl p-5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-4 font-mono font-bold text-sm">
+                <div className="w-8 h-8 rounded-lg bg-foreground/5 flex items-center justify-center text-foreground mb-4 font-mono font-bold text-sm">
                   01
                 </div>
                 <h3 className="text-base font-bold text-foreground mb-2">
@@ -445,7 +445,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
               </div>
 
               <div className="bg-background/60 border border-border-custom rounded-xl p-5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-4 font-mono font-bold text-sm">
+                <div className="w-8 h-8 rounded-lg bg-foreground/5 flex items-center justify-center text-foreground mb-4 font-mono font-bold text-sm">
                   02
                 </div>
                 <h3 className="text-base font-bold text-foreground mb-2">
@@ -457,7 +457,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
               </div>
 
               <div className="bg-background/60 border border-border-custom rounded-xl p-5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-4 font-mono font-bold text-sm">
+                <div className="w-8 h-8 rounded-lg bg-foreground/5 flex items-center justify-center text-foreground mb-4 font-mono font-bold text-sm">
                   03
                 </div>
                 <h3 className="text-base font-bold text-foreground mb-2">
@@ -473,7 +473,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
               <span className="text-secondary-custom">
                 Need specialized assistance with multi-location or local store presence?
               </span>
-              <Link href="/services/seo/local-seo-services" className="text-emerald-500 font-semibold hover:underline inline-flex items-center gap-1">
+              <Link href="/services/seo/local-seo-services" className="text-foreground font-semibold hover:underline inline-flex items-center gap-1">
                 Learn more about our dedicated Local SEO Services
                 <ArrowRight className="w-4 h-4" />
               </Link>
@@ -484,7 +484,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
         {/* SECTION 7: WHY BUSINESSES MAY NEED SEO */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-20 md:mb-28">
           <div className="mb-12">
-            <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-2">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-2">
               Search Obstacles & Solutions
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground mb-4">
@@ -499,7 +499,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
             {pageData.whyBusinessesNeedSeo.map((challenge, idx) => (
               <div key={idx} className="seo-card flex flex-col justify-between">
                 <div>
-                  <span className="text-xs font-mono font-bold text-emerald-500 uppercase block mb-2">
+                  <span className="text-xs font-mono font-bold text-foreground uppercase block mb-2">
                     Challenge {idx + 1}
                   </span>
                   <h3 className="text-lg font-bold text-foreground mb-3">
@@ -515,7 +515,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
                   </div>
                 </div>
                 <div className="pt-4 border-t border-border-custom/50 bg-surface/30 -mx-7 -mb-7 p-4 rounded-b-xl">
-                  <span className="text-[11px] font-mono text-emerald-500 uppercase font-semibold block mb-1">
+                  <span className="text-[11px] font-mono text-foreground uppercase font-semibold block mb-1">
                     Engineering Solution:
                   </span>
                   <p className="text-xs text-foreground/90 leading-relaxed">
@@ -530,7 +530,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
         {/* SECTION 8: SEO PROCESS */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-20 md:mb-28">
           <div className="mb-12">
-            <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-2">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-2">
               Engineering-First Methodology
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground mb-4">
@@ -559,7 +559,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
         {/* SECTION 9: RELATED SEO SERVICES & REGIONAL HUBS */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-20 md:mb-28">
           <div className="mb-12">
-            <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-2">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-2">
               Connected Capabilities & Regional Networks
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mb-4">
@@ -579,17 +579,17 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
                 className="seo-related-card group flex flex-col justify-between"
               >
                 <div>
-                  <span className="text-[10px] font-mono font-bold text-emerald-500 uppercase tracking-wider block mb-2">
+                  <span className="text-[10px] font-mono font-bold text-foreground uppercase tracking-wider block mb-2">
                     {service.badge}
                   </span>
-                  <h3 className="text-sm font-bold text-foreground mb-1 group-hover:text-emerald-500 transition-colors">
+                  <h3 className="text-sm font-bold text-foreground mb-1 group-hover:text-foreground transition-colors">
                     {service.title}
                   </h3>
                   <p className="text-xs text-secondary-custom leading-relaxed">
                     {service.description}
                   </p>
                 </div>
-                <div className="flex items-center gap-1 text-xs font-mono font-semibold text-emerald-500 mt-4">
+                <div className="flex items-center gap-1 text-xs font-mono font-semibold text-foreground mt-4">
                   <span>View Details</span>
                   <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -610,14 +610,14 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
                   className="seo-sibling-city-pill group"
                 >
                   <div>
-                    <span className="font-semibold text-foreground group-hover:text-emerald-500 transition-colors block">
+                    <span className="font-semibold text-foreground group-hover:text-foreground transition-colors block">
                       {sibling.name}
                     </span>
                     <span className="text-[11px] text-secondary-custom font-mono">
                       {sibling.relation}
                     </span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-secondary-custom group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="w-4 h-4 text-secondary-custom group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
                 </Link>
               ))}
             </div>
@@ -627,7 +627,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
         {/* SECTION 10: FAQ */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-20 md:mb-28">
           <div className="mb-12">
-            <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-2">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-2">
               Common Questions
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground mb-4">
@@ -653,7 +653,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
                     </span>
                     <ChevronDown
                       className={`w-5 h-5 text-secondary-custom shrink-0 transition-transform duration-200 ${
-                        isOpen ? "rotate-180 text-emerald-500" : ""
+                        isOpen ? "rotate-180 text-foreground" : ""
                       }`}
                     />
                   </button>
@@ -673,7 +673,7 @@ export default function SeoCityPageTemplate({ pageData }: SeoCityPageTemplatePro
         {/* SECTION 11: FINAL CTA */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-16">
           <div className="border border-border-custom bg-surface/40 rounded-3xl p-8 sm:p-14 relative overflow-hidden text-center max-w-5xl mx-auto">
-            <span className="text-xs font-mono font-bold text-emerald-500 tracking-widest uppercase block mb-3">
+            <span className="text-xs font-mono font-bold text-foreground tracking-widest uppercase block mb-3">
               Ready to Expand Your {pageData.city} Search Footprint?
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground mb-4 max-w-2xl mx-auto">

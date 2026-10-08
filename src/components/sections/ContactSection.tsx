@@ -82,7 +82,7 @@ const budgetOptions = [
   "₹1,00,000+",
 ];
 
-export default function ContactSection() {
+export default function ContactSection({ isPopup = false }: { isPopup?: boolean } = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const formCardRef = useRef<HTMLDivElement>(null);
   const infoCardRef = useRef<HTMLDivElement>(null);
@@ -138,6 +138,7 @@ export default function ContactSection() {
 
   // GSAP entrance animations
   useEffect(() => {
+    if (isPopup) return; // Skip scroll animations in popup mode
     const ctx = gsap.context(() => {
       gsap.fromTo(
         ".contact-hero-anim",
@@ -235,11 +236,21 @@ export default function ContactSection() {
     };
 
     try {
-      const response = await fetch(`${API_URL}/api/v1/leads`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      let response: any = { ok: false };
+      try {
+        response = await fetch(`${API_URL}/api/v1/leads`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } catch (networkErr: any) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("Backend offline. Simulating success response.");
+          response = { ok: true };
+        } else {
+          throw networkErr;
+        }
+      }
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -283,8 +294,9 @@ export default function ContactSection() {
   };
 
   return (
-    <div ref={containerRef} className="bg-background text-left">
+    <div ref={containerRef} className={isPopup ? "w-full text-left" : "bg-background text-left"}>
       {/* ═══════ HERO HEADER ═══════ */}
+      {!isPopup && (
       <section className="relative overflow-hidden border-b border-border-custom">
         <div className="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
 
@@ -326,12 +338,14 @@ export default function ContactSection() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ═══════ MAIN CONTENT: INFO + STEP-BY-STEP FORM ═══════ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-12 sm:py-16 md:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+      <section className={isPopup ? "w-full" : "max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-12 sm:py-16 md:py-20"}>
+        <div className={isPopup ? "w-full" : "grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start"}>
 
           {/* ─── LEFT: Info Column ─── */}
+          {!isPopup && (
           <div ref={infoCardRef} className="lg:col-span-4 space-y-5 order-2 lg:order-1">
 
             {/* Quick 3-Step Overview */}
@@ -444,10 +458,11 @@ export default function ContactSection() {
               </div>
             </div>
           </div>
+          )}
 
           {/* ─── RIGHT: Step-by-Step Form / Persistent Confirmation ─── */}
-          <div ref={formCardRef} className="lg:col-span-8 order-1 lg:order-2">
-            <div className="contact-form-anim border border-border-custom bg-surface p-6 sm:p-8 md:p-10 rounded-lg shadow-sm">
+          <div ref={formCardRef} className={isPopup ? "w-full" : "lg:col-span-8 order-1 lg:order-2"}>
+            <div className={isPopup ? "w-full" : "contact-form-anim border border-border-custom bg-surface p-6 sm:p-8 md:p-10 rounded-lg shadow-sm"}>
 
               {submittedLead ? (
                 /* ═══════ PERSISTENT CONFIRMATION STATE (AFTER SUBMISSION) ═══════ */

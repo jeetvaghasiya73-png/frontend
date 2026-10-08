@@ -5,6 +5,7 @@ import Providers from "@/components/ui/Providers";
 import CursorGlow from "@/components/ui/CursorGlow";
 import PageLoader from "@/components/ui/PageLoader";
 import WhatsAppFloat from "@/components/ui/WhatsAppFloat";
+import LeadPopup from "@/components/ui/LeadPopup";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -228,6 +229,7 @@ export default function RootLayout({
             {children}
           </div>
           <WhatsAppFloat />
+          <LeadPopup />
         </Providers>
       </body>
     </html>

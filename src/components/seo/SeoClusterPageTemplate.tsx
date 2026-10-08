@@ -136,7 +136,7 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
             <span className="seo-breadcrumb-separator">/</span>
             <Link href="/services" className="seo-breadcrumb-link">Services</Link>
             <span className="seo-breadcrumb-separator">/</span>
-            <Link href="/services/seo" className="seo-breadcrumb-link hover:text-emerald-500">
+            <Link href="/services/seo" className="seo-breadcrumb-link hover:text-foreground">
               SEO Services
             </Link>
             <span className="seo-breadcrumb-separator">/</span>
@@ -151,7 +151,7 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
         {/* HERO SECTION */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full relative mb-16 md:mb-24">
           <div className="seo-hero-badge mb-6">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+            <Sparkles className="w-3.5 h-3.5 text-foreground" />
             <span>{pageData.heroBadge}</span>
           </div>
 
@@ -184,19 +184,19 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
           {/* Trust Highlights Strip */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 border-t border-border-custom/60">
             <div className="flex items-center gap-2.5 text-xs text-secondary-custom font-mono">
-              <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-foreground shrink-0" />
               <span>Google Search Essentials</span>
             </div>
             <div className="flex items-center gap-2.5 text-xs text-secondary-custom font-mono">
-              <Target className="w-4 h-4 text-emerald-500 shrink-0" />
+              <Target className="w-4 h-4 text-foreground shrink-0" />
               <span>Search Intent Precision</span>
             </div>
             <div className="flex items-center gap-2.5 text-xs text-secondary-custom font-mono">
-              <Zap className="w-4 h-4 text-emerald-500 shrink-0" />
+              <Zap className="w-4 h-4 text-foreground shrink-0" />
               <span>Full-Stack Engineering</span>
             </div>
             <div className="flex items-center gap-2.5 text-xs text-secondary-custom font-mono">
-              <TrendingUp className="w-4 h-4 text-emerald-500 shrink-0" />
+              <TrendingUp className="w-4 h-4 text-foreground shrink-0" />
               <span>Transparent Attribution</span>
             </div>
           </div>
@@ -206,7 +206,7 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-20 md:mb-28">
           <div className="bg-surface/20 border border-border-custom rounded-2xl p-6 sm:p-10 lg:p-12">
             <div className="max-w-3xl">
-              <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-3">
+              <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-3">
                 Overview & Search Intent
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mb-6">
@@ -223,7 +223,7 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
 
               <div className="pt-4 border-t border-border-custom/50 flex flex-wrap items-center gap-2 text-xs text-secondary-custom">
                 <span>Part of our comprehensive</span>
-                <Link href="/services/seo" className="text-emerald-500 font-semibold hover:underline inline-flex items-center gap-1">
+                <Link href="/services/seo" className="text-foreground font-semibold hover:underline inline-flex items-center gap-1">
                   Search Engine Optimization Services
                   <ExternalLink className="w-3 h-3" />
                 </Link>
@@ -236,7 +236,7 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
         {/* CORE FOCUS AREAS / CAPABILITIES */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-20 md:mb-28">
           <div className="mb-12">
-            <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-2">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-2">
               Key Capabilities
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground mb-4">
@@ -251,14 +251,14 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
             {pageData.coreFocusAreas.map((area, idx) => (
               <div key={idx} className="seo-card">
                 <div className="seo-card-icon">
-                  <Layers className="w-5 h-5 text-emerald-500" />
+                  <Layers className="w-5 h-5 text-foreground" />
                 </div>
                 <h3 className="seo-card-title">{area.title}</h3>
                 <p className="seo-card-desc mb-6">{area.description}</p>
                 <ul className="space-y-2.5 mt-auto pt-4 border-t border-border-custom/40">
                   {area.points.map((pt, pIdx) => (
                     <li key={pIdx} className="flex items-start gap-2.5 text-xs text-foreground/90">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-foreground shrink-0 mt-0.5" />
                       <span>{pt}</span>
                     </li>
                   ))}
@@ -272,7 +272,7 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
         <section id="deep-dive" className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-20 md:mb-28">
           <div className="seo-matrix-box">
             <div className="mb-10">
-              <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-2">
+              <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-2">
                 Technical & Strategic Deep-Dive
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mb-3">
@@ -287,9 +287,9 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
             {pageData.deepDive.cards && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {pageData.deepDive.cards.map((card, idx) => (
-                  <div key={idx} className="p-5 rounded-xl border border-border-custom bg-surface/30 hover:border-emerald-500/30 transition-colors">
+                  <div key={idx} className="p-5 rounded-xl border border-border-custom bg-surface/30 hover:border-border-custom transition-colors">
                     {card.tag && (
-                      <span className="inline-block text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 mb-2.5">
+                      <span className="inline-block text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-foreground/5 text-foreground mb-2.5">
                         {card.tag}
                       </span>
                     )}
@@ -330,7 +330,7 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
         {/* METHODOLOGY & STRUCTURED PROCESS */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-20 md:mb-28">
           <div className="mb-12 text-center max-w-3xl mx-auto">
-            <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-2">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-2">
               Our Methodology
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground mb-4">
@@ -347,7 +347,7 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
                 <div className="seo-timeline-num">{step.step}</div>
                 <h3 className="text-base font-bold text-foreground mb-2">{step.title}</h3>
                 <p className="text-xs text-secondary-custom leading-relaxed mb-4">{step.description}</p>
-                <div className="mt-auto pt-3 border-t border-border-custom/50 text-[11px] font-mono text-emerald-500">
+                <div className="mt-auto pt-3 border-t border-border-custom/50 text-[11px] font-mono text-foreground">
                   <span className="font-semibold text-secondary-custom block text-[10px] uppercase">Deliverable:</span>
                   {step.deliverable}
                 </div>
@@ -361,7 +361,7 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
           <div className="border-t border-b border-border-custom/50 py-16">
             <div className="flex flex-col lg:flex-row gap-10 items-start">
               <div className="lg:w-1/3">
-                <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-2">
+                <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-2">
                   Target Audiences
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mb-4">
@@ -380,7 +380,7 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
                       <span className="font-semibold text-foreground/80 block mb-0.5">Challenge:</span>
                       {aud.challenge}
                     </div>
-                    <div className="pt-2 border-t border-border-custom/40 text-[11px] text-emerald-500/90">
+                    <div className="pt-2 border-t border-border-custom/40 text-[11px] text-foreground">
                       <span className="font-semibold text-foreground/80 block mb-0.5">Solution:</span>
                       {aud.solution}
                     </div>
@@ -394,7 +394,7 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
         {/* RELATED SERVICES & CLUSTER INTERNAL LINKS */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full mb-20 md:mb-28">
           <div className="mb-10">
-            <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-2">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-2">
               Explore Related SEO Services
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mb-3">
@@ -414,10 +414,10 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
               >
                 <div className="seo-related-title">
                   <span>{rel.title}</span>
-                  <ChevronRight className="w-4 h-4 text-emerald-500 group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight className="w-4 h-4 text-foreground group-hover:translate-x-1 transition-transform" />
                 </div>
                 <p className="seo-related-desc mb-3">{rel.relationship}</p>
-                <span className="text-[11px] font-mono text-emerald-500 group-hover:underline">
+                <span className="text-[11px] font-mono text-foreground group-hover:underline">
                   Explore {rel.anchorText} →
                 </span>
               </Link>
@@ -428,7 +428,7 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
           <div className="mt-8 text-center sm:text-left">
             <Link
               href="/services/seo"
-              className="inline-flex items-center gap-2 text-xs font-mono text-secondary-custom hover:text-emerald-500 transition-colors"
+              className="inline-flex items-center gap-2 text-xs font-mono text-secondary-custom hover:text-foreground transition-colors"
             >
               <span>← Return to Parent SEO Services Overview (/services/seo)</span>
             </Link>
@@ -438,7 +438,7 @@ export default function SeoClusterPageTemplate({ pageData }: SeoClusterPageTempl
         {/* FREQUENTLY ASKED QUESTIONS */}
         <section className="max-w-3xl mx-auto px-4 sm:px-6 w-full mb-20 md:mb-28">
           <div className="text-center mb-10">
-            <span className="text-[11px] font-mono font-bold tracking-widest text-emerald-500 uppercase block mb-2">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-foreground uppercase block mb-2">
               FAQ
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
