@@ -407,6 +407,7 @@ export default function DashboardLayout({
       { name: "Dashboard", href: `${ADMIN_PATH}/dashboard`, icon: LayoutDashboard },
       { name: "Leads Database", href: `${ADMIN_PATH}/dashboard/leads`, icon: Users },
       { name: "Sales Calling", href: `${ADMIN_PATH}/dashboard/sales-calls`, icon: PhoneCall, badge: "NEW" },
+      { name: "Interested Leads", href: `${ADMIN_PATH}/dashboard/sales-calls/interested`, icon: Star },
       { name: "Messages Inbox", href: `${ADMIN_PATH}/dashboard/contacts`, icon: MessageSquare },
     ]},
     { title: "AUTOMATION & TOOLS", links: [
