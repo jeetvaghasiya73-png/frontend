@@ -218,7 +218,7 @@ export default function SalesCallingDashboard() {
                   )}
                   
                   {lead.bussiness_website && (
-                    <a href={formatWebsiteUrl(lead.bussiness_website)} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 w-fit mt-0.5">
+                    <a href={formatWebsiteUrl(lead.bussiness_website) || "#"} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 w-fit mt-0.5">
                       <ExternalLink className="w-3 h-3" /> Visit Website
                     </a>
                   )}

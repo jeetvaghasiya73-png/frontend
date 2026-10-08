@@ -34,6 +34,19 @@ import { formatISTDateTime } from "@/lib/formatters";
 
 const API = API_URL;
 
+const AVAILABLE_PERMISSIONS = [
+  { id: "sales_calling", label: "Sales Calling (Call leads & log dispositions)" },
+  { id: "manage_leads", label: "Leads Database (View & edit prospect records)" },
+  { id: "delete_lead", label: "Delete Leads (Remove leads & bulk delete)" },
+  { id: "send_whatsapp", label: "Send WhatsApp (Direct pitch, test messages & campaigns)" },
+  { id: "manage_faqs", label: "Manage FAQs (Create, update & delete FAQs)" },
+  { id: "manage_portfolio", label: "Manage Portfolio (Create, update & delete works)" },
+  { id: "manage_blogs", label: "Manage Blogs (Publish, update & delete articles)" },
+  { id: "manage_testimonials", label: "Manage Testimonials (Add & edit client reviews)" },
+  { id: "manage_services", label: "Manage Services (Update agency offerings)" },
+  { id: "manage_settings", label: "System Settings (Configure agency & API keys)" },
+];
+
 /* ─────────────────────────── Types ─────────────────────────── */
 interface AdminUser {
   id: number;
@@ -437,13 +450,9 @@ function AdminUsersTab() {
 
               {!newIsSuperadmin && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Permissions</label>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {[
-                      { id: "delete_lead", label: "Delete Leads" },
-                      { id: "send_whatsapp", label: "Send WhatsApp" },
-                      { id: "sales_calling", label: "Sales Calling Access" },
-                    ].map(perm => (
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Assigned Permissions</label>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {AVAILABLE_PERMISSIONS.map(perm => (
                       <div key={perm.id} className="flex items-center gap-2">
                         <input
                           type="checkbox"
@@ -584,13 +593,9 @@ function AdminUsersTab() {
 
               {!editIsSuperadmin && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Permissions</label>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {[
-                      { id: "delete_lead", label: "Delete Leads" },
-                      { id: "send_whatsapp", label: "Send WhatsApp" },
-                      { id: "sales_calling", label: "Sales Calling Access" },
-                    ].map(perm => (
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Assigned Permissions</label>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {AVAILABLE_PERMISSIONS.map(perm => (
                       <div key={perm.id} className="flex items-center gap-2">
                         <input
                           type="checkbox"

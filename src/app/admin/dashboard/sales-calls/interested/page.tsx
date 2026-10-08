@@ -258,7 +258,7 @@ export default function InterestedLeadsDashboard() {
                 )}
                 
                 {lead.website && (
-                  <a href={formatWebsiteUrl(lead.website)} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 w-fit mt-0.5">
+                  <a href={formatWebsiteUrl(lead.website) || "#"} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 w-fit mt-0.5">
                     <ExternalLink className="w-3 h-3" /> Visit Website
                   </a>
                 )}

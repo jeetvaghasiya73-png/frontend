@@ -58,6 +58,7 @@ import {
   MoreVertical
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
+import { useAuthStore } from "@/lib/authStore";
 import { isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTTime, formatISTDateTime } from "@/lib/formatters";
 import {
   ResponsiveContainer,
@@ -276,6 +277,10 @@ const EMOJI_LIST = ["😊", "👍", "🔥", "📞", "📅", "🚀", "🎯", "⭐
 const ITEMS_PER_PAGE = 20;
 
 export default function WhatsAppOutreachPage() {
+  const user = useAuthStore((s) => s.user);
+  const isSuperAdmin = Boolean(user?.is_superadmin || user?.is_main_admin);
+  const canSendWhatsapp = isSuperAdmin || (user?.permissions?.includes("send_whatsapp") ?? false);
+
   const [activeTab, setActiveTab] = useState<"chat" | "analytics" | "leads" | "logs">("chat");
 
   // Core stats & state
@@ -1068,6 +1073,10 @@ export default function WhatsAppOutreachPage() {
   };
 
   const handleSendTestMessage = async () => {
+    if (!canSendWhatsapp) {
+      showAlert("error", "Permission Denied: You do not have permission to send WhatsApp messages.");
+      return;
+    }
     setSendingTest(true);
     try {
       const res = await authFetch(`${API}/api/v1/whatsapp/test-message`, {
@@ -1180,13 +1189,15 @@ export default function WhatsAppOutreachPage() {
             <span>{stats?.test_mode ? "Test Mode: ON" : "Test Mode: OFF"}</span>
           </button>
 
-          <button
-            onClick={() => setTestModalOpen(true)}
-            className="crm-btn-secondary text-xs flex items-center gap-1.5"
-          >
-            <Zap className="w-3.5 h-3.5 text-amber-500" />
-            <span>Send Test</span>
-          </button>
+          {canSendWhatsapp && (
+            <button
+              onClick={() => setTestModalOpen(true)}
+              className="crm-btn-secondary text-xs flex items-center gap-1.5"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-500" />
+              <span>Send Test</span>
+            </button>
+          )}
 
           <button
             onClick={() => { fetchOverview(); fetchAnalytics(); fetchConversations(); fetchLeadsTable(); }}

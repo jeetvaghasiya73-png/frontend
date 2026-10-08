@@ -260,7 +260,13 @@ export default function DashboardLayout({
           if (meRes.ok) {
             const userData = await meRes.json();
             useAuthStore.setState({
-              user: { id: userData.id, username: userData.username, is_superadmin: Boolean(userData.is_superadmin) }
+              user: {
+                id: userData.id,
+                username: userData.username,
+                is_superadmin: Boolean(userData.is_superadmin),
+                is_main_admin: Boolean(userData.is_main_admin),
+                permissions: Array.isArray(userData.permissions) ? userData.permissions : []
+              }
             });
           }
         } catch (meErr) { console.error("Failed to load user profile:", meErr); }
@@ -401,27 +407,43 @@ export default function DashboardLayout({
   });
 
   const isSuperAdmin = mounted ? Boolean(user?.is_superadmin) : false;
+  const isMainAdmin = mounted ? Boolean(user?.is_main_admin) : false;
+  const userPermissions = mounted ? (user?.permissions || []) : [];
 
-  const navGroups = [
+  const hasPerm = (requiredPerm?: string) => {
+    if (isSuperAdmin || isMainAdmin) return true;
+    if (!requiredPerm) return true;
+    if (requiredPerm === "manage_leads") {
+      return userPermissions.includes("manage_leads") || userPermissions.includes("sales_calling") || userPermissions.includes("delete_lead");
+    }
+    return userPermissions.includes(requiredPerm);
+  };
+
+  const rawNavGroups = [
     { title: "CORE CRM", links: [
       { name: "Dashboard", href: `${ADMIN_PATH}/dashboard`, icon: LayoutDashboard },
-      { name: "Leads Database", href: `${ADMIN_PATH}/dashboard/leads`, icon: Users },
-      { name: "Sales Calling", href: `${ADMIN_PATH}/dashboard/sales-calls`, icon: PhoneCall, badge: "NEW" },
-      { name: "Interested Leads", href: `${ADMIN_PATH}/dashboard/sales-calls/interested`, icon: Star },
-      { name: "Messages Inbox", href: `${ADMIN_PATH}/dashboard/contacts`, icon: MessageSquare },
+      { name: "Leads Database", href: `${ADMIN_PATH}/dashboard/leads`, icon: Users, perm: "manage_leads" },
+      { name: "Sales Calling", href: `${ADMIN_PATH}/dashboard/sales-calls`, icon: PhoneCall, badge: "NEW", perm: "sales_calling" },
+      { name: "Interested Leads", href: `${ADMIN_PATH}/dashboard/sales-calls/interested`, icon: Star, perm: "sales_calling" },
+      { name: "Messages Inbox", href: `${ADMIN_PATH}/dashboard/contacts`, icon: MessageSquare, perm: "send_whatsapp" },
     ]},
     { title: "AUTOMATION & TOOLS", links: [
-      { name: "WhatsApp Outreach", href: `${ADMIN_PATH}/dashboard/automation/whatsapp`, icon: MessageSquare, badge: "ACTIVE" },
-      { name: "Portfolio Works", href: `${ADMIN_PATH}/dashboard/portfolio`, icon: Briefcase },
-      { name: "Blog Articles", href: `${ADMIN_PATH}/dashboard/blogs`, icon: FileText },
-      { name: "Testimonials", href: `${ADMIN_PATH}/dashboard/testimonials`, icon: Star },
+      { name: "WhatsApp Outreach", href: `${ADMIN_PATH}/dashboard/automation/whatsapp`, icon: MessageSquare, badge: "ACTIVE", perm: "send_whatsapp" },
+      { name: "Portfolio Works", href: `${ADMIN_PATH}/dashboard/portfolio`, icon: Briefcase, perm: "manage_portfolio" },
+      { name: "Blog Articles", href: `${ADMIN_PATH}/dashboard/blogs`, icon: FileText, perm: "manage_blogs" },
+      { name: "Testimonials", href: `${ADMIN_PATH}/dashboard/testimonials`, icon: Star, perm: "manage_testimonials" },
     ]},
     { title: "ADMINISTRATION", links: [
-      { name: "FAQ Management", href: `${ADMIN_PATH}/dashboard/faqs`, icon: HelpCircle },
-      { name: "System Settings", href: `${ADMIN_PATH}/dashboard/settings`, icon: Settings },
+      { name: "FAQ Management", href: `${ADMIN_PATH}/dashboard/faqs`, icon: HelpCircle, perm: "manage_faqs" },
+      { name: "System Settings", href: `${ADMIN_PATH}/dashboard/settings`, icon: Settings, perm: "manage_settings" },
       ...(isSuperAdmin ? [{ name: "Security & Roles", href: `${ADMIN_PATH}/dashboard/security`, icon: Shield }] : []),
     ]}
   ];
+
+  const navGroups = rawNavGroups.map(group => ({
+    ...group,
+    links: group.links.filter(l => hasPerm((l as any).perm))
+  })).filter(group => group.links.length > 0);
 
   const effectiveCollapsed = mounted ? isCollapsed : false;
 
