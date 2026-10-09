@@ -34,6 +34,19 @@ import { formatISTDateTime } from "@/lib/formatters";
 
 const API = API_URL;
 
+const AVAILABLE_PERMISSIONS = [
+  { id: "sales_calling", label: "Sales Calling (Call leads & log dispositions)" },
+  { id: "manage_leads", label: "Leads Database (View & edit prospect records)" },
+  { id: "delete_lead", label: "Delete Leads (Remove leads & bulk delete)" },
+  { id: "send_whatsapp", label: "Send WhatsApp (Direct pitch, test messages & campaigns)" },
+  { id: "manage_faqs", label: "Manage FAQs (Create, update & delete FAQs)" },
+  { id: "manage_portfolio", label: "Manage Portfolio (Create, update & delete works)" },
+  { id: "manage_blogs", label: "Manage Blogs (Publish, update & delete articles)" },
+  { id: "manage_testimonials", label: "Manage Testimonials (Add & edit client reviews)" },
+  { id: "manage_services", label: "Manage Services (Update agency offerings)" },
+  { id: "manage_settings", label: "System Settings (Configure agency & API keys)" },
+];
+
 /* ─────────────────────────── Types ─────────────────────────── */
 interface AdminUser {
   id: number;
@@ -42,6 +55,8 @@ interface AdminUser {
   is_admin: boolean;
   is_superadmin: boolean;
   is_main_admin?: boolean;
+  job_title?: string;
+  permissions?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -108,6 +123,12 @@ function RoleBadge({ isSuperadmin, isMainAdmin }: { isSuperadmin: boolean; isMai
 /* ─────────────────────────── Tab 1: Admin Users ─────────────────────────── */
 function AdminUsersTab() {
   const { user: currentUser } = useAuthStore();
+  const isSuperAdmin = Boolean(
+    currentUser?.is_superadmin ||
+    currentUser?.is_main_admin ||
+    currentUser?.role === "superadmin" ||
+    currentUser?.permissions?.includes("all")
+  );
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -115,11 +136,87 @@ function AdminUsersTab() {
   const [showCreate, setShowCreate] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [newJobTitle, setNewJobTitle] = useState("");
+  const [newPermissions, setNewPermissions] = useState<string[]>([]);
   const [newIsSuperadmin, setNewIsSuperadmin] = useState(false);
   const [creating, setCreating] = useState(false);
 
   const [deleteModalUser, setDeleteModalUser] = useState<AdminUser | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Edit User Modal State
+  const [editModalUser, setEditModalUser] = useState<AdminUser | null>(null);
+  const [editUsername, setEditUsername] = useState("");
+  const [editJobTitle, setEditJobTitle] = useState("");
+  const [editPermissions, setEditPermissions] = useState<string[]>([]);
+  const [editIsSuperadmin, setEditIsSuperadmin] = useState(false);
+  const [editPassword, setEditPassword] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [editSuccess, setEditSuccess] = useState("");
+
+  const openEditModal = (u: AdminUser) => {
+    setEditModalUser(u);
+    setEditUsername(u.username);
+    setEditJobTitle(u.job_title || "");
+    setEditPermissions(u.permissions || []);
+    setEditIsSuperadmin(u.is_superadmin);
+    setEditPassword("");
+    setEditError("");
+    setEditSuccess("");
+  };
+
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editModalUser) return;
+
+    const isEditingSelf = editModalUser.id === currentUser?.id;
+    if (!isSuperAdmin && !isEditingSelf) {
+      setEditError("Access denied: Only Super Admin can change another user or admin's password or details.");
+      return;
+    }
+
+    setEditing(true);
+    setEditError("");
+    setEditSuccess("");
+    try {
+      const body: any = {
+        username: editUsername.trim(),
+        job_title: editJobTitle.trim(),
+      };
+      if (isSuperAdmin) {
+        body.permissions = editPermissions;
+        if (!editModalUser.is_main_admin) {
+          body.is_superadmin = editIsSuperadmin;
+        }
+      }
+      if (editPassword.trim().length > 0) {
+        if (!isSuperAdmin && !isEditingSelf) {
+          throw new Error("Access denied: Only Super Admin can change other user passwords.");
+        }
+        body.password = editPassword.trim();
+      }
+      const res = await authFetch(`${API}/api/v1/users/admin-users/${editModalUser.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Failed to update user");
+      }
+      setEditSuccess("User updated successfully!");
+      fetchUsers();
+      setTimeout(() => {
+        setEditModalUser(null);
+        setEditSuccess("");
+      }, 1000);
+    } catch (err: any) {
+      setEditError(err.message || "Failed to update user");
+    } finally {
+      setEditing(false);
+    }
+  };
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -138,6 +235,15 @@ function AdminUsersTab() {
 
   useEffect(() => {
     fetchUsers();
+
+    const handleWsEvent = (e: any) => {
+      const type = e.detail?.type;
+      if (type === "user_updated" || type === "user_deleted") {
+        fetchUsers();
+      }
+    };
+    window.addEventListener("crm_ws_event", handleWsEvent);
+    return () => window.removeEventListener("crm_ws_event", handleWsEvent);
   }, [fetchUsers]);
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -152,6 +258,8 @@ function AdminUsersTab() {
           username: newUsername,
           password: newPassword,
           is_superadmin: newIsSuperadmin,
+          job_title: newJobTitle,
+          permissions: newPermissions
         }),
       });
       if (!res.ok) {
@@ -161,6 +269,8 @@ function AdminUsersTab() {
       setShowCreate(false);
       setNewUsername("");
       setNewPassword("");
+      setNewJobTitle("");
+      setNewPermissions([]);
       setNewIsSuperadmin(false);
       fetchUsers();
     } catch (err: any) {
@@ -186,6 +296,7 @@ function AdminUsersTab() {
   const handleDelete = async () => {
     if (!deleteModalUser) return;
     setDeleting(true);
+    setError("");
     try {
       const res = await authFetch(`${API}/api/v1/users/admin-users/${deleteModalUser.id}`, {
         method: "DELETE",
@@ -194,7 +305,7 @@ function AdminUsersTab() {
         setDeleteModalUser(null);
         fetchUsers();
       } else {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({ detail: "Failed to delete user" }));
         setError(err.detail || "Failed to delete user");
       }
     } catch {
@@ -212,13 +323,15 @@ function AdminUsersTab() {
             Registered accounts with console access to LeadFlow CRM
           </p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold text-xs flex items-center gap-2 transition shadow-md shadow-indigo-600/30 cursor-pointer"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>New Admin User</span>
-        </button>
+        {isSuperAdmin && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold text-xs flex items-center gap-2 transition shadow-md shadow-indigo-600/30 cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>New Admin User</span>
+          </button>
+        )}
       </div>
 
       {error && (
@@ -258,6 +371,7 @@ function AdminUsersTab() {
                   </td>
                   <td className="py-3.5 px-5">
                     <RoleBadge isSuperadmin={u.is_superadmin} isMainAdmin={u.is_main_admin} />
+                    {u.job_title && <span className="block mt-1 text-[10px] text-slate-500">{u.job_title}</span>}
                   </td>
                   <td className="py-3.5 px-5">
                     <Badge active={u.is_active} />
@@ -267,15 +381,43 @@ function AdminUsersTab() {
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleToggleActive(u)}
-                        disabled={u.is_main_admin || (!currentUser?.is_main_admin && u.is_superadmin)}
+                        disabled={!isSuperAdmin || u.is_main_admin || (!currentUser?.is_main_admin && u.is_superadmin) || u.id === currentUser?.id}
                         className={`p-1.5 rounded-lg transition cursor-pointer ${
-                          u.is_main_admin || (!currentUser?.is_main_admin && u.is_superadmin)
+                          !isSuperAdmin || u.is_main_admin || (!currentUser?.is_main_admin && u.is_superadmin) || u.id === currentUser?.id
                             ? "opacity-30 cursor-not-allowed"
                             : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"
                         }`}
-                        title={u.is_main_admin ? "Main Admin cannot be disabled" : u.is_active ? "Deactivate User" : "Activate User"}
+                        title={
+                          !isSuperAdmin
+                            ? "Only Super Admin can change account status"
+                            : u.is_main_admin
+                            ? "Main Admin cannot be disabled"
+                            : u.id === currentUser?.id
+                            ? "You cannot disable your own account"
+                            : u.is_active
+                            ? "Deactivate User"
+                            : "Activate User"
+                        }
                       >
                         {u.is_active ? <ToggleRight className="w-5 h-5 text-emerald-500" /> : <ToggleLeft className="w-5 h-5 text-slate-400" />}
+                      </button>
+                      <button
+                        onClick={() => openEditModal(u)}
+                        disabled={(!isSuperAdmin && u.id !== currentUser?.id) || (u.is_main_admin && !currentUser?.is_main_admin && u.id !== currentUser?.id)}
+                        className={`p-1.5 rounded-lg transition cursor-pointer ${
+                          (!isSuperAdmin && u.id !== currentUser?.id) || (u.is_main_admin && !currentUser?.is_main_admin && u.id !== currentUser?.id)
+                            ? "opacity-30 cursor-not-allowed"
+                            : "hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-500"
+                        }`}
+                        title={
+                          !isSuperAdmin && u.id !== currentUser?.id
+                            ? "Only Super Admin can edit other users or change their passwords"
+                            : (u.is_main_admin && !currentUser?.is_main_admin && u.id !== currentUser?.id)
+                            ? "Only Main Admin can edit this account"
+                            : "Edit User"
+                        }
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                       </button>
                       {currentUser?.is_main_admin && (
                         <button
@@ -309,7 +451,7 @@ function AdminUsersTab() {
 
       {/* Create Modal */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
           <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-md border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Create New Admin User</h3>
@@ -340,6 +482,42 @@ function AdminUsersTab() {
                   className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Job Title (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. SEO Manager"
+                  value={newJobTitle}
+                  onChange={(e) => setNewJobTitle(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
+                />
+              </div>
+
+              {!newIsSuperadmin && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Assigned Permissions</label>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {AVAILABLE_PERMISSIONS.map(perm => (
+                      <div key={perm.id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id={`perm-${perm.id}`}
+                          checked={newPermissions.includes(perm.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) setNewPermissions(prev => [...prev, perm.id]);
+                            else setNewPermissions(prev => prev.filter(p => p !== perm.id));
+                          }}
+                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <label htmlFor={`perm-${perm.id}`} className="text-xs text-slate-600 dark:text-slate-400">
+                          {perm.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center gap-2 pt-1">
                 <input
@@ -377,7 +555,7 @@ function AdminUsersTab() {
 
       {/* Delete Confirmation Modal */}
       {deleteModalUser && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
           <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-md border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-900 dark:text-white">Confirm User Deletion</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -402,6 +580,154 @@ function AdminUsersTab() {
           </div>
         </div>
       )}
+
+      {/* ─── Edit User Modal ─── */}
+      {editModalUser && (
+        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-md border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                {editModalUser.id === currentUser?.id ? "Edit Your Profile & Password" : `Edit User: ${editModalUser.username}`}
+              </h3>
+              <button onClick={() => setEditModalUser(null)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {editError && (
+              <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-md text-xs text-rose-600 dark:text-rose-400 font-mono">
+                {editError}
+              </div>
+            )}
+            {editSuccess && (
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-md text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" /> {editSuccess}
+              </div>
+            )}
+
+            <form onSubmit={handleEditUser} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Username / Email</label>
+                <input
+                  type="text"
+                  required
+                  value={editUsername}
+                  onChange={(e) => setEditUsername(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Job Title</label>
+                <input
+                  type="text"
+                  placeholder="e.g. SEO Manager"
+                  value={editJobTitle}
+                  onChange={(e) => setEditJobTitle(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  {editModalUser.id === currentUser?.id ? "Change Your Password (leave blank to keep current)" : "New Password (leave blank to keep current)"}
+                </label>
+                {!isSuperAdmin && editModalUser.id !== currentUser?.id ? (
+                  <div className="p-2.5 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                    <Lock className="w-3.5 h-3.5 shrink-0" />
+                    <span>Only Super Admin can change passwords for other users.</span>
+                  </div>
+                ) : (
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
+                  />
+                )}
+              </div>
+
+              {!isSuperAdmin ? (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Assigned Permissions</label>
+                  <p className="text-[10px] text-slate-500 mb-2">Only Super Admin can assign or change permissions.</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {editPermissions.length > 0 ? (
+                      editPermissions.map(p => {
+                        const found = AVAILABLE_PERMISSIONS.find(ap => ap.id === p);
+                        return (
+                          <span key={p} className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                            {found ? found.label.split("(")[0].trim() : p}
+                          </span>
+                        );
+                      })
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">No custom permissions</span>
+                    )}
+                  </div>
+                </div>
+              ) : !editIsSuperadmin && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Assigned Permissions</label>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {AVAILABLE_PERMISSIONS.map(perm => (
+                      <div key={perm.id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id={`edit-perm-${perm.id}`}
+                          checked={editPermissions.includes(perm.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) setEditPermissions(prev => [...prev, perm.id]);
+                            else setEditPermissions(prev => prev.filter(p => p !== perm.id));
+                          }}
+                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <label htmlFor={`edit-perm-${perm.id}`} className="text-xs text-slate-600 dark:text-slate-400">
+                          {perm.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {currentUser?.is_main_admin && !editModalUser.is_main_admin && (
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="edit-superadmin"
+                    checked={editIsSuperadmin}
+                    onChange={(e) => setEditIsSuperadmin(e.target.checked)}
+                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <label htmlFor="edit-superadmin" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Grant Super Admin Rights
+                  </label>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditModalUser(null)}
+                  className="px-4 py-2 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editing}
+                  className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                >
+                  {editing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {editing ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -409,18 +735,12 @@ function AdminUsersTab() {
 /* ─────────────────────────── Main Security Page Layout ─────────────────────────── */
 export default function SecurityPage() {
   const { user } = useAuthStore();
-
-  if (!user?.is_superadmin) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
-        <Shield className="w-12 h-12 text-rose-500 opacity-60 animate-pulse" />
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Access Denied</h2>
-        <p className="text-xs text-slate-500 max-w-md">
-          You do not have the required permissions to view the Security & Access Control center. Only Super Admins can access this area.
-        </p>
-      </div>
-    );
-  }
+  const isSuperAdmin = Boolean(
+    user?.is_superadmin ||
+    user?.is_main_admin ||
+    user?.role === "superadmin" ||
+    user?.permissions?.includes("all")
+  );
 
   return (
     <div className="space-y-6 text-left pb-20 relative animate-fadeIn font-sans antialiased text-slate-800 dark:text-slate-200">
@@ -436,34 +756,45 @@ export default function SecurityPage() {
         </div>
       </header>
 
+      {!isSuperAdmin && (
+        <div className="flex items-center gap-3 p-3.5 bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/80 rounded-md text-xs text-indigo-800 dark:text-indigo-300">
+          <Shield className="w-4 h-4 shrink-0 text-indigo-600 dark:text-indigo-400" />
+          <span>
+            <strong>Admin Console Access:</strong> You can edit your profile and change your own password. Only Super Admin can add new admin accounts or change passwords for other users.
+          </span>
+        </div>
+      )}
+
       <AdminUsersTab />
 
-      {/* Google OAuth Token Refresh Section */}
-      <div className="bg-white dark:bg-[#0f172a] border border-slate-200/80 dark:border-slate-800 rounded-md overflow-hidden shadow-sm w-full p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300">
-            <Lock className="w-4 h-4" />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Third-Party Integrations & API Security</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Manage OAuth tokens for email and other services</p>
-          </div>
-        </div>
-
-        <div className="border border-slate-200 dark:border-slate-800 rounded-md p-4 bg-slate-50/50 dark:bg-slate-900/20">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                Gmail API OAuth Token
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-lg">
-                LeadFlow CRM uses the Gmail API to send outreach emails on behalf of the admin. When the token expires, you must re-authenticate with Google.
-              </p>
+      {/* Google OAuth Token Refresh Section - Super Admin Only */}
+      {isSuperAdmin && (
+        <div className="bg-white dark:bg-[#0f172a] border border-slate-200/80 dark:border-slate-800 rounded-md overflow-hidden shadow-sm w-full p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300">
+              <Lock className="w-4 h-4" />
             </div>
-            <GoogleOAuthRefreshButton />
+            <div>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Third-Party Integrations &amp; API Security</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Manage OAuth tokens for email and other services</p>
+            </div>
+          </div>
+
+          <div className="border border-slate-200 dark:border-slate-800 rounded-md p-4 bg-slate-50/50 dark:bg-slate-900/20">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  Gmail API OAuth Token
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-lg">
+                  LeadFlow CRM uses the Gmail API to send outreach emails on behalf of the admin. When the token expires, you must re-authenticate with Google.
+                </p>
+              </div>
+              <GoogleOAuthRefreshButton />
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

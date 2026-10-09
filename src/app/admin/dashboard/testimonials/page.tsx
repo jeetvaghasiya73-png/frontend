@@ -16,6 +16,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
+import { useAuthStore } from "@/lib/authStore";
 
 interface Testimonial {
   id: number;
@@ -29,6 +30,10 @@ interface Testimonial {
 }
 
 export default function TestimonialsManager() {
+  const { user } = useAuthStore();
+  const isSuperAdmin = user?.role === "superadmin" || (user?.permissions?.includes("all") ?? false);
+  const canManageTestimonials = isSuperAdmin || (user?.permissions?.includes("manage_testimonials") ?? false);
+
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -93,6 +98,10 @@ export default function TestimonialsManager() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canManageTestimonials) {
+      setFormError("Unauthorized: You do not have permission to manage testimonials.");
+      return;
+    }
     setFormError("");
     setSubmitting(true);
     const payload = { name, role, company, content, rating: Number(rating) };
@@ -136,6 +145,10 @@ export default function TestimonialsManager() {
   };
 
   const handleDelete = async (testId: number) => {
+    if (!canManageTestimonials) {
+      alert("Unauthorized: You do not have permission to delete testimonials.");
+      return;
+    }
     if (!confirm("Are you sure you want to delete this testimonial?")) return;
     try {
       const response = await authFetch(`${API}/api/v1/testimonials/${testId}`, {
@@ -204,16 +217,18 @@ export default function TestimonialsManager() {
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md bg-[var(--dash-primary)] hover:bg-[var(--dash-primary-hover)] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Add Testimonial</span>
-        </button>
+        {canManageTestimonials && (
+          <button
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md bg-[var(--dash-primary)] hover:bg-[var(--dash-primary-hover)] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Testimonial</span>
+          </button>
+        )}
       </div>
 
       {/* Structured Metrics Bar */}
@@ -319,22 +334,28 @@ export default function TestimonialsManager() {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleEditClick(test)}
-                      className="p-1.5 rounded-md text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] hover:bg-[var(--dash-bg)] transition-colors cursor-pointer"
-                      title="Edit testimonial"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(test.id)}
-                      className="p-1.5 rounded-md text-[var(--dash-text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
-                      title="Delete testimonial"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  {canManageTestimonials ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleEditClick(test)}
+                        className="p-1.5 rounded-md text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] hover:bg-[var(--dash-bg)] transition-colors cursor-pointer"
+                        title="Edit testimonial"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(test.id)}
+                        className="p-1.5 rounded-md text-[var(--dash-text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                        title="Delete testimonial"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] font-mono text-[var(--dash-text-muted)] bg-[var(--dash-bg)] px-2 py-0.5 rounded border border-[var(--dash-border)]">
+                      Read Only
+                    </span>
+                  )}
                 </div>
 
                 {/* Quote Content */}

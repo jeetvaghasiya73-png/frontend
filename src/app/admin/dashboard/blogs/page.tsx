@@ -8,7 +8,10 @@ import BlankCanvasBlogEditor from "@/components/admin/BlankCanvasBlogEditor";
 import { formatISTDate } from "@/lib/formatters";
 
 export default function BlogsManager() {
-  const { accessToken } = useAuthStore();
+  const { accessToken, user } = useAuthStore();
+  const isSuperAdmin = user?.role === "superadmin" || (user?.permissions?.includes("all") ?? false);
+  const canManageBlogs = isSuperAdmin || (user?.permissions?.includes("manage_blogs") ?? false);
+
   const [blogs, setBlogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,6 +53,10 @@ export default function BlogsManager() {
   };
 
   const handleSaveBlog = async (payload: any) => {
+    if (!canManageBlogs) {
+      alert("Unauthorized: You do not have permission to manage blog articles.");
+      return;
+    }
     try {
       if (editingBlog?.id) {
         const response = await authFetch(`${API}/api/v1/blogs/${editingBlog.id}`, {
@@ -92,6 +99,10 @@ export default function BlogsManager() {
   };
 
   const handleDelete = async (blog: any) => {
+    if (!canManageBlogs) {
+      alert("Unauthorized: You do not have permission to delete blog articles.");
+      return;
+    }
     const target = blog.id || blog.slug;
     if (!confirm(`Are you sure you want to delete "${blog.title}"?`)) return;
     try {
@@ -146,13 +157,15 @@ export default function BlogsManager() {
           </p>
         </div>
 
-        <button
-          onClick={handleCreateNew}
-          className="bg-accent-custom hover:opacity-95 text-white px-4 py-2.5 rounded-[3px] text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm shadow-accent-custom/20 self-start md:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Write New Article</span>
-        </button>
+        {canManageBlogs && (
+          <button
+            onClick={handleCreateNew}
+            className="bg-accent-custom hover:opacity-95 text-white px-4 py-2.5 rounded-[3px] text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm shadow-accent-custom/20 self-start md:self-auto"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Write New Article</span>
+          </button>
+        )}
       </div>
 
       {/* Articles List */}
@@ -160,12 +173,14 @@ export default function BlogsManager() {
         {blogs.length === 0 ? (
           <div className="p-12 text-center text-xs font-mono text-secondary-custom space-y-3">
             <p>No articles drafted yet.</p>
-            <button
-              onClick={handleCreateNew}
-              className="px-4 py-2 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 font-semibold hover:bg-accent-custom/20 transition-colors cursor-pointer"
-            >
-              Launch Blank Canvas Editor
-            </button>
+            {canManageBlogs && (
+              <button
+                onClick={handleCreateNew}
+                className="px-4 py-2 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 font-semibold hover:bg-accent-custom/20 transition-colors cursor-pointer"
+              >
+                Launch Blank Canvas Editor
+              </button>
+            )}
           </div>
         ) : (
           blogs.map((blog) => (
@@ -235,23 +250,31 @@ export default function BlogsManager() {
                   <Eye className="w-3.5 h-3.5" />
                 </a>
 
-                <button
-                  onClick={() => handleEditClick(blog)}
-                  className="w-8 h-8 rounded-[2px] border border-border-custom bg-background flex items-center justify-center text-secondary-custom hover:text-foreground hover:bg-surface cursor-pointer transition-all"
-                  title="Edit with Visual Block Editor"
-                  aria-label="Edit blog"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                </button>
+                {canManageBlogs ? (
+                  <>
+                    <button
+                      onClick={() => handleEditClick(blog)}
+                      className="w-8 h-8 rounded-[2px] border border-border-custom bg-background flex items-center justify-center text-secondary-custom hover:text-foreground hover:bg-surface cursor-pointer transition-all"
+                      title="Edit with Visual Block Editor"
+                      aria-label="Edit blog"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
 
-                <button
-                  onClick={() => handleDelete(blog)}
-                  className="w-8 h-8 rounded-[2px] border border-border-custom bg-background flex items-center justify-center text-secondary-custom hover:text-red-500 hover:border-red-500/30 cursor-pointer transition-all"
-                  title="Delete Article"
-                  aria-label="Delete blog"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                    <button
+                      onClick={() => handleDelete(blog)}
+                      className="w-8 h-8 rounded-[2px] border border-border-custom bg-background flex items-center justify-center text-secondary-custom hover:text-red-500 hover:border-red-500/30 cursor-pointer transition-all"
+                      title="Delete Article"
+                      aria-label="Delete blog"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-[10px] font-mono text-secondary-custom bg-surface px-2 py-1 rounded-[2px] border border-border-custom">
+                    Read Only
+                  </span>
+                )}
               </div>
             </div>
           ))

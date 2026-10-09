@@ -254,17 +254,22 @@ export default function DashboardLayout({
         setNotifications(mappedList);
       }
 
-      if (!useAuthStore.getState().user) {
-        try {
-          const meRes = await authFetch(`${API_URL}/api/v1/auth/me`);
-          if (meRes.ok) {
-            const userData = await meRes.json();
-            useAuthStore.setState({
-              user: { id: userData.id, username: userData.username, is_superadmin: Boolean(userData.is_superadmin) }
-            });
-          }
-        } catch (meErr) { console.error("Failed to load user profile:", meErr); }
-      }
+      // Always refresh user profile and permissions from DB
+      try {
+        const meRes = await authFetch(`${API_URL}/api/v1/auth/me`);
+        if (meRes.ok) {
+          const userData = await meRes.json();
+          useAuthStore.setState({
+            user: {
+              id: userData.id,
+              username: userData.username,
+              is_superadmin: Boolean(userData.is_superadmin),
+              is_main_admin: Boolean(userData.is_main_admin),
+              permissions: Array.isArray(userData.permissions) ? userData.permissions : []
+            }
+          });
+        }
+      } catch (meErr) { console.error("Failed to load user profile:", meErr); }
     } catch (e) { console.error("Failed to load badge counts & notifications:", e); }
   }, [isAuthenticated]);
 
@@ -279,44 +284,111 @@ export default function DashboardLayout({
     };
     window.addEventListener("click", handleUserInteraction, { once: true });
     window.addEventListener("touchstart", handleUserInteraction, { once: true });
+    window.addEventListener("keydown", handleUserInteraction, { once: true });
     return () => {
       window.removeEventListener("click", handleUserInteraction);
       window.removeEventListener("touchstart", handleUserInteraction);
+      window.removeEventListener("keydown", handleUserInteraction);
     };
   }, []);
 
   useEffect(() => {
+    // Initial fetch once on dashboard mount
     loadCountsAndNotifications(false);
+
     let ws: WebSocket | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
     let reconnectDelay = 1000;
     let unmounted = false;
+
+    const getWsUrl = () => {
+      if (typeof window === "undefined") return "";
+      if (process.env.NEXT_PUBLIC_API_URL) {
+        return process.env.NEXT_PUBLIC_API_URL.replace(/^http/, "ws") + "/api/v1/ws";
+      }
+      const host = window.location.hostname;
+      if (host === "techinfinix.com" || host.endsWith("techinfinix.com")) {
+        return "wss://api.techinfinix.com/api/v1/ws";
+      }
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      return `${protocol}//${window.location.host}/api/v1/ws`;
+    };
 
     const connect = () => {
       if (unmounted) return;
       try {
-        const wsUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000")
-          .replace(/^http/, "ws") + "/api/v1/whatsapp/ws";
+        const wsUrl = getWsUrl();
+        if (!wsUrl) return;
         ws = new WebSocket(wsUrl);
-        ws.onopen = () => { reconnectDelay = 1000; };
+
+        ws.onopen = () => {
+          reconnectDelay = 1000;
+          // Zero-overhead WebSocket ping heartbeat every 25 seconds to keep connection alive
+          if (heartbeatTimer) clearInterval(heartbeatTimer);
+          heartbeatTimer = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              try { ws.send("ping"); } catch {}
+            }
+          }, 25000);
+        };
         
         let wsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
         
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
+            if (data.type === "pong") return; // Heartbeat response
+
+            // Broadcast real-time event across current window for sub-components
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new CustomEvent("crm_ws_event", { detail: data }));
+            }
+
+            if (data.type === "notification_added") {
+              playNotificationSound();
+              const newNotif: AppNotification = {
+                id: String(data.id || Date.now()),
+                title: data.title || "New Alert 🔔",
+                message: data.message || "",
+                time: "Just now",
+                timestamp: Date.now(),
+                type: (data.notif_type as any) || "system",
+                read: false,
+                link: data.link ? data.link.replace(/^\/admin/, ADMIN_PATH) : `${ADMIN_PATH}/dashboard`
+              };
+              setActiveToastNotif(newNotif);
+              setNotifications(prev => [newNotif, ...prev]);
+              setTimeout(() => { setActiveToastNotif(null); }, 5000);
+
+              if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+                try {
+                  new Notification(data.title || "New LeadFlow Alert 🔔", {
+                    body: data.message || "New notification received",
+                    icon: "/favicon.ico"
+                  });
+                } catch (e) {}
+              }
+              return;
+            }
+
             const isImportantEvent = (
-              data.type === "notification_added" ||
               (data.type === "whatsapp_update" && (data.event === "intake_completed" || data.event === "interested_lead")) ||
-              (data.type === "lead_updated" && (data.event === "intake_completed" || data.is_interested === true))
+              (data.type === "lead_updated" && (data.event === "intake_completed" || data.is_interested === true)) ||
+              data.type === "new_lead" ||
+              data.type === "new_contact_message" ||
+              data.type === "new_chat_message"
             );
+
             const isAnyUpdate = (
               isImportantEvent ||
-              (data.type === "whatsapp_update" && (data.event === "inbound_message" || data.event === "chat_message_received")) ||
-              data.type === "new_chat_message" ||
               data.type === "lead_updated" ||
-              data.event === "new_contact_message"
+              data.type === "lead_deleted" ||
+              data.type === "user_updated" ||
+              data.type === "user_deleted" ||
+              (data.type === "whatsapp_update" && (data.event === "inbound_message" || data.event === "chat_message_received"))
             );
+
             if (isImportantEvent) {
               playNotificationSound();
               if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
@@ -328,23 +400,41 @@ export default function DashboardLayout({
                 } catch (e) {}
               }
             }
+
             if (isAnyUpdate) {
               if (wsDebounceTimer) clearTimeout(wsDebounceTimer);
               wsDebounceTimer = setTimeout(() => {
-                loadCountsAndNotifications(true);
+                loadCountsAndNotifications(false);
               }, 500);
             }
           } catch (err) {}
         };
+
         ws.onclose = () => {
+          if (heartbeatTimer) clearInterval(heartbeatTimer);
           if (unmounted) return;
-          reconnectTimer = setTimeout(() => { reconnectDelay = Math.min(reconnectDelay * 2, 30000); connect(); }, reconnectDelay);
+          reconnectTimer = setTimeout(() => {
+            reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+            connect();
+          }, reconnectDelay);
         };
-        ws.onerror = () => { ws?.close(); };
-      } catch (e) { console.error("WS connection error:", e); }
+
+        ws.onerror = () => {
+          ws?.close();
+        };
+      } catch (e) {
+        console.error("WS connection error:", e);
+      }
     };
+
     connect();
-    return () => { unmounted = true; if (reconnectTimer) clearTimeout(reconnectTimer); if (ws) ws.close(); };
+
+    return () => {
+      unmounted = true;
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (ws) ws.close();
+    };
   }, [loadCountsAndNotifications]);
 
   if (typeof window !== "undefined" && !isAuthenticated) return null;
@@ -401,12 +491,14 @@ export default function DashboardLayout({
   });
 
   const isSuperAdmin = mounted ? Boolean(user?.is_superadmin) : false;
+  const isMainAdmin = mounted ? Boolean(user?.is_main_admin) : false;
 
   const navGroups = [
     { title: "CORE CRM", links: [
       { name: "Dashboard", href: `${ADMIN_PATH}/dashboard`, icon: LayoutDashboard },
       { name: "Leads Database", href: `${ADMIN_PATH}/dashboard/leads`, icon: Users },
       { name: "Sales Calling", href: `${ADMIN_PATH}/dashboard/sales-calls`, icon: PhoneCall, badge: "NEW" },
+      { name: "Interested Leads", href: `${ADMIN_PATH}/dashboard/sales-calls/interested`, icon: Star },
       { name: "Messages Inbox", href: `${ADMIN_PATH}/dashboard/contacts`, icon: MessageSquare },
     ]},
     { title: "AUTOMATION & TOOLS", links: [
@@ -418,7 +510,7 @@ export default function DashboardLayout({
     { title: "ADMINISTRATION", links: [
       { name: "FAQ Management", href: `${ADMIN_PATH}/dashboard/faqs`, icon: HelpCircle },
       { name: "System Settings", href: `${ADMIN_PATH}/dashboard/settings`, icon: Settings },
-      ...(isSuperAdmin ? [{ name: "Security & Roles", href: `${ADMIN_PATH}/dashboard/security`, icon: Shield }] : []),
+      { name: "Security & Roles", href: `${ADMIN_PATH}/dashboard/security`, icon: Shield },
     ]}
   ];
 

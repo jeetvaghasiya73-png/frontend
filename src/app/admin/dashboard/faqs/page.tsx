@@ -18,6 +18,7 @@ import {
   BookOpen
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
+import { useAuthStore } from "@/lib/authStore";
 
 interface FAQItem {
   id: number;
@@ -37,6 +38,10 @@ const CATEGORIES = [
 ];
 
 export default function FaqsManager() {
+  const { user } = useAuthStore();
+  const isSuperAdmin = Boolean(user?.is_superadmin || user?.is_main_admin);
+  const canManageFaqs = isSuperAdmin || (user?.permissions?.includes("manage_faqs") ?? false);
+
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -223,16 +228,18 @@ export default function FaqsManager() {
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }}
-          className="px-3.5 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Question</span>
-        </button>
+        {canManageFaqs && (
+          <button
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
+            className="px-3.5 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Question</span>
+          </button>
+        )}
       </div>
 
       {/* KPI Stats Bar - Crisp Rectangular Tiles */}
@@ -360,22 +367,24 @@ export default function FaqsManager() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => handleEditClick(faq)}
-                      className="w-7 h-7 rounded-md border border-[var(--dash-border)] bg-[var(--dash-bg)] flex items-center justify-center text-[var(--dash-text-muted)] hover:text-indigo-500 hover:border-indigo-500/40 cursor-pointer transition"
-                      title="Edit question"
-                    >
-                      <Edit2 className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(faq.id)}
-                      className="w-7 h-7 rounded-md border border-[var(--dash-border)] bg-[var(--dash-bg)] flex items-center justify-center text-[var(--dash-text-muted)] hover:text-red-500 hover:border-red-500/40 cursor-pointer transition"
-                      title="Delete question"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
+                  {canManageFaqs && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => handleEditClick(faq)}
+                        className="w-7 h-7 rounded-md border border-[var(--dash-border)] bg-[var(--dash-bg)] flex items-center justify-center text-[var(--dash-text-muted)] hover:text-indigo-500 hover:border-indigo-500/40 cursor-pointer transition"
+                        title="Edit question"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(faq.id)}
+                        className="w-7 h-7 rounded-md border border-[var(--dash-border)] bg-[var(--dash-bg)] flex items-center justify-center text-[var(--dash-text-muted)] hover:text-red-500 hover:border-red-500/40 cursor-pointer transition"
+                        title="Delete question"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Collapsible Answer */}

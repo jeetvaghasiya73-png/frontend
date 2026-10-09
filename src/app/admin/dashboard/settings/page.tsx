@@ -30,6 +30,7 @@ import {
   KeyRound
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
+import { useAuthStore } from "@/lib/authStore";
 
 interface ServiceTestResult {
   testing: boolean;
@@ -96,6 +97,10 @@ interface SystemOverview {
 }
 
 export default function SettingsPage() {
+  const { user } = useAuthStore();
+  const isSuperAdmin = user?.role === "superadmin" || (user?.permissions?.includes("all") ?? false);
+  const canManageSettings = isSuperAdmin || (user?.permissions?.includes("manage_settings") ?? false);
+
   const [overview, setOverview] = useState<SystemOverview | null>(null);
   const [loadingOverview, setLoadingOverview] = useState(true);
   const [runningAll, setRunningAll] = useState(false);
@@ -129,6 +134,10 @@ export default function SettingsPage() {
   const [toggleError, setToggleError] = useState<string | null>(null);
 
   const handleConfirmToggleTestMode = async () => {
+    if (!canManageSettings) {
+      setToggleError("Unauthorized: You do not have permission to modify settings.");
+      return;
+    }
     if (!adminPassword.trim()) {
       setToggleError("Super Admin password is required.");
       return;
@@ -202,13 +211,17 @@ export default function SettingsPage() {
 
   const handleAddAdminEmail = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canManageSettings) {
+      showToast("error", "Unauthorized: You do not have permission to manage admin emails.");
+      return;
+    }
     if (!newAdminEmail.trim() || !newAdminEmail.includes("@")) return;
     setAddingEmail(true);
     try {
       const res = await authFetch(`${API}/api/v1/settings/admin-emails`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: newAdminEmail.trim() }),
+        body: JSON.stringify({ emails: [...adminEmails, newAdminEmail.trim()] }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -228,14 +241,21 @@ export default function SettingsPage() {
   };
 
   const handleRemoveAdminEmail = async (emailToRemove: string) => {
+    if (!canManageSettings) {
+      showToast("error", "Unauthorized: You do not have permission to remove admin emails.");
+      return;
+    }
     if (emailToRemove === "meetvaghasiya166@gmail.com") {
       showToast("error", "Primary admin email cannot be removed.");
       return;
     }
     setRemovingEmail(emailToRemove);
     try {
-      const res = await authFetch(`${API}/api/v1/settings/admin-emails/${encodeURIComponent(emailToRemove)}`, {
-        method: "DELETE",
+      const updatedEmails = adminEmails.filter(e => e !== emailToRemove);
+      const res = await authFetch(`${API}/api/v1/settings/admin-emails`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emails: updatedEmails }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -506,6 +526,7 @@ export default function SettingsPage() {
             {/* Toggle Button for All Services */}
             <button
               onClick={() => {
+                if (!canManageSettings) return;
                 const currentStatus = !!(overview?.services?.whatsapp?.test_mode || overview?.services?.smtp?.test_mode);
                 setTargetTestMode(!currentStatus);
                 setTargetService("all");
@@ -513,7 +534,11 @@ export default function SettingsPage() {
                 setToggleError(null);
                 setToggleModalOpen(true);
               }}
-              className={`relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+              disabled={!canManageSettings}
+              title={canManageSettings ? "Toggle Master Test Mode" : "Read-only: Super Admin permission required"}
+              className={`relative inline-flex h-8 w-16 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                !canManageSettings ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+              } ${
                 overview?.services?.whatsapp?.test_mode || overview?.services?.smtp?.test_mode
                   ? "bg-emerald-500"
                   : "bg-amber-600"
@@ -597,18 +622,20 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-          <button
-            onClick={() => {
-              setTargetTestMode(!overview?.services?.whatsapp?.test_mode);
-              setTargetService("whatsapp");
-              setAdminPassword("");
-              setToggleError(null);
-              setToggleModalOpen(true);
-            }}
-            className="crm-btn-secondary text-[11px] py-1 px-2.5 font-bold cursor-pointer"
-          >
-            Toggle
-          </button>
+          {canManageSettings && (
+            <button
+              onClick={() => {
+                setTargetTestMode(!overview?.services?.whatsapp?.test_mode);
+                setTargetService("whatsapp");
+                setAdminPassword("");
+                setToggleError(null);
+                setToggleModalOpen(true);
+              }}
+              className="crm-btn-secondary text-[11px] py-1 px-2.5 font-bold cursor-pointer"
+            >
+              Toggle
+            </button>
+          )}
         </div>
 
         {/* Email Outreach Status Card */}
@@ -634,18 +661,20 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-          <button
-            onClick={() => {
-              setTargetTestMode(!overview?.services?.smtp?.test_mode);
-              setTargetService("email");
-              setAdminPassword("");
-              setToggleError(null);
-              setToggleModalOpen(true);
-            }}
-            className="crm-btn-secondary text-[11px] py-1 px-2.5 font-bold cursor-pointer"
-          >
-            Toggle
-          </button>
+          {canManageSettings && (
+            <button
+              onClick={() => {
+                setTargetTestMode(!overview?.services?.smtp?.test_mode);
+                setTargetService("email");
+                setAdminPassword("");
+                setToggleError(null);
+                setToggleModalOpen(true);
+              }}
+              className="crm-btn-secondary text-[11px] py-1 px-2.5 font-bold cursor-pointer"
+            >
+              Toggle
+            </button>
+          )}
         </div>
       </div>
 
@@ -984,7 +1013,7 @@ export default function SettingsPage() {
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shrink-0">
                       Primary
                     </span>
-                  ) : (
+                  ) : canManageSettings ? (
                     <button
                       type="button"
                       onClick={() => handleRemoveAdminEmail(email)}
@@ -994,7 +1023,7 @@ export default function SettingsPage() {
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
-                  )}
+                  ) : null}
                 </div>
               );
             })}
@@ -1002,30 +1031,36 @@ export default function SettingsPage() {
         </div>
 
         {/* Add New Admin Email Form */}
-        <form onSubmit={handleAddAdminEmail} className="pt-2 border-t border-[var(--dash-border)] flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-          <div className="flex-1">
-            <input
-              type="email"
-              required
-              placeholder="Add another admin email (e.g. partner@techinfinix.com)..."
-              value={newAdminEmail}
-              onChange={(e) => setNewAdminEmail(e.target.value)}
-              className="crm-input w-full text-xs font-mono py-2 px-3"
-            />
+        {canManageSettings ? (
+          <form onSubmit={handleAddAdminEmail} className="pt-2 border-t border-[var(--dash-border)] flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div className="flex-1">
+              <input
+                type="email"
+                required
+                placeholder="Add another admin email (e.g. partner@techinfinix.com)..."
+                value={newAdminEmail}
+                onChange={(e) => setNewAdminEmail(e.target.value)}
+                className="crm-input w-full text-xs font-mono py-2 px-3"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={addingEmail || !newAdminEmail.trim()}
+              className="crm-btn-primary px-4 py-2 text-xs font-bold inline-flex items-center justify-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+            >
+              {addingEmail ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Plus className="w-3.5 h-3.5" />
+              )}
+              <span>{addingEmail ? "Adding Admin..." : "Add Admin Email"}</span>
+            </button>
+          </form>
+        ) : (
+          <div className="pt-2 border-t border-[var(--dash-border)] text-xs text-[var(--dash-text-muted)] font-mono">
+            Notice: Managing alert recipient addresses requires Super Admin authorization.
           </div>
-          <button
-            type="submit"
-            disabled={addingEmail || !newAdminEmail.trim()}
-            className="crm-btn-primary px-4 py-2 text-xs font-bold inline-flex items-center justify-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
-          >
-            {addingEmail ? (
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Plus className="w-3.5 h-3.5" />
-            )}
-            <span>{addingEmail ? "Adding Admin..." : "Add Admin Email"}</span>
-          </button>
-        </form>
+        )}
       </div>
 
       {/* ─────────────────────────────────────────────────────────────

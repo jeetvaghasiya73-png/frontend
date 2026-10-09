@@ -83,7 +83,22 @@ interface NormalizedLead {
 }
 
 export default function LeadsManager() {
-  const { accessToken } = useAuthStore();
+  const { accessToken, user } = useAuthStore();
+  const canDeleteLeads = Boolean(
+    user?.is_superadmin ||
+    user?.is_main_admin ||
+    user?.permissions?.includes("delete_lead")
+  );
+  const canSendWhatsapp = Boolean(
+    user?.is_superadmin ||
+    user?.is_main_admin ||
+    user?.permissions?.includes("send_whatsapp")
+  );
+  const canManageLeads = Boolean(
+    user?.is_superadmin ||
+    user?.is_main_admin ||
+    user?.permissions?.includes("manage_leads")
+  );
   const isFetchingRef = useRef(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const inquiriesCacheRef = useRef<any[] | null>(null);
@@ -178,6 +193,10 @@ export default function LeadsManager() {
   };
 
   const openWaModalForLead = async (lead: NormalizedLead) => {
+    if (!canSendWhatsapp) {
+      triggerToast("Access Denied: You do not have permission to send WhatsApp outreach.");
+      return;
+    }
     setWaPreviewLead(lead);
     setWaCustomPhone(lead.phone || "");
     setShowWaModal(true);
@@ -212,6 +231,10 @@ export default function LeadsManager() {
   };
 
   const handleSendWaOutreach = async () => {
+    if (!canSendWhatsapp) {
+      triggerToast("Access Denied: You do not have permission to send WhatsApp outreach.");
+      return;
+    }
     if (!waPreviewLead) return;
     const recipientPhone = waCustomPhone.trim() || waPreviewLead.phone;
     if (!recipientPhone) {
@@ -256,6 +279,10 @@ export default function LeadsManager() {
   };
 
   const handleBulkSendWaOutreach = async () => {
+    if (!canSendWhatsapp) {
+      triggerToast("Access Denied: You do not have permission to send WhatsApp outreach.");
+      return;
+    }
     if (selectedLeadIds.size === 0) return;
     const scrapedRawIds = allLeads.filter(l => selectedLeadIds.has(l.id) && l.source === "scraped").map(l => l.rawId);
     if (scrapedRawIds.length === 0) {
@@ -903,6 +930,10 @@ export default function LeadsManager() {
   };
 
   const handleDeleteLead = async (lead: NormalizedLead) => {
+    if (!canDeleteLeads) {
+      triggerToast("Access Denied: Only authorized administrators can delete leads.");
+      return;
+    }
     if (!confirm(`Are you sure you want to delete "${lead.name}"?`)) return;
     try {
       const phoneParam = lead.phone ? `?phone=${encodeURIComponent(lead.phone)}` : "";
@@ -921,6 +952,7 @@ export default function LeadsManager() {
       }
 
       if (res.ok) {
+        inquiriesCacheRef.current = null;
         setAllLeads((prev) => prev.filter((l) => l.id !== lead.id && l.rawId !== lead.rawId));
         if (selectedLead?.id === lead.id || selectedLead?.rawId === lead.rawId) {
           setIsDrawerOpen(false);
@@ -939,6 +971,10 @@ export default function LeadsManager() {
 
   // 1. Delete Selected Leads
   const handleDeleteSelected = async () => {
+    if (!canDeleteLeads) {
+      triggerToast("Access Denied: Only authorized administrators can delete leads.");
+      return;
+    }
     if (selectedLeadIds.size === 0) return;
     if (!confirm(`Are you sure you want to permanently delete ${selectedLeadIds.size} selected lead(s)?`)) return;
 
@@ -963,6 +999,7 @@ export default function LeadsManager() {
         });
       }
 
+      inquiriesCacheRef.current = null;
       setAllLeads(prev => prev.filter(l => !isLeadSelected(l)));
       setSelectedLeadIds(new Set());
       triggerToast(`Successfully deleted selected lead(s)`);
@@ -974,6 +1011,10 @@ export default function LeadsManager() {
 
   // 2. Delete Current Page Leads
   const handleDeleteCurrentPage = async () => {
+    if (!canDeleteLeads) {
+      triggerToast("Access Denied: Only authorized administrators can delete leads.");
+      return;
+    }
     if (paginatedLeads.length === 0) return;
     if (!confirm(`Are you sure you want to delete all ${paginatedLeads.length} lead(s) visible on Page ${currentPage}?`)) return;
 
@@ -999,6 +1040,7 @@ export default function LeadsManager() {
         });
       }
 
+      inquiriesCacheRef.current = null;
       setAllLeads(prev => prev.filter(l => !pageIdsToRemove.has(l.id) && !pageRawIdsToRemove.has(l.rawId)));
       setSelectedLeadIds(new Set());
       triggerToast(`Deleted ${paginatedLeads.length} lead(s) from Page ${currentPage}`);
@@ -1010,6 +1052,10 @@ export default function LeadsManager() {
 
   // 3. Delete ALL Database Leads
   const handleDeleteAllLeads = async () => {
+    if (!canDeleteLeads) {
+      triggerToast("Access Denied: Only authorized administrators can delete leads.");
+      return;
+    }
     const totalCount = (totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount;
     if (totalCount === 0) return;
     if (!confirm(`🚨 CRITICAL ACTION:\nAre you sure you want to PERMANENTLY DELETE ALL ${totalCount} leads from the database?\nThis action cannot be undone!`)) return;
@@ -1020,6 +1066,7 @@ export default function LeadsManager() {
         authFetch(`${API}/api/v1/leads/bulk`, { method: "DELETE" }),
       ]);
 
+      inquiriesCacheRef.current = null;
       setAllLeads([]);
       setSelectedLeadIds(new Set());
       triggerToast("Entire leads database cleared successfully");
@@ -1367,22 +1414,26 @@ export default function LeadsManager() {
             <Download className="w-3.5 h-3.5 text-slate-500 shrink-0" />
             <span className="truncate">Export</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setShowImportModal(true)}
-            className="crm-btn-secondary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-            <span className="truncate">Import</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAddLeadModal(true)}
-            className="crm-btn-primary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center shadow-xs"
-          >
-            <Plus className="w-4 h-4 shrink-0" />
-            <span className="truncate">Add Lead</span>
-          </button>
+          {canManageLeads && (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowImportModal(true)}
+                className="crm-btn-secondary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                <span className="truncate">Import</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddLeadModal(true)}
+                className="crm-btn-primary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center shadow-xs"
+              >
+                <Plus className="w-4 h-4 shrink-0" />
+                <span className="truncate">Add Lead</span>
+              </button>
+            </>
+          )}
         </div>
       </header>
 
@@ -1533,6 +1584,7 @@ export default function LeadsManager() {
             </div>
 
             {/* Multi-Option Deletion Menu */}
+            {canDeleteLeads && (
             <div className="relative flex-1 md:flex-none shrink-0 z-30">
               <button
                 type="button"
@@ -1651,6 +1703,7 @@ export default function LeadsManager() {
                   </>
                 )}
               </div>
+            )}
             </div>
           </div>
 
@@ -1828,20 +1881,24 @@ export default function LeadsManager() {
 
                   <td className="py-3.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => openWaModalForLead(lead)}
-                        className="p-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
-                        title="Send WhatsApp Outreach Proposal"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteLead(lead)}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
-                        title="Delete Lead"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canSendWhatsapp && (
+                        <button
+                          onClick={() => openWaModalForLead(lead)}
+                          className="p-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
+                          title="Send WhatsApp Outreach Proposal"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </button>
+                      )}
+                      {canDeleteLeads && (
+                        <button
+                          onClick={() => handleDeleteLead(lead)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
+                          title="Delete Lead"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -1992,7 +2049,7 @@ export default function LeadsManager() {
                         <Phone className="w-3.5 h-3.5" />
                       </a>
                     )}
-                    {lead.phone && (
+                    {lead.phone && canSendWhatsapp && (
                       <button
                         type="button"
                         onClick={() => openWaModalForLead(lead)}
@@ -2888,29 +2945,33 @@ export default function LeadsManager() {
                   <span className="hidden sm:inline">Close</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleDeleteLead(selectedLead)}
-                  className="text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer py-2 px-2 sm:px-2.5 rounded-md border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 transition shrink-0"
-                  title="Delete lead record"
-                  aria-label="Delete lead record"
-                >
-                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                  <span className="hidden md:inline">Delete</span>
-                </button>
+                {canDeleteLeads && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteLead(selectedLead)}
+                    className="text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer py-2 px-2 sm:px-2.5 rounded-md border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 transition shrink-0"
+                    title="Delete lead record"
+                    aria-label="Delete lead record"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                    <span className="hidden md:inline">Delete</span>
+                  </button>
+                )}
               </div>
 
               {/* Primary Actions: Proposal & Update Status (Flexible & Never Overflow) */}
               <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 justify-end">
-                <button
-                  type="button"
-                  onClick={() => openWaModalForLead(selectedLead)}
-                  className="flex-1 min-w-0 px-2 sm:px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center justify-center gap-1 shrink-0 active:scale-[0.98]"
-                  title="Open WhatsApp Proposal"
-                >
-                  <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">Proposal 🚀</span>
-                </button>
+                {canSendWhatsapp && (
+                  <button
+                    type="button"
+                    onClick={() => openWaModalForLead(selectedLead)}
+                    className="flex-1 min-w-0 px-2 sm:px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center justify-center gap-1 shrink-0 active:scale-[0.98]"
+                    title="Open WhatsApp Proposal"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">Proposal 🚀</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setShowStatusModal(true)}
