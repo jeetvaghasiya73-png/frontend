@@ -197,6 +197,7 @@ export default function FooterSection() {
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 <span>3D Brand Film</span>
               </Link>
+              <Link href="/about" className="hover:text-foreground transition-colors">About Us</Link>
               <Link href="/#work" onClick={(e) => handleHashLink(e, "/#work")} className="hover:text-foreground transition-colors">Case Studies</Link>
               <Link href="/#process" onClick={(e) => handleHashLink(e, "/#process")} className="hover:text-foreground transition-colors">Our Process</Link>
               <Link href="/#faq" onClick={(e) => handleHashLink(e, "/#faq")} className="hover:text-foreground transition-colors">FAQ Knowledge</Link>
