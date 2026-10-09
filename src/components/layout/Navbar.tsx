@@ -37,8 +37,25 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
+  const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [mobileServicesExpanded, setMobileServicesExpanded] = useState(false);
+  const [mobileCompanyExpanded, setMobileCompanyExpanded] = useState(false);
   const dropdownTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const companyDropdownTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnterCompany = () => {
+    if (companyDropdownTimeoutRef.current) {
+      clearTimeout(companyDropdownTimeoutRef.current);
+      companyDropdownTimeoutRef.current = null;
+    }
+    setCompanyDropdownOpen(true);
+  };
+
+  const handleMouseLeaveCompany = () => {
+    companyDropdownTimeoutRef.current = setTimeout(() => {
+      setCompanyDropdownOpen(false);
+    }, 150);
+  };
 
   const handleMouseEnterServices = () => {
     if (dropdownTimeoutRef.current) {
@@ -147,11 +164,12 @@ export default function Navbar() {
     },
     {
       id: "04",
-      name: "Case Studies",
-      href: "/#work",
-      desc: "Enterprise Client ROI & Deployments",
-      icon: TrendingUp,
-      badge: "Results",
+      name: "Company",
+      href: "/about",
+      desc: "About Us, Privacy Policy & more",
+      icon: ShieldCheck,
+      badge: "Company",
+      hasDropdown: true,
     },
     {
       id: "05",
@@ -171,56 +189,39 @@ export default function Navbar() {
     },
   ];
 
-  // Most linked core SEO landing pages for the Services dropdown
+  // Services dropdown — SEO main page + Automation main page only
   const mainSeoDropdownLinks = [
     {
-      name: "All SEO Services",
+      name: "SEO & Digital Marketing",
       href: "/services/seo",
       desc: "Full service directory & topical authority cluster",
-      badge: "Hub",
+      badge: "SEO",
       icon: Search,
     },
     {
-      name: "Local SEO Services",
-      href: "/services/seo/local-seo-services",
-      desc: "Google Maps, local 3-pack & verified citations",
-      badge: "Popular",
-      icon: Target,
+      name: "WhatsApp & Workflow Automation",
+      href: "/services/automation",
+      desc: "WhatsApp bots, n8n workflows & AI automation",
+      badge: "Automation",
+      icon: Bot,
+    },
+  ];
+
+  // Company dropdown links
+  const companyDropdownLinks = [
+    {
+      name: "About Us",
+      href: "/about",
+      desc: "Our team, founders & mission",
+      badge: "Team",
+      icon: ShieldCheck,
     },
     {
-      name: "Technical SEO Audit",
-      href: "/services/seo/seo-audit-services",
-      desc: "Core Web Vitals, crawl budget & code diagnostics",
-      badge: "Core",
-      icon: Zap,
-    },
-    {
-      name: "E-Commerce SEO",
-      href: "/services/seo/ecommerce-seo-services",
-      desc: "Shopify & custom store catalog revenue growth",
-      badge: "Retail",
-      icon: ShoppingCart,
-    },
-    {
-      name: "On-Page SEO Services",
-      href: "/services/seo/on-page-seo-services",
-      desc: "Search intent matching, schemas & internal linking",
-      badge: "On-Page",
-      icon: Layers,
-    },
-    {
-      name: "Professional SEO",
-      href: "/services/seo/professional-seo-services",
-      desc: "Full-funnel enterprise organic growth roadmap",
-      badge: "Enterprise",
-      icon: TrendingUp,
-    },
-    {
-      name: "25 Indian City Directory",
-      href: "/services/seo#indian-cities-directory",
-      desc: "Local SEO across Mumbai, Delhi, Bengaluru & more",
-      badge: "25 Cities",
-      icon: MapPin,
+      name: "Privacy Policy",
+      href: "/privacy-policy",
+      desc: "How we handle your data",
+      badge: "Legal",
+      icon: ShieldCheck,
     },
   ];
 
@@ -300,30 +301,30 @@ export default function Navbar() {
                       />
                     </Link>
 
-                    {/* Desktop Mega Dropdown */}
+                    {/* Desktop Services Dropdown */}
                     {servicesDropdownOpen && (
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-[560px] pointer-events-auto animate-in fade-in-0 zoom-in-95 duration-150 z-50">
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-[340px] pointer-events-auto animate-in fade-in-0 zoom-in-95 duration-150 z-50">
                         <div className="rounded-2xl border border-border-custom bg-background/95 dark:bg-[#0c0d12]/95 backdrop-blur-2xl shadow-2xl p-4 text-left normal-case tracking-normal">
                           {/* Header */}
                           <div className="flex items-center justify-between px-2.5 pb-2.5 mb-2 border-b border-border-custom/50">
                             <div className="flex items-center gap-2">
                               <span className="w-2 h-2 rounded-full bg-foreground animate-pulse" />
                               <span className="text-[11px] font-mono font-semibold tracking-wider uppercase text-foreground">
-                                Organic Search &amp; Growth Solutions
+                                Our Services
                               </span>
                             </div>
                             <Link
-                              href="/services/seo"
+                              href="/contact"
                               onClick={() => setServicesDropdownOpen(false)}
                               className="text-[11px] font-mono font-semibold text-foreground hover:underline flex items-center gap-1"
                             >
-                              <span>All SEO Services</span>
+                              <span>Get a Quote</span>
                               <ArrowRight className="w-3 h-3" />
                             </Link>
                           </div>
 
-                          {/* 2-Column Grid of Most Linked Pages */}
-                          <div className="grid grid-cols-2 gap-1.5">
+                          {/* Service Links */}
+                          <div className="flex flex-col gap-1.5">
                             {mainSeoDropdownLinks.map((item) => {
                               const ItemIcon = item.icon;
                               return (
@@ -338,11 +339,11 @@ export default function Navbar() {
                                   </div>
                                   <div className="flex flex-col min-w-0">
                                     <div className="flex items-center gap-1.5">
-                                      <span className="text-xs font-semibold text-foreground group-hover:text-foreground transition-colors truncate">
+                                      <span className="text-xs font-semibold text-foreground transition-colors truncate">
                                         {item.name}
                                       </span>
                                       {item.badge && (
-                                        <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-surface border border-border-custom/60 text-secondary-custom shrink-0">
+                                        <span className="text-[9px] font-mono px-1 rounded bg-surface border border-border-custom/60 text-secondary-custom shrink-0">
                                           {item.badge}
                                         </span>
                                       )}
@@ -357,26 +358,89 @@ export default function Navbar() {
                           </div>
 
                           {/* Bottom Quick Row */}
-                          <div className="mt-2.5 pt-2.5 border-t border-border-custom/50 px-2 flex items-center justify-between text-xs">
+                          <div className="mt-2.5 pt-2.5 border-t border-border-custom/50 px-2 flex items-center justify-end text-xs">
                             <Link
-                              href="/#services"
-                              onClick={(e) => {
-                                setServicesDropdownOpen(false);
-                                handleHashLink(e, "/#services");
-                              }}
-                              className="text-secondary-custom hover:text-foreground text-[11px] font-mono flex items-center gap-1.5 transition-colors"
-                            >
-                              <Bot className="w-3.5 h-3.5 text-foreground" />
-                              <span>Autonomous AI &amp; Software</span>
-                            </Link>
-                            <Link
-                              href="/contact?service=seo"
+                              href="/services"
                               onClick={() => setServicesDropdownOpen(false)}
                               className="text-foreground font-semibold text-[11px] hover:underline flex items-center gap-1"
                             >
-                              <span>Request SEO Strategy</span>
+                              <span>More</span>
                               <ArrowRight className="w-3 h-3" />
                             </Link>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              if (link.name === "Company") {
+                return (
+                  <div
+                    key={link.name}
+                    className="relative py-1"
+                    onMouseEnter={handleMouseEnterCompany}
+                    onMouseLeave={handleMouseLeaveCompany}
+                  >
+                    <button
+                      type="button"
+                      className={`text-secondary-custom hover:text-foreground relative transition-colors duration-200 group flex items-center gap-1 cursor-pointer ${
+                        companyDropdownOpen ? "text-foreground" : ""
+                      }`}
+                    >
+                      <span>{link.name}</span>
+                      <ChevronDown
+                        className={`w-3 h-3 text-secondary-custom transition-transform duration-200 ${
+                          companyDropdownOpen ? "rotate-180 text-foreground" : "group-hover:text-foreground"
+                        }`}
+                      />
+                      <span
+                        className={`absolute bottom-0 left-0 h-[1px] bg-foreground transition-all duration-300 ${
+                          companyDropdownOpen ? "w-full" : "w-0 group-hover:w-full"
+                        }`}
+                      />
+                    </button>
+
+                    {/* Desktop Company Dropdown */}
+                    {companyDropdownOpen && (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-[280px] pointer-events-auto animate-in fade-in-0 zoom-in-95 duration-150 z-50">
+                        <div className="rounded-2xl border border-border-custom bg-background/95 dark:bg-[#0c0d12]/95 backdrop-blur-2xl shadow-2xl p-4 text-left normal-case tracking-normal">
+                          <div className="flex items-center gap-2 px-2.5 pb-2.5 mb-2 border-b border-border-custom/50">
+                            <span className="w-2 h-2 rounded-full bg-foreground" />
+                            <span className="text-[11px] font-mono font-semibold tracking-wider uppercase text-foreground">
+                              Company
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            {companyDropdownLinks.map((item) => {
+                              const ItemIcon = item.icon;
+                              return (
+                                <Link
+                                  key={item.name}
+                                  href={item.href}
+                                  onClick={() => setCompanyDropdownOpen(false)}
+                                  className="group flex items-start gap-2.5 p-2 rounded-xl border border-transparent hover:border-border-custom hover:bg-surface/50 transition-all duration-150"
+                                >
+                                  <div className="w-7 h-7 rounded-lg bg-surface border border-border-custom/60 flex items-center justify-center text-secondary-custom group-hover:text-foreground group-hover:border-foreground/40 transition-colors shrink-0 mt-0.5">
+                                    <ItemIcon className="w-3.5 h-3.5" />
+                                  </div>
+                                  <div className="flex flex-col min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-xs font-semibold text-foreground transition-colors truncate">
+                                        {item.name}
+                                      </span>
+                                      <span className="text-[9px] font-mono px-1 rounded bg-surface border border-border-custom/60 text-secondary-custom shrink-0">
+                                        {item.badge}
+                                      </span>
+                                    </div>
+                                    <span className="text-[10px] text-secondary-custom leading-tight">
+                                      {item.desc}
+                                    </span>
+                                  </div>
+                                </Link>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
@@ -580,19 +644,86 @@ export default function Navbar() {
                               );
                             })}
                             <Link
-                              href="/#services"
+                              href="/services"
                               onClick={(e) => {
                                 setMobileMenuOpen(false);
-                                handleHashLink(e, "/#services");
+                                handleHashLink(e, "/services");
                               }}
-                              className="flex items-center justify-between p-2 rounded-lg bg-surface/30 border border-border-custom/20 text-xs font-medium text-secondary-custom hover:text-foreground transition-colors"
+                              className="flex items-center justify-between p-2 rounded-lg bg-surface/30 border border-border-custom/20 text-xs font-medium text-secondary-custom hover:text-foreground transition-colors mt-1"
                             >
                               <div className="flex items-center gap-2">
-                                <Bot className="w-3.5 h-3.5 text-foreground" />
-                                <span>Autonomous AI &amp; Software</span>
+                                <span>More</span>
                               </div>
                               <ArrowRight className="w-3 h-3 text-secondary-custom" />
                             </Link>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  if (link.name === "Company") {
+                    return (
+                      <div
+                        key={link.name}
+                        className="flex flex-col rounded-xl border border-border-custom/40 bg-surface/40 overflow-hidden"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setMobileCompanyExpanded(!mobileCompanyExpanded)}
+                          className="w-full group flex items-center justify-between p-3 text-left transition-all duration-200"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg border border-border-custom/60 bg-surface/80 flex items-center justify-center text-foreground group-hover:border-accent-custom/50 group-hover:text-accent-custom transition-colors">
+                              <ShieldCheck className="w-4 h-4" />
+                            </div>
+                            <div className="flex flex-col text-left">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-[10px] text-secondary-custom font-semibold">
+                                  {link.id}
+                                </span>
+                                <span className="text-sm font-semibold text-foreground tracking-tight group-hover:text-accent-custom transition-colors">
+                                  {link.name}
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-secondary-custom line-clamp-1 font-sans">
+                                About Us &amp; Legal
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-surface border border-border-custom text-foreground font-semibold">
+                              Company
+                            </span>
+                            <ChevronDown
+                              className={`w-4 h-4 text-secondary-custom transition-transform duration-200 ${
+                                mobileCompanyExpanded ? "rotate-180 text-foreground" : ""
+                              }`}
+                            />
+                          </div>
+                        </button>
+
+                        {mobileCompanyExpanded && (
+                          <div className="px-3 pb-3 pt-1 border-t border-border-custom/30 space-y-1.5 animate-in fade-in-0 duration-200">
+                            {companyDropdownLinks.map((subItem) => {
+                              const SubIcon = subItem.icon;
+                              return (
+                                <Link
+                                  key={subItem.name}
+                                  href={subItem.href}
+                                  onClick={() => setMobileMenuOpen(false)}
+                                  className="flex items-center justify-between p-2 rounded-lg bg-surface/60 border border-border-custom/30 hover:border-foreground/40 text-xs font-medium text-foreground transition-colors"
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <SubIcon className="w-3.5 h-3.5 text-foreground shrink-0" />
+                                    <span className="truncate">{subItem.name}</span>
+                                  </div>
+                                  <span className="text-[9px] font-mono text-secondary-custom uppercase shrink-0">
+                                    {subItem.badge}
+                                  </span>
+                                </Link>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
