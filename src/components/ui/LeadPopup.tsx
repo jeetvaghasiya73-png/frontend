@@ -1,17 +1,30 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import ContactSection from "@/components/sections/ContactSection";
 
 const POPUP_DELAY = 15000;
 
 export default function LeadPopup() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Only display on public website, never on admin or dashboard routes
+  const isAdminOrDashboardRoute =
+    pathname?.startsWith("/admin") ||
+    pathname?.includes("dashboard") ||
+    pathname?.includes("techinfinix-console");
+
   useEffect(() => {
     setMounted(true);
+
+    if (isAdminOrDashboardRoute) {
+      setIsOpen(false);
+      return;
+    }
 
     // Frequency check
     const hasBeenShown = sessionStorage.getItem("techinfinix_popup_shown");
@@ -26,11 +39,11 @@ export default function LeadPopup() {
     }, POPUP_DELAY);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [isAdminOrDashboardRoute]);
 
   // Keyboard navigation & body lock
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen || isAdminOrDashboardRoute) {
       document.body.style.overflow = "";
       return;
     }
@@ -46,9 +59,9 @@ export default function LeadPopup() {
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "";
     };
-  }, [isOpen]);
+  }, [isOpen, isAdminOrDashboardRoute]);
 
-  if (!mounted || !isOpen) return null;
+  if (!mounted || !isOpen || isAdminOrDashboardRoute) return null;
 
   return (
     <div 
