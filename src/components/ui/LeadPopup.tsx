@@ -1,70 +1,65 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import ContactSection from "@/components/sections/ContactSection";
 
-// Show popup after user spends 7 seconds (5-10s window) on the website
-const POPUP_DELAY = 7000;
+// Show popup after user spends 6 seconds (5 to 10s timeframe) on the website
+const POPUP_DELAY = 6000;
 
 export default function LeadPopup() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Strict check: ONLY show on public website pages, NEVER on admin or dashboard routes
-  const checkIsAdminOrDashboard = useCallback(() => {
-    const nextPath = (pathname || "").toLowerCase();
+  // Check if current route is an admin, dashboard, or console route
+  const isDashboardRoute = () => {
+    const currentPath = (pathname || "").toLowerCase();
     const winPath = typeof window !== "undefined" ? window.location.pathname.toLowerCase() : "";
     const winHash = typeof window !== "undefined" ? window.location.hash.toLowerCase() : "";
 
-    const forbiddenTokens = [
-      "/admin",
-      "dashboard",
-      "techinfinix-console",
-      "console",
-      "/login",
-    ];
+    const forbidden = ["/admin", "dashboard", "techinfinix-console", "console", "/login"];
+    return forbidden.some(
+      (f) => currentPath.includes(f) || winPath.includes(f) || winHash.includes(f)
+    );
+  };
 
-    const isNextForbidden = forbiddenTokens.some((t) => nextPath.includes(t));
-    const isWinForbidden = forbiddenTokens.some((t) => winPath.includes(t) || winHash.includes(t));
-
-    return isNextForbidden || isWinForbidden;
-  }, [pathname]);
-
-  const isAdminOrDashboard = checkIsAdminOrDashboard();
+  const isAdmin = isDashboardRoute();
 
   useEffect(() => {
     setMounted(true);
 
-    // If on admin or dashboard, keep closed and cancel any pending triggers
-    if (isAdminOrDashboard) {
+    // If on admin or dashboard, immediately hide and clear any timer
+    if (isAdmin) {
       setIsOpen(false);
+      if (timerRef.current) clearTimeout(timerRef.current);
       return;
     }
 
-    // Frequency check: once per session, and never if lead already submitted
-    const hasBeenShown = sessionStorage.getItem("techinfinix_popup_shown");
-    const hasSubmitted = localStorage.getItem("techinfinix_submitted_lead");
+    // If user already closed the popup in this current page view, do not re-open
+    if (dismissed) return;
 
-    if (hasBeenShown || hasSubmitted) return;
+    // Clear previous timer if any
+    if (timerRef.current) clearTimeout(timerRef.current);
 
-    // Trigger popup after 5-10s engagement (7 seconds)
-    const timer = setTimeout(() => {
-      // Re-verify route before opening in case user navigated during delay
-      if (!checkIsAdminOrDashboard()) {
+    // Start 6-second timer for users on the website
+    timerRef.current = setTimeout(() => {
+      if (!isDashboardRoute() && !dismissed) {
         setIsOpen(true);
-        sessionStorage.setItem("techinfinix_popup_shown", "true");
       }
     }, POPUP_DELAY);
 
-    return () => clearTimeout(timer);
-  }, [isAdminOrDashboard, checkIsAdminOrDashboard]);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [pathname, isAdmin, dismissed]);
 
   // Keyboard navigation & body scroll lock
   useEffect(() => {
-    if (!isOpen || isAdminOrDashboard) {
+    if (!isOpen || isAdmin) {
       document.body.style.overflow = "";
       return;
     }
@@ -72,7 +67,10 @@ export default function LeadPopup() {
     document.body.style.overflow = "hidden";
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsOpen(false);
+      if (e.key === "Escape") {
+        setIsOpen(false);
+        setDismissed(true);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -80,10 +78,15 @@ export default function LeadPopup() {
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "";
     };
-  }, [isOpen, isAdminOrDashboard]);
+  }, [isOpen, isAdmin]);
 
-  // If unmounted, closed, or on any admin/dashboard route, render nothing
-  if (!mounted || !isOpen || isAdminOrDashboard) return null;
+  const handleClose = () => {
+    setIsOpen(false);
+    setDismissed(true);
+  };
+
+  // Never render on admin or dashboard routes, or when not open
+  if (!mounted || !isOpen || isAdmin) return null;
 
   return (
     <div
@@ -95,7 +98,7 @@ export default function LeadPopup() {
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-[3px] transition-opacity duration-300 animate-in fade-in cursor-pointer"
-        onClick={() => setIsOpen(false)}
+        onClick={handleClose}
         aria-hidden="true"
       />
 
@@ -104,9 +107,9 @@ export default function LeadPopup() {
         className="relative w-full max-w-[560px] max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden bg-surface border border-border-custom shadow-2xl rounded-2xl transition-all duration-300 animate-in fade-in zoom-in-95 slide-in-from-bottom-3"
         style={{ animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
       >
-        {/* Close Button - elevated touch target */}
+        {/* Close Button */}
         <button
-          onClick={() => setIsOpen(false)}
+          onClick={handleClose}
           className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full border border-border-custom bg-background/90 hover:bg-surface flex items-center justify-center text-foreground transition-all cursor-pointer shadow-sm active:scale-95"
           aria-label="Close dialog"
         >
@@ -129,7 +132,7 @@ export default function LeadPopup() {
           </p>
         </div>
 
-        {/* Scrollable Form Body with clean scrollbar */}
+        {/* Scrollable Form Body */}
         <div className="p-3.5 sm:p-5 pb-6 sm:pb-8 overflow-y-auto overscroll-contain flex-1">
           <ContactSection isPopup={true} />
         </div>

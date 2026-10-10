@@ -121,8 +121,9 @@ export default function ContactSection({ isPopup = false }: { isPopup?: boolean 
   const selectedCategory = watch("category");
   const selectedServices = watch("services");
 
-  // Load existing persistent submission on mount (prevents seeing form again)
+  // Load existing persistent submission on mount (prevents seeing form again on dedicated contact page)
   useEffect(() => {
+    if (isPopup) return; // In popup mode, always present the fresh audit request form
     try {
       const saved = localStorage.getItem("techinfinix_submitted_lead");
       if (saved) {
@@ -134,7 +135,7 @@ export default function ContactSection({ isPopup = false }: { isPopup?: boolean 
     } catch (e) {
       console.warn("Could not read local submission:", e);
     }
-  }, []);
+  }, [isPopup]);
 
   // GSAP entrance animations
   useEffect(() => {
