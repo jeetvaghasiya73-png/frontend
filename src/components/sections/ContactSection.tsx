@@ -645,17 +645,17 @@ export default function ContactSection({ isPopup = false }: { isPopup?: boolean 
                     </div>
 
                     {/* Step Tabs Pill Bar */}
-                    <div className="grid grid-cols-3 gap-2 pt-1">
+                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2 pt-1">
                       <button
                         type="button"
                         onClick={() => setCurrentStep(1)}
-                        className={`px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                        className={`px-2 sm:px-3 py-1.5 rounded-md text-[11px] sm:text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer ${
                           currentStep === 1
                             ? "bg-foreground text-background font-bold shadow-xs"
                             : "bg-background border border-border-custom text-secondary-custom hover:text-foreground"
                         }`}
                       >
-                        <span className="w-4 h-4 rounded-full bg-secondary-custom/20 text-[10px] flex items-center justify-center font-bold">
+                        <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-secondary-custom/20 text-[9px] sm:text-[10px] flex items-center justify-center font-bold">
                           1
                         </span>
                         <span className="truncate">Contact</span>
@@ -667,13 +667,13 @@ export default function ContactSection({ isPopup = false }: { isPopup?: boolean 
                           const valid1 = await trigger(["name", "email", "phone"]);
                           if (valid1) setCurrentStep(2);
                         }}
-                        className={`px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                        className={`px-2 sm:px-3 py-1.5 rounded-md text-[11px] sm:text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer ${
                           currentStep === 2
                             ? "bg-foreground text-background font-bold shadow-xs"
                             : "bg-background border border-border-custom text-secondary-custom hover:text-foreground"
                         }`}
                       >
-                        <span className="w-4 h-4 rounded-full bg-secondary-custom/20 text-[10px] flex items-center justify-center font-bold">
+                        <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-secondary-custom/20 text-[9px] sm:text-[10px] flex items-center justify-center font-bold">
                           2
                         </span>
                         <span className="truncate">Business</span>
@@ -686,13 +686,13 @@ export default function ContactSection({ isPopup = false }: { isPopup?: boolean 
                           const valid2 = await trigger(["business_name", "category"]);
                           if (valid1 && valid2) setCurrentStep(3);
                         }}
-                        className={`px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                        className={`px-2 sm:px-3 py-1.5 rounded-md text-[11px] sm:text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer ${
                           currentStep === 3
                             ? "bg-foreground text-background font-bold shadow-xs"
                             : "bg-background border border-border-custom text-secondary-custom hover:text-foreground"
                         }`}
                       >
-                        <span className="w-4 h-4 rounded-full bg-secondary-custom/20 text-[10px] flex items-center justify-center font-bold">
+                        <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-secondary-custom/20 text-[9px] sm:text-[10px] flex items-center justify-center font-bold">
                           3
                         </span>
                         <span className="truncate">Scope</span>
