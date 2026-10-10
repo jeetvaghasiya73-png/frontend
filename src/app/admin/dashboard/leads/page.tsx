@@ -119,6 +119,8 @@ export default function LeadsManager() {
   const statusFilterRef = useRef(statusFilter);
   statusFilterRef.current = statusFilter;
   const [searchQuery, setSearchQuery] = useState("");
+  const searchQueryRef = useRef(searchQuery);
+  searchQueryRef.current = searchQuery;
 
   // Helper to accurately classify organic WhatsApp inbound leads vs cold outreach scraped leads
   const isOrganicInbound = (l: { source?: string; scraped_service?: string; scraped_city?: string; name?: string; bussiness_name?: string } | null) => {
@@ -312,19 +314,21 @@ export default function LeadsManager() {
     }
   };
 
-  const fetchLeads = useCallback(async (pageToFetch?: number, limitToFetch?: number, statusToFetch?: string) => {
+  const fetchLeads = useCallback(async (pageToFetch?: number, limitToFetch?: number, statusToFetch?: string, searchToFetch?: string) => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
     const pageNum = pageToFetch ?? currentPage;
     const limitNum = limitToFetch ?? pageSize;
     const curStatus = statusToFetch !== undefined ? statusToFetch : statusFilterRef.current;
     const statusParam = curStatus && curStatus !== "all" ? `&status=${encodeURIComponent(curStatus)}` : "";
+    const effectiveSearch = (searchToFetch !== undefined ? searchToFetch : searchQueryRef.current).trim();
+    const searchParam = effectiveSearch ? `&search=${encodeURIComponent(effectiveSearch)}` : "";
     try {
       setLoading(true);
       const shouldFetchInquiries = !inquiriesCacheRef.current || pageNum === 1 || sourceFilterRef.current === "inquiry";
       const [inquiryRes, scrapedRes] = await Promise.allSettled([
         shouldFetchInquiries ? authFetch(`${API}/api/v1/leads/`) : Promise.resolve(null as any),
-        authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${limitNum}${statusParam}`)
+        authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${limitNum}${statusParam}${searchParam}`)
       ]);
 
       let inquiryData: any[] = inquiriesCacheRef.current || [];
@@ -361,7 +365,7 @@ export default function LeadsManager() {
       if (!scrapedOk) {
         for (const fallbackLimit of [50, 20]) {
           try {
-            const fallbackRes = await authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${fallbackLimit}${statusParam}`);
+            const fallbackRes = await authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${fallbackLimit}${statusParam}${searchParam}`);
             if (fallbackRes.ok) {
               const fbJson = await fallbackRes.json();
               if (Array.isArray(fbJson)) {
@@ -573,14 +577,17 @@ export default function LeadsManager() {
 
   useEffect(() => {
     setMounted(true);
+    let initialSearch = "";
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const urlQ = params.get("search") || params.get("q");
       if (urlQ) {
+        initialSearch = urlQ;
         setSearchQuery(urlQ);
+        searchQueryRef.current = urlQ;
       }
     }
-    fetchLeads();
+    fetchLeads(1, pageSize, undefined, initialSearch);
 
     const handleSyncUrl = () => {
       if (typeof window !== "undefined") {
@@ -588,6 +595,8 @@ export default function LeadsManager() {
         const urlQ = params.get("search") || params.get("q");
         if (urlQ !== null && urlQ !== undefined) {
           setSearchQuery(urlQ);
+          searchQueryRef.current = urlQ;
+          fetchLeads(1, pageSize, undefined, urlQ);
         }
       }
     };

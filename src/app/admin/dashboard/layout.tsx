@@ -377,7 +377,8 @@ export default function DashboardLayout({
   const navigateToLead = (lead: GlobalSearchLead) => {
     setIsSearchOpen(false);
     setMobileSearchOpen(false);
-    const term = lead.phone || lead.name;
+    const cleanPhone = lead.phone ? format10DigitPhone(lead.phone) : "";
+    const term = cleanPhone || lead.name;
     router.push(`${ADMIN_PATH}/dashboard/leads?search=${encodeURIComponent(term)}`);
   };
 

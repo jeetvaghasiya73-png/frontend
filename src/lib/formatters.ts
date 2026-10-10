@@ -313,18 +313,28 @@ export function matchesSimilaritySearch(
   if (queryDigits.length >= 3) {
     for (const val of stringValues) {
       const valDigits = val.replace(/\D/g, "");
-      if (!valDigits) continue;
+      // Only fields containing at least 7 digits qualify as phone numbers / mobile contacts
+      if (!valDigits || valDigits.length < 7) continue;
 
-      // Substring match on digits
-      if (valDigits.includes(queryDigits) || queryDigits.includes(valDigits)) {
-        return true;
-      }
-
-      // Check last 10 digits for phone numbers with country codes / leading zeros
+      // Exact 10-digit mobile match (handles leading 0 and country code +91 variations)
       if (queryDigits.length >= 10 && valDigits.length >= 10) {
         const qLast10 = queryDigits.slice(-10);
         const vLast10 = valDigits.slice(-10);
-        if (qLast10 === vLast10 || valDigits.includes(qLast10) || queryDigits.includes(vLast10)) {
+        if (qLast10 === vLast10) {
+          return true;
+        }
+      }
+
+      // If lead's phone number contains the query digits
+      // (e.g. query: 98240, lead's phone: 09824082041 or 9824082041)
+      if (valDigits.includes(queryDigits)) {
+        return true;
+      }
+
+      // If query has country code or leading zeros and lead has a 10-digit number
+      // (e.g. query: 09824082041 or +919824082041, lead's phone: 9824082041)
+      if (queryDigits.length >= 10 && valDigits.length >= 10) {
+        if (queryDigits.includes(valDigits.slice(-10))) {
           return true;
         }
       }
@@ -347,7 +357,10 @@ export function matchesSimilaritySearch(
       if (combinedText.includes(token)) return true;
       const tDigits = token.replace(/\D/g, "");
       if (tDigits.length >= 3) {
-        return stringValues.some((v) => v.replace(/\D/g, "").includes(tDigits));
+        return stringValues.some((v) => {
+          const vDigits = v.replace(/\D/g, "");
+          return vDigits.length >= 7 && vDigits.includes(tDigits);
+        });
       }
       return false;
     });
