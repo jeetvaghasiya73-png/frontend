@@ -573,7 +573,25 @@ export default function LeadsManager() {
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlQ = params.get("search") || params.get("q");
+      if (urlQ) {
+        setSearchQuery(urlQ);
+      }
+    }
     fetchLeads();
+
+    const handleSyncUrl = () => {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        const urlQ = params.get("search") || params.get("q");
+        if (urlQ !== null && urlQ !== undefined) {
+          setSearchQuery(urlQ);
+        }
+      }
+    };
+    window.addEventListener("popstate", handleSyncUrl);
 
     let ws: WebSocket | null = null;
     try {
@@ -595,6 +613,7 @@ export default function LeadsManager() {
     }
 
     return () => {
+      window.removeEventListener("popstate", handleSyncUrl);
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       if (ws) ws.close();
     };

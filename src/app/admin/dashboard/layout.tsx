@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/lib/authStore";
@@ -32,10 +32,50 @@ import {
   CheckCircle2,
   ExternalLink,
   PhoneCall,
+  Loader2,
+  Phone,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
 
 import { authFetch } from "@/lib/authFetch";
 import { API_URL, ADMIN_PATH } from "@/lib/config";
+import { matchesSimilaritySearch, format10DigitPhone } from "@/lib/formatters";
+
+interface CrmPageNav {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+  category: string;
+  description: string;
+  keywords: string[];
+}
+
+interface GlobalSearchLead {
+  id: number | string;
+  name: string;
+  phone: string;
+  email: string;
+  city: string;
+  category: string;
+  status: string;
+  source: "scraped" | "inquiry";
+}
+
+const CRM_PAGES: CrmPageNav[] = [
+  { name: "Dashboard Overview", href: `${ADMIN_PATH}/dashboard`, icon: LayoutDashboard, category: "Core", description: "KPI metrics, stats & pipeline summary", keywords: ["home", "stats", "metrics", "overview", "analytics"] },
+  { name: "Leads Database", href: `${ADMIN_PATH}/dashboard/leads`, icon: Users, category: "Pipeline", description: "Unified database of scraped & inbound leads", keywords: ["leads", "database", "clients", "customers", "prospects", "google maps", "scraper"] },
+  { name: "Sales Calling Queue", href: `${ADMIN_PATH}/dashboard/sales-calls`, icon: PhoneCall, category: "Sales", description: "Telecalling dialer queue & disposition log", keywords: ["sales", "calls", "calling", "phone", "telecalling", "queue", "outreach", "dialer"] },
+  { name: "Interested Hot Leads", href: `${ADMIN_PATH}/dashboard/sales-calls/interested`, icon: Star, category: "Sales", description: "Prioritized hot prospect list ready to convert", keywords: ["interested", "hot", "stars", "priority", "conversion", "ready", "deals"] },
+  { name: "Messages & Inquiries", href: `${ADMIN_PATH}/dashboard/contacts`, icon: MessageSquare, category: "Communication", description: "Website contact inquiries & lead messages", keywords: ["messages", "inbox", "contacts", "inquiries", "chat", "email"] },
+  { name: "WhatsApp Outreach", href: `${ADMIN_PATH}/dashboard/automation/whatsapp`, icon: MessageSquare, category: "Automation", description: "Automated bulk WhatsApp campaigns & replies", keywords: ["whatsapp", "automation", "campaigns", "bulk", "templates"] },
+  { name: "Portfolio Works", href: `${ADMIN_PATH}/dashboard/portfolio`, icon: Briefcase, category: "Content", description: "Showcase case studies and projects", keywords: ["portfolio", "projects", "works", "case studies"] },
+  { name: "Blog Articles", href: `${ADMIN_PATH}/dashboard/blogs`, icon: FileText, category: "Content", description: "Publish marketing & SEO articles", keywords: ["blogs", "articles", "news", "posts"] },
+  { name: "Testimonials", href: `${ADMIN_PATH}/dashboard/testimonials`, icon: Star, category: "Content", description: "Client reviews and ratings manager", keywords: ["testimonials", "reviews", "feedback"] },
+  { name: "FAQ Management", href: `${ADMIN_PATH}/dashboard/faqs`, icon: HelpCircle, category: "System", description: "Frequently asked questions & help center", keywords: ["faq", "questions", "answers", "help"] },
+  { name: "System Settings", href: `${ADMIN_PATH}/dashboard/settings`, icon: Settings, category: "System", description: "CRM branding, integrations & configuration", keywords: ["settings", "config", "preferences", "system"] },
+  { name: "Security & Roles", href: `${ADMIN_PATH}/dashboard/security`, icon: Shield, category: "Security", description: "User permissions, admin accounts & logs", keywords: ["security", "roles", "permissions", "admins", "users"] },
+];
 
 interface AppNotification {
   id: string;
@@ -151,8 +191,21 @@ export default function DashboardLayout({
   const [activeNotifFilter, setActiveNotifFilter] = useState<"all" | "unread" | "inquiry" | "system">("all");
   const [activeToastNotif, setActiveToastNotif] = useState<AppNotification | null>(null);
 
+  // Global Search Omnibar State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [matchedLeads, setMatchedLeads] = useState<GlobalSearchLead[]>([]);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [activeHighlightIdx, setActiveHighlightIdx] = useState(-1);
+
   const notifRef = useRef<HTMLDivElement>(null);
   const mobileNotifRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -192,10 +245,195 @@ export default function DashboardLayout({
       ) {
         setNotificationsOpen(false);
       }
+      if (
+        searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node) &&
+        (!mobileSearchRef.current || !mobileSearchRef.current.contains(event.target as Node))
+      ) {
+        setIsSearchOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Global Keyboard Shortcuts (Cmd+K / Ctrl+K & Escape)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        if (window.innerWidth < 1024) {
+          setMobileSearchOpen(true);
+          setTimeout(() => mobileSearchInputRef.current?.focus(), 80);
+        } else {
+          setIsSearchOpen(true);
+          setTimeout(() => searchInputRef.current?.focus(), 80);
+        }
+      } else if (e.key === "Escape") {
+        setIsSearchOpen(false);
+        setMobileSearchOpen(false);
+        searchInputRef.current?.blur();
+        mobileSearchInputRef.current?.blur();
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, []);
+
+  // Debounced API Similarity Search for Omnibar
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) {
+      setMatchedLeads([]);
+      setIsSearching(false);
+      return;
+    }
+
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+
+    searchDebounceRef.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const [scrapedRes, inqRes] = await Promise.allSettled([
+          authFetch(`${API_URL}/api/v1/scraped-leads/?search=${encodeURIComponent(q)}&limit=12`),
+          authFetch(`${API_URL}/api/v1/leads/?limit=50`)
+        ]);
+
+        const results: GlobalSearchLead[] = [];
+
+        if (scrapedRes.status === "fulfilled" && scrapedRes.value.ok) {
+          const sJson = await scrapedRes.value.json();
+          const items: any[] = Array.isArray(sJson) ? sJson : (sJson.leads || sJson.items || []);
+          items.forEach((item) => {
+            const phone = item.bussiness_number || item.phone || "";
+            const name = item.bussiness_name || item.name || "Business Lead";
+            const email = item.bussiness_email || item.email || "";
+            const city = item.scraped_city || item.city || "";
+            const category = item.scraped_service || item.category || "";
+            
+            if (matchesSimilaritySearch(q, [name, phone, email, city, category, item.bussiness_address])) {
+              results.push({
+                id: item.id,
+                name,
+                phone,
+                email,
+                city,
+                category,
+                status: item.is_interested ? "Interested" : (item.whatsapp_status || item.email_status || "Scraped"),
+                source: "scraped"
+              });
+            }
+          });
+        }
+
+        if (inqRes.status === "fulfilled" && inqRes.value.ok) {
+          const inqJson = await inqRes.value.json();
+          if (Array.isArray(inqJson)) {
+            inqJson.forEach((inq) => {
+              const phone = inq.phone || "";
+              const name = inq.name || inq.business_name || inq.company || "Direct Inquiry";
+              const email = inq.email || "";
+              const city = inq.city || "";
+              const category = (inq.services && inq.services[0]) || inq.category || "Inbound";
+              
+              if (matchesSimilaritySearch(q, [name, phone, email, city, category, inq.message])) {
+                results.push({
+                  id: inq.id,
+                  name,
+                  phone,
+                  email,
+                  city,
+                  category,
+                  status: inq.status || "Inbound",
+                  source: "inquiry"
+                });
+              }
+            });
+          }
+        }
+
+        const uniqueMap = new Map<string, GlobalSearchLead>();
+        results.forEach(r => {
+          const key = r.phone ? r.phone.replace(/\D/g, "").slice(-10) : `${r.source}_${r.id}`;
+          if (!uniqueMap.has(key)) {
+            uniqueMap.set(key, r);
+          }
+        });
+
+        setMatchedLeads(Array.from(uniqueMap.values()).slice(0, 8));
+      } catch (err) {
+        console.error("Global omnibar search error:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 260);
+
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, [searchQuery]);
+
+  const navigateToLead = (lead: GlobalSearchLead) => {
+    setIsSearchOpen(false);
+    setMobileSearchOpen(false);
+    const term = lead.phone || lead.name;
+    router.push(`${ADMIN_PATH}/dashboard/leads?search=${encodeURIComponent(term)}`);
+  };
+
+  const navigateToLeadsSearch = (term: string) => {
+    setIsSearchOpen(false);
+    setMobileSearchOpen(false);
+    if (!term.trim()) {
+      router.push(`${ADMIN_PATH}/dashboard/leads`);
+    } else {
+      router.push(`${ADMIN_PATH}/dashboard/leads?search=${encodeURIComponent(term.trim())}`);
+    }
+  };
+
+  const navigateToPage = (href: string) => {
+    setIsSearchOpen(false);
+    setMobileSearchOpen(false);
+    router.push(href);
+  };
+
+  const matchedPages = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return CRM_PAGES.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      p.category.toLowerCase().includes(q) ||
+      p.description.toLowerCase().includes(q) ||
+      p.keywords.some(k => k.includes(q))
+    ).slice(0, 4);
+  }, [searchQuery]);
+
+  const totalSelectableItems = matchedPages.length + matchedLeads.length;
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveHighlightIdx(prev => (prev < totalSelectableItems - 1 ? prev + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveHighlightIdx(prev => (prev > 0 ? prev - 1 : totalSelectableItems - 1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (activeHighlightIdx >= 0 && activeHighlightIdx < matchedPages.length) {
+        navigateToPage(matchedPages[activeHighlightIdx].href);
+      } else if (activeHighlightIdx >= matchedPages.length && activeHighlightIdx < totalSelectableItems) {
+        const leadIdx = activeHighlightIdx - matchedPages.length;
+        navigateToLead(matchedLeads[leadIdx]);
+      } else {
+        navigateToLeadsSearch(searchQuery);
+      }
+    } else if (e.key === "Escape") {
+      setIsSearchOpen(false);
+      setMobileSearchOpen(false);
+      searchInputRef.current?.blur();
+      mobileSearchInputRef.current?.blur();
+    }
+  };
 
   const notificationsRef = useRef<AppNotification[]>([]);
   useEffect(() => { notificationsRef.current = notifications; }, [notifications]);
@@ -601,6 +839,273 @@ export default function DashboardLayout({
     );
   };
 
+  const renderSearchResultsDropdown = (isMobile = false) => {
+    if (!isSearchOpen && !isMobile) return null;
+
+    const hasQuery = searchQuery.trim().length > 0;
+
+    return (
+      <div
+        className={`${
+          isMobile
+            ? "w-full mt-2"
+            : "absolute left-0 right-0 top-full mt-1.5 z-50 w-full"
+        } rounded-xl shadow-2xl overflow-hidden transition-all duration-200 border animate-fadeIn`}
+        style={{
+          background: "var(--dash-surface)",
+          borderColor: "var(--dash-border)",
+          boxShadow: "0 14px 40px -10px rgba(0, 0, 0, 0.35)",
+          maxHeight: isMobile ? "calc(80vh - 120px)" : "480px",
+        }}
+      >
+        <div className="overflow-y-auto crm-scrollbar max-h-[420px] p-2 space-y-3">
+          {/* If empty query, show quick navigation shortcuts and similarity search tips */}
+          {!hasQuery && (
+            <div className="p-2 space-y-2.5">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--dash-text-muted)" }}>
+                  ⚡ Quick CRM Navigation
+                </span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: "var(--dash-surface-alt)", color: "var(--dash-text-muted)", border: "1px solid var(--dash-border)" }}>
+                  ⌘K
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {CRM_PAGES.slice(0, 6).map((item) => {
+                  const PageIcon = item.icon;
+                  return (
+                    <button
+                      key={item.href}
+                      onClick={() => navigateToPage(item.href)}
+                      className="flex items-center gap-2 p-2 rounded-lg text-left transition cursor-pointer group"
+                      style={{ background: "var(--dash-surface-alt)", border: "1px solid var(--dash-border-subtle)" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--dash-primary)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--dash-border-subtle)"; }}
+                    >
+                      <div className="p-1.5 rounded-md shrink-0 transition" style={{ background: "var(--dash-primary-light)", color: "var(--dash-primary)" }}>
+                        <PageIcon className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold truncate" style={{ color: "var(--dash-text)" }}>
+                          {item.name}
+                        </div>
+                        <div className="text-[10px] truncate" style={{ color: "var(--dash-text-muted)" }}>
+                          {item.category}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="p-2.5 rounded-lg flex items-start gap-2 text-[11px] leading-relaxed" style={{ background: "var(--dash-surface-alt)", border: "1px solid var(--dash-border-subtle)", color: "var(--dash-text-secondary)" }}>
+                <Sparkles className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+                <div>
+                  <span className="font-semibold" style={{ color: "var(--dash-text)" }}>Similarity Search:</span> Search any 10-digit phone (e.g. <span className="font-mono text-indigo-400 font-semibold">91737 39080</span>), client name, or city. Spacing differences and formats match automatically.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* If user typed a query */}
+          {hasQuery && (
+            <>
+              {/* Matched Pages */}
+              {matchedPages.length > 0 && (
+                <div className="space-y-1">
+                  <div className="text-[10px] font-bold uppercase tracking-wider px-2 py-1" style={{ color: "var(--dash-text-muted)" }}>
+                    Pages & Views ({matchedPages.length})
+                  </div>
+                  {matchedPages.map((page, idx) => {
+                    const PageIcon = page.icon;
+                    const isSelected = activeHighlightIdx === idx;
+                    return (
+                      <div
+                        key={page.href}
+                        onClick={() => navigateToPage(page.href)}
+                        className="flex items-center justify-between p-2 rounded-lg transition cursor-pointer"
+                        style={{
+                          background: isSelected ? "var(--dash-primary-light)" : "transparent",
+                          border: isSelected ? "1px solid var(--dash-primary)" : "1px solid transparent",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "var(--dash-surface-alt)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = isSelected ? "var(--dash-primary-light)" : "transparent";
+                        }}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="p-1.5 rounded-md shrink-0" style={{ background: "var(--dash-primary-light)", color: "var(--dash-primary)" }}>
+                            <PageIcon className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-xs font-bold block truncate" style={{ color: "var(--dash-text)" }}>
+                              {page.name}
+                            </span>
+                            <span className="text-[10px] block truncate" style={{ color: "var(--dash-text-muted)" }}>
+                              {page.description}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: "var(--dash-surface-alt)", color: "var(--dash-text-muted)" }}>
+                            {page.category}
+                          </span>
+                          <ArrowRight className="w-3.5 h-3.5 opacity-60" style={{ color: "var(--dash-text-muted)" }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Matched Leads */}
+              {matchedLeads.length > 0 && (
+                <div className="space-y-1">
+                  <div className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 flex items-center justify-between" style={{ color: "var(--dash-text-muted)" }}>
+                    <span>Matched Leads & Contacts ({matchedLeads.length})</span>
+                    {isSearching && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
+                  </div>
+                  {matchedLeads.map((lead, idx) => {
+                    const isSelected = activeHighlightIdx === (matchedPages.length + idx);
+                    const formattedPhone = format10DigitPhone(lead.phone);
+                    const isHot = lead.status.toLowerCase().includes("interested");
+                    return (
+                      <div
+                        key={`${lead.source}-${lead.id}`}
+                        onClick={() => navigateToLead(lead)}
+                        className="flex items-center justify-between p-2.5 rounded-lg transition cursor-pointer"
+                        style={{
+                          background: isSelected ? "var(--dash-primary-light)" : "transparent",
+                          border: isSelected ? "1px solid var(--dash-primary)" : "1px solid var(--dash-border-subtle)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "var(--dash-surface-alt)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = isSelected ? "var(--dash-primary-light)" : "transparent";
+                        }}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold"
+                            style={{
+                              background: isHot ? "var(--dash-success-light)" : "var(--dash-primary-light)",
+                              color: isHot ? "var(--dash-success)" : "var(--dash-primary)",
+                            }}
+                          >
+                            {lead.name.slice(0, 1).toUpperCase()}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold truncate" style={{ color: "var(--dash-text)" }}>
+                                {lead.name}
+                              </span>
+                              {lead.city && (
+                                <span className="text-[9px] px-1 py-0.2 rounded truncate" style={{ background: "var(--dash-surface-alt)", color: "var(--dash-text-muted)" }}>
+                                  {lead.city}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5 text-[11px] font-mono truncate" style={{ color: "var(--dash-text-secondary)" }}>
+                              {lead.phone ? (
+                                <span className="flex items-center gap-1">
+                                  <Phone className="w-2.5 h-2.5 text-emerald-500" />
+                                  {formattedPhone}
+                                </span>
+                              ) : lead.email ? (
+                                <span className="truncate">{lead.email}</span>
+                              ) : (
+                                <span className="text-[10px] text-gray-400">Direct Inbound</span>
+                              )}
+                              {lead.category && (
+                                <span className="text-[10px] opacity-70 truncate font-sans">
+                                  • {lead.category}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          <span
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-full capitalize"
+                            style={{
+                              background: isHot
+                                ? "var(--dash-success-light)"
+                                : lead.source === "inquiry"
+                                ? "var(--dash-primary-light)"
+                                : "var(--dash-surface-alt)",
+                              color: isHot
+                                ? "var(--dash-success)"
+                                : lead.source === "inquiry"
+                                ? "var(--dash-primary)"
+                                : "var(--dash-text-secondary)",
+                            }}
+                          >
+                            {lead.status}
+                          </span>
+                          <ArrowRight className="w-3.5 h-3.5 opacity-40 hover:opacity-100" style={{ color: "var(--dash-text-muted)" }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Loading indicator when search is fetching */}
+              {isSearching && matchedLeads.length === 0 && (
+                <div className="py-6 text-center text-xs flex items-center justify-center gap-2" style={{ color: "var(--dash-text-muted)" }}>
+                  <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+                  <span>Searching CRM database with similarity matching...</span>
+                </div>
+              )}
+
+              {/* No matches state */}
+              {!isSearching && matchedPages.length === 0 && matchedLeads.length === 0 && (
+                <div className="p-6 text-center space-y-2" style={{ color: "var(--dash-text-muted)" }}>
+                  <Search className="w-7 h-7 mx-auto opacity-30" />
+                  <p className="text-xs font-semibold" style={{ color: "var(--dash-text)" }}>
+                    No quick preview matches for &ldquo;{searchQuery}&rdquo;
+                  </p>
+                  <p className="text-[11px] max-w-xs mx-auto leading-relaxed">
+                    The entire database contains thousands of leads. Click below to run a deep scan in the Leads Manager.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Omnibar Footer Actions */}
+        <div
+          className="p-2.5 px-3 flex items-center justify-between text-xs font-semibold"
+          style={{
+            background: "var(--dash-surface-alt)",
+            borderTop: "1px solid var(--dash-border)",
+          }}
+        >
+          <div className="flex items-center gap-2 text-[11px]" style={{ color: "var(--dash-text-muted)" }}>
+            <span className="font-mono px-1 py-0.5 rounded text-[10px]" style={{ background: "var(--dash-surface)", border: "1px solid var(--dash-border)" }}>↵ Enter</span>
+            <span>View all matching records</span>
+          </div>
+          <button
+            onClick={() => navigateToLeadsSearch(searchQuery)}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer hover:underline"
+            style={{
+              background: "var(--dash-primary)",
+              color: "#FFFFFF",
+            }}
+          >
+            <span>Open in Leads Database</span>
+            <ExternalLink className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div
       data-dash-theme={dashTheme}
@@ -638,7 +1143,20 @@ export default function DashboardLayout({
             <span className="text-[9px] uppercase font-semibold tracking-wider" style={{ color: "var(--dash-primary)" }}>Enterprise CRM</span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Mobile Omnibar Search Button */}
+          <button
+            onClick={() => {
+              setMobileSearchOpen(true);
+              setIsSearchOpen(true);
+              setTimeout(() => mobileSearchInputRef.current?.focus(), 100);
+            }}
+            className="p-1 transition cursor-pointer opacity-70 hover:opacity-100"
+            style={{ color: "var(--dash-sidebar-text)" }}
+            title="Search Leads & CRM (⌘K)"
+          >
+            <Search className="w-4.5 h-4.5" />
+          </button>
           <button onClick={toggleDashTheme} className="p-1 transition cursor-pointer opacity-70 hover:opacity-100" style={{ color: "var(--dash-sidebar-text)" }} title="Toggle Dashboard Dark/Light Theme">
             {mounted && dashTheme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
           </button>
@@ -655,6 +1173,60 @@ export default function DashboardLayout({
           </div>
         </div>
       </div>
+
+      {/* Mobile Omnibar Search Modal */}
+      {mobileSearchOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex flex-col" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}>
+          <div className="p-3 w-full shrink-0 flex flex-col gap-2" style={{ background: "var(--dash-surface)", borderBottom: "1px solid var(--dash-border)" }} ref={mobileSearchRef}>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                {isSearching ? (
+                  <Loader2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 animate-spin text-indigo-500" />
+                ) : (
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--dash-text-muted)" }} />
+                )}
+                <input
+                  ref={mobileSearchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setIsSearchOpen(true);
+                    setActiveHighlightIdx(-1);
+                  }}
+                  onKeyDown={handleSearchKeyDown}
+                  placeholder="Search leads, phone (91737 39080), pages..."
+                  className="crm-input w-full !pl-9 pr-8 py-2 text-xs"
+                  autoFocus
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery("");
+                      mobileSearchInputRef.current?.focus();
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-200 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  setMobileSearchOpen(false);
+                  setIsSearchOpen(false);
+                }}
+                className="px-3 py-2 text-xs font-bold rounded-lg cursor-pointer"
+                style={{ background: "var(--dash-surface-alt)", color: "var(--dash-text)", border: "1px solid var(--dash-border)" }}
+              >
+                Close
+              </button>
+            </div>
+            {renderSearchResultsDropdown(true)}
+          </div>
+          <div className="flex-1" onClick={() => { setMobileSearchOpen(false); setIsSearchOpen(false); }} />
+        </div>
+      )}
 
       {/* Mobile Backdrop */}
       {mobileOpen && <div className="fixed inset-0 z-30 lg:hidden animate-fadeIn" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} onClick={() => setMobileOpen(false)} />}
@@ -750,13 +1322,62 @@ export default function DashboardLayout({
             <span>CRM</span><ChevronRight className="w-3 h-3" /><span className="font-semibold" style={{ color: "var(--dash-text)" }}>{getPageTitle()}</span>
           </div>
 
-          {/* Search */}
-          <div className="flex-1 max-w-md mx-6">
+          {/* Global Search Omnibar */}
+          <div className="flex-1 max-w-md mx-6 relative" ref={searchContainerRef}>
             <div className="relative w-full">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--dash-text-muted)" }} />
-              <input type="text" placeholder="Search leads, conversations..." className="crm-input w-full !pl-9 pr-12 py-1.5 text-xs" />
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono px-1.5 py-0.5" style={{ color: "var(--dash-text-muted)", border: "1px solid var(--dash-border)", borderRadius: "var(--dash-badge-radius)" }}>⌘K</span>
+              {isSearching ? (
+                <Loader2 className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 animate-spin text-indigo-500" />
+              ) : (
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--dash-text-muted)" }} />
+              )}
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchOpen(true);
+                  setActiveHighlightIdx(-1);
+                }}
+                onFocus={() => setIsSearchOpen(true)}
+                onKeyDown={handleSearchKeyDown}
+                placeholder="Search leads, phone (91737 39080), pages..."
+                className="crm-input w-full !pl-9 pr-16 py-1.5 text-xs transition-all duration-150 focus:ring-1 focus:ring-indigo-500"
+              />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                {searchQuery && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery("");
+                      searchInputRef.current?.focus();
+                    }}
+                    className="p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer"
+                    style={{ color: "var(--dash-text-muted)" }}
+                    title="Clear search"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+                <span
+                  className="text-[10px] font-mono px-1.5 py-0.5 cursor-pointer select-none transition hover:border-indigo-400"
+                  style={{
+                    color: "var(--dash-text-muted)",
+                    border: "1px solid var(--dash-border)",
+                    borderRadius: "var(--dash-badge-radius)"
+                  }}
+                  onClick={() => {
+                    setIsSearchOpen(true);
+                    searchInputRef.current?.focus();
+                  }}
+                  title="Press ⌘K or Ctrl+K to search"
+                >
+                  ⌘K
+                </span>
+              </div>
             </div>
+
+            {/* Desktop Results Dropdown */}
+            {renderSearchResultsDropdown(false)}
           </div>
 
           {/* Right Actions */}
