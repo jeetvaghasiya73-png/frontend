@@ -272,3 +272,88 @@ export function formatISTDateTime(
   }
 }
 
+/**
+ * Similarity and fuzzy match helper for dashboard search queries.
+ * Solves phone formatting discrepancies, multi-word matching, and compact text matching.
+ * - If user types "9173739080" and DB has "91737 39080" or "+91 91737 39080", it matches!
+ * - If user types partial phone numbers like "73739", it matches!
+ * - Multi-word tokens match in any order ("surat dental" matches "Dental Clinic, Surat")
+ */
+export function matchesSimilaritySearch(
+  query: string,
+  fields: (string | number | string[] | null | undefined)[]
+): boolean {
+  if (!query) return true;
+  const rawQ = query.trim().toLowerCase();
+  if (!rawQ) return true;
+
+  // Flatten and normalize values
+  const stringValues: string[] = [];
+  for (const f of fields) {
+    if (f === null || f === undefined) continue;
+    if (Array.isArray(f)) {
+      f.forEach((item) => {
+        if (item) stringValues.push(String(item).trim());
+      });
+    } else {
+      const s = String(f).trim();
+      if (s) stringValues.push(s);
+    }
+  }
+
+  if (stringValues.length === 0) return false;
+
+  const combinedText = stringValues.join(" ").toLowerCase();
+
+  // 1. Direct Substring Match
+  if (combinedText.includes(rawQ)) return true;
+
+  // 2. Phone / Digits Similarity Match
+  const queryDigits = rawQ.replace(/\D/g, "");
+  if (queryDigits.length >= 3) {
+    for (const val of stringValues) {
+      const valDigits = val.replace(/\D/g, "");
+      if (!valDigits) continue;
+
+      // Substring match on digits
+      if (valDigits.includes(queryDigits) || queryDigits.includes(valDigits)) {
+        return true;
+      }
+
+      // Check last 10 digits for phone numbers with country codes / leading zeros
+      if (queryDigits.length >= 10 && valDigits.length >= 10) {
+        const qLast10 = queryDigits.slice(-10);
+        const vLast10 = valDigits.slice(-10);
+        if (qLast10 === vLast10 || valDigits.includes(qLast10) || queryDigits.includes(vLast10)) {
+          return true;
+        }
+      }
+    }
+  }
+
+  // 3. Compact Alphanumeric Match (e.g. "techinfinix" matches "Tech Infinix")
+  const compactQuery = rawQ.replace(/[^a-z0-9]/g, "");
+  if (compactQuery.length >= 3) {
+    const compactCombined = combinedText.replace(/[^a-z0-9]/g, "");
+    if (compactCombined.includes(compactQuery)) {
+      return true;
+    }
+  }
+
+  // 4. Multi-word Token Match (each token in query must be found somewhere)
+  const tokens = rawQ.split(/\s+/).filter(Boolean);
+  if (tokens.length > 1) {
+    const allTokensMatch = tokens.every((token) => {
+      if (combinedText.includes(token)) return true;
+      const tDigits = token.replace(/\D/g, "");
+      if (tDigits.length >= 3) {
+        return stringValues.some((v) => v.replace(/\D/g, "").includes(tDigits));
+      }
+      return false;
+    });
+    if (allTokensMatch) return true;
+  }
+
+  return false;
+}
+

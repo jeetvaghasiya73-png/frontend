@@ -52,7 +52,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
-import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTDateTime, formatISTTime } from "@/lib/formatters";
+import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTDateTime, formatISTTime, matchesSimilaritySearch } from "@/lib/formatters";
 import {
   ResponsiveContainer,
   BarChart,
@@ -512,16 +512,22 @@ export default function SuperAdminDashboard() {
 
   // Main table list builder
   const tableDataset = useMemo(() => {
-    const q = tableSearch.toLowerCase().trim();
+    const q = tableSearch.trim();
 
     if (activeTableTab === "scraped") {
       let data = filteredData.currentScraped;
       if (q) {
         data = data.filter(l =>
-          l.bussiness_name?.toLowerCase().includes(q) ||
-          l.bussiness_email?.toLowerCase().includes(q) ||
-          l.scraped_city?.toLowerCase().includes(q) ||
-          l.scraped_service?.toLowerCase().includes(q)
+          matchesSimilaritySearch(q, [
+            l.bussiness_name,
+            l.bussiness_number,
+            l.bussiness_email,
+            l.scraped_city,
+            l.scraped_service,
+            l.category,
+            l.bussiness_address,
+            l.bussiness_website
+          ])
         );
       }
       return data.map((l, idx) => {
@@ -557,11 +563,17 @@ export default function SuperAdminDashboard() {
       let data = filteredData.currentInquiries;
       if (q) {
         data = data.filter(l =>
-          l.name?.toLowerCase().includes(q) ||
-          l.email?.toLowerCase().includes(q) ||
-          l.business_name?.toLowerCase().includes(q) ||
-          l.company?.toLowerCase().includes(q) ||
-          l.category?.toLowerCase().includes(q)
+          matchesSimilaritySearch(q, [
+            l.name,
+            l.phone,
+            l.email,
+            l.business_name,
+            l.company,
+            l.category,
+            l.services,
+            l.message,
+            l.website
+          ])
         );
       }
       return data.map((l, idx) => {
@@ -601,9 +613,19 @@ export default function SuperAdminDashboard() {
       });
       if (q) {
         data = data.filter(l =>
-          (l.bussiness_name || l.name)?.toLowerCase().includes(q) ||
-          (l.bussiness_email || l.email)?.toLowerCase().includes(q) ||
-          (l.scraped_city || l.city || l.location)?.toLowerCase().includes(q)
+          matchesSimilaritySearch(q, [
+            l.bussiness_name,
+            l.name,
+            l.bussiness_number,
+            l.phone,
+            l.bussiness_email,
+            l.email,
+            l.scraped_city,
+            l.city,
+            l.location,
+            l.scraped_service,
+            l.category
+          ])
         );
       }
       return data.map((l, idx) => {
@@ -638,8 +660,12 @@ export default function SuperAdminDashboard() {
       let data = portfolios;
       if (q) {
         data = data.filter(p =>
-          p.title?.toLowerCase().includes(q) ||
-          p.client?.toLowerCase().includes(q)
+          matchesSimilaritySearch(q, [
+            p.title,
+            p.client,
+            p.services_used,
+            p.description
+          ])
         );
       }
       return data.map((p, idx) => {

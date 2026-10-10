@@ -41,7 +41,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
-import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTDateTime } from "@/lib/formatters";
+import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTDateTime, matchesSimilaritySearch } from "@/lib/formatters";
 
 type SourceFilter = "all" | "inquiry" | "scraped";
 
@@ -1295,12 +1295,21 @@ export default function LeadsManager() {
     }
 
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
+      const q = searchQuery.trim();
       result = result.filter(l =>
-        l.name.toLowerCase().includes(q) ||
-        l.email.toLowerCase().includes(q) ||
-        l.company?.toLowerCase().includes(q) ||
-        l.city?.toLowerCase().includes(q)
+        matchesSimilaritySearch(q, [
+          l.name,
+          l.phone,
+          l.email,
+          l.company,
+          l.city,
+          l.category,
+          l.scraped_service,
+          l.services,
+          l.address,
+          l.website,
+          l.message
+        ])
       );
     }
 
