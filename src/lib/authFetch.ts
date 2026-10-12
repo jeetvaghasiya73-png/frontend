@@ -11,6 +11,29 @@ export const API = API_URL;
  */
 let refreshPromise: Promise<string | null> | null = null;
 
+// High-speed client memory cache for GET responses (15s fresh TTL)
+interface CachedResponse {
+  body: string;
+  status: number;
+  statusText: string;
+  headers: [string, string][];
+  timestamp: number;
+}
+
+const _apiCache = new Map<string, CachedResponse>();
+
+export function clearAuthFetchCache(pattern?: string): void {
+  if (!pattern) {
+    _apiCache.clear();
+    return;
+  }
+  for (const key of _apiCache.keys()) {
+    if (key.includes(pattern)) {
+      _apiCache.delete(key);
+    }
+  }
+}
+
 async function doRefresh(): Promise<string | null> {
   const { refreshToken } = useAuthStore.getState();
 
@@ -59,6 +82,26 @@ export async function authFetch(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
+  const method = (options.method || "GET").toUpperCase();
+
+  // Invalidate read cache on data-mutating requests (POST, PUT, DELETE, PATCH)
+  if (method !== "GET" && method !== "HEAD") {
+    _apiCache.clear();
+  }
+
+  // Fast-path memory cache for GET requests (<0.1ms instant render)
+  const isCacheable = method === "GET" && !(options.headers as any)?.["Cache-Control"];
+  if (isCacheable) {
+    const cached = _apiCache.get(url);
+    if (cached && Date.now() - cached.timestamp < 15_000) {
+      return new Response(cached.body, {
+        status: cached.status,
+        statusText: cached.statusText,
+        headers: new Headers(cached.headers),
+      });
+    }
+  }
+
   const { accessToken } = useAuthStore.getState();
 
   const headers: Record<string, string> = {
@@ -83,6 +126,19 @@ export async function authFetch(
       headers,
     });
 
+    // Populate cache on successful GET response
+    if (isCacheable && response.ok) {
+      response.clone().text().then((text) => {
+        _apiCache.set(url, {
+          body: text,
+          status: response.status,
+          statusText: response.statusText,
+          headers: Array.from(response.headers.entries()),
+          timestamp: Date.now(),
+        });
+      }).catch(() => {});
+    }
+
     // Token expired → try silent refresh + retry
     if (response.status === 401) {
       const newToken = await silentRefresh();
@@ -91,7 +147,19 @@ export async function authFetch(
         // Retry the original request with the fresh token
         headers["Authorization"] = `Bearer ${newToken}`;
         try {
-          return await fetch(url, { ...options, credentials: "include", headers });
+          const retriedResponse = await fetch(url, { ...options, credentials: "include", headers });
+          if (isCacheable && retriedResponse.ok) {
+            retriedResponse.clone().text().then((text) => {
+              _apiCache.set(url, {
+                body: text,
+                status: retriedResponse.status,
+                statusText: retriedResponse.statusText,
+                headers: Array.from(retriedResponse.headers.entries()),
+                timestamp: Date.now(),
+              });
+            }).catch(() => {});
+          }
+          return retriedResponse;
         } catch {
           return new Response(JSON.stringify({ detail: "Network error connecting to API backend." }), {
             status: 503,
