@@ -1266,7 +1266,7 @@ export default function DashboardLayout({
                     const Icon = link.icon;
                     const isActive = pathname === link.href || pathname.replace("/admin", ADMIN_PATH) === link.href || pathname.replace(ADMIN_PATH, "/admin") === link.href;
                     return (
-                      <Link key={link.name} href={link.href} onClick={() => setMobileOpen(false)} suppressHydrationWarning
+                      <Link key={link.name} href={link.href} prefetch={false} onClick={() => setMobileOpen(false)} suppressHydrationWarning
                         className={`flex items-center justify-between px-3 py-2 text-xs font-semibold transition-all duration-150 cursor-pointer ${effectiveCollapsed ? "justify-center" : ""}`}
                         style={{ borderRadius: "var(--dash-btn-radius)", background: isActive ? "var(--dash-sidebar-active)" : "transparent", color: isActive ? "var(--dash-primary)" : "var(--dash-sidebar-text)", borderLeft: isActive ? "2px solid var(--dash-primary)" : "2px solid transparent" }}
                         title={effectiveCollapsed ? link.name : undefined}
