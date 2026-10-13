@@ -171,7 +171,7 @@ export default function BlogsPage() {
                     <Link
                       href={`/blogs/${blog.slug}`}
                       key={blog.id || blog.slug}
-                      className="group flex flex-col rounded-[3px] bg-surface border border-border-custom overflow-hidden hover:border-accent-custom/60 hover:shadow-lg transition-all duration-300"
+                      className="group flex flex-col rounded-[3px] bg-surface border border-border-custom border-l-[6px] border-l-accent-custom overflow-hidden hover:border-accent-custom/80 hover:shadow-xl hover:translate-y-[-2px] transition-all duration-300"
                     >
                       {/* Thumbnail Container */}
                       <div className="aspect-[16/10] overflow-hidden bg-background relative border-b border-border-custom">

@@ -186,30 +186,40 @@ export default function BlogsManager() {
           blogs.map((blog) => (
             <div
               key={blog.id}
-              className="p-5 flex flex-col md:flex-row md:items-start justify-between gap-6 hover:bg-background/40 transition-all"
+              className="p-5 flex flex-col md:flex-row md:items-start justify-between gap-6 hover:bg-background/40 transition-all border-l-[6px] border-l-accent-custom"
             >
-              <div className="text-left space-y-2 min-w-0">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span
-                    className={`text-[9.5px] uppercase font-bold font-mono px-2 py-0.5 rounded-[2px] border ${
-                      blog.published
-                        ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                        : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                    }`}
-                  >
-                    {blog.published ? "Published" : "Draft"}
-                  </span>
-                  {blog.include_contact_form !== false && (
-                    <span className="text-[9.5px] font-mono px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20">
-                      Bottom Form On
-                    </span>
-                  )}
-                  <span className="text-[10.5px] font-mono text-secondary-custom">
-                    By {blog.author} &bull; {formatISTDate(blog.created_at)}
-                  </span>
-                </div>
+              <div className="flex items-start gap-4 min-w-0 flex-1">
+                {/* Cover Thumbnail if present */}
+                {blog.cover_image && (
+                  <div className="w-20 h-14 rounded-[2px] overflow-hidden border border-border-custom bg-background shrink-0 hidden sm:block">
+                    <img
+                      src={blog.cover_image}
+                      alt={blog.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
 
-                <h3 className="text-base sm:text-lg font-bold text-foreground">
+                <div className="text-left space-y-1.5 min-w-0 flex-1">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span
+                      className={`text-[9.5px] uppercase font-bold font-mono px-2 py-0.5 rounded-[2px] border ${
+                        blog.published
+                          ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                          : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                      }`}
+                    >
+                      {blog.published ? "Published" : "Draft"}
+                    </span>
+                    <span className="text-[9.5px] uppercase font-bold font-mono px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20">
+                      {blog.category || "ARTICLE"}
+                    </span>
+                    <span className="text-[10.5px] font-mono text-secondary-custom">
+                      By {blog.author} &bull; {formatISTDate(blog.created_at)}
+                    </span>
+                  </div>
+
+                  <h3 className="text-base sm:text-lg font-bold text-foreground">
                   <a
                     href={`/blogs/${blog.slug}`}
                     target="_blank"
@@ -237,6 +247,7 @@ export default function BlogsManager() {
                   </a>
                 </div>
               </div>
+            </div>
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2 shrink-0 self-end md:self-center">

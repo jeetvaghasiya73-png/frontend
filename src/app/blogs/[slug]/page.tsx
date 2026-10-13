@@ -88,49 +88,36 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
     };
   }, [blog?.content]);
 
-  const relatedArticles = [
-    {
-      slug: "scaling-outbound-lead-pipelines",
-      title: "Scaling Outbound Lead Pipelines with LangGraph Agents",
-      summary: "How autonomous multi-agent swarms coordinate data cleaning, validation, and zero-latency CRM uploads.",
-      tag: "AGENTS",
-      tagColor: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-      image: "/images/blogs/lead-pipeline-thumb.jpg",
-      readTime: "4 min read",
-      date: new Date().toISOString()
-    },
-    {
-      slug: "google-maps-3pack-seo",
-      title: "Enterprise SEO: Dominating Organic Google Search",
-      summary: "Automating authority signals, technical indexing, and keyword dominance for fast-growing enterprises.",
-      tag: "SEO",
-      tagColor: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-      image: "/images/blogs/seo-maps-thumb.jpg",
-      readTime: "5 min read",
-      date: new Date().toISOString()
-    },
-    {
-      slug: "shift-to-edge-computing-databases",
-      title: "The Shift to Edge-Computing Databases for AI Workflows",
-      summary: "Performance benchmarks of distributed edge SQLite and vector stores for sub-15ms AI query response times.",
-      tag: "ARCHITECTURE",
-      tagColor: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-      image: "/images/blogs/centaur-ai-worker.jpg",
-      readTime: "6 min read",
-      date: new Date().toISOString()
-    },
-    {
-      slug: "whatsapp-crm-bots",
-      title: "Building 24/7 Autonomous WhatsApp AI Bots with Evolution API",
-      summary: "Deploying high-reliability stateful WhatsApp conversational engines that qualify inbound leads in real-time.",
-      tag: "AUTOMATION",
-      tagColor: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-      image: "/images/blogs/ai-human-hero.jpg",
-      readTime: "5 min read",
-      date: new Date().toISOString()
-    }
-  ];
+  const [relatedArticles, setRelatedArticles] = useState<any[]>([]);
 
+  useEffect(() => {
+    const fetchRelated = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/v1/blogs/?limit=10`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            const others = data
+              .filter((b: any) => b.published && b.slug !== slug)
+              .map((b: any) => ({
+                slug: b.slug,
+                title: b.title,
+                summary: b.summary || "",
+                tag: b.category || "ARTICLE",
+                tagColor: "bg-accent-custom/10 text-accent-custom border-accent-custom/20",
+                image: b.cover_image || b.image || "/images/blogs/ai-human-hero.jpg",
+                readTime: b.readTime || b.read_time || "5 min read",
+                date: b.created_at || new Date().toISOString()
+              }));
+            setRelatedArticles(others);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load related blogs:", e);
+      }
+    };
+    fetchRelated();
+  }, [slug]);
 
   useEffect(() => {
     const fetchBlog = async () => {
@@ -356,6 +343,26 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
                 </div>
               )}
 
+              {/* ─── PROMINENT COVER IMAGE AT STARTING OF BLOG DETAIL PAGE ─── */}
+              {(blog.cover_image || blog.image) && (
+                <div className="mb-8 border border-border-custom bg-surface rounded-[3px] border-l-[8px] border-l-accent-custom overflow-hidden shadow-xs">
+                  <div className="relative aspect-[16/9] w-full overflow-hidden bg-background">
+                    <img
+                      src={blog.cover_image || blog.image}
+                      alt={blog.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="px-4 py-2.5 bg-surface/90 border-t border-border-custom/50 flex items-center justify-between text-[11px] font-mono text-secondary-custom">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <span className="w-2 h-2 bg-accent-custom inline-block rounded-[1px]" />
+                      <span>{blog.category || "ARTICLE"}</span>
+                    </span>
+                    <span>{blog.author || "Tech Infinix"} &bull; {blog.readTime || "5 min read"}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Article Content */}
               <div className="blog-content max-w-none text-foreground">
                 {isHtml(processedContent) ? (
@@ -424,8 +431,8 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
               </div>
 
               {/* Author Box */}
-              <div className="mt-8 p-5 rounded-[3px] bg-surface border border-border-custom shadow-xs flex items-start sm:items-center gap-4 sm:gap-5 flex-col sm:flex-row">
-                <div className="w-14 h-14 rounded-full overflow-hidden border border-border-custom dark:border-white/35 dark:ring-1 dark:ring-white/20 bg-black flex items-center justify-center shrink-0 shadow-md">
+              <div className="mt-8 p-5 rounded-[3px] bg-surface border border-border-custom border-l-[6px] border-l-accent-custom shadow-xs flex items-start sm:items-center gap-4 sm:gap-5 flex-col sm:flex-row">
+                <div className="w-14 h-14 rounded-[3px] overflow-hidden border border-border-custom dark:border-white/35 dark:ring-1 dark:ring-white/20 bg-black flex items-center justify-center shrink-0 shadow-md">
                   <Image
                     src="/favicon.png"
                     alt="Tech Infinix"
@@ -671,68 +678,70 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
         </div>
 
         {/* ═══════ BOTTOM SECTION: "Read also..." (HORIZONTAL ON MOBILE / 4-COL ON DESKTOP) ═══════ */}
-        <div id="related-articles-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 pt-14 border-t border-border-custom">
-          <div className="flex items-center justify-between mb-7">
-            <div>
-              <span className="text-[11px] font-mono text-accent-custom uppercase tracking-wider font-semibold">
-                More Insights
-              </span>
-              <h3 className="text-xl sm:text-2xl font-bold text-foreground mt-0.5 tracking-tight">
-                Read also...
-              </h3>
+        {relatedArticles.length > 0 && (
+          <div id="related-articles-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 pt-14 border-t border-border-custom">
+            <div className="flex items-center justify-between mb-7">
+              <div>
+                <span className="text-[11px] font-mono text-accent-custom uppercase tracking-wider font-semibold">
+                  More Insights
+                </span>
+                <h3 className="text-xl sm:text-2xl font-bold text-foreground mt-0.5 tracking-tight">
+                  Read also...
+                </h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[10.5px] font-mono text-secondary-custom sm:hidden">
+                  Swipe &rarr;
+                </span>
+                <Link
+                  href="/blogs"
+                  className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-secondary-custom hover:text-accent-custom transition-colors"
+                >
+                  <span>Explore all</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-[10.5px] font-mono text-secondary-custom sm:hidden">
-                Swipe &rarr;
-              </span>
-              <Link
-                href="/blogs"
-                className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-secondary-custom hover:text-accent-custom transition-colors"
-              >
-                <span>Explore all</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
 
-          {/* Responsive: HORIZONTALLY scrollable row with snap points on mobile | 4-Column Grid on desktop */}
-          <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 overflow-x-auto sm:overflow-visible pb-4 sm:pb-0 scrollbar-none snap-x snap-mandatory pl-3 sm:pl-0 pr-4 sm:pr-0">
-            {relatedArticles.map((item, idx) => (
-              <Link
-                key={idx}
-                href={`/blogs/${item.slug}`}
-                className="w-[270px] sm:w-auto shrink-0 snap-start group flex flex-col rounded-[3px] bg-surface border border-border-custom overflow-hidden hover:border-accent-custom/60 hover:shadow-md transition-all duration-300"
-              >
-                <div className="aspect-[16/10] overflow-hidden bg-background relative border-b border-border-custom">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-2.5 left-2.5">
-                    <span className={`px-2 py-0.5 rounded-[2px] text-[9.5px] font-mono font-bold border backdrop-blur-md ${item.tagColor}`}>
-                      {item.tag}
-                    </span>
+            {/* Responsive: HORIZONTALLY scrollable row with snap points on mobile | 4-Column Grid on desktop */}
+            <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 overflow-x-auto sm:overflow-visible pb-4 sm:pb-0 scrollbar-none snap-x snap-mandatory pl-3 sm:pl-0 pr-4 sm:pr-0">
+              {relatedArticles.map((item, idx) => (
+                <Link
+                  key={idx}
+                  href={`/blogs/${item.slug}`}
+                  className="w-[270px] sm:w-auto shrink-0 snap-start group flex flex-col rounded-[3px] bg-surface border border-border-custom border-l-[6px] border-l-accent-custom overflow-hidden hover:shadow-md transition-all duration-300"
+                >
+                  <div className="aspect-[16/10] overflow-hidden bg-background relative border-b border-border-custom">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-2.5 left-2.5">
+                      <span className={`px-2 py-0.5 rounded-[2px] text-[9.5px] font-mono font-bold border backdrop-blur-md ${item.tagColor}`}>
+                        {item.tag}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="p-3.5 flex-1 flex flex-col justify-between space-y-1.5">
-                  <h4 className="text-[13px] font-semibold text-foreground group-hover:text-accent-custom transition-colors line-clamp-2 leading-snug">
-                    {item.title}
-                  </h4>
-                  <p className="text-[11.5px] text-secondary-custom/90 line-clamp-2 leading-relaxed">
-                    {item.summary}
-                  </p>
-                  <div className="pt-2 flex items-center justify-between text-[10.5px] font-mono text-secondary-custom border-t border-border-custom/40">
-                    <span>{item.readTime}</span>
-                    <span className="inline-flex items-center gap-1 text-accent-custom font-semibold group-hover:translate-x-0.5 transition-transform">
-                      Read <ArrowRight className="w-3 h-3" />
-                    </span>
+                  <div className="p-3.5 flex-1 flex flex-col justify-between space-y-1.5">
+                    <h4 className="text-[13px] font-semibold text-foreground group-hover:text-accent-custom transition-colors line-clamp-2 leading-snug">
+                      {item.title}
+                    </h4>
+                    <p className="text-[11.5px] text-secondary-custom/90 line-clamp-2 leading-relaxed">
+                      {item.summary}
+                    </p>
+                    <div className="pt-2 flex items-center justify-between text-[10.5px] font-mono text-secondary-custom border-t border-border-custom/40">
+                      <span>{item.readTime}</span>
+                      <span className="inline-flex items-center gap-1 text-accent-custom font-semibold group-hover:translate-x-0.5 transition-transform">
+                        Read <ArrowRight className="w-3 h-3" />
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ═══════ REAL CONTACT COMPONENT (Integrated from /contact for API synchronization) ═══════ */}
         {blog.include_contact_form !== false && (
