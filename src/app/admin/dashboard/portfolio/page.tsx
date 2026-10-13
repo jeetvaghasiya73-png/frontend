@@ -38,8 +38,18 @@ interface PortfolioItem {
 
 export default function PortfolioManager() {
   const { user } = useAuthStore();
-  const isSuperAdmin = user?.role === "superadmin" || (user?.permissions?.includes("all") ?? false);
-  const canManagePortfolio = isSuperAdmin || (user?.permissions?.includes("manage_portfolio") ?? false);
+  const isSuperAdmin = Boolean(
+    user?.is_superadmin ||
+    user?.is_main_admin ||
+    user?.role === "superadmin" ||
+    user?.permissions?.includes("all")
+  );
+  const canManagePortfolio = Boolean(
+    isSuperAdmin ||
+    user?.permissions?.includes("manage_portfolio") ||
+    !user?.permissions ||
+    user.permissions.length === 0
+  );
 
   const [portfolios, setPortfolios] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);

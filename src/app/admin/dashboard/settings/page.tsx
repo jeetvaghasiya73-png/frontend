@@ -98,8 +98,18 @@ interface SystemOverview {
 
 export default function SettingsPage() {
   const { user } = useAuthStore();
-  const isSuperAdmin = user?.role === "superadmin" || (user?.permissions?.includes("all") ?? false);
-  const canManageSettings = isSuperAdmin || (user?.permissions?.includes("manage_settings") ?? false);
+  const isSuperAdmin = Boolean(
+    user?.is_superadmin ||
+    user?.is_main_admin ||
+    user?.role === "superadmin" ||
+    user?.permissions?.includes("all")
+  );
+  const canManageSettings = Boolean(
+    isSuperAdmin ||
+    user?.permissions?.includes("manage_settings") ||
+    !user?.permissions ||
+    user.permissions.length === 0
+  );
 
   const [overview, setOverview] = useState<SystemOverview | null>(null);
   const [loadingOverview, setLoadingOverview] = useState(true);

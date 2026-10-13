@@ -504,6 +504,7 @@ export default function DashboardLayout({
               username: userData.username,
               is_superadmin: Boolean(userData.is_superadmin),
               is_main_admin: Boolean(userData.is_main_admin),
+              role: (userData.role as string) || (userData.is_superadmin ? "superadmin" : "admin"),
               permissions: Array.isArray(userData.permissions) ? userData.permissions : []
             }
           });

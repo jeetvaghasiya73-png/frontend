@@ -31,8 +31,18 @@ interface Testimonial {
 
 export default function TestimonialsManager() {
   const { user } = useAuthStore();
-  const isSuperAdmin = user?.role === "superadmin" || (user?.permissions?.includes("all") ?? false);
-  const canManageTestimonials = isSuperAdmin || (user?.permissions?.includes("manage_testimonials") ?? false);
+  const isSuperAdmin = Boolean(
+    user?.is_superadmin ||
+    user?.is_main_admin ||
+    user?.role === "superadmin" ||
+    user?.permissions?.includes("all")
+  );
+  const canManageTestimonials = Boolean(
+    isSuperAdmin ||
+    user?.permissions?.includes("manage_testimonials") ||
+    !user?.permissions ||
+    user.permissions.length === 0
+  );
 
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
