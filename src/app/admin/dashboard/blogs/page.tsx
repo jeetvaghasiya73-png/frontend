@@ -159,11 +159,11 @@ export default function BlogsManager() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
             <span>Blog Articles & Content Engine</span>
             <span className="px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom text-[11px] font-mono font-bold border border-accent-custom/20">
-              Blank Canvas & tags.md Engine
+              Visual Document Editor
             </span>
           </h1>
           <p className="text-xs text-secondary-custom mt-1 font-mono">
-            Paste or compose raw tagged text using tags.md reference. Instant compilation with dynamic tables, stat grids, and media layouts.
+            Write, format, and publish articles visually like Microsoft Word. Clean in-place text styling with zero code exposure.
           </p>
         </div>
 
@@ -185,7 +185,7 @@ export default function BlogsManager() {
               onClick={handleCreateNew}
               className="px-4 py-2 rounded-[2px] bg-accent-custom/10 text-accent-custom border border-accent-custom/20 font-semibold hover:bg-accent-custom/20 transition-colors cursor-pointer"
             >
-              Launch Blank Canvas Editor
+              Launch Document Editor
             </button>
           </div>
         ) : (

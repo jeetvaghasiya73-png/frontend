@@ -1,45 +1,46 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
-  FileText,
-  Eye,
-  Check,
-  Upload,
-  Copy,
-  Plus,
-  Heading,
-  Heading1,
-  Heading2,
-  Heading3,
   Bold,
   Italic,
   Underline,
   Strikethrough,
+  Heading1,
+  Heading2,
+  Heading3,
   List,
   ListOrdered,
   Quote,
-  Sparkles,
-  Link as LinkIcon,
+  Table as TableIcon,
   Image as ImageIcon,
-  Columns,
-  Code,
+  Link as LinkIcon,
   Minus,
-  LayoutGrid,
-  Smartphone,
-  Monitor,
+  Sparkles,
+  Undo2,
+  Redo2,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Upload,
+  Check,
   X,
   ExternalLink,
-  BookOpen,
-  ArrowRight,
-  Trash2,
+  Eye,
+  Edit3,
   Save,
-  CheckCircle2
+  CheckCircle2,
+  Loader2,
+  FolderGit2,
+  Calendar,
+  Clock,
+  Layers,
+  Eraser
 } from "lucide-react";
 import { API, authFetch } from "@/lib/authFetch";
-import { slugify, parseTaggedBlog } from "@/lib/blogTagParser";
+import { slugify } from "@/lib/blogTagParser";
 
-interface BlankCanvasBlogEditorProps {
+interface WordStyleBlogEditorProps {
   initialBlog?: any;
   onSave: (payload: any) => Promise<void>;
   onCancel: () => void;
@@ -49,7 +50,7 @@ export default function BlankCanvasBlogEditor({
   initialBlog,
   onSave,
   onCancel
-}: BlankCanvasBlogEditorProps) {
+}: WordStyleBlogEditorProps) {
   // ─── METADATA FIELDS ───
   const [title, setTitle] = useState(initialBlog?.title || "");
   const [slug, setSlug] = useState(initialBlog?.slug || "");
@@ -59,970 +60,841 @@ export default function BlankCanvasBlogEditor({
   const [readTime, setReadTime] = useState(initialBlog?.readTime || initialBlog?.read_time || "5 min read");
   const [summary, setSummary] = useState(initialBlog?.summary || "");
   const [coverImage, setCoverImage] = useState(initialBlog?.cover_image || initialBlog?.image || "");
-  const [includeForm, setIncludeForm] = useState(initialBlog?.include_contact_form !== false);
   const [published, setPublished] = useState(initialBlog?.published || false);
+  const [includeForm, setIncludeForm] = useState(initialBlog?.include_contact_form !== false);
 
-  // ─── CONTENT STATE ───
-  const [content, setContent] = useState("");
-  const [viewMode, setViewMode] = useState<"editor" | "split" | "preview">("split");
-  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
+  // ─── EDITOR STATE ───
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [saving, setSaving] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
-  const [uploadingBodyImg, setUploadingBodyImg] = useState(false);
+  const [wordCount, setWordCount] = useState(0);
 
-  // Modals
+  // ─── MODALS ───
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("https://");
   const [linkText, setLinkText] = useState("");
-  const [linkNewTab, setLinkNewTab] = useState(true);
+  const [savedRange, setSavedRange] = useState<Range | null>(null);
 
   const [imageModalOpen, setImageModalOpen] = useState(false);
-  const [imgSrc, setImgSrc] = useState("");
+  const [imgUrl, setImgUrl] = useState("");
   const [imgAlt, setImgAlt] = useState("");
   const [imgCaption, setImgCaption] = useState("");
+  const [uploadingInlineImg, setUploadingInlineImg] = useState(false);
 
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const editorRef = useRef<HTMLDivElement | null>(null);
 
-  // Load initialBlog or start completely fresh with clean empty fields
-  useEffect(() => {
-    if (initialBlog) {
-      setTitle(initialBlog.title || "");
-      setSlug(initialBlog.slug || "");
-      setSlugManuallyEdited(true);
-      setCategory(initialBlog.category || "AI & AUTOMATION");
-      setAuthor(initialBlog.author || "Tech Infinix Research Team");
-      setReadTime(initialBlog.readTime || initialBlog.read_time || "5 min read");
-      setSummary(initialBlog.summary || "");
-      setCoverImage(initialBlog.cover_image || initialBlog.image || "");
-      setIncludeForm(initialBlog.include_contact_form !== false);
-      setPublished(initialBlog.published || false);
-
-      // Clean HTML or tags
-      let rawContent = initialBlog.content || "";
-      const sourceMatch = rawContent.match(/<!--\s*TECH_INFINIX_TAGGED_SOURCE_START\s*\n([\s\S]*?)\n\s*TECH_INFINIX_TAGGED_SOURCE_END\s*-->/);
-      if (sourceMatch) {
-        rawContent = sourceMatch[1].trim();
-      } else {
-        rawContent = rawContent.replace(/<!--[\s\S]*?-->/g, "").trim();
-      }
-      setContent(rawContent);
-    } else {
-      // Start completely clean - NO hardcoded demo blogs!
-      setTitle("");
-      setSlug("");
-      setSlugManuallyEdited(false);
-      setCategory("AI & AUTOMATION");
-      setAuthor("Tech Infinix Research Team");
-      setReadTime("5 min read");
-      setSummary("");
-      setCoverImage("");
-      setIncludeForm(true);
-      setPublished(false);
-      setContent("");
-    }
-  }, [initialBlog]);
-
-  // Auto-slugify when title changes (unless user manually customized slug)
-  const handleTitleChange = (newTitle: string) => {
-    setTitle(newTitle);
+  // ─── AUTO GENERATE SLUG ───
+  const handleTitleChange = (val: string) => {
+    setTitle(val);
     if (!slugManuallyEdited) {
-      setSlug(slugify(newTitle));
+      setSlug(slugify(val));
     }
   };
 
-  // Word count & read time helper
-  const wordCount = useMemo(() => {
-    const textOnly = content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-    return textOnly ? textOnly.split(" ").length : 0;
-  }, [content]);
-
-  const handleAutoCalculateReadTime = () => {
-    const minutes = Math.max(1, Math.ceil(wordCount / 200));
+  // ─── UPDATE WORD COUNT & READ TIME ───
+  const calculateStats = () => {
+    if (!editorRef.current) return;
+    const text = editorRef.current.innerText || "";
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    setWordCount(words);
+    const minutes = Math.max(1, Math.ceil(words / 200));
     setReadTime(`${minutes} min read`);
   };
 
-  // ─── SELECTION FORMATTING TOOLBAR HELPERS ───
-  const applyFormatting = (before: string, after: string = "", defaultText: string = "") => {
-    if (!textareaRef.current) return;
-    const textarea = textareaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const current = textarea.value;
-    const selected = current.substring(start, end);
-
-    const replacement = selected ? `${before}${selected}${after}` : `${before}${defaultText}${after}`;
-    const updated = current.substring(0, start) + replacement + current.substring(end);
-    setContent(updated);
-
-    setTimeout(() => {
-      textarea.focus();
-      const newCursor = start + replacement.length;
-      textarea.setSelectionRange(newCursor, newCursor);
-    }, 10);
-  };
-
-  const handleFormatBold = () => applyFormatting("<strong>", "</strong>", "bold text");
-  const handleFormatItalic = () => applyFormatting("<em>", "</em>", "italic text");
-  const handleFormatUnderline = () => applyFormatting("<u>", "</u>", "underlined text");
-  const handleFormatStrike = () => applyFormatting("<s>", "</s>", "strikethrough text");
-
-  const handleFormatHeading = (level: 1 | 2 | 3) => {
-    if (!textareaRef.current) return;
-    const textarea = textareaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const current = textarea.value;
-    const selected = current.substring(start, end) || `Section Heading ${level}`;
-
-    let tag = `h${level}`;
-    let classes = "";
-    if (level === 1) classes = "text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground my-5";
-    if (level === 2) classes = "text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-8 mb-3 pt-3 border-b border-border-custom/50";
-    if (level === 3) classes = "text-lg font-semibold text-foreground mt-6 mb-2";
-
-    const snippet = `\n<${tag} class="${classes}">${selected}</${tag}>\n`;
-    const updated = current.substring(0, start) + snippet + current.substring(end);
-    setContent(updated);
-  };
-
-  const handleFormatQuote = () => {
-    applyFormatting(
-      '\n<blockquote class="border-l-[6px] border-accent-custom pl-4 py-2 my-4 italic text-foreground/90 bg-surface/40 rounded-r-[2px]">\n',
-      "\n</blockquote>\n",
-      "Insert quote here..."
-    );
-  };
-
-  const handleFormatCallout = () => {
-    applyFormatting(
-      '\n<div class="border border-border-custom border-l-[8px] border-l-accent-custom bg-surface p-5 my-6 rounded-[3px] shadow-xs">\n  <div class="font-bold text-accent-custom text-xs uppercase mb-1.5 flex items-center gap-1.5">\n    <span class="w-2 h-2 bg-accent-custom inline-block rounded-[1px]"></span>Key Takeaway\n  </div>\n  <p class="text-sm text-foreground/90 leading-relaxed">',
-      "</p>\n</div>\n",
-      "Highlight critical finding, strategy insight, or executive summary point here."
-    );
-  };
-
-  const handleFormatBulletList = () => {
-    if (!textareaRef.current) return;
-    const textarea = textareaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const current = textarea.value;
-    const selected = current.substring(start, end);
-
-    if (selected) {
-      const items = selected.split("\n").filter(Boolean).map(l => `  <li>${l.replace(/^[-*•]\s*/, "")}</li>`).join("\n");
-      const listSnippet = `\n<ul class="list-disc pl-6 space-y-1.5 my-4 text-foreground/90">\n${items}\n</ul>\n`;
-      const updated = current.substring(0, start) + listSnippet + current.substring(end);
-      setContent(updated);
-    } else {
-      applyFormatting('\n<ul class="list-disc pl-6 space-y-1.5 my-4 text-foreground/90">\n  <li>First point</li>\n  <li>Second point</li>\n  <li>Third point</li>\n</ul>\n');
+  // ─── LOAD INITIAL CONTENT (CLEAN HTML INTO VISUAL WORD CANVAS) ───
+  useEffect(() => {
+    if (editorRef.current) {
+      if (initialBlog?.content) {
+        let clean = initialBlog.content;
+        // Strip legacy comment wrappers if any exist
+        clean = clean.replace(/<!--[\s\S]*?-->/g, "").trim();
+        editorRef.current.innerHTML = clean;
+      } else {
+        editorRef.current.innerHTML = "<p>Start typing or paste your content here...</p>";
+      }
+      calculateStats();
     }
+  }, [initialBlog]);
+
+  // ─── WORD-STYLE FORMATTING COMMANDS ───
+  // Note: onMouseDown with e.preventDefault() prevents losing the selection range!
+  const execCmd = (command: string, value: string | undefined = undefined) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand(command, false, value);
+    calculateStats();
   };
 
-  const handleFormatNumberList = () => {
-    if (!textareaRef.current) return;
-    const textarea = textareaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const current = textarea.value;
-    const selected = current.substring(start, end);
+  const handleFormatBlock = (tag: string) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand("formatBlock", false, tag);
+    calculateStats();
+  };
 
-    if (selected) {
-      const items = selected.split("\n").filter(Boolean).map(l => `  <li>${l.replace(/^\d+[\.\)]\s*/, "")}</li>`).join("\n");
-      const listSnippet = `\n<ol class="list-decimal pl-6 space-y-1.5 my-4 text-foreground/90">\n${items}\n</ol>\n`;
-      const updated = current.substring(0, start) + listSnippet + current.substring(end);
-      setContent(updated);
+  // ─── INSERT RICH COMPONENTS DIRECTLY INTO WORD CANVAS ───
+  const insertHtmlAtCursor = (html: string) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const el = document.createElement("div");
+      el.innerHTML = html;
+      const frag = document.createDocumentFragment();
+      let node: ChildNode | null;
+      let lastNode: ChildNode | null = null;
+      while ((node = el.firstChild)) {
+        lastNode = frag.appendChild(node);
+      }
+      range.insertNode(frag);
+      if (lastNode) {
+        const nextRange = range.cloneRange();
+        nextRange.setStartAfter(lastNode);
+        nextRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(nextRange);
+      }
     } else {
-      applyFormatting('\n<ol class="list-decimal pl-6 space-y-1.5 my-4 text-foreground/90">\n  <li>Step one</li>\n  <li>Step two</li>\n  <li>Step three</li>\n</ol>\n');
+      editorRef.current.innerHTML += html;
     }
+    calculateStats();
   };
 
-  const handleFormatCodeBlock = () => {
-    applyFormatting(
-      '\n<pre class="bg-black/95 border border-border-custom p-4 rounded-[2px] font-mono text-xs text-emerald-400 overflow-x-auto my-4"><code>',
-      "</code></pre>\n",
-      "// write code or configuration here"
-    );
+  const insertQuote = () => {
+    const quoteHtml = `
+      <blockquote class="my-6 border-l-[6px] border-l-accent-custom bg-surface/80 p-5 rounded-[2px] italic text-foreground text-sm shadow-xs">
+        "Enter your quote or key takeaway message here..."
+      </blockquote>
+      <p><br></p>
+    `;
+    insertHtmlAtCursor(quoteHtml);
   };
 
-  const handleFormatDivider = () => {
-    applyFormatting("\n<hr class=\"my-8 border-border-custom\" />\n");
+  const insertCalloutBox = () => {
+    const calloutHtml = `
+      <div class="my-6 border border-border-custom border-l-[6px] border-l-accent-custom bg-accent-custom/5 p-5 rounded-[2px]">
+        <div class="flex items-center gap-2 mb-1.5 text-accent-custom font-bold text-xs uppercase tracking-wider font-mono">
+          <span>Key Insight</span>
+        </div>
+        <p class="text-xs text-foreground/90 m-0">Highlight an important actionable point, enterprise benefit, or strategic advice here.</p>
+      </div>
+      <p><br></p>
+    `;
+    insertHtmlAtCursor(calloutHtml);
   };
 
-  const handleFormatStatsGrid = () => {
-    applyFormatting(
-      '\n<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">\n' +
-      '  <div class="p-4 bg-surface border border-border-custom border-l-[6px] border-l-accent-custom rounded-[2px] text-center">\n' +
-      '    <div class="text-2xl font-black text-accent-custom font-mono">99.8%</div>\n' +
-      '    <div class="text-xs font-mono text-secondary-custom mt-1">Accuracy Score</div>\n' +
-      '  </div>\n' +
-      '  <div class="p-4 bg-surface border border-border-custom border-l-[6px] border-l-accent-custom rounded-[2px] text-center">\n' +
-      '    <div class="text-2xl font-black text-accent-custom font-mono">&lt;3s</div>\n' +
-      '    <div class="text-xs font-mono text-secondary-custom mt-1">Response Latency</div>\n' +
-      '  </div>\n' +
-      '  <div class="p-4 bg-surface border border-border-custom border-l-[6px] border-l-accent-custom rounded-[2px] text-center">\n' +
-      '    <div class="text-2xl font-black text-accent-custom font-mono">10x</div>\n' +
-      '    <div class="text-xs font-mono text-secondary-custom mt-1">Qualification ROI</div>\n' +
-      '  </div>\n' +
-      '</div>\n'
-    );
+  const insertTable = () => {
+    const tableHtml = `
+      <div class="my-6 overflow-x-auto border border-border-custom rounded-[2px]">
+        <table class="w-full border-collapse text-xs text-left">
+          <thead>
+            <tr class="bg-surface border-b border-border-custom">
+              <th class="p-3 font-bold border-r border-border-custom text-foreground">Dimension / Feature</th>
+              <th class="p-3 font-bold border-r border-border-custom text-foreground">Standard Approach</th>
+              <th class="p-3 font-bold text-accent-custom">Automated Solution</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-border-custom/40">
+              <td class="p-3 border-r border-border-custom text-foreground/90">Lead Response Time</td>
+              <td class="p-3 border-r border-border-custom text-secondary-custom">4 to 12 Hours (Manual)</td>
+              <td class="p-3 text-emerald-500 font-semibold">&lt; 30 Seconds Instant AI Hand-off</td>
+            </tr>
+            <tr class="border-b border-border-custom/40">
+              <td class="p-3 border-r border-border-custom text-foreground/90">Follow-up Consistency</td>
+              <td class="p-3 border-r border-border-custom text-secondary-custom">Often Forgotten</td>
+              <td class="p-3 text-emerald-500 font-semibold">100% Guaranteed 7-Touch Automation</td>
+            </tr>
+            <tr>
+              <td class="p-3 border-r border-border-custom text-foreground/90">Pipeline Conversion Rate</td>
+              <td class="p-3 border-r border-border-custom text-secondary-custom">Baseline (2 - 4%)</td>
+              <td class="p-3 text-emerald-500 font-semibold">3.8x Lift with Smart Routing</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p><br></p>
+    `;
+    insertHtmlAtCursor(tableHtml);
   };
 
-  // Submit Link modal
-  const handleInsertLink = () => {
-    if (!linkUrl) return;
-    const target = linkNewTab ? ' target="_blank" rel="noopener noreferrer"' : "";
-    const displayText = linkText || linkUrl;
-    applyFormatting(`<a href="${linkUrl}"${target} class="text-accent-custom underline font-semibold hover:opacity-80">`, "</a>", displayText);
+  const insertHorizontalRule = () => {
+    insertHtmlAtCursor(`<hr class="my-8 border-border-custom/60" /><p><br></p>`);
+  };
+
+  // ─── LINK MODAL HANDLER ───
+  const openLinkModal = () => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      setSavedRange(sel.getRangeAt(0));
+      setLinkText(sel.toString());
+    }
+    setLinkModalOpen(true);
+  };
+
+  const applyLink = () => {
+    if (!linkUrl) {
+      setLinkModalOpen(false);
+      return;
+    }
+    if (savedRange && editorRef.current) {
+      editorRef.current.focus();
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(savedRange);
+
+      const text = linkText.trim() || linkUrl;
+      const linkHtml = `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="text-accent-custom underline font-medium hover:opacity-80">${text}</a>`;
+      insertHtmlAtCursor(linkHtml);
+    }
     setLinkModalOpen(false);
     setLinkUrl("https://");
     setLinkText("");
+    setSavedRange(null);
   };
 
-  // Submit Image Modal
-  const handleInsertImage = () => {
-    if (!imgSrc) return;
-    const figureHtml =
-      `\n<figure class="my-6 border border-border-custom bg-surface rounded-[3px] border-l-[6px] border-l-accent-custom overflow-hidden">\n` +
-      `  <img src="${imgSrc}" alt="${imgAlt || title}" class="w-full h-auto object-cover" />\n` +
-      (imgCaption ? `  <figcaption class="p-2.5 bg-surface/90 text-xs font-mono text-secondary-custom text-center border-t border-border-custom/50">${imgCaption}</figcaption>\n` : "") +
-      `</figure>\n`;
-    applyFormatting(figureHtml);
-    setImageModalOpen(false);
-    setImgSrc("");
-    setImgAlt("");
-    setImgCaption("");
-  };
-
-  // Upload Image file to backend endpoint
-  const handleUploadFile = async (file: File, target: "cover" | "body") => {
-    const isCover = target === "cover";
-    if (isCover) setUploadingCover(true);
-    else setUploadingBodyImg(true);
-
+  // ─── INLINE IMAGE MODAL & UPLOAD ───
+  const handleInlineImageUpload = async (file: File) => {
+    setUploadingInlineImg(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
-
       const res = await authFetch(`${API}/api/v1/blogs/upload-image`, {
         method: "POST",
         body: formData
       });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        alert(err.detail || "Image upload failed");
-        return;
-      }
-
-      const data = await res.json();
-      if (isCover) {
-        setCoverImage(data.url);
+      if (res.ok) {
+        const data = await res.json();
+        const uploadedUrl = data.url || data.image_url;
+        setImgUrl(uploadedUrl);
       } else {
-        setImgSrc(data.url);
-        const filenameClean = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
-        setImgAlt(filenameClean);
+        alert("Image upload failed. Please try again or paste image URL.");
       }
-    } catch (err: any) {
-      console.error(err);
-      alert("Failed to upload image: " + err.message);
+    } catch (e: any) {
+      alert("Upload failed: " + e.message);
     } finally {
-      if (isCover) setUploadingCover(false);
-      else setUploadingBodyImg(false);
+      setUploadingInlineImg(false);
     }
   };
 
-  // Compile raw content into clean semantic HTML
-  const compiledContent = useMemo(() => {
-    if (!content.trim()) return "";
+  const applyInlineImage = () => {
+    if (!imgUrl) return;
+    const figureHtml = `
+      <figure class="my-8 text-center">
+        <img src="${imgUrl}" alt="${imgAlt || title}" class="w-full max-h-[480px] object-cover rounded-[3px] border border-border-custom shadow-xs" />
+        ${imgCaption ? `<figcaption class="text-xs text-secondary-custom font-mono mt-2 italic">${imgCaption}</figcaption>` : ""}
+      </figure>
+      <p><br></p>
+    `;
+    insertHtmlAtCursor(figureHtml);
+    setImageModalOpen(false);
+    setImgUrl("");
+    setImgAlt("");
+    setImgCaption("");
+  };
 
-    // If content contains legacy tags, let parseTaggedBlog compile them cleanly
-    if (content.includes("[SECTION") || content.includes("[HIGHLIGHT") || content.includes("[STAT_GRID") || content.includes("[TABLE]")) {
-      const parsed = parseTaggedBlog(content);
-      return parsed.compiledHtml;
+  // ─── COVER IMAGE UPLOADER ───
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingCover(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await authFetch(`${API}/api/v1/blogs/upload-image`, {
+        method: "POST",
+        body: formData
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCoverImage(data.url || data.image_url);
+      } else {
+        alert("Cover upload failed. Please try again or use direct URL.");
+      }
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  // ─── FINAL SAVE HANDLER ───
+  const handleSave = async () => {
+    if (!title.trim()) {
+      alert("Please provide an article title.");
+      return;
+    }
+    const finalSlug = slug.trim() || slugify(title);
+    if (!finalSlug) {
+      alert("Please provide a URL slug for the article.");
+      return;
     }
 
-    // Process raw paragraphs if plain text was pasted
-    const blocks = content.split(/\n\s*\n/);
-    const htmlBlocks = blocks.map((b) => {
-      const trimmed = b.trim();
-      if (!trimmed) return "";
-      // If block is already an HTML tag (<h1, <h2, <p, <div, <blockquote, <figure, <ul, <ol, <pre, <table, <hr), preserve it directly
-      if (/^<(h[1-6]|p|div|blockquote|figure|ul|ol|pre|table|hr|section)/i.test(trimmed)) {
-        return trimmed;
-      }
-      return `<p class="my-4 text-sm sm:text-base text-foreground/90 leading-relaxed">${trimmed.replace(/\n/g, "<br />")}</p>`;
-    });
-
-    return htmlBlocks.filter(Boolean).join("\n\n");
-  }, [content]);
-
-  // Save Blog Handler
-  const handleSave = async (isPublishing: boolean) => {
-    if (!title.trim()) {
-      alert("Please provide a Title for the blog article.");
+    const htmlContent = editorRef.current ? editorRef.current.innerHTML.trim() : "";
+    if (!htmlContent || htmlContent === "<p><br></p>") {
+      alert("Article content cannot be empty.");
       return;
     }
 
     setSaving(true);
     try {
-      const finalSlug = slug.trim() || slugify(title);
       const payload = {
         title: title.trim(),
         slug: finalSlug,
-        category: category.trim() || "TECH & ENGINEERING",
-        readTime: readTime.trim() || "5 min read",
+        category: category.trim() || "AI & AUTOMATION",
         author: author.trim() || "Tech Infinix Research Team",
+        readTime: readTime || "5 min read",
         summary: summary.trim(),
         cover_image: coverImage.trim() || null,
-        content: compiledContent,
-        published: isPublishing,
-        seo_title: title.trim(),
-        seo_description: summary.trim() || title.trim(),
-        include_contact_form: includeForm
+        image: coverImage.trim() || null,
+        published: published,
+        include_contact_form: includeForm,
+        content: htmlContent
       };
-
       await onSave(payload);
-    } catch (err: any) {
-      console.error(err);
-      alert("Error saving blog: " + err.message);
+    } catch (e: any) {
+      alert("Save failed: " + e.message);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
-      {/* ═══════ TOP COMMAND HEADER ═══════ */}
-      <header className="sticky top-0 z-40 bg-surface/90 backdrop-blur-md border-b border-border-custom px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-[2px] bg-accent-custom/10 border border-accent-custom/30 flex items-center justify-center shrink-0">
-            <FileText className="w-4 h-4 text-accent-custom" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-sm font-bold text-foreground truncate">
-              {title ? title : "New Blog Article"}
-            </h1>
-            <span className="text-[10px] font-mono text-secondary-custom block truncate">
-              {slug ? `/blogs/${slug}` : "Draft article"}
-            </span>
-          </div>
-        </div>
-
-        {/* View Switcher & Action Buttons */}
-        <div className="flex items-center gap-2">
-          {/* View Mode Pills (Thin border radius) */}
-          <div className="hidden sm:flex items-center bg-background border border-border-custom rounded-[2px] p-0.5">
+    <div className="fixed inset-0 z-50 bg-background text-foreground flex flex-col overflow-hidden font-sans">
+      
+      {/* ═══════════════════════════════════════════════════════════════
+          WORD-STYLE TOP COMMAND RIBBON
+          ═══════════════════════════════════════════════════════════════ */}
+      <header className="bg-surface border-b border-border-custom shrink-0 z-30 shadow-xs">
+        
+        {/* Top Header Row: Title, Article Status, Exit & Save */}
+        <div className="px-4 py-2.5 flex items-center justify-between gap-4 border-b border-border-custom/60 flex-wrap">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <button
-              onClick={() => setViewMode("editor")}
-              className={`px-3 py-1 text-xs font-mono font-medium rounded-[2px] transition-colors ${
-                viewMode === "editor" ? "bg-accent-custom text-white" : "text-secondary-custom hover:text-foreground"
-              }`}
+              onClick={onCancel}
+              className="px-2.5 py-1.5 rounded-[2px] border border-border-custom text-xs font-mono text-secondary-custom hover:text-foreground hover:bg-background transition-all"
+              title="Close editor and discard changes"
             >
-              Editor
+              &larr; Exit
             </button>
-            <button
-              onClick={() => setViewMode("split")}
-              className={`px-3 py-1 text-xs font-mono font-medium rounded-[2px] transition-colors ${
-                viewMode === "split" ? "bg-accent-custom text-white" : "text-secondary-custom hover:text-foreground"
-              }`}
-            >
-              Split View
-            </button>
-            <button
-              onClick={() => setViewMode("preview")}
-              className={`px-3 py-1 text-xs font-mono font-medium rounded-[2px] transition-colors ${
-                viewMode === "preview" ? "bg-accent-custom text-white" : "text-secondary-custom hover:text-foreground"
-              }`}
-            >
-              Preview
-            </button>
-          </div>
-
-          {/* Cancel */}
-          <button
-            onClick={onCancel}
-            disabled={saving}
-            className="px-3 py-1.5 rounded-[2px] text-xs font-mono border border-border-custom text-secondary-custom hover:text-foreground hover:bg-surface transition-colors cursor-pointer"
-          >
-            Cancel
-          </button>
-
-          {/* Save Draft */}
-          <button
-            onClick={() => handleSave(false)}
-            disabled={saving}
-            className="px-3 py-1.5 rounded-[2px] text-xs font-mono font-semibold bg-surface border border-border-custom hover:border-accent-custom text-foreground transition-colors cursor-pointer"
-          >
-            {saving ? "Saving..." : "Save Draft"}
-          </button>
-
-          {/* Save & Publish */}
-          <button
-            onClick={() => handleSave(true)}
-            disabled={saving}
-            className="px-4 py-1.5 rounded-[2px] text-xs font-mono font-bold bg-accent-custom text-white hover:opacity-95 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <Save className="w-3.5 h-3.5" />
-            <span>{saving ? "Publishing..." : "Publish Article"}</span>
-          </button>
-        </div>
-      </header>
-
-      {/* ═══════ METADATA BAR (Architectural & Human-Focused) ═══════ */}
-      <section className="bg-surface/50 border-b border-border-custom px-4 sm:px-6 py-4">
-        <div className="max-w-7xl mx-auto space-y-4">
-          
-          {/* Row 1: Title & Slug */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            <div className="lg:col-span-8 space-y-1">
-              <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-secondary-custom flex items-center gap-1.5">
-                <span>Article Title</span>
-                <span className="text-accent-custom">*</span>
-              </label>
+            
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               <input
                 type="text"
-                placeholder="e.g. How Autonomous AI Agents Are Redefining Modern Enterprise Workflows"
                 value={title}
                 onChange={(e) => handleTitleChange(e.target.value)}
-                className="w-full bg-background border border-border-custom rounded-[2px] px-3.5 py-2 text-sm sm:text-base font-semibold text-foreground placeholder:text-secondary-custom/60 focus:outline-none focus:border-accent-custom transition-colors"
+                placeholder="Article Document Title (e.g. How Autonomous AI Agents Work)..."
+                className="bg-transparent text-sm sm:text-base font-bold text-foreground placeholder:text-secondary-custom/50 focus:outline-none w-full border-b border-transparent focus:border-accent-custom transition-all"
               />
-            </div>
-
-            <div className="lg:col-span-4 space-y-1">
-              <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-secondary-custom">
-                URL Slug
-              </label>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-secondary-custom hidden sm:inline">/blogs/</span>
-                <input
-                  type="text"
-                  placeholder="autonomous-ai-agents"
-                  value={slug}
-                  onChange={(e) => {
-                    setSlug(e.target.value);
-                    setSlugManuallyEdited(true);
-                  }}
-                  className="w-full bg-background border border-border-custom rounded-[2px] px-3 py-2 text-xs font-mono text-foreground placeholder:text-secondary-custom/60 focus:outline-none focus:border-accent-custom transition-colors"
-                />
-              </div>
+              <span className="text-[10px] font-mono text-secondary-custom whitespace-nowrap hidden md:inline-block bg-background px-2 py-0.5 rounded-[2px] border border-border-custom">
+                /blogs/{slug || "slug-preview"}
+              </span>
             </div>
           </div>
 
-          {/* Row 2: Category, Author, Read Time, Cover Image */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Category */}
-            <div className="space-y-1">
-              <label className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-secondary-custom">
-                Category
-              </label>
-              <input
-                type="text"
-                placeholder="AI & AUTOMATION"
-                value={category}
-                onChange={(e) => setCategory(e.target.value.toUpperCase())}
-                className="w-full bg-background border border-border-custom rounded-[2px] px-3 py-1.5 text-xs font-mono font-bold text-accent-custom placeholder:text-secondary-custom/60 focus:outline-none focus:border-accent-custom transition-colors"
-              />
-            </div>
+          <div className="flex items-center gap-2.5 shrink-0">
+            {/* Metadata Settings Drawer Toggle */}
+            <button
+              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+              className={`px-3 py-1.5 rounded-[2px] border text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer ${
+                isSettingsOpen
+                  ? "bg-accent-custom/10 border-accent-custom text-accent-custom font-semibold"
+                  : "border-border-custom text-secondary-custom hover:text-foreground hover:bg-background"
+              }`}
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Document Meta</span>
+            </button>
 
-            {/* Author */}
-            <div className="space-y-1">
-              <label className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-secondary-custom">
-                Author
-              </label>
-              <input
-                type="text"
-                placeholder="Tech Infinix Research Team"
-                value={author}
-                onChange={(e) => setAuthor(e.target.value)}
-                className="w-full bg-background border border-border-custom rounded-[2px] px-3 py-1.5 text-xs font-medium text-foreground placeholder:text-secondary-custom/60 focus:outline-none focus:border-accent-custom transition-colors"
-              />
-            </div>
-
-            {/* Reading Time */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-secondary-custom">
-                  Reading Time
-                </label>
-                <button
-                  type="button"
-                  onClick={handleAutoCalculateReadTime}
-                  className="text-[9px] font-mono text-accent-custom hover:underline cursor-pointer"
-                >
-                  Auto ({wordCount} words)
-                </button>
-              </div>
-              <input
-                type="text"
-                placeholder="5 min read"
-                value={readTime}
-                onChange={(e) => setReadTime(e.target.value)}
-                className="w-full bg-background border border-border-custom rounded-[2px] px-3 py-1.5 text-xs font-mono text-foreground placeholder:text-secondary-custom/60 focus:outline-none focus:border-accent-custom transition-colors"
-              />
-            </div>
-
-            {/* Form Toggle & Status */}
-            <div className="space-y-1">
-              <label className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-secondary-custom">
-                Consultation Form & Status
-              </label>
-              <div className="flex items-center gap-3 pt-1">
-                <label className="flex items-center gap-1.5 text-xs font-mono text-foreground cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={includeForm}
-                    onChange={(e) => setIncludeForm(e.target.checked)}
-                    className="accent-accent-custom rounded-[1px]"
-                  />
-                  <span>Show Form</span>
-                </label>
-                <label className="flex items-center gap-1.5 text-xs font-mono text-foreground cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={published}
-                    onChange={(e) => setPublished(e.target.checked)}
-                    className="accent-accent-custom rounded-[1px]"
-                  />
-                  <span className={published ? "text-emerald-500 font-bold" : "text-secondary-custom"}>
-                    {published ? "Live / Published" : "Draft"}
-                  </span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Row 3: Cover Image Uploader + Summary */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 pt-1 border-t border-border-custom/40">
-            {/* Cover Image */}
-            <div className="lg:col-span-5 space-y-2">
-              <label className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-secondary-custom flex items-center justify-between">
-                <span>Article Cover Image</span>
-                {coverImage && (
-                  <button
-                    onClick={() => setCoverImage("")}
-                    className="text-[9.5px] text-red-400 hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <Trash2 className="w-3 h-3" /> Remove
-                  </button>
-                )}
-              </label>
-
-              {/* Cover Preview / Upload Area (Strict 5-10px border & thin radius) */}
-              <div className="border border-border-custom border-l-[6px] border-l-accent-custom bg-background rounded-[3px] p-3 flex items-center gap-3">
-                {coverImage ? (
-                  <div className="w-20 h-14 rounded-[2px] overflow-hidden border border-border-custom shrink-0 bg-surface">
-                    <img src={coverImage} alt="Cover Preview" className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <div className="w-20 h-14 rounded-[2px] border border-dashed border-border-custom shrink-0 flex items-center justify-center bg-surface/30">
-                    <ImageIcon className="w-5 h-5 text-secondary-custom/50" />
-                  </div>
-                )}
-
-                <div className="flex-1 min-w-0 space-y-1.5">
-                  <input
-                    type="text"
-                    placeholder="Paste image URL (or upload below)"
-                    value={coverImage}
-                    onChange={(e) => setCoverImage(e.target.value)}
-                    className="w-full bg-surface border border-border-custom rounded-[2px] px-2.5 py-1 text-xs text-foreground placeholder:text-secondary-custom/50 focus:outline-none focus:border-accent-custom"
-                  />
-                  <label className="inline-flex items-center gap-1.5 px-3 py-1 bg-surface border border-border-custom hover:border-accent-custom rounded-[2px] text-[10.5px] font-mono font-medium text-foreground cursor-pointer transition-colors">
-                    <Upload className="w-3 h-3 text-accent-custom" />
-                    <span>{uploadingCover ? "Uploading..." : "Upload Cover Image File"}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          handleUploadFile(e.target.files[0], "cover");
-                        }
-                      }}
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Summary / Excerpt */}
-            <div className="lg:col-span-7 space-y-1">
-              <label className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-secondary-custom">
-                Article Summary / Executive Brief
-              </label>
-              <textarea
-                rows={3}
-                placeholder="1 to 2 sentence summary describing the core technical insight or business outcome..."
-                value={summary}
-                onChange={(e) => setSummary(e.target.value)}
-                className="w-full bg-background border border-border-custom rounded-[2px] px-3.5 py-2 text-xs text-foreground placeholder:text-secondary-custom/60 focus:outline-none focus:border-accent-custom transition-colors resize-none"
-              />
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ═══════ VISUAL FORMATTING TOOLBAR (Sticky & Ergonomic) ═══════ */}
-      <nav className="sticky top-[57px] z-30 bg-surface/95 backdrop-blur-md border-b border-border-custom px-4 sm:px-6 py-2">
-        <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2">
-          
-          <div className="flex items-center gap-1 flex-wrap">
-            {/* Inline Text Styles */}
-            <div className="flex items-center bg-background border border-border-custom rounded-[2px] p-0.5">
+            {/* Mode Switch (Word Canvas vs Live View) */}
+            <div className="flex items-center border border-border-custom rounded-[2px] bg-background p-0.5 text-xs font-mono">
               <button
-                type="button"
-                onClick={handleFormatBold}
-                className="p-1.5 rounded-[2px] hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Bold (Ctrl+B)"
-              >
-                <Bold className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleFormatItalic}
-                className="p-1.5 rounded-[2px] hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Italic (Ctrl+I)"
-              >
-                <Italic className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleFormatUnderline}
-                className="p-1.5 rounded-[2px] hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Underline (Ctrl+U)"
-              >
-                <Underline className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleFormatStrike}
-                className="p-1.5 rounded-[2px] hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Strikethrough"
-              >
-                <Strikethrough className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Headings */}
-            <div className="flex items-center bg-background border border-border-custom rounded-[2px] p-0.5">
-              <button
-                type="button"
-                onClick={() => handleFormatHeading(1)}
-                className="px-2 py-1 rounded-[2px] text-[11px] font-mono font-bold hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Heading 1"
-              >
-                H1
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFormatHeading(2)}
-                className="px-2 py-1 rounded-[2px] text-[11px] font-mono font-bold hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Heading 2 (Main Section)"
-              >
-                H2
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFormatHeading(3)}
-                className="px-2 py-1 rounded-[2px] text-[11px] font-mono font-bold hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Heading 3 (Subsection)"
-              >
-                H3
-              </button>
-            </div>
-
-            {/* Lists */}
-            <div className="flex items-center bg-background border border-border-custom rounded-[2px] p-0.5">
-              <button
-                type="button"
-                onClick={handleFormatBulletList}
-                className="p-1.5 rounded-[2px] hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Bullet List"
-              >
-                <List className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleFormatNumberList}
-                className="p-1.5 rounded-[2px] hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Numbered List"
-              >
-                <ListOrdered className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Special Blocks */}
-            <div className="flex items-center bg-background border border-border-custom rounded-[2px] p-0.5">
-              <button
-                type="button"
-                onClick={handleFormatQuote}
-                className="p-1.5 rounded-[2px] hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Blockquote"
-              >
-                <Quote className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleFormatCallout}
-                className="p-1.5 rounded-[2px] hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Key Takeaway / Callout Card"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-accent-custom" />
-              </button>
-              <button
-                type="button"
-                onClick={handleFormatCodeBlock}
-                className="p-1.5 rounded-[2px] hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Code Block"
-              >
-                <Code className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleFormatStatsGrid}
-                className="p-1.5 rounded-[2px] hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="3-Column Metric Stats Grid"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleFormatDivider}
-                className="p-1.5 rounded-[2px] hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Horizontal Divider"
-              >
-                <Minus className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Links & Media */}
-            <div className="flex items-center bg-background border border-border-custom rounded-[2px] p-0.5">
-              <button
-                type="button"
-                onClick={() => {
-                  const textarea = textareaRef.current;
-                  if (textarea) {
-                    const sel = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
-                    setLinkText(sel);
-                  }
-                  setLinkModalOpen(true);
-                }}
-                className="p-1.5 rounded-[2px] hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Insert Link"
-              >
-                <LinkIcon className="w-3.5 h-3.5 text-accent-custom" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setImageModalOpen(true)}
-                className="p-1.5 rounded-[2px] hover:bg-surface text-secondary-custom hover:text-foreground transition-colors cursor-pointer"
-                title="Insert Image into Content"
-              >
-                <ImageIcon className="w-3.5 h-3.5 text-accent-custom" />
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Info & Hint */}
-          <div className="text-[11px] font-mono text-secondary-custom hidden md:flex items-center gap-2">
-            <span>Tip: Select any text and click formatting buttons above</span>
-            <span>&bull;</span>
-            <span>{wordCount} words</span>
-          </div>
-
-        </div>
-      </nav>
-
-      {/* ═══════ MAIN CONTENT WORKSPACE (Editor / Split / Preview) ═══════ */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start h-full">
-
-          {/* ─── LEFT: RAW CONTENT CANVAS (Visual Raw Text Pasting & Editing) ─── */}
-          {(viewMode === "editor" || viewMode === "split") && (
-            <div className={`${viewMode === "editor" ? "lg:col-span-12" : "lg:col-span-6"} flex flex-col space-y-2`}>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-secondary-custom flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-accent-custom rounded-[1px]" />
-                  <span>Content Canvas (Paste raw text or formatted HTML)</span>
-                </span>
-                <span className="text-[10px] font-mono text-secondary-custom">
-                  {content.length} characters
-                </span>
-              </div>
-
-              <div className="border border-border-custom border-l-[6px] border-l-accent-custom rounded-[3px] bg-surface/30 focus-within:border-accent-custom transition-all shadow-xs">
-                <textarea
-                  ref={textareaRef}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder={`Paste your raw plain text or article here...
-
-Select words or paragraphs to apply Bold, Italic, Headings (H1/H2/H3), Quotes, or Lists using the toolbar above.
-
-All HTML tags are formatted cleanly in the background.`}
-                  className="w-full h-[620px] bg-transparent p-4 text-xs sm:text-sm font-mono text-foreground placeholder:text-secondary-custom/50 focus:outline-none resize-none leading-relaxed"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ─── RIGHT: LIVE HUMAN-EDITORIAL PREVIEW (Desktop / Mobile Switcher) ─── */}
-          {(viewMode === "preview" || viewMode === "split") && (
-            <div className={`${viewMode === "preview" ? "lg:col-span-12" : "lg:col-span-6"} flex flex-col space-y-2`}>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-secondary-custom flex items-center gap-2">
-                  <Eye className="w-3.5 h-3.5 text-accent-custom" />
-                  <span>Live Editorial Preview</span>
-                </span>
-
-                {/* Device viewport switcher */}
-                <div className="flex items-center bg-surface border border-border-custom rounded-[2px] p-0.5">
-                  <button
-                    onClick={() => setPreviewDevice("desktop")}
-                    className={`p-1 rounded-[2px] transition-colors ${previewDevice === "desktop" ? "bg-accent-custom text-white" : "text-secondary-custom"}`}
-                    title="Desktop Preview"
-                  >
-                    <Monitor className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setPreviewDevice("mobile")}
-                    className={`p-1 rounded-[2px] transition-colors ${previewDevice === "mobile" ? "bg-accent-custom text-white" : "text-secondary-custom"}`}
-                    title="Mobile Viewport"
-                  >
-                    <Smartphone className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Rendered Preview Card (Architectural styling with 8px border spine) */}
-              <div
-                className={`border border-border-custom bg-background rounded-[3px] overflow-hidden shadow-sm h-[620px] overflow-y-auto ${
-                  previewDevice === "mobile" ? "max-w-sm mx-auto" : "w-full"
+                onClick={() => setMode("edit")}
+                className={`px-2.5 py-1 rounded-[2px] transition-all cursor-pointer ${
+                  mode === "edit"
+                    ? "bg-accent-custom text-white font-bold"
+                    : "text-secondary-custom hover:text-foreground"
                 }`}
               >
-                <div className="p-6 space-y-5 text-left">
-                  
-                  {/* Category & Read Time */}
-                  <div className="flex items-center gap-2 text-[10.5px] font-mono">
-                    <span className="px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom font-bold border border-accent-custom/20 uppercase">
-                      {category || "CATEGORY"}
-                    </span>
-                    <span className="text-secondary-custom">•</span>
-                    <span className="text-secondary-custom font-medium">{readTime || "5 min read"}</span>
-                  </div>
-
-                  {/* Title */}
-                  <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground leading-tight">
-                    {title ? title : "Your Article Title Will Appear Here"}
-                  </h1>
-
-                  {/* Author Meta */}
-                  <div className="flex items-center gap-2 text-xs font-mono text-secondary-custom pb-2 border-b border-border-custom/40">
-                    <span className="text-foreground font-semibold">{author || "Tech Infinix"}</span>
-                    <span>&bull;</span>
-                    <span>Today</span>
-                  </div>
-
-                  {/* Summary / Excerpt */}
-                  {summary && (
-                    <p className="text-xs sm:text-sm text-secondary-custom leading-relaxed italic border-l-[4px] border-accent-custom pl-3 py-1 bg-surface/30 rounded-r-[2px]">
-                      "{summary}"
-                    </p>
-                  )}
-
-                  {/* ─── PROMINENT COVER IMAGE ON DETAIL PAGE ─── */}
-                  {coverImage && (
-                    <div className="border border-border-custom bg-surface rounded-[3px] border-l-[8px] border-l-accent-custom overflow-hidden shadow-xs my-4">
-                      <div className="relative aspect-[16/9] w-full overflow-hidden bg-background">
-                        <img src={coverImage} alt={title} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="px-3.5 py-2 bg-surface/90 border-t border-border-custom/50 flex items-center justify-between text-[10px] font-mono text-secondary-custom">
-                        <span>Cover &bull; {category}</span>
-                        <span>{author}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Rendered Body Content */}
-                  <div className="blog-content prose prose-invert max-w-none text-foreground text-xs sm:text-sm">
-                    {compiledContent ? (
-                      <div dangerouslySetInnerHTML={{ __html: compiledContent }} />
-                    ) : (
-                      <p className="text-secondary-custom italic text-xs py-8 text-center">
-                        Your formatted article content will render live here as you write.
-                      </p>
-                    )}
-                  </div>
-
-                </div>
-              </div>
-            </div>
-          )}
-
-        </div>
-      </main>
-
-      {/* ═══════ MODAL: INSERT LINK ═══════ */}
-      {linkModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface border border-border-custom rounded-[3px] border-l-[8px] border-l-accent-custom p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-border-custom">
-              <h3 className="text-sm font-bold font-mono text-foreground flex items-center gap-2">
-                <LinkIcon className="w-4 h-4 text-accent-custom" />
-                <span>Insert Hyperlink</span>
-              </h3>
-              <button onClick={() => setLinkModalOpen(false)} className="text-secondary-custom hover:text-foreground">
-                <X className="w-4 h-4" />
+                Editor
+              </button>
+              <button
+                onClick={() => setMode("preview")}
+                className={`px-2.5 py-1 rounded-[2px] transition-all cursor-pointer flex items-center gap-1 ${
+                  mode === "preview"
+                    ? "bg-accent-custom text-white font-bold"
+                    : "text-secondary-custom hover:text-foreground"
+                }`}
+              >
+                <Eye className="w-3 h-3" />
+                <span>Live View</span>
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="space-y-1">
-                <label className="font-mono text-secondary-custom">Destination URL</label>
+            {/* Publish Toggle */}
+            <button
+              onClick={() => setPublished(!published)}
+              className={`px-3 py-1.5 rounded-[2px] text-xs font-mono font-bold border transition-all cursor-pointer ${
+                published
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
+                  : "bg-amber-500/10 border-amber-500/30 text-amber-500"
+              }`}
+            >
+              {published ? "● Published" : "○ Draft Mode"}
+            </button>
+
+            {/* Save Button */}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-accent-custom hover:opacity-95 text-white px-4 py-1.5 rounded-[3px] text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-accent-custom/20 disabled:opacity-50"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save Article</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* ─── WORD FORMATTING TOOLBAR RIBBON (Active in Edit Mode) ─── */}
+        {mode === "edit" && (
+          <div className="px-4 py-1.5 flex items-center gap-1 overflow-x-auto text-xs select-none">
+            
+            {/* Undo / Redo */}
+            <button
+              onMouseDown={(e) => { e.preventDefault(); execCmd("undo"); }}
+              className="p-1.5 rounded-[2px] text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer"
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); execCmd("redo"); }}
+              className="p-1.5 rounded-[2px] text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer"
+              title="Redo (Ctrl+Y)"
+            >
+              <Redo2 className="w-3.5 h-3.5" />
+            </button>
+
+            <span className="w-px h-4 bg-border-custom mx-1" />
+
+            {/* Paragraph / Heading Format Dropdown */}
+            <select
+              onChange={(e) => handleFormatBlock(e.target.value)}
+              defaultValue="<p>"
+              className="bg-background text-foreground text-xs font-mono border border-border-custom rounded-[2px] px-2 py-1 focus:outline-none focus:border-accent-custom cursor-pointer"
+              title="Select Paragraph Style"
+            >
+              <option value="<p>">Normal Text</option>
+              <option value="<h2>">Heading 2 (Major Section)</option>
+              <option value="<h3>">Heading 3 (Sub-Section)</option>
+              <option value="<h4>">Heading 4 (Topic)</option>
+            </select>
+
+            <span className="w-px h-4 bg-border-custom mx-1" />
+
+            {/* Bold, Italic, Underline, Strikethrough */}
+            <button
+              onMouseDown={(e) => { e.preventDefault(); execCmd("bold"); }}
+              className="w-7 h-7 rounded-[2px] flex items-center justify-center font-bold text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer"
+              title="Bold (Ctrl+B)"
+            >
+              <Bold className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); execCmd("italic"); }}
+              className="w-7 h-7 rounded-[2px] flex items-center justify-center italic text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer"
+              title="Italic (Ctrl+I)"
+            >
+              <Italic className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); execCmd("underline"); }}
+              className="w-7 h-7 rounded-[2px] flex items-center justify-center underline text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer"
+              title="Underline (Ctrl+U)"
+            >
+              <Underline className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); execCmd("strikeThrough"); }}
+              className="w-7 h-7 rounded-[2px] flex items-center justify-center line-through text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer"
+              title="Strikethrough"
+            >
+              <Strikethrough className="w-3.5 h-3.5" />
+            </button>
+
+            <span className="w-px h-4 bg-border-custom mx-1" />
+
+            {/* Alignment */}
+            <button
+              onMouseDown={(e) => { e.preventDefault(); execCmd("justifyLeft"); }}
+              className="w-7 h-7 rounded-[2px] flex items-center justify-center text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer"
+              title="Align Left"
+            >
+              <AlignLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); execCmd("justifyCenter"); }}
+              className="w-7 h-7 rounded-[2px] flex items-center justify-center text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer"
+              title="Align Center"
+            >
+              <AlignCenter className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); execCmd("justifyRight"); }}
+              className="w-7 h-7 rounded-[2px] flex items-center justify-center text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer"
+              title="Align Right"
+            >
+              <AlignRight className="w-3.5 h-3.5" />
+            </button>
+
+            <span className="w-px h-4 bg-border-custom mx-1" />
+
+            {/* Bullet & Numbered Lists */}
+            <button
+              onMouseDown={(e) => { e.preventDefault(); execCmd("insertUnorderedList"); }}
+              className="w-7 h-7 rounded-[2px] flex items-center justify-center text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer"
+              title="Bulleted List"
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); execCmd("insertOrderedList"); }}
+              className="w-7 h-7 rounded-[2px] flex items-center justify-center text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer"
+              title="Numbered List"
+            >
+              <ListOrdered className="w-3.5 h-3.5" />
+            </button>
+
+            <span className="w-px h-4 bg-border-custom mx-1" />
+
+            {/* Quote & Callout */}
+            <button
+              onMouseDown={(e) => { e.preventDefault(); insertQuote(); }}
+              className="px-2 py-1 rounded-[2px] flex items-center gap-1 font-mono text-[11px] text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer border border-transparent hover:border-border-custom"
+              title="Insert Quote Box"
+            >
+              <Quote className="w-3 h-3 text-accent-custom" />
+              <span>Quote</span>
+            </button>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); insertCalloutBox(); }}
+              className="px-2 py-1 rounded-[2px] flex items-center gap-1 font-mono text-[11px] text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer border border-transparent hover:border-border-custom"
+              title="Insert Key Insight Box"
+            >
+              <Sparkles className="w-3 h-3 text-accent-custom" />
+              <span>Insight Callout</span>
+            </button>
+
+            <span className="w-px h-4 bg-border-custom mx-1" />
+
+            {/* Table, Image, Link, Divider */}
+            <button
+              onMouseDown={(e) => { e.preventDefault(); insertTable(); }}
+              className="px-2 py-1 rounded-[2px] flex items-center gap-1 font-mono text-[11px] text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer border border-transparent hover:border-border-custom"
+              title="Insert Comparison Table"
+            >
+              <TableIcon className="w-3 h-3 text-accent-custom" />
+              <span>Table</span>
+            </button>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); setImageModalOpen(true); }}
+              className="px-2 py-1 rounded-[2px] flex items-center gap-1 font-mono text-[11px] text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer border border-transparent hover:border-border-custom"
+              title="Insert Inline Image"
+            >
+              <ImageIcon className="w-3 h-3 text-accent-custom" />
+              <span>Image</span>
+            </button>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); openLinkModal(); }}
+              className="px-2 py-1 rounded-[2px] flex items-center gap-1 font-mono text-[11px] text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer border border-transparent hover:border-border-custom"
+              title="Insert Hyperlink"
+            >
+              <LinkIcon className="w-3 h-3 text-accent-custom" />
+              <span>Link</span>
+            </button>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); insertHorizontalRule(); }}
+              className="px-2 py-1 rounded-[2px] flex items-center gap-1 font-mono text-[11px] text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer border border-transparent hover:border-border-custom"
+              title="Horizontal Divider"
+            >
+              <Minus className="w-3 h-3" />
+              <span>Divider</span>
+            </button>
+
+            {/* Clear Formatting */}
+            <button
+              onMouseDown={(e) => { e.preventDefault(); execCmd("removeFormat"); }}
+              className="p-1.5 rounded-[2px] text-secondary-custom hover:text-foreground hover:bg-background transition-colors cursor-pointer ml-auto"
+              title="Clear Formatting"
+            >
+              <Eraser className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+      </header>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          DOCUMENT METADATA DRAWER (COLLAPSIBLE)
+          ═══════════════════════════════════════════════════════════════ */}
+      {isSettingsOpen && (
+        <div className="bg-surface/95 border-b border-border-custom px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono animate-in slide-in-from-top-2 duration-150 shrink-0">
+          <div>
+            <label className="text-secondary-custom block mb-1">URL Route Slug:</label>
+            <input
+              type="text"
+              value={slug}
+              onChange={(e) => {
+                setSlug(slugify(e.target.value));
+                setSlugManuallyEdited(true);
+              }}
+              className="w-full bg-background border border-border-custom rounded-[2px] px-2.5 py-1.5 text-foreground focus:outline-none focus:border-accent-custom"
+              placeholder="e.g. how-ai-agents-work"
+            />
+          </div>
+
+          <div>
+            <label className="text-secondary-custom block mb-1">Category & Topic:</label>
+            <input
+              type="text"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full bg-background border border-border-custom rounded-[2px] px-2.5 py-1.5 text-foreground focus:outline-none focus:border-accent-custom"
+              placeholder="e.g. AI & AUTOMATION"
+            />
+          </div>
+
+          <div>
+            <label className="text-secondary-custom block mb-1">Author Name:</label>
+            <input
+              type="text"
+              value={author}
+              onChange={(e) => setAuthor(e.target.value)}
+              className="w-full bg-background border border-border-custom rounded-[2px] px-2.5 py-1.5 text-foreground focus:outline-none focus:border-accent-custom"
+              placeholder="e.g. Tech Infinix Research Team"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="text-secondary-custom block mb-1">Article Summary / Excerpt:</label>
+            <input
+              type="text"
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+              className="w-full bg-background border border-border-custom rounded-[2px] px-2.5 py-1.5 text-foreground focus:outline-none focus:border-accent-custom"
+              placeholder="A concise summary of what the reader will learn..."
+            />
+          </div>
+
+          {/* Cover Image Upload & Preview */}
+          <div>
+            <label className="text-secondary-custom block mb-1">Cover Image:</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={coverImage}
+                onChange={(e) => setCoverImage(e.target.value)}
+                className="flex-1 bg-background border border-border-custom rounded-[2px] px-2.5 py-1.5 text-foreground focus:outline-none focus:border-accent-custom text-[11px]"
+                placeholder="https://..."
+              />
+              <label className="bg-background border border-border-custom hover:border-accent-custom text-secondary-custom hover:text-foreground px-2.5 py-1.5 rounded-[2px] cursor-pointer flex items-center gap-1 transition-colors shrink-0">
+                <Upload className="w-3.5 h-3.5" />
+                <span>{uploadingCover ? "..." : "Upload"}</span>
                 <input
-                  type="text"
-                  value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="https://example.com"
-                  className="w-full bg-background border border-border-custom rounded-[2px] p-2 text-foreground focus:outline-none focus:border-accent-custom"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverUpload}
+                  className="hidden"
                 />
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════
+          MAIN CANVAS BODY: WORD DOCUMENT VIEW vs LIVE VIEW
+          ═══════════════════════════════════════════════════════════════ */}
+      <main className="flex-1 overflow-y-auto bg-background/50 p-4 sm:p-8 flex justify-center">
+        
+        {mode === "edit" ? (
+          /* ─── MICROSOFT WORD STYLE DOCUMENT CANVAS ─── */
+          <div className="w-full max-w-4xl bg-surface border border-border-custom rounded-[3px] shadow-sm my-2 flex flex-col min-h-[800px] border-l-[6px] border-l-accent-custom">
+            
+            {/* Document Header (Hero Cover Image & Title Preview Inside the Word Sheet) */}
+            <div className="p-8 sm:p-12 pb-6 border-b border-border-custom/50">
+              
+              {/* Cover Image Banner if provided */}
+              {coverImage ? (
+                <div className="relative aspect-[16/9] w-full rounded-[2px] overflow-hidden border border-border-custom mb-6 bg-background group">
+                  <img
+                    src={coverImage}
+                    alt={title || "Cover preview"}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    onClick={() => setCoverImage("")}
+                    className="absolute top-2 right-2 p-1.5 bg-black/70 hover:bg-red-600 text-white rounded-[2px] text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Remove Cover Image"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="mb-6 p-6 border-2 border-dashed border-border-custom hover:border-accent-custom rounded-[2px] text-center cursor-pointer bg-background/40 hover:bg-background transition-all group"
+                >
+                  <ImageIcon className="w-6 h-6 text-secondary-custom group-hover:text-accent-custom mx-auto mb-1.5" />
+                  <span className="text-xs font-mono text-secondary-custom group-hover:text-foreground">
+                    + Click to Add Featured Cover Image (or set in Document Meta)
+                  </span>
+                </div>
+              )}
+
+              {/* Category & Meta Banner */}
+              <div className="flex items-center gap-3 text-xs font-mono text-secondary-custom mb-3">
+                <span className="px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom font-bold border border-accent-custom/20 uppercase">
+                  {category || "ARTICLE"}
+                </span>
+                <span>&bull;</span>
+                <span>By {author || "Tech Infinix"}</span>
+                <span>&bull;</span>
+                <span>{readTime}</span>
               </div>
 
-              <div className="space-y-1">
-                <label className="font-mono text-secondary-custom">Display Text</label>
+              {/* Title Header */}
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground leading-tight">
+                {title || "Untitled Article"}
+              </h1>
+
+              {summary && (
+                <p className="mt-3 text-sm text-secondary-custom italic border-l-2 border-accent-custom pl-3 py-0.5">
+                  "{summary}"
+                </p>
+              )}
+            </div>
+
+            {/* ─── PURE WORD WYSIWYG EDITABLE CANVAS ─── */}
+            {/* The user types, pastes, and formats text visually here! No HTML tags ever visible! */}
+            <div
+              ref={editorRef}
+              contentEditable={true}
+              suppressContentEditableWarning={true}
+              onInput={calculateStats}
+              onKeyUp={calculateStats}
+              className="blog-content flex-1 p-8 sm:p-12 focus:outline-none text-foreground text-sm sm:text-base leading-relaxed select-text"
+              style={{ minHeight: "600px" }}
+            />
+
+            {/* Word Document Footer Bar (Word Count & Reading Time) */}
+            <div className="px-8 py-3 bg-surface/90 border-t border-border-custom/50 flex items-center justify-between text-xs font-mono text-secondary-custom">
+              <div className="flex items-center gap-4">
+                <span><strong>{wordCount.toLocaleString()}</strong> words</span>
+                <span>&bull;</span>
+                <span><strong>{readTime}</strong></span>
+              </div>
+              <span className="text-[11px] text-secondary-custom/70">
+                Word WYSIWYG Mode &bull; Clean Visual Editing
+              </span>
+            </div>
+          </div>
+        ) : (
+          /* ─── LIVE WEBSITE PREVIEW MODE ─── */
+          <div className="w-full max-w-4xl bg-surface border border-border-custom rounded-[3px] p-8 sm:p-12 my-2 shadow-xs border-l-[8px] border-l-accent-custom">
+            
+            {coverImage && (
+              <div className="aspect-[16/9] w-full rounded-[3px] overflow-hidden border border-border-custom mb-8">
+                <img src={coverImage} alt={title} className="w-full h-full object-cover" />
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 text-xs font-mono text-secondary-custom mb-3">
+              <span className="px-2 py-0.5 rounded-[2px] bg-accent-custom/10 text-accent-custom font-bold border border-accent-custom/20 uppercase">
+                {category}
+              </span>
+              <span>&bull;</span>
+              <span>By {author}</span>
+              <span>&bull;</span>
+              <span>{readTime}</span>
+            </div>
+
+            <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight mb-4">
+              {title}
+            </h1>
+
+            {summary && (
+              <p className="text-sm text-secondary-custom italic border-l-2 border-accent-custom pl-3 py-1 mb-8">
+                "{summary}"
+              </p>
+            )}
+
+            <div
+              className="blog-content text-foreground text-sm sm:text-base leading-relaxed"
+              dangerouslySetInnerHTML={{
+                __html: editorRef.current ? editorRef.current.innerHTML : ""
+              }}
+            />
+          </div>
+        )}
+      </main>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          INSERT HYPERLINK MODAL
+          ═══════════════════════════════════════════════════════════════ */}
+      {linkModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-surface border border-border-custom rounded-[3px] w-full max-w-md p-5 space-y-4 shadow-lg border-l-[6px] border-l-accent-custom">
+            <h3 className="text-sm font-bold font-mono text-foreground uppercase tracking-wider flex items-center gap-2">
+              <LinkIcon className="w-4 h-4 text-accent-custom" />
+              <span>Insert Hyperlink</span>
+            </h3>
+
+            <div className="space-y-3 text-xs font-mono">
+              <div>
+                <label className="text-secondary-custom block mb-1">Display Text:</label>
                 <input
                   type="text"
                   value={linkText}
                   onChange={(e) => setLinkText(e.target.value)}
-                  placeholder="Link text"
-                  className="w-full bg-background border border-border-custom rounded-[2px] p-2 text-foreground focus:outline-none focus:border-accent-custom"
+                  placeholder="e.g. Read Case Study"
+                  className="w-full bg-background border border-border-custom rounded-[2px] px-3 py-2 text-foreground focus:outline-none focus:border-accent-custom"
                 />
               </div>
 
-              <label className="flex items-center gap-2 font-mono text-foreground cursor-pointer pt-1">
+              <div>
+                <label className="text-secondary-custom block mb-1">Destination Web Address (URL):</label>
                 <input
-                  type="checkbox"
-                  checked={linkNewTab}
-                  onChange={(e) => setLinkNewTab(e.target.checked)}
-                  className="accent-accent-custom"
+                  type="text"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  placeholder="https://techinfinix.com/services"
+                  className="w-full bg-background border border-border-custom rounded-[2px] px-3 py-2 text-foreground focus:outline-none focus:border-accent-custom"
                 />
-                <span>Open in new tab</span>
-              </label>
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-custom">
               <button
                 onClick={() => setLinkModalOpen(false)}
-                className="px-3 py-1.5 text-xs font-mono border border-border-custom rounded-[2px] text-secondary-custom"
+                className="px-3 py-1.5 rounded-[2px] border border-border-custom text-xs font-mono text-secondary-custom hover:text-foreground"
               >
                 Cancel
               </button>
               <button
-                onClick={handleInsertLink}
-                className="px-4 py-1.5 text-xs font-mono font-bold bg-accent-custom text-white rounded-[2px]"
+                onClick={applyLink}
+                className="px-4 py-1.5 rounded-[2px] bg-accent-custom text-white text-xs font-mono font-bold hover:opacity-90"
               >
                 Insert Link
               </button>
@@ -1031,66 +903,56 @@ All HTML tags are formatted cleanly in the background.`}
         </div>
       )}
 
-      {/* ═══════ MODAL: INSERT IMAGE ═══════ */}
+      {/* ═══════════════════════════════════════════════════════════════
+          INSERT INLINE IMAGE MODAL
+          ═══════════════════════════════════════════════════════════════ */}
       {imageModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface border border-border-custom rounded-[3px] border-l-[8px] border-l-accent-custom p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-border-custom">
-              <h3 className="text-sm font-bold font-mono text-foreground flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-accent-custom" />
-                <span>Insert Article Image</span>
-              </h3>
-              <button onClick={() => setImageModalOpen(false)} className="text-secondary-custom hover:text-foreground">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-surface border border-border-custom rounded-[3px] w-full max-w-md p-5 space-y-4 shadow-lg border-l-[6px] border-l-accent-custom">
+            <h3 className="text-sm font-bold font-mono text-foreground uppercase tracking-wider flex items-center gap-2">
+              <ImageIcon className="w-4 h-4 text-accent-custom" />
+              <span>Insert Inline Image</span>
+            </h3>
 
-            <div className="space-y-3 text-xs">
-              <div className="space-y-1">
-                <label className="font-mono text-secondary-custom">Image URL or File Upload</label>
-                <div className="flex items-center gap-2">
+            <div className="space-y-3 text-xs font-mono">
+              <div>
+                <label className="text-secondary-custom block mb-1">Upload File:</label>
+                <label className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-border-custom hover:border-accent-custom rounded-[2px] cursor-pointer bg-background transition-colors">
+                  <Upload className="w-4 h-4 text-accent-custom" />
+                  <span className="text-secondary-custom hover:text-foreground">
+                    {uploadingInlineImg ? "Uploading image..." : "Choose Image File from Computer"}
+                  </span>
                   <input
-                    type="text"
-                    value={imgSrc}
-                    onChange={(e) => setImgSrc(e.target.value)}
-                    placeholder="https://... or /images/..."
-                    className="flex-1 bg-background border border-border-custom rounded-[2px] p-2 text-foreground focus:outline-none focus:border-accent-custom"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleInlineImageUpload(file);
+                    }}
+                    className="hidden"
                   />
-                  <label className="px-3 py-2 bg-background border border-border-custom rounded-[2px] font-mono text-accent-custom hover:border-accent-custom cursor-pointer shrink-0">
-                    <Upload className="w-3.5 h-3.5" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          handleUploadFile(e.target.files[0], "body");
-                        }
-                      }}
-                    />
-                  </label>
-                </div>
+                </label>
               </div>
 
-              <div className="space-y-1">
-                <label className="font-mono text-secondary-custom">Alt Text (Accessibility & SEO)</label>
+              <div>
+                <label className="text-secondary-custom block mb-1">Or Image URL:</label>
                 <input
                   type="text"
-                  value={imgAlt}
-                  onChange={(e) => setImgAlt(e.target.value)}
-                  placeholder="Descriptive alt text"
-                  className="w-full bg-background border border-border-custom rounded-[2px] p-2 text-foreground focus:outline-none focus:border-accent-custom"
+                  value={imgUrl}
+                  onChange={(e) => setImgUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full bg-background border border-border-custom rounded-[2px] px-3 py-2 text-foreground focus:outline-none focus:border-accent-custom"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="font-mono text-secondary-custom">Caption (Optional)</label>
+              <div>
+                <label className="text-secondary-custom block mb-1">Optional Caption:</label>
                 <input
                   type="text"
                   value={imgCaption}
                   onChange={(e) => setImgCaption(e.target.value)}
-                  placeholder="e.g. Architecture pipeline showing sub-50ms latency."
-                  className="w-full bg-background border border-border-custom rounded-[2px] p-2 text-foreground focus:outline-none focus:border-accent-custom"
+                  placeholder="e.g. Figure 1: AI Agent Execution Workflow"
+                  className="w-full bg-background border border-border-custom rounded-[2px] px-3 py-2 text-foreground focus:outline-none focus:border-accent-custom"
                 />
               </div>
             </div>
@@ -1098,13 +960,14 @@ All HTML tags are formatted cleanly in the background.`}
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-custom">
               <button
                 onClick={() => setImageModalOpen(false)}
-                className="px-3 py-1.5 text-xs font-mono border border-border-custom rounded-[2px] text-secondary-custom"
+                className="px-3 py-1.5 rounded-[2px] border border-border-custom text-xs font-mono text-secondary-custom hover:text-foreground"
               >
                 Cancel
               </button>
               <button
-                onClick={handleInsertImage}
-                className="px-4 py-1.5 text-xs font-mono font-bold bg-accent-custom text-white rounded-[2px]"
+                onClick={applyInlineImage}
+                disabled={!imgUrl}
+                className="px-4 py-1.5 rounded-[2px] bg-accent-custom text-white text-xs font-mono font-bold hover:opacity-90 disabled:opacity-40"
               >
                 Insert Image
               </button>
@@ -1112,6 +975,7 @@ All HTML tags are formatted cleanly in the background.`}
           </div>
         </div>
       )}
+
     </div>
   );
 }
