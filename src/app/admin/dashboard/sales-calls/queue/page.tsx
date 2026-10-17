@@ -28,9 +28,13 @@ import {
   FileText,
   Heart,
   Ban,
-  ArrowRight
+  ArrowRight,
+  UserCheck,
+  Users,
+  Filter,
+  Lock
 } from "lucide-react";
-import { format10DigitPhone, formatDialerUrl, formatWebsiteUrl, matchesSimilaritySearch } from "@/lib/formatters";
+import { format10DigitPhone, formatDialerUrl, formatWebsiteUrl, matchesSimilaritySearch, formatRelativeTime } from "@/lib/formatters";
 import { ADMIN_PATH } from "@/lib/config";
 
 interface QueueLeadItem {
@@ -43,6 +47,11 @@ interface QueueLeadItem {
   callback_at: string | null;
   notes: string | null;
   assigned_at: string | null;
+  assigned_to?: {
+    id: number | null;
+    username: string;
+    job_title: string;
+  };
   lead: {
     id: number;
     bussiness_name: string;
@@ -69,10 +78,29 @@ interface CallerStats {
   progress_percentage: number;
 }
 
+interface TelecallerSummary {
+  id: number;
+  username: string;
+  job_title: string;
+  is_superadmin: boolean;
+  is_main_admin: boolean;
+  total_assigned: number;
+  total_pending: number;
+  total_completed: number;
+  total_interested: number;
+  total_contacted: number;
+  total_callbacks: number;
+  progress_percentage: number;
+}
+
 export default function SalesCallingDeskPage() {
   const { user } = useAuthStore();
   const isSuperAdmin = Boolean(user?.is_superadmin || user?.is_main_admin);
   const callerName = user?.username ? user.username.charAt(0).toUpperCase() + user.username.slice(1) : "Telecaller";
+
+  // Telecaller Switcher for Admin & Super Admin
+  const [telecallers, setTelecallers] = useState<TelecallerSummary[]>([]);
+  const [selectedCallerId, setSelectedCallerId] = useState<string>("all");
 
   const [items, setItems] = useState<QueueLeadItem[]>([]);
   const [stats, setStats] = useState<CallerStats>({
@@ -96,6 +124,7 @@ export default function SalesCallingDeskPage() {
   const [batchSize, setBatchSize] = useState(50);
   const [filterCity, setFilterCity] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [targetUserId, setTargetUserId] = useState<string>("");
   const [generating, setGenerating] = useState(false);
   const [generateMessage, setGenerateMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
@@ -110,13 +139,44 @@ export default function SalesCallingDeskPage() {
   const [callbackNote, setCallbackNote] = useState("");
   const [savingCallback, setSavingCallback] = useState(false);
 
-  // Fetch caller's queue
-  const fetchQueue = useCallback(async (pageNumber = 1, filter = statusFilter) => {
+  // Fetch telecallers directory (for Admins to inspect other agents' queues)
+  const fetchTelecallers = useCallback(async () => {
+    try {
+      const res = await authFetch(`${API}/api/v1/sales-calls/telecallers`);
+      if (res.ok) {
+        const data = await res.json();
+        setTelecallers(data || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch telecallers:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isSuperAdmin) {
+      fetchTelecallers();
+    }
+  }, [isSuperAdmin, fetchTelecallers]);
+
+  // Fetch caller's queue (or team queue for admin)
+  const fetchQueue = useCallback(async (pageNumber = 1, filter = statusFilter, callerId = selectedCallerId) => {
     setLoading(true);
     try {
-      const res = await authFetch(
-        `${API}/api/v1/sales-calls/my-queue?page=${pageNumber}&limit=24&status=${filter}`
-      );
+      const params = new URLSearchParams({
+        page: String(pageNumber),
+        limit: "24",
+        status: filter,
+      });
+
+      if (isSuperAdmin) {
+        if (callerId && callerId !== "all") {
+          params.append("caller_id", callerId);
+        } else {
+          params.append("caller_id", "all");
+        }
+      }
+
+      const res = await authFetch(`${API}/api/v1/sales-calls/my-queue?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setItems(data.items || []);
@@ -131,51 +191,85 @@ export default function SalesCallingDeskPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, selectedCallerId, isSuperAdmin]);
 
   useEffect(() => {
-    fetchQueue(page, statusFilter);
-  }, [fetchQueue, page, statusFilter]);
+    fetchQueue(page, statusFilter, selectedCallerId);
+  }, [fetchQueue, page, statusFilter, selectedCallerId]);
 
   // WebSocket Live Updates
   useEffect(() => {
     const handleWs = (e: any) => {
       const type = e.detail?.type;
       if (type === "call_queue_generated" || type === "call_disposition_updated" || type === "lead_updated") {
-        fetchQueue(page, statusFilter);
+        fetchQueue(page, statusFilter, selectedCallerId);
+        if (isSuperAdmin) {
+          fetchTelecallers();
+        }
       }
     };
     window.addEventListener("crm_ws_event", handleWs);
     return () => window.removeEventListener("crm_ws_event", handleWs);
-  }, [fetchQueue, page, statusFilter]);
+  }, [fetchQueue, fetchTelecallers, page, statusFilter, selectedCallerId, isSuperAdmin]);
+
+  // Check if telecaller is blocked from generating due to pending leads
+  const isGenerationBlocked = useMemo(() => {
+    // If regular caller or admin generating for themselves, check pending count
+    if (!isSuperAdmin) {
+      return stats.total_pending > 0;
+    }
+    // If admin has selected a specific caller, check that caller's pending count
+    if (selectedCallerId !== "all") {
+      return stats.total_pending > 0;
+    }
+    return false;
+  }, [isSuperAdmin, selectedCallerId, stats.total_pending]);
 
   // Generate new queue batch
   const handleGenerateQueue = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isGenerationBlocked) {
+      setGenerateMessage({
+        text: `Cannot generate new queue: You have ${stats.total_pending} pending lead(s) in queue. You must complete or update all pending leads first.`,
+        isError: true,
+      });
+      return;
+    }
+
     setGenerating(true);
     setGenerateMessage(null);
     try {
+      const payload: any = {
+        batch_size: Number(batchSize),
+        city: filterCity.trim() || undefined,
+        category: filterCategory.trim() || undefined,
+      };
+
+      if (isSuperAdmin && targetUserId) {
+        payload.target_user_id = Number(targetUserId);
+      }
+
       const res = await authFetch(`${API}/api/v1/sales-calls/generate-queue`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          batch_size: Number(batchSize),
-          city: filterCity.trim() || undefined,
-          category: filterCategory.trim() || undefined,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setGenerateMessage({ text: data.message || `Assigned ${data.count} leads to your queue!`, isError: false });
+        setGenerateMessage({ text: data.message || `Assigned ${data.count} leads to the queue!`, isError: false });
         setTimeout(() => {
           setShowGenerateModal(false);
           setGenerateMessage(null);
           setStatusFilter("pending");
           setPage(1);
-          fetchQueue(1, "pending");
+          fetchQueue(1, "pending", selectedCallerId);
+          if (isSuperAdmin) fetchTelecallers();
         }, 1200);
       } else {
-        setGenerateMessage({ text: data.message || data.detail || "No unassigned leads found.", isError: true });
+        setGenerateMessage({
+          text: data.message || data.detail || "Unable to claim new leads. Make sure all current leads have been updated.",
+          isError: true,
+        });
       }
     } catch (err: any) {
       setGenerateMessage({ text: err.message || "Failed to generate queue.", isError: true });
@@ -233,6 +327,10 @@ export default function SalesCallingDeskPage() {
             progress_percentage: newProg,
           };
         });
+
+        if (isSuperAdmin) {
+          fetchTelecallers();
+        }
       }
     } catch (err) {
       console.error("Failed to update call disposition:", err);
@@ -268,89 +366,168 @@ export default function SalesCallingDeskPage() {
         item.lead?.scraped_city,
         item.lead?.category,
         item.lead?.bussiness_address,
+        item.assigned_to?.username,
         item.notes,
       ])
     );
   }, [items, searchQuery]);
 
+  // Current view label
+  const currentViewTitle = useMemo(() => {
+    if (!isSuperAdmin) return `${callerName}’s Calling Desk`;
+    if (selectedCallerId === "all") return "Team Overview (All Telecallers)";
+    const found = telecallers.find(t => String(t.id) === selectedCallerId);
+    return found ? `${found.username}’s Calling Desk` : "Telecaller Desk";
+  }, [isSuperAdmin, selectedCallerId, callerName, telecallers]);
+
   return (
-    <div className="space-y-6 animate-fadeIn pb-24">
+    <div className="space-y-5 animate-fadeIn pb-24">
       {/* Personalized Caller Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-lg bg-gradient-to-tr from-indigo-600 via-indigo-500 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 shrink-0">
             <PhoneCall className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-                {callerName}&rsquo;s Calling Desk
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+                {currentViewTitle}
               </h1>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                Active Desk
+                Live Desk
               </span>
+              {stats.total_pending > 0 && !isSuperAdmin && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> {stats.total_pending} Pending
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Dedicated queue of uncalled leads assigned exclusively to you
+              {isSuperAdmin
+                ? "Inspect any sales caller's queue, review progress, or audit live calling leads"
+                : "Dedicated queue of uncalled leads assigned exclusively to you"}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Generation Button with pending indicator */}
           <button
-            onClick={() => setShowGenerateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-bold transition shadow-sm shadow-indigo-600/30 cursor-pointer"
+            onClick={() => {
+              setGenerateMessage(null);
+              setShowGenerateModal(true);
+            }}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-bold transition shadow-sm cursor-pointer ${
+              isGenerationBlocked
+                ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 hover:bg-amber-100"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/30"
+            }`}
+            title={isGenerationBlocked ? `Complete your ${stats.total_pending} pending leads before generating new leads` : "Claim fresh batch of leads"}
           >
-            <PlusCircle className="w-4 h-4" />
-            <span>Generate Call Queue</span>
+            {isGenerationBlocked ? <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> : <PlusCircle className="w-4 h-4" />}
+            <span>{isGenerationBlocked ? `Queue Locked (${stats.total_pending} Pending)` : "Generate Call Queue"}</span>
           </button>
+
           {isSuperAdmin && (
             <a
               href={`${ADMIN_PATH}/dashboard/sales-calls/reports`}
-              className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/60 rounded-md text-xs font-semibold transition"
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-md text-xs font-semibold transition"
             >
-              <span>Team Reports →</span>
+              <TrendingUp className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Executive Reports →</span>
             </a>
           )}
         </div>
       </header>
 
+      {/* Admin Telecaller Switcher Bar */}
+      {isSuperAdmin && (
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">
+            <Users className="w-4 h-4 text-indigo-500" />
+            <span>Select Sales Caller Queue:</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            <button
+              onClick={() => setSelectedCallerId("all")}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-md border transition cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                selectedCallerId === "all"
+                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-sm"
+                  : "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <span>All Telecallers</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                Team
+              </span>
+            </button>
+
+            {telecallers.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setSelectedCallerId(String(t.id))}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-md border transition cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                  selectedCallerId === String(t.id)
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-600/30"
+                    : "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                <div className="w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-[9px] font-bold flex items-center justify-center shrink-0">
+                  {t.username.charAt(0).toUpperCase()}
+                </div>
+                <span>{t.username}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  selectedCallerId === String(t.id)
+                    ? "bg-white/20 text-white"
+                    : t.total_pending > 0
+                    ? "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400"
+                    : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                }`}>
+                  {t.total_pending} pend / {t.total_assigned}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Real-time KPI Stats Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Assigned</span>
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 sm:p-4 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Assigned</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-slate-900 dark:text-white">{stats.total_assigned}</span>
+            <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">{stats.total_assigned}</span>
             <span className="text-xs text-indigo-500 font-semibold font-mono">Leads</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">Pending Call</span>
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 sm:p-4 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] sm:text-[11px] font-bold text-amber-500 uppercase tracking-wider">Pending (To Call)</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-amber-600 dark:text-amber-400">{stats.total_pending}</span>
+            <span className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">{stats.total_pending}</span>
             <span className="text-xs text-slate-400 font-medium">To Dial</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Interested (Hot)</span>
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 sm:p-4 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Interested (Hot)</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{stats.total_interested}</span>
+            <span className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">{stats.total_interested}</span>
             <span className="text-xs text-emerald-500 font-semibold font-mono">Converted</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">Contacted</span>
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 sm:p-4 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] sm:text-[11px] font-bold text-blue-600 uppercase tracking-wider">Contacted</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-blue-600 dark:text-blue-400">{stats.total_contacted}</span>
+            <span className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400">{stats.total_contacted}</span>
             <span className="text-xs text-slate-400 font-medium">Done</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1">
-          <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">Shift Progress</span>
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 sm:p-4 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1">
+          <span className="text-[10px] sm:text-[11px] font-bold text-indigo-600 uppercase tracking-wider">Shift Progress</span>
           <div className="mt-2">
             <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white mb-1">
               <span>{stats.progress_percentage}%</span>
@@ -367,7 +544,7 @@ export default function SalesCallingDeskPage() {
       </div>
 
       {/* Filter Tabs & Search Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm">
         <div className="flex flex-wrap items-center gap-1.5">
           {[
             { key: "pending", label: "Pending (To Call)", count: stats.total_pending, color: "amber" },
@@ -404,7 +581,7 @@ export default function SalesCallingDeskPage() {
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search phone, name, city..."
+            placeholder="Search phone, name, city, caller..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-md pl-8 pr-7 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -425,20 +602,36 @@ export default function SalesCallingDeskPage() {
       {loading && items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-slate-400 bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
           <Loader2 className="w-7 h-7 animate-spin mb-3 text-indigo-500" />
-          <p className="text-xs font-semibold">Loading your calling queue...</p>
+          <p className="text-xs font-semibold">Loading calling queue...</p>
         </div>
       ) : items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm">
           <div className="w-14 h-14 rounded-full bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-500 mb-3.5">
             <CheckCircle2 className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">Your Call Queue is Empty!</h3>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">
+            {isSuperAdmin && selectedCallerId !== "all"
+              ? "No Leads in this Filter for this Caller"
+              : isSuperAdmin
+              ? "No Leads in Current Queue Filter"
+              : "Your Call Queue is Clear!"}
+          </h3>
           <p className="text-xs text-slate-500 max-w-sm mt-1 mb-5">
-            You don&rsquo;t have any pending leads in this filter. Click below to generate an exclusive new batch of fresh leads.
+            {isSuperAdmin
+              ? "You can switch to another telecaller from the tabs above or generate a fresh queue batch."
+              : "You have completed all pending leads in this filter. Click below to generate an exclusive new batch."}
           </p>
           <button
-            onClick={() => setShowGenerateModal(true)}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-bold transition shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer"
+            onClick={() => {
+              setGenerateMessage(null);
+              setShowGenerateModal(true);
+            }}
+            disabled={isGenerationBlocked}
+            className={`px-4 py-2 rounded-md text-xs font-bold transition shadow-sm flex items-center gap-2 cursor-pointer ${
+              isGenerationBlocked
+                ? "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/30"
+            }`}
           >
             <PlusCircle className="w-4 h-4" />
             <span>Generate New Call Queue</span>
@@ -446,23 +639,40 @@ export default function SalesCallingDeskPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
             {filteredItems.map((item) => {
               const lead = item.lead;
               const formattedPhone = lead.bussiness_number ? format10DigitPhone(lead.bussiness_number) : "";
               const dialerUrl = formatDialerUrl(lead.bussiness_number);
               const isItemProcessing = processingId === item.queue_id;
+              const callerBadgeName = item.assigned_to?.username || "Sales Caller";
 
               return (
                 <div
                   key={item.queue_id}
-                  className="bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-slate-800/60 rounded-lg p-5 flex flex-col justify-between shadow-sm hover:shadow-md hover:border-indigo-500/20 dark:hover:border-indigo-500/30 transition-all group"
+                  className="bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-slate-800/80 rounded-lg p-4 flex flex-col justify-between shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all group"
                 >
                   {/* Top Card Info */}
                   <div>
-                    <div className="flex items-start justify-between gap-2.5 mb-2.5">
+                    {/* Caller Marker / Badge */}
+                    <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900/60 rounded-md border border-slate-100 dark:border-slate-800 mb-2.5">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-bold text-[9px] flex items-center justify-center shrink-0">
+                          {callerBadgeName.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 truncate">
+                          {item.status === "pending" ? "Assigned:" : "Contacted by:"}{" "}
+                          <strong className="text-indigo-600 dark:text-indigo-400 font-bold">{callerBadgeName}</strong>
+                        </span>
+                      </div>
+                      <div className="text-[10px] font-medium text-slate-400 shrink-0">
+                        {item.call_attempts > 0 ? `${item.call_attempts} call${item.call_attempts > 1 ? "s" : ""}` : "Not called"}
+                      </div>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-2.5 mb-2">
                       <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                        <div className="w-8 h-8 rounded-md bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-800/40 mt-0.5">
+                        <div className="w-8 h-8 rounded-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-800/50 mt-0.5">
                           <Building className="w-4 h-4" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -502,7 +712,7 @@ export default function SalesCallingDeskPage() {
                     </div>
 
                     {/* Metadata tags */}
-                    <div className="flex flex-wrap items-center gap-1.5 my-2.5">
+                    <div className="flex flex-wrap items-center gap-1.5 my-2">
                       {lead.category && (
                         <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 rounded border border-slate-100 dark:border-slate-800">
                           {lead.category}
@@ -527,13 +737,13 @@ export default function SalesCallingDeskPage() {
                     </div>
 
                     {lead.bussiness_address && (
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-3">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-2.5">
                         {lead.bussiness_address}
                       </p>
                     )}
 
                     {/* Quick Call Notes input */}
-                    <div className="mt-2 mb-3">
+                    <div className="mt-1.5 mb-2.5">
                       <input
                         type="text"
                         placeholder="Add call notes / takeaway..."
@@ -545,7 +755,7 @@ export default function SalesCallingDeskPage() {
                   </div>
 
                   {/* Actions Bar */}
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800/60 space-y-2">
+                  <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
                     {/* Primary Dialer & WhatsApp buttons */}
                     <div className="flex gap-2">
                       <a
@@ -607,7 +817,7 @@ export default function SalesCallingDeskPage() {
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 pb-2">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 pb-2">
               <span className="text-xs text-slate-500">
                 Showing {filteredItems.length} of {totalItems} leads in queue
               </span>
@@ -637,8 +847,8 @@ export default function SalesCallingDeskPage() {
 
       {/* ── Generate Queue Modal ── */}
       {showGenerateModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-indigo-600" />
@@ -655,9 +865,23 @@ export default function SalesCallingDeskPage() {
               </button>
             </div>
 
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Atomically claims an exclusive batch of uncalled leads for <strong>{callerName}</strong>. Zero duplication guarantee: no two callers will ever be assigned the same lead.
-            </p>
+            {/* Business Rule Warning when pending leads exist */}
+            {isGenerationBlocked ? (
+              <div className="p-3.5 rounded-md bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800/60 text-xs text-amber-900 dark:text-amber-300 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-200">
+                  <Lock className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span>Queue Generation Blocked</span>
+                </div>
+                <p className="leading-relaxed">
+                  You currently have <strong>{stats.total_pending} pending lead(s)</strong> waiting to be called.
+                  You must call and update the status for all current leads (mark as <em>Interested</em>, <em>Contacted</em>, <em>Callback</em>, or <em>Invalid</em>) before claiming fresh leads.
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Claims an exclusive batch of uncalled leads. Zero duplication guarantee: no two callers will ever be assigned the same lead.
+              </p>
+            )}
 
             {generateMessage && (
               <div className={`p-3 rounded-md text-xs font-semibold flex items-center gap-2 ${
@@ -671,6 +895,27 @@ export default function SalesCallingDeskPage() {
             )}
 
             <form onSubmit={handleGenerateQueue} className="space-y-3.5">
+              {/* Admin target caller select */}
+              {isSuperAdmin && telecallers.length > 0 && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Assign Leads To Caller:
+                  </label>
+                  <select
+                    value={targetUserId}
+                    onChange={(e) => setTargetUserId(e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-white"
+                  >
+                    <option value="">Myself ({callerName})</option>
+                    {telecallers.map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.username} ({t.total_pending} pending / {t.total_assigned} total)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Queue Batch Size
@@ -729,8 +974,12 @@ export default function SalesCallingDeskPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={generating}
-                  className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-600/30 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  disabled={generating || isGenerationBlocked}
+                  className={`px-4 py-2 rounded-md text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-md ${
+                    isGenerationBlocked
+                      ? "bg-slate-300 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed shadow-none"
+                      : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/30"
+                  }`}
                 >
                   {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                   <span>{generating ? "Claiming Leads..." : "Claim Batch"}</span>
@@ -743,8 +992,8 @@ export default function SalesCallingDeskPage() {
 
       {/* ── Schedule Callback Modal ── */}
       {callbackItem && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-purple-600" />

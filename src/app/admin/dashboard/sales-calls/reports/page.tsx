@@ -24,7 +24,8 @@ import {
   RefreshCw,
   Sparkles,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  CalendarDays
 } from "lucide-react";
 import { format10DigitPhone, formatISTDateTime, formatRelativeTime } from "@/lib/formatters";
 import { ADMIN_PATH } from "@/lib/config";
@@ -55,6 +56,19 @@ interface LeaderboardEntry {
   conversion_rate: number;
   progress_percentage: number;
   last_active_at: string | null;
+}
+
+interface DailyBreakdownItem {
+  date: string;
+  caller_id: number;
+  caller_name: string;
+  job_title: string;
+  calls_count: number;
+  interested_count: number;
+  contacted_count: number;
+  callback_count: number;
+  invalid_count: number;
+  total_duration_minutes: number;
 }
 
 interface CallAuditLog {
@@ -96,6 +110,7 @@ export default function CallingReportsDashboard() {
     conversion_rate: 0,
   });
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [dailyBreakdown, setDailyBreakdown] = useState<DailyBreakdownItem[]>([]);
   const [logs, setLogs] = useState<CallAuditLog[]>([]);
   const [totalLogs, setTotalLogs] = useState(0);
   const [logPage, setLogPage] = useState(1);
@@ -129,7 +144,7 @@ export default function CallingReportsDashboard() {
     return { dateFrom: undefined, dateTo: undefined };
   }, [datePreset]);
 
-  // Fetch summary & leaderboard
+  // Fetch summary, leaderboard, and daily breakdown
   const fetchSummary = useCallback(async () => {
     try {
       const params = new URLSearchParams();
@@ -142,6 +157,7 @@ export default function CallingReportsDashboard() {
         const data = await res.json();
         setSummary(data.summary || {});
         setLeaderboard(data.leaderboard || []);
+        setDailyBreakdown(data.daily_breakdown || []);
       }
     } catch (err) {
       console.error("Failed to load reports summary:", err);
@@ -223,61 +239,60 @@ export default function CallingReportsDashboard() {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-24">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
+      {/* Executive Header */}
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-lg bg-gradient-to-tr from-indigo-600 via-indigo-500 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 shrink-0">
             <BarChart3 className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-                Telecalling Progress & Performance Reports
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+                Telecalling Executive Reports
               </h1>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
-                Executive View
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                Management Analytics
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Live audit logs, individual agent call counts, interested hot lead conversion rates & pipeline KPIs
+              Live team calling productivity, conversion rates, daily agent breakdowns, and audit trails
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Back to Live Queue Button */}
+          <a
+            href={`${ADMIN_PATH}/dashboard/sales-calls/queue`}
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-md text-xs font-semibold transition"
+          >
+            <PhoneCall className="w-3.5 h-3.5 text-indigo-500" />
+            <span>← Live Calling Desk</span>
+          </a>
+
+          {/* Export CSV button */}
           <button
             onClick={handleExportCsv}
             disabled={exporting}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-bold transition shadow-sm shadow-emerald-600/30 cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-bold transition shadow-sm shadow-indigo-600/30 cursor-pointer disabled:opacity-50"
           >
             {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-            <span>Export CSV Report</span>
-          </button>
-          <button
-            onClick={() => {
-              fetchSummary();
-              fetchLogs(logPage);
-            }}
-            className="p-2 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition cursor-pointer"
-            title="Refresh statistics"
-          >
-            <RefreshCw className="w-4 h-4" />
+            <span>Export CSV</span>
           </button>
         </div>
       </header>
 
-      {/* Date & Agent Filters Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
+      {/* Filter Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm">
+        {/* Date presets */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs font-bold text-slate-500 flex items-center gap-1 mr-1">
-            <Calendar className="w-3.5 h-3.5" /> Date:
-          </span>
+          <Calendar className="w-3.5 h-3.5 text-slate-400 mr-1 hidden sm:inline" />
           {[
-            { key: "all", label: "All Time" },
             { key: "today", label: "Today" },
             { key: "yesterday", label: "Yesterday" },
             { key: "7d", label: "Last 7 Days" },
-            { key: "30d", label: "This Month" },
+            { key: "30d", label: "Last 30 Days" },
+            { key: "all", label: "All Time" },
           ].map(p => (
             <button
               key={p.key}
@@ -285,7 +300,7 @@ export default function CallingReportsDashboard() {
               className={`text-xs font-semibold px-2.5 py-1 rounded-md border transition cursor-pointer ${
                 datePreset === p.key
                   ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                  : "bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-slate-700/50 hover:bg-slate-100"
+                  : "bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
               }`}
             >
               {p.label}
@@ -293,19 +308,18 @@ export default function CallingReportsDashboard() {
           ))}
         </div>
 
+        {/* Telecaller filter */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
-            <Users className="w-3.5 h-3.5" /> Agent:
-          </span>
+          <Users className="w-3.5 h-3.5 text-slate-400" />
           <select
             value={selectedCallerId}
             onChange={(e) => setSelectedCallerId(e.target.value)}
-            className="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold"
+            className="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-800 dark:text-slate-200 focus:outline-none"
           >
             <option value="all">All Telecallers</option>
             {leaderboard.map(agent => (
               <option key={agent.user_id} value={agent.user_id}>
-                {agent.username} ({agent.job_title || "Caller"})
+                {agent.username} ({agent.calls_count} calls)
               </option>
             ))}
           </select>
@@ -313,59 +327,59 @@ export default function CallingReportsDashboard() {
       </div>
 
       {/* KPI Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Leads Assigned</span>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Calls Logged</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-slate-900 dark:text-white">{summary.total_leads_assigned}</span>
-            <span className="text-[11px] text-slate-400 font-medium">In Queue</span>
+            <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">{summary.total_calls_logged}</span>
+            <span className="text-[10px] text-indigo-500 font-semibold font-mono">Dials</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Total Calls Logged</span>
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Interested (Hot)</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{summary.total_calls_logged}</span>
-            <span className="text-[11px] text-indigo-400 font-mono">Dials</span>
+            <span className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">{summary.total_interested}</span>
+            <span className="text-[10px] text-emerald-500 font-semibold font-mono">Won</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Interested Leads</span>
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Conversion Rate</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{summary.total_interested}</span>
-            <span className="text-[11px] text-emerald-500 font-bold">Hot</span>
+            <span className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">{summary.conversion_rate}%</span>
+            <span className="text-[10px] text-slate-400 font-medium">Interest</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Team Conversion Rate</span>
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Contacted (Done)</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-emerald-700 dark:text-emerald-300">{summary.conversion_rate}%</span>
-            <TrendingUp className="w-4 h-4 text-emerald-500" />
+            <span className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400">{summary.total_contacted}</span>
+            <span className="text-[10px] text-slate-400 font-medium">Leads</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
           <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Callbacks</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-purple-600 dark:text-purple-400">{summary.total_callbacks}</span>
-            <span className="text-[11px] text-slate-400 font-medium">Scheduled</span>
+            <span className="text-xl sm:text-2xl font-black text-purple-600 dark:text-purple-400">{summary.total_callbacks}</span>
+            <span className="text-[10px] text-slate-400 font-medium">Scheduled</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
           <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Pending Remaining</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-amber-600 dark:text-amber-400">{summary.total_pending_leads}</span>
-            <span className="text-[11px] text-slate-400 font-medium">To Call</span>
+            <span className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">{summary.total_pending_leads}</span>
+            <span className="text-[10px] text-slate-400 font-medium">To Call</span>
           </div>
         </div>
       </div>
 
       {/* Telecaller Performance Leaderboard */}
-      <div className="bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+      <div className="bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-indigo-600" />
             <h2 className="text-sm font-bold text-slate-900 dark:text-white">Caller Performance Leaderboard</h2>
@@ -379,7 +393,7 @@ export default function CallingReportsDashboard() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs min-w-[700px]">
               <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
                 <tr>
                   <th className="py-3 px-4">Telecaller / Agent</th>
@@ -449,16 +463,93 @@ export default function CallingReportsDashboard() {
         )}
       </div>
 
+      {/* Daily Call Activity Breakdown (Minimal Details per Caller per Day) */}
+      <div className="bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-indigo-600" />
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Daily Calling Activity Breakdown</h2>
+          </div>
+          <span className="text-xs text-slate-400 font-medium">{dailyBreakdown.length} Daily Records</span>
+        </div>
+
+        {dailyBreakdown.length === 0 ? (
+          <div className="p-8 text-center text-xs text-slate-400">
+            No daily call activity records found for this period.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs min-w-[700px]">
+              <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
+                <tr>
+                  <th className="py-3 px-4">Date</th>
+                  <th className="py-3 px-4">Sales Caller</th>
+                  <th className="py-3 px-4 text-center">Total Calls Done</th>
+                  <th className="py-3 px-4 text-center">Interested (Hot)</th>
+                  <th className="py-3 px-4 text-center">Contacted</th>
+                  <th className="py-3 px-4 text-center">Callbacks</th>
+                  <th className="py-3 px-4 text-center">Invalid</th>
+                  <th className="py-3 px-4 text-center">Talk Time</th>
+                  <th className="py-3 px-4 text-right">Daily Conversion</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                {dailyBreakdown.map((row, idx) => {
+                  const conv = row.calls_count > 0 ? Math.round((row.interested_count / row.calls_count) * 100) : 0;
+                  return (
+                    <tr key={`${row.date}-${row.caller_id}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                      <td className="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">
+                        {row.date}
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-[10px] shrink-0">
+                          {row.caller_name.charAt(0).toUpperCase()}
+                        </div>
+                        <span>{row.caller_name}</span>
+                      </td>
+                      <td className="py-3 px-4 text-center font-bold text-blue-600 dark:text-blue-400">
+                        {row.calls_count}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                          <Star className="w-2.5 h-2.5 fill-emerald-500" />
+                          {row.interested_count}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center font-semibold text-slate-700 dark:text-slate-300">
+                        {row.contacted_count}
+                      </td>
+                      <td className="py-3 px-4 text-center font-semibold text-purple-600 dark:text-purple-400">
+                        {row.callback_count}
+                      </td>
+                      <td className="py-3 px-4 text-center text-slate-400">
+                        {row.invalid_count}
+                      </td>
+                      <td className="py-3 px-4 text-center text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                        {row.total_duration_minutes > 0 ? `${row.total_duration_minutes}m` : "—"}
+                      </td>
+                      <td className="py-3 px-4 text-right font-black text-emerald-600 dark:text-emerald-400">
+                        {conv}%
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {/* Chronological Call Activity Audit Log */}
-      <div className="bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <PhoneCall className="w-4 h-4 text-indigo-600" />
             <h2 className="text-sm font-bold text-slate-900 dark:text-white">Call Activity Audit Trail</h2>
             <span className="text-xs text-slate-400">({totalLogs} total entries)</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Disposition filter */}
             <select
               value={logDispositionFilter}
@@ -480,80 +571,91 @@ export default function CallingReportsDashboard() {
               <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search logs..."
+                placeholder="Search business, phone, notes..."
                 value={logSearch}
                 onChange={(e) => {
                   setLogSearch(e.target.value);
                   setLogPage(1);
                 }}
-                className="pl-8 pr-3 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="pl-7 pr-3 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-white w-48 sm:w-60 focus:outline-none"
               />
             </div>
           </div>
         </div>
 
-        {loading && logs.length === 0 ? (
-          <div className="p-12 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
-            <span>Loading call audit logs...</span>
+        {loading ? (
+          <div className="p-12 flex flex-col items-center justify-center text-slate-400">
+            <Loader2 className="w-6 h-6 animate-spin text-indigo-500 mb-2" />
+            <span className="text-xs">Loading call logs...</span>
           </div>
         ) : logs.length === 0 ? (
-          <div className="p-12 text-center text-xs text-slate-400">
-            No call activity records found matching these criteria.
+          <div className="p-8 text-center text-xs text-slate-400">
+            No call activity logs match this criteria.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs min-w-[700px]">
               <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
                 <tr>
-                  <th className="py-3 px-4">Date & Time</th>
+                  <th className="py-3 px-4">Timestamp</th>
                   <th className="py-3 px-4">Caller</th>
-                  <th className="py-3 px-4">Business Name & Phone</th>
-                  <th className="py-3 px-4">City</th>
-                  <th className="py-3 px-4">Disposition</th>
-                  <th className="py-3 px-4">Caller Notes</th>
+                  <th className="py-3 px-4">Business / Lead</th>
+                  <th className="py-3 px-4">Outcome</th>
+                  <th className="py-3 px-4">Notes / Takeaway</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {logs.map((log) => {
-                  const formattedPhone = log.lead?.bussiness_number ? format10DigitPhone(log.lead.bussiness_number) : "";
+                  const leadPhone = log.lead?.bussiness_number ? format10DigitPhone(log.lead.bussiness_number) : "";
                   return (
                     <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
-                      <td className="py-3 px-4 text-slate-500 font-mono text-[11px] whitespace-nowrap">
+                      <td className="py-3 px-4 text-[11px] font-mono text-slate-400 whitespace-nowrap">
                         {formatISTDateTime(log.called_at)}
                       </td>
-                      <td className="py-3 px-4 font-bold text-slate-900 dark:text-white whitespace-nowrap">
-                        {log.caller?.username}
+                      <td className="py-3 px-4 font-bold text-slate-900 dark:text-white">
+                        {log.caller?.username || "Unknown"}
                       </td>
                       <td className="py-3 px-4">
-                        <div className="font-bold text-slate-800 dark:text-slate-200">
-                          {log.lead?.bussiness_name || "Unknown Business"}
+                        <div className="font-bold text-slate-900 dark:text-white truncate max-w-[200px]" title={log.lead?.bussiness_name}>
+                          {log.lead?.bussiness_name || "Unknown"}
                         </div>
-                        <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-mono">
-                          {formattedPhone ? `+${formattedPhone}` : "No number"}
+                        <div className="text-[11px] font-mono text-slate-400">
+                          {leadPhone ? `+${leadPhone}` : "—"} {log.lead?.scraped_city ? `• ${log.lead.scraped_city}` : ""}
                         </div>
-                      </td>
-                      <td className="py-3 px-4 text-slate-500">
-                        {log.lead?.scraped_city || "—"}
                       </td>
                       <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${
-                            log.disposition === "interested"
-                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
-                              : log.disposition === "contacted"
-                              ? "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800"
-                              : log.disposition === "callback"
-                              ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
-                          }`}
-                        >
-                          {log.disposition === "interested" && <Star className="w-2.5 h-2.5 fill-current" />}
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${
+                          log.disposition === "interested"
+                            ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                            : log.disposition === "contacted"
+                            ? "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800"
+                            : log.disposition === "callback"
+                            ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                        }`}>
                           {log.disposition}
                         </span>
+                        {log.callback_at && (
+                          <div className="text-[10px] text-purple-600 dark:text-purple-400 mt-0.5 flex items-center gap-1 font-mono">
+                            <Clock className="w-2.5 h-2.5" /> {formatISTDateTime(log.callback_at)}
+                          </div>
+                        )}
                       </td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 max-w-xs truncate" title={log.notes || ""}>
-                        {log.notes || <span className="text-slate-400 italic">No notes</span>}
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 text-[11px] max-w-xs truncate" title={log.notes || ""}>
+                        {log.notes || "—"}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        {leadPhone && (
+                          <a
+                            href={`https://wa.me/${leadPhone}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-[#25D366] hover:underline"
+                          >
+                            Chat WhatsApp →
+                          </a>
+                        )}
                       </td>
                     </tr>
                   );
@@ -563,27 +665,24 @@ export default function CallingReportsDashboard() {
           </div>
         )}
 
-        {/* Audit Log Pagination */}
+        {/* Pagination */}
         {totalLogPages > 1 && (
-          <div className="p-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs text-slate-500">
-            <span>Showing {logs.length} of {totalLogs} logged calls</span>
+          <div className="p-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+            <span>Showing Page {logPage} of {totalLogPages}</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setLogPage(p => Math.max(1, p - 1))}
                 disabled={logPage === 1 || loading}
-                className="p-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 cursor-pointer"
+                className="p-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5" />
               </button>
-              <span className="font-bold text-slate-700 dark:text-slate-300">
-                Page {logPage} of {totalLogPages}
-              </span>
               <button
                 onClick={() => setLogPage(p => Math.min(totalLogPages, p + 1))}
                 disabled={logPage === totalLogPages || loading}
-                className="p-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 cursor-pointer"
+                className="p-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
