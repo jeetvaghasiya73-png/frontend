@@ -370,7 +370,14 @@ function AdminUsersTab() {
                     </div>
                   </td>
                   <td className="py-3.5 px-5">
-                    <RoleBadge isSuperadmin={u.is_superadmin} isMainAdmin={u.is_main_admin} />
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <RoleBadge isSuperadmin={u.is_superadmin} isMainAdmin={u.is_main_admin} />
+                      {u.permissions?.includes("sales_calling") && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                          Sales Caller
+                        </span>
+                      )}
+                    </div>
                     {u.job_title && <span className="block mt-1 text-[10px] text-slate-500">{u.job_title}</span>}
                   </td>
                   <td className="py-3.5 px-5">

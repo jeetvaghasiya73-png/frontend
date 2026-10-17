@@ -32,7 +32,8 @@ import {
   UserCheck,
   Users,
   Filter,
-  Lock
+  Lock,
+  Trash2
 } from "lucide-react";
 import { format10DigitPhone, formatDialerUrl, formatWebsiteUrl, matchesSimilaritySearch, formatRelativeTime } from "@/lib/formatters";
 import { ADMIN_PATH } from "@/lib/config";
@@ -130,7 +131,16 @@ export default function SalesCallingDeskPage() {
 
   // Disposition Action States
   const [processingId, setProcessingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [activeNotes, setActiveNotes] = useState<Record<number, string>>({});
+
+  // Role check: Only users with sales role or admin can operate
+  const hasSalesRole = Boolean(
+    user?.is_superadmin ||
+    user?.is_main_admin ||
+    user?.permissions?.includes("sales_calling") ||
+    user?.permissions?.includes("all")
+  );
 
   // Schedule Callback Modal State
   const [callbackItem, setCallbackItem] = useState<QueueLeadItem | null>(null);
@@ -201,7 +211,12 @@ export default function SalesCallingDeskPage() {
   useEffect(() => {
     const handleWs = (e: any) => {
       const type = e.detail?.type;
-      if (type === "call_queue_generated" || type === "call_disposition_updated" || type === "lead_updated") {
+      if (
+        type === "call_queue_generated" ||
+        type === "call_disposition_updated" ||
+        type === "lead_updated" ||
+        type === "queue_lead_removed"
+      ) {
         fetchQueue(page, statusFilter, selectedCallerId);
         if (isSuperAdmin) {
           fetchTelecallers();
@@ -211,6 +226,38 @@ export default function SalesCallingDeskPage() {
     window.addEventListener("crm_ws_event", handleWs);
     return () => window.removeEventListener("crm_ws_event", handleWs);
   }, [fetchQueue, fetchTelecallers, page, statusFilter, selectedCallerId, isSuperAdmin]);
+
+  // Remove Lead from Queue (Admin only)
+  const handleRemoveLead = async (queueId: number, leadName: string) => {
+    if (!window.confirm(`Are you sure you want to remove "${leadName}" from this caller's queue? The lead will be released back to the general pool.`)) {
+      return;
+    }
+    setDeletingId(queueId);
+    try {
+      const res = await authFetch(`${API}/api/v1/sales-calls/queue/${queueId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setItems(prev => prev.filter(i => i.queue_id !== queueId));
+        setTotalItems(prev => Math.max(0, prev - 1));
+        setStats(prev => ({
+          ...prev,
+          total_assigned: Math.max(0, prev.total_assigned - 1),
+          total_pending: Math.max(0, prev.total_pending - 1),
+        }));
+        if (isSuperAdmin) {
+          fetchTelecallers();
+        }
+      } else {
+        const err = await res.json();
+        alert(err.detail || "Failed to remove lead from queue.");
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to remove lead from queue.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   // Check if telecaller is blocked from generating due to pending leads
   const isGenerationBlocked = useMemo(() => {
@@ -228,6 +275,14 @@ export default function SalesCallingDeskPage() {
   // Generate new queue batch
   const handleGenerateQueue = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hasSalesRole && !isSuperAdmin) {
+      setGenerateMessage({
+        text: "Access denied: Only sales persons assigned the Sales Caller role by Super Admin can create a call queue.",
+        isError: true,
+      });
+      return;
+    }
+
     if (isGenerationBlocked) {
       setGenerateMessage({
         text: `Cannot generate new queue: You have ${stats.total_pending} pending lead(s) in queue. You must complete or update all pending leads first.`,
@@ -665,8 +720,24 @@ export default function SalesCallingDeskPage() {
                           <strong className="text-indigo-600 dark:text-indigo-400 font-bold">{callerBadgeName}</strong>
                         </span>
                       </div>
-                      <div className="text-[10px] font-medium text-slate-400 shrink-0">
-                        {item.call_attempts > 0 ? `${item.call_attempts} call${item.call_attempts > 1 ? "s" : ""}` : "Not called"}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[10px] font-medium text-slate-400">
+                          {item.call_attempts > 0 ? `${item.call_attempts} call${item.call_attempts > 1 ? "s" : ""}` : "Not called"}
+                        </span>
+                        {isSuperAdmin && (
+                          <button
+                            onClick={() => handleRemoveLead(item.queue_id, lead.bussiness_name || "Lead")}
+                            disabled={deletingId === item.queue_id}
+                            className="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded transition cursor-pointer"
+                            title="Admin: Remove lead from caller queue"
+                          >
+                            {deletingId === item.queue_id ? (
+                              <Loader2 className="w-3 h-3 animate-spin text-rose-500" />
+                            ) : (
+                              <Trash2 className="w-3 h-3" />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
 
