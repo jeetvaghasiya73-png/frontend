@@ -33,7 +33,9 @@ import {
   Users,
   Filter,
   Lock,
-  Trash2
+  Trash2,
+  ShieldCheck,
+  ShieldAlert
 } from "lucide-react";
 import { format10DigitPhone, formatDialerUrl, formatWebsiteUrl, matchesSimilaritySearch, formatRelativeTime } from "@/lib/formatters";
 import { ADMIN_PATH } from "@/lib/config";
@@ -48,6 +50,8 @@ interface QueueLeadItem {
   callback_at: string | null;
   notes: string | null;
   assigned_at: string | null;
+  is_phone_masked?: boolean;
+  dialer_phone?: string;
   assigned_to?: {
     id: number | null;
     username: string;
@@ -85,6 +89,7 @@ interface TelecallerSummary {
   job_title: string;
   is_superadmin: boolean;
   is_main_admin: boolean;
+  is_sales_assigned?: boolean;
   total_assigned: number;
   total_pending: number;
   total_completed: number;
@@ -215,7 +220,9 @@ export default function SalesCallingDeskPage() {
         type === "call_queue_generated" ||
         type === "call_disposition_updated" ||
         type === "lead_updated" ||
-        type === "queue_lead_removed"
+        type === "queue_lead_removed" ||
+        type === "caller_queue_bulk_dequeued" ||
+        type === "caller_action_tracked"
       ) {
         fetchQueue(page, statusFilter, selectedCallerId);
         if (isSuperAdmin) {
@@ -226,6 +233,57 @@ export default function SalesCallingDeskPage() {
     window.addEventListener("crm_ws_event", handleWs);
     return () => window.removeEventListener("crm_ws_event", handleWs);
   }, [fetchQueue, fetchTelecallers, page, statusFilter, selectedCallerId, isSuperAdmin]);
+
+  // Bulk Dequeue All Leads from Caller (Admin only - Dequeues, does NOT delete)
+  const [bulkDequeuing, setBulkDequeuing] = useState(false);
+  const handleBulkDequeue = async (callerId: number, callerUsername: string) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to release ALL leads assigned to "${callerUsername}"?\n\n⚠️ IMPORTANT: These leads will be released back to the general pool for other telecallers to claim. The business leads will NOT be deleted.`
+      )
+    ) {
+      return;
+    }
+    setBulkDequeuing(true);
+    try {
+      const res = await authFetch(`${API}/api/v1/sales-calls/bulk-dequeue`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caller_id: callerId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert(data.message || `Successfully dequeued ${data.count} leads.`);
+        fetchQueue(1, statusFilter, selectedCallerId);
+        if (isSuperAdmin) fetchTelecallers();
+      } else {
+        alert(data.message || data.detail || "Failed to bulk dequeue leads.");
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to bulk dequeue caller leads.");
+    } finally {
+      setBulkDequeuing(false);
+    }
+  };
+
+  // Track Call and WhatsApp button interactions (Telecaller audit & attempt count)
+  const handleTrackAction = async (queueId: number, actionType: "call_clicked" | "whatsapp_clicked") => {
+    // Optimistically increment call attempts locally on the card
+    setItems((prev) =>
+      prev.map((item) =>
+        item.queue_id === queueId ? { ...item, call_attempts: (item.call_attempts || 0) + 1 } : item
+      )
+    );
+    try {
+      await authFetch(`${API}/api/v1/sales-calls/${queueId}/track-action`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action_type: actionType }),
+      });
+    } catch (err) {
+      console.error("Failed to track button action:", err);
+    }
+  };
 
   // Remove Lead from Queue (Admin only)
   const handleRemoveLead = async (queueId: number, leadName: string) => {
@@ -257,6 +315,22 @@ export default function SalesCallingDeskPage() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  // Open queue generation modal with auto-selected sales caller
+  const openGenerateModal = () => {
+    setGenerateMessage(null);
+    if (isSuperAdmin) {
+      const salesOnly = telecallers.filter((t) => t.is_sales_assigned);
+      if (selectedCallerId !== "all" && salesOnly.some((t) => String(t.id) === selectedCallerId)) {
+        setTargetUserId(selectedCallerId);
+      } else if (salesOnly.length > 0) {
+        setTargetUserId(String(salesOnly[0].id));
+      } else {
+        setTargetUserId("");
+      }
+    }
+    setShowGenerateModal(true);
   };
 
   // Check if telecaller is blocked from generating due to pending leads
@@ -300,7 +374,14 @@ export default function SalesCallingDeskPage() {
         category: filterCategory.trim() || undefined,
       };
 
-      if (isSuperAdmin && targetUserId) {
+      if (isSuperAdmin) {
+        if (!targetUserId) {
+          setGenerateMessage({
+            text: "Please select an authorized sales caller from the list.",
+            isError: true,
+          });
+          return;
+        }
         payload.target_user_id = Number(targetUserId);
       }
 
@@ -468,10 +549,7 @@ export default function SalesCallingDeskPage() {
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Generation Button with pending indicator */}
           <button
-            onClick={() => {
-              setGenerateMessage(null);
-              setShowGenerateModal(true);
-            }}
+            onClick={openGenerateModal}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-bold transition shadow-sm cursor-pointer ${
               isGenerationBlocked
                 ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 hover:bg-amber-100"
@@ -503,7 +581,7 @@ export default function SalesCallingDeskPage() {
             <span>Select Sales Caller Queue:</span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+          <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 flex-1">
             <button
               onClick={() => setSelectedCallerId("all")}
               className={`text-xs font-semibold px-3 py-1.5 rounded-md border transition cursor-pointer flex items-center gap-1.5 shrink-0 ${
@@ -544,6 +622,23 @@ export default function SalesCallingDeskPage() {
               </button>
             ))}
           </div>
+
+          {/* Bulk Dequeue button for selected caller */}
+          {selectedCallerId !== "all" && (() => {
+            const currentCaller = telecallers.find(t => String(t.id) === selectedCallerId);
+            if (!currentCaller || currentCaller.total_assigned === 0) return null;
+            return (
+              <button
+                onClick={() => handleBulkDequeue(currentCaller.id, currentCaller.username)}
+                disabled={bulkDequeuing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/70 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition cursor-pointer disabled:opacity-50 shrink-0"
+                title="Release all assigned leads back to the general pool (leads are dequeued, NOT deleted)"
+              >
+                {bulkDequeuing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                <span>Bulk Dequeue All ({currentCaller.total_assigned})</span>
+              </button>
+            );
+          })()}
         </div>
       )}
 
@@ -677,10 +772,7 @@ export default function SalesCallingDeskPage() {
               : "You have completed all pending leads in this filter. Click below to generate an exclusive new batch."}
           </p>
           <button
-            onClick={() => {
-              setGenerateMessage(null);
-              setShowGenerateModal(true);
-            }}
+            onClick={openGenerateModal}
             disabled={isGenerationBlocked}
             className={`px-4 py-2 rounded-md text-xs font-bold transition shadow-sm flex items-center gap-2 cursor-pointer ${
               isGenerationBlocked
@@ -754,9 +846,19 @@ export default function SalesCallingDeskPage() {
                             {lead.bussiness_name || "Unknown Business"}
                           </h3>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs font-bold font-mono text-indigo-600 dark:text-indigo-400">
-                              {formattedPhone ? `+${formattedPhone}` : "No Number"}
-                            </span>
+                            {item.is_phone_masked ? (
+                              <span className="text-xs font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                <ShieldAlert className="w-3 h-3 text-amber-500" />
+                                <span>{lead.bussiness_number || "+91 ••••• •••••"}</span>
+                                <span className="text-[9px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1 py-0.2 rounded border border-amber-200 dark:border-amber-800">
+                                  Protected
+                                </span>
+                              </span>
+                            ) : (
+                              <span className="text-xs font-bold font-mono text-indigo-600 dark:text-indigo-400">
+                                {formattedPhone ? `+${formattedPhone}` : "No Number"}
+                              </span>
+                            )}
                             {lead.scraped_city && (
                               <span className="text-[10px] text-slate-400 flex items-center gap-0.5 truncate">
                                 <MapPin className="w-2.5 h-2.5" /> {lead.scraped_city}
@@ -827,19 +929,27 @@ export default function SalesCallingDeskPage() {
 
                   {/* Actions Bar */}
                   <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
-                    {/* Primary Dialer & WhatsApp buttons */}
+                    {/* Primary Dialer & WhatsApp buttons with click tracking */}
                     <div className="flex gap-2">
                       <a
-                        href={dialerUrl}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-md text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition shadow-sm"
+                        href={item.dialer_phone ? `tel:${item.dialer_phone}` : dialerUrl}
+                        onClick={() => handleTrackAction(item.queue_id, "call_clicked")}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-md text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition shadow-sm cursor-pointer"
+                        title="Click to dial customer via device phone dialer"
                       >
                         <Phone className="w-3.5 h-3.5" /> Call Now
                       </a>
                       <a
-                        href={`https://wa.me/${formattedPhone}`}
+                        href={
+                          item.dialer_phone
+                            ? `https://wa.me/${item.dialer_phone.replace(/^\+/, "")}`
+                            : `https://wa.me/${formattedPhone}`
+                        }
                         target="_blank"
                         rel="noreferrer"
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-md text-xs font-bold transition shadow-sm"
+                        onClick={() => handleTrackAction(item.queue_id, "whatsapp_clicked")}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-md text-xs font-bold transition shadow-sm cursor-pointer"
+                        title="Open WhatsApp chat with lead"
                       >
                         <MessageSquare className="w-3.5 h-3.5" /> WhatsApp
                       </a>
@@ -967,23 +1077,35 @@ export default function SalesCallingDeskPage() {
 
             <form onSubmit={handleGenerateQueue} className="space-y-3.5">
               {/* Admin target caller select */}
-              {isSuperAdmin && telecallers.length > 0 && (
+              {isSuperAdmin && (
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Assign Leads To Caller:
+                    Assign Leads To Sales Caller:
                   </label>
-                  <select
-                    value={targetUserId}
-                    onChange={(e) => setTargetUserId(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-white"
-                  >
-                    <option value="">Myself ({callerName})</option>
-                    {telecallers.map(t => (
-                      <option key={t.id} value={t.id}>
-                        {t.username} ({t.total_pending} pending / {t.total_assigned} total)
-                      </option>
-                    ))}
-                  </select>
+                  {telecallers.filter((t) => t.is_sales_assigned).length === 0 ? (
+                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-md text-xs text-amber-800 dark:text-amber-300">
+                      No designated Sales Callers found. Please go to <strong>Security Settings</strong> and grant the <strong>Sales Caller</strong> role to a team member first.
+                    </div>
+                  ) : (
+                    <select
+                      value={targetUserId}
+                      onChange={(e) => setTargetUserId(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-white"
+                    >
+                      <option value="" disabled>-- Select Authorized Sales Caller --</option>
+                      {telecallers
+                        .filter((t) => t.is_sales_assigned)
+                        .map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.username} ({t.total_pending} pending / {t.total_assigned} total)
+                          </option>
+                        ))}
+                    </select>
+                  )}
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Admins and Super Admins manage and audit queues. Call batches can only be held by authorized Sales Callers.
+                  </p>
                 </div>
               )}
 

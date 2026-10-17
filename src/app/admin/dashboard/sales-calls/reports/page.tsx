@@ -25,7 +25,10 @@ import {
   Sparkles,
   ShieldCheck,
   AlertCircle,
-  CalendarDays
+  CalendarDays,
+  MessageSquare,
+  MousePointerClick,
+  PhoneForwarded
 } from "lucide-react";
 import { format10DigitPhone, formatISTDateTime, formatRelativeTime } from "@/lib/formatters";
 import { ADMIN_PATH } from "@/lib/config";
@@ -39,6 +42,8 @@ interface SummaryStats {
   total_invalid: number;
   total_pending_leads: number;
   conversion_rate: number;
+  total_call_clicks?: number;
+  total_whatsapp_clicks?: number;
 }
 
 interface LeaderboardEntry {
@@ -92,6 +97,28 @@ interface CallAuditLog {
   };
 }
 
+interface CallerActionAuditLog {
+  id: number;
+  queue_item_id: number;
+  lead_id: number;
+  caller_user_id: number;
+  action_type: string;
+  notes: string | null;
+  created_at: string;
+  caller: {
+    id: number;
+    username: string;
+    job_title: string;
+  };
+  lead: {
+    id: number;
+    bussiness_name: string;
+    bussiness_number: string;
+    scraped_city: string;
+    category: string;
+  };
+}
+
 export default function CallingReportsDashboard() {
   const { user } = useAuthStore();
   const isSuperAdmin = Boolean(user?.is_superadmin || user?.is_main_admin);
@@ -117,6 +144,13 @@ export default function CallingReportsDashboard() {
   const [totalLogPages, setTotalLogPages] = useState(1);
   const [logSearch, setLogSearch] = useState("");
   const [logDispositionFilter, setLogDispositionFilter] = useState("all");
+
+  const [interactionLogs, setInteractionLogs] = useState<CallerActionAuditLog[]>([]);
+  const [totalInteractions, setTotalInteractions] = useState(0);
+  const [interactionPage, setInteractionPage] = useState(1);
+  const [totalInteractionPages, setTotalInteractionPages] = useState(1);
+  const [interactionTypeFilter, setInteractionTypeFilter] = useState("all");
+  const [interactionLoading, setInteractionLoading] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -192,10 +226,57 @@ export default function CallingReportsDashboard() {
     }
   }, [dateFrom, dateTo, selectedCallerId, logDispositionFilter, logSearch]);
 
+  // Fetch telecaller button interaction logs (Call / WhatsApp clicks audit)
+  const fetchInteractions = useCallback(async (pageNumber = 1) => {
+    setInteractionLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: String(pageNumber),
+        limit: "25",
+      });
+      if (dateFrom) params.append("date_from", dateFrom);
+      if (dateTo) params.append("date_to", dateTo);
+      if (selectedCallerId !== "all") params.append("caller_id", selectedCallerId);
+      if (interactionTypeFilter !== "all") params.append("action_type", interactionTypeFilter);
+
+      const res = await authFetch(`${API}/api/v1/sales-calls/reports/interactions?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setInteractionLogs(data.logs || []);
+        setTotalInteractions(data.total || 0);
+        setTotalInteractionPages(data.pages || 1);
+      }
+    } catch (err) {
+      console.error("Failed to load interaction logs:", err);
+    } finally {
+      setInteractionLoading(false);
+    }
+  }, [dateFrom, dateTo, selectedCallerId, interactionTypeFilter]);
+
   useEffect(() => {
     fetchSummary();
     fetchLogs(logPage);
-  }, [fetchSummary, fetchLogs, logPage]);
+    fetchInteractions(interactionPage);
+  }, [fetchSummary, fetchLogs, fetchInteractions, logPage, interactionPage]);
+
+  // WebSocket Live Updates
+  useEffect(() => {
+    const handleWs = (e: any) => {
+      const type = e.detail?.type;
+      if (
+        type === "caller_action_tracked" ||
+        type === "call_disposition_updated" ||
+        type === "call_queue_generated" ||
+        type === "caller_queue_bulk_dequeued"
+      ) {
+        fetchSummary();
+        fetchLogs(logPage);
+        fetchInteractions(interactionPage);
+      }
+    };
+    window.addEventListener("crm_ws_event", handleWs);
+    return () => window.removeEventListener("crm_ws_event", handleWs);
+  }, [fetchSummary, fetchLogs, fetchInteractions, logPage, interactionPage]);
 
   // Handle CSV Export
   const handleExportCsv = async () => {
@@ -327,9 +408,9 @@ export default function CallingReportsDashboard() {
       </div>
 
       {/* KPI Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
         <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Calls Logged</span>
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Calls Logged</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">{summary.total_calls_logged}</span>
             <span className="text-[10px] text-indigo-500 font-semibold font-mono">Dials</span>
@@ -337,7 +418,23 @@ export default function CallingReportsDashboard() {
         </div>
 
         <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Interested (Hot)</span>
+          <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Call Clicks</span>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400">{summary.total_call_clicks ?? 0}</span>
+            <span className="text-[10px] text-slate-400 font-medium">Clicks</span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-[#25D366] uppercase tracking-wider">WA Clicks</span>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-xl sm:text-2xl font-black text-[#25D366]">{summary.total_whatsapp_clicks ?? 0}</span>
+            <span className="text-[10px] text-slate-400 font-medium">Chats</span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Interested</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">{summary.total_interested}</span>
             <span className="text-[10px] text-emerald-500 font-semibold font-mono">Won</span>
@@ -345,7 +442,7 @@ export default function CallingReportsDashboard() {
         </div>
 
         <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Conversion Rate</span>
+          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Conv. Rate</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">{summary.conversion_rate}%</span>
             <span className="text-[10px] text-slate-400 font-medium">Interest</span>
@@ -353,7 +450,7 @@ export default function CallingReportsDashboard() {
         </div>
 
         <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Contacted (Done)</span>
+          <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Contacted</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400">{summary.total_contacted}</span>
             <span className="text-[10px] text-slate-400 font-medium">Leads</span>
@@ -369,7 +466,7 @@ export default function CallingReportsDashboard() {
         </div>
 
         <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Pending Remaining</span>
+          <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Pending</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">{summary.total_pending_leads}</span>
             <span className="text-[10px] text-slate-400 font-medium">To Call</span>
@@ -680,6 +777,151 @@ export default function CallingReportsDashboard() {
               <button
                 onClick={() => setLogPage(p => Math.min(totalLogPages, p + 1))}
                 disabled={logPage === totalLogPages || loading}
+                className="p-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Telecaller Click-to-Call & Button Interaction Audit Feed */}
+      <div className="bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <MousePointerClick className="w-4 h-4 text-indigo-600" />
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Caller Button Actions & Click-to-Call Audit</h2>
+            <span className="text-xs text-slate-400">({totalInteractions} button clicks tracked)</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Action Type filter */}
+            <select
+              value={interactionTypeFilter}
+              onChange={(e) => {
+                setInteractionTypeFilter(e.target.value);
+                setInteractionPage(1);
+              }}
+              className="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-800 dark:text-slate-200"
+            >
+              <option value="all">All Button Actions</option>
+              <option value="call_clicked">"Call Now" Clicks</option>
+              <option value="whatsapp_clicked">"WhatsApp" Clicks</option>
+            </select>
+          </div>
+        </div>
+
+        {interactionLoading ? (
+          <div className="p-12 flex flex-col items-center justify-center text-slate-400">
+            <Loader2 className="w-6 h-6 animate-spin text-indigo-500 mb-2" />
+            <span className="text-xs">Loading button interactions...</span>
+          </div>
+        ) : interactionLogs.length === 0 ? (
+          <div className="p-8 text-center text-xs text-slate-400">
+            No button clicks or telecaller interactions recorded yet for this filter.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs min-w-[700px]">
+              <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
+                <tr>
+                  <th className="py-3 px-4">Timestamp</th>
+                  <th className="py-3 px-4">Sales Caller</th>
+                  <th className="py-3 px-4">Action Triggered</th>
+                  <th className="py-3 px-4">Target Business / Lead</th>
+                  <th className="py-3 px-4">Location</th>
+                  <th className="py-3 px-4 text-right">Direct Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                {interactionLogs.map((log) => {
+                  const leadPhone = log.lead?.bussiness_number ? format10DigitPhone(log.lead.bussiness_number) : "";
+                  const isCallAction = log.action_type === "call_clicked";
+                  return (
+                    <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                      <td className="py-3 px-4 text-[11px] font-mono text-slate-400 whitespace-nowrap">
+                        {formatISTDateTime(log.created_at)}
+                      </td>
+                      <td className="py-3 px-4 font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-[10px] shrink-0">
+                          {(log.caller?.username || "C").charAt(0).toUpperCase()}
+                        </div>
+                        <span>{log.caller?.username || "Unknown Caller"}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                            isCallAction
+                              ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+                              : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                          }`}
+                        >
+                          {isCallAction ? (
+                            <>
+                              <Phone className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+                              <span>"Call Now" Pressed</span>
+                            </>
+                          ) : (
+                            <>
+                              <MessageSquare className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                              <span>"WhatsApp" Pressed</span>
+                            </>
+                          )}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="font-bold text-slate-900 dark:text-white truncate max-w-[220px]" title={log.lead?.bussiness_name}>
+                          {log.lead?.bussiness_name || "Unknown Business"}
+                        </div>
+                        <div className="text-[11px] font-mono text-slate-400">
+                          {leadPhone ? `+${leadPhone}` : "—"}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 text-[11px]">
+                        {log.lead?.scraped_city ? (
+                          <span className="inline-flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-slate-400" /> {log.lead.scraped_city}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        {leadPhone && (
+                          <a
+                            href={`https://wa.me/${leadPhone}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-[#25D366] hover:underline"
+                          >
+                            WhatsApp →
+                          </a>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Interaction Pagination */}
+        {totalInteractionPages > 1 && (
+          <div className="p-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+            <span>Showing Page {interactionPage} of {totalInteractionPages}</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setInteractionPage((p) => Math.max(1, p - 1))}
+                disabled={interactionPage === 1 || interactionLoading}
+                className="p-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setInteractionPage((p) => Math.min(totalInteractionPages, p + 1))}
+                disabled={interactionPage === totalInteractionPages || interactionLoading}
                 className="p-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
