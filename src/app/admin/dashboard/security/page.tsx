@@ -496,7 +496,37 @@ function AdminUsersTab() {
 
               {!newIsSuperadmin && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Assigned Permissions</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Assigned Permissions</label>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewJobTitle("Sales Telecaller");
+                          setNewPermissions(["sales_calling"]);
+                        }}
+                        className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 cursor-pointer"
+                      >
+                        + Sales Caller
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewPermissions(AVAILABLE_PERMISSIONS.map(p => p.id));
+                        }}
+                        className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 cursor-pointer"
+                      >
+                        All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewPermissions([])}
+                        className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 cursor-pointer"
+                      >
+                        None
+                      </button>
+                    </div>
+                  </div>
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                     {AVAILABLE_PERMISSIONS.map(perm => (
                       <div key={perm.id} className="flex items-center gap-2">
@@ -669,7 +699,37 @@ function AdminUsersTab() {
                 </div>
               ) : !editIsSuperadmin && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Assigned Permissions</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Assigned Permissions</label>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditJobTitle("Sales Telecaller");
+                          setEditPermissions(["sales_calling"]);
+                        }}
+                        className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 cursor-pointer"
+                      >
+                        + Sales Caller
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditPermissions(AVAILABLE_PERMISSIONS.map(p => p.id));
+                        }}
+                        className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 cursor-pointer"
+                      >
+                        All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditPermissions([])}
+                        className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 cursor-pointer"
+                      >
+                        None
+                      </button>
+                    </div>
+                  </div>
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                     {AVAILABLE_PERMISSIONS.map(perm => (
                       <div key={perm.id} className="flex items-center gap-2">

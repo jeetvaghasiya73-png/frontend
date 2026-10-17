@@ -36,6 +36,7 @@ import {
   Phone,
   ArrowRight,
   Sparkles,
+  BarChart3,
 } from "lucide-react";
 
 import { authFetch } from "@/lib/authFetch";
@@ -64,8 +65,10 @@ interface GlobalSearchLead {
 
 const CRM_PAGES: CrmPageNav[] = [
   { name: "Dashboard Overview", href: `${ADMIN_PATH}/dashboard`, icon: LayoutDashboard, category: "Core", description: "KPI metrics, stats & pipeline summary", keywords: ["home", "stats", "metrics", "overview", "analytics"] },
+  { name: "My Call Desk", href: `${ADMIN_PATH}/dashboard/sales-calls/queue`, icon: PhoneCall, category: "Sales", description: "Telecaller dialer desk & dynamic batch queue", keywords: ["call", "desk", "queue", "sales", "dialer", "calling", "agent"] },
+  { name: "Calling Reports", href: `${ADMIN_PATH}/dashboard/sales-calls/reports`, icon: BarChart3, category: "Sales", description: "Team calling analytics & agent performance leaderboard", keywords: ["reports", "calling", "analytics", "leaderboard", "stats", "telecalling"] },
+  { name: "Sales Leads Pool", href: `${ADMIN_PATH}/dashboard/sales-calls`, icon: Phone, category: "Sales", description: "General pool of leads for telecalling", keywords: ["sales", "calls", "calling", "phone", "telecalling", "pool", "outreach"] },
   { name: "Leads Database", href: `${ADMIN_PATH}/dashboard/leads`, icon: Users, category: "Pipeline", description: "Unified database of scraped & inbound leads", keywords: ["leads", "database", "clients", "customers", "prospects", "google maps", "scraper"] },
-  { name: "Sales Calling Queue", href: `${ADMIN_PATH}/dashboard/sales-calls`, icon: PhoneCall, category: "Sales", description: "Telecalling dialer queue & disposition log", keywords: ["sales", "calls", "calling", "phone", "telecalling", "queue", "outreach", "dialer"] },
   { name: "Interested Hot Leads", href: `${ADMIN_PATH}/dashboard/sales-calls/interested`, icon: Star, category: "Sales", description: "Prioritized hot prospect list ready to convert", keywords: ["interested", "hot", "stars", "priority", "conversion", "ready", "deals"] },
   { name: "Messages & Inquiries", href: `${ADMIN_PATH}/dashboard/contacts`, icon: MessageSquare, category: "Communication", description: "Website contact inquiries & lead messages", keywords: ["messages", "inbox", "contacts", "inquiries", "chat", "email"] },
   { name: "WhatsApp Outreach", href: `${ADMIN_PATH}/dashboard/automation/whatsapp`, icon: MessageSquare, category: "Automation", description: "Automated bulk WhatsApp campaigns & replies", keywords: ["whatsapp", "automation", "campaigns", "bulk", "templates"] },
@@ -398,16 +401,91 @@ export default function DashboardLayout({
     router.push(href);
   };
 
+  const isSuperAdmin = mounted ? Boolean(user?.is_superadmin) : false;
+  const isMainAdmin = mounted ? Boolean(user?.is_main_admin) : false;
+  const userPermissions = useMemo(() => Array.isArray(user?.permissions) ? (user.permissions as string[]) : [], [user]);
+  const hasFullAccess = isSuperAdmin || isMainAdmin || userPermissions.includes("all");
+
+  const isLinkAllowed = useCallback((linkHref: string): boolean => {
+    if (hasFullAccess) return true;
+    
+    // Reports is strictly Super Admin & Main Admin only
+    if (linkHref.includes("/sales-calls/reports")) return false;
+    
+    // Security is strictly Super Admin & Main Admin only
+    if (linkHref.includes("/security")) return false;
+
+    // Caller queue & sales calling
+    if (linkHref.includes("/sales-calls/queue") || linkHref.includes("/sales-calls/interested") || linkHref.endsWith("/sales-calls")) {
+      return userPermissions.includes("sales_calling") || userPermissions.includes("manage_leads");
+    }
+
+    if (linkHref.includes("/leads")) return userPermissions.includes("manage_leads");
+    if (linkHref.includes("/contacts")) return userPermissions.includes("manage_contacts") || userPermissions.includes("manage_leads");
+    if (linkHref.includes("/automation/whatsapp")) return userPermissions.includes("send_whatsapp");
+    if (linkHref.includes("/portfolio")) return userPermissions.includes("manage_portfolio");
+    if (linkHref.includes("/blogs")) return userPermissions.includes("manage_blogs");
+    if (linkHref.includes("/testimonials")) return userPermissions.includes("manage_testimonials");
+    if (linkHref.includes("/faqs")) return userPermissions.includes("manage_faqs");
+    if (linkHref.includes("/settings")) return userPermissions.includes("manage_settings");
+    
+    // Overview Dashboard: if user has ONLY sales_calling, hide overview (their desk is /sales-calls/queue)
+    if (linkHref.endsWith("/dashboard")) {
+      const isSalesCallerOnly = userPermissions.length === 1 && userPermissions.includes("sales_calling");
+      return !isSalesCallerOnly;
+    }
+
+    return false;
+  }, [hasFullAccess, userPermissions]);
+
+  // RBAC Route Guarding: Protect unauthorized routes from direct URL access
+  useEffect(() => {
+    if (!mounted || !user) return;
+    const currentPath = pathname.replace(ADMIN_PATH, "/admin");
+    const isSalesCallerOnly = !hasFullAccess && userPermissions.length === 1 && userPermissions.includes("sales_calling");
+
+    // If caller lands on default /dashboard, redirect to their Call Desk
+    if (isSalesCallerOnly && (currentPath === "/admin/dashboard" || currentPath === "/admin")) {
+      router.replace(`${ADMIN_PATH}/dashboard/sales-calls/queue`);
+      return;
+    }
+
+    if (!hasFullAccess) {
+      if (currentPath.includes("/sales-calls/reports") || currentPath.includes("/security")) {
+        router.replace(`${ADMIN_PATH}/dashboard/sales-calls/queue`);
+        return;
+      }
+      if (currentPath.includes("/settings") && !userPermissions.includes("manage_settings")) {
+        router.replace(`${ADMIN_PATH}/dashboard/sales-calls/queue`);
+        return;
+      }
+      if (currentPath.includes("/leads") && !userPermissions.includes("manage_leads")) {
+        router.replace(`${ADMIN_PATH}/dashboard/sales-calls/queue`);
+        return;
+      }
+      if (currentPath.includes("/automation") && !userPermissions.includes("send_whatsapp")) {
+        router.replace(`${ADMIN_PATH}/dashboard/sales-calls/queue`);
+        return;
+      }
+      if (currentPath.includes("/contacts") && !userPermissions.includes("manage_contacts") && !userPermissions.includes("manage_leads")) {
+        router.replace(`${ADMIN_PATH}/dashboard/sales-calls/queue`);
+        return;
+      }
+    }
+  }, [mounted, user, pathname, router, hasFullAccess, userPermissions]);
+
   const matchedPages = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return [];
     return CRM_PAGES.filter(p =>
-      p.name.toLowerCase().includes(q) ||
-      p.category.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q) ||
-      p.keywords.some(k => k.includes(q))
+      isLinkAllowed(p.href) && (
+        p.name.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q) ||
+        p.keywords.some(k => k.includes(q))
+      )
     ).slice(0, 4);
-  }, [searchQuery]);
+  }, [searchQuery, isLinkAllowed]);
 
   const totalSelectableItems = matchedPages.length + matchedLeads.length;
 
@@ -730,16 +808,17 @@ export default function DashboardLayout({
     return true;
   });
 
-  const isSuperAdmin = mounted ? Boolean(user?.is_superadmin) : false;
-  const isMainAdmin = mounted ? Boolean(user?.is_main_admin) : false;
-
-  const navGroups = [
+  const rawNavGroups = [
     { title: "CORE CRM", links: [
       { name: "Dashboard", href: `${ADMIN_PATH}/dashboard`, icon: LayoutDashboard },
+      { name: "My Call Desk", href: `${ADMIN_PATH}/dashboard/sales-calls/queue`, icon: PhoneCall, badge: "QUEUE" },
       { name: "Leads Database", href: `${ADMIN_PATH}/dashboard/leads`, icon: Users },
-      { name: "Sales Calling", href: `${ADMIN_PATH}/dashboard/sales-calls`, icon: PhoneCall, badge: "NEW" },
       { name: "Interested Leads", href: `${ADMIN_PATH}/dashboard/sales-calls/interested`, icon: Star },
       { name: "Messages Inbox", href: `${ADMIN_PATH}/dashboard/contacts`, icon: MessageSquare },
+    ]},
+    { title: "TELECALLING & SALES", links: [
+      { name: "Calling Reports", href: `${ADMIN_PATH}/dashboard/sales-calls/reports`, icon: BarChart3, badge: "ADMIN" },
+      { name: "Sales Leads Pool", href: `${ADMIN_PATH}/dashboard/sales-calls`, icon: Phone },
     ]},
     { title: "AUTOMATION & TOOLS", links: [
       { name: "WhatsApp Outreach", href: `${ADMIN_PATH}/dashboard/automation/whatsapp`, icon: MessageSquare, badge: "ACTIVE" },
@@ -753,6 +832,16 @@ export default function DashboardLayout({
       { name: "Security & Roles", href: `${ADMIN_PATH}/dashboard/security`, icon: Shield },
     ]}
   ];
+
+  const navGroups = useMemo(() => {
+    if (!mounted) return rawNavGroups;
+    return rawNavGroups
+      .map(group => ({
+        ...group,
+        links: group.links.filter(link => isLinkAllowed(link.href))
+      }))
+      .filter(group => group.links.length > 0);
+  }, [mounted, isLinkAllowed]);
 
   const effectiveCollapsed = mounted ? isCollapsed : false;
 

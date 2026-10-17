@@ -1,0 +1,594 @@
+"use client";
+
+import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { useAuthStore } from "@/lib/authStore";
+import { authFetch, API } from "@/lib/authFetch";
+import {
+  BarChart3,
+  Users,
+  PhoneCall,
+  Star,
+  CheckCircle2,
+  Clock,
+  Download,
+  Search,
+  Filter,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+  Loader2,
+  Phone,
+  Building,
+  MapPin,
+  RefreshCw,
+  Sparkles,
+  ShieldCheck,
+  AlertCircle
+} from "lucide-react";
+import { format10DigitPhone, formatISTDateTime, formatRelativeTime } from "@/lib/formatters";
+import { ADMIN_PATH } from "@/lib/config";
+
+interface SummaryStats {
+  total_leads_assigned: number;
+  total_calls_logged: number;
+  total_interested: number;
+  total_contacted: number;
+  total_callbacks: number;
+  total_invalid: number;
+  total_pending_leads: number;
+  conversion_rate: number;
+}
+
+interface LeaderboardEntry {
+  user_id: number;
+  username: string;
+  job_title: string;
+  assigned_count: number;
+  completed_count: number;
+  calls_count: number;
+  interested_count: number;
+  contacted_count: number;
+  callback_count: number;
+  invalid_count: number;
+  pending_count: number;
+  conversion_rate: number;
+  progress_percentage: number;
+  last_active_at: string | null;
+}
+
+interface CallAuditLog {
+  id: number;
+  called_at: string;
+  disposition: string;
+  notes: string | null;
+  callback_at: string | null;
+  duration_seconds: number;
+  caller: {
+    id: number;
+    username: string;
+    job_title: string;
+  };
+  lead: {
+    id: number;
+    bussiness_name: string;
+    bussiness_number: string;
+    scraped_city: string;
+    category: string;
+  };
+}
+
+export default function CallingReportsDashboard() {
+  const { user } = useAuthStore();
+  const isSuperAdmin = Boolean(user?.is_superadmin || user?.is_main_admin);
+
+  const [datePreset, setDatePreset] = useState<"today" | "yesterday" | "7d" | "30d" | "all">("all");
+  const [selectedCallerId, setSelectedCallerId] = useState<string>("all");
+
+  const [summary, setSummary] = useState<SummaryStats>({
+    total_leads_assigned: 0,
+    total_calls_logged: 0,
+    total_interested: 0,
+    total_contacted: 0,
+    total_callbacks: 0,
+    total_invalid: 0,
+    total_pending_leads: 0,
+    conversion_rate: 0,
+  });
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [logs, setLogs] = useState<CallAuditLog[]>([]);
+  const [totalLogs, setTotalLogs] = useState(0);
+  const [logPage, setLogPage] = useState(1);
+  const [totalLogPages, setTotalLogPages] = useState(1);
+  const [logSearch, setLogSearch] = useState("");
+  const [logDispositionFilter, setLogDispositionFilter] = useState("all");
+
+  const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+
+  // Compute ISO dates based on preset
+  const { dateFrom, dateTo } = useMemo(() => {
+    const now = new Date();
+    if (datePreset === "today") {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return { dateFrom: start.toISOString(), dateTo: undefined };
+    }
+    if (datePreset === "yesterday") {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, -1);
+      return { dateFrom: start.toISOString(), dateTo: end.toISOString() };
+    }
+    if (datePreset === "7d") {
+      const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return { dateFrom: start.toISOString(), dateTo: undefined };
+    }
+    if (datePreset === "30d") {
+      const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      return { dateFrom: start.toISOString(), dateTo: undefined };
+    }
+    return { dateFrom: undefined, dateTo: undefined };
+  }, [datePreset]);
+
+  // Fetch summary & leaderboard
+  const fetchSummary = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (dateFrom) params.append("date_from", dateFrom);
+      if (dateTo) params.append("date_to", dateTo);
+      if (selectedCallerId !== "all") params.append("caller_id", selectedCallerId);
+
+      const res = await authFetch(`${API}/api/v1/sales-calls/reports/summary?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSummary(data.summary || {});
+        setLeaderboard(data.leaderboard || []);
+      }
+    } catch (err) {
+      console.error("Failed to load reports summary:", err);
+    }
+  }, [dateFrom, dateTo, selectedCallerId]);
+
+  // Fetch audit logs
+  const fetchLogs = useCallback(async (pageNumber = 1) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: String(pageNumber),
+        limit: "25",
+      });
+      if (dateFrom) params.append("date_from", dateFrom);
+      if (dateTo) params.append("date_to", dateTo);
+      if (selectedCallerId !== "all") params.append("caller_id", selectedCallerId);
+      if (logDispositionFilter !== "all") params.append("disposition", logDispositionFilter);
+      if (logSearch.trim()) params.append("search", logSearch.trim());
+
+      const res = await authFetch(`${API}/api/v1/sales-calls/reports/logs?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setLogs(data.logs || []);
+        setTotalLogs(data.total || 0);
+        setTotalLogPages(data.pages || 1);
+      }
+    } catch (err) {
+      console.error("Failed to load call logs:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [dateFrom, dateTo, selectedCallerId, logDispositionFilter, logSearch]);
+
+  useEffect(() => {
+    fetchSummary();
+    fetchLogs(logPage);
+  }, [fetchSummary, fetchLogs, logPage]);
+
+  // Handle CSV Export
+  const handleExportCsv = async () => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (dateFrom) params.append("date_from", dateFrom);
+      if (dateTo) params.append("date_to", dateTo);
+      if (selectedCallerId !== "all") params.append("caller_id", selectedCallerId);
+
+      const res = await authFetch(`${API}/api/v1/sales-calls/reports/export?${params.toString()}`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `calling_report_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error("Failed to export calling report:", err);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  if (!isSuperAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center p-6 bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm">
+        <AlertCircle className="w-12 h-12 text-rose-500 mb-3" />
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Access Denied</h2>
+        <p className="text-xs text-slate-500 max-w-sm mt-1">
+          Only Super Admins and Main Admins are authorized to view team calling performance reports.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-fadeIn pb-24">
+      {/* Header */}
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-lg bg-gradient-to-tr from-indigo-600 via-indigo-500 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 shrink-0">
+            <BarChart3 className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+                Telecalling Progress & Performance Reports
+              </h1>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                Executive View
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Live audit logs, individual agent call counts, interested hot lead conversion rates & pipeline KPIs
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={handleExportCsv}
+            disabled={exporting}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-bold transition shadow-sm shadow-emerald-600/30 cursor-pointer disabled:opacity-50"
+          >
+            {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+            <span>Export CSV Report</span>
+          </button>
+          <button
+            onClick={() => {
+              fetchSummary();
+              fetchLogs(logPage);
+            }}
+            className="p-2 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition cursor-pointer"
+            title="Refresh statistics"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
+      </header>
+
+      {/* Date & Agent Filters Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs font-bold text-slate-500 flex items-center gap-1 mr-1">
+            <Calendar className="w-3.5 h-3.5" /> Date:
+          </span>
+          {[
+            { key: "all", label: "All Time" },
+            { key: "today", label: "Today" },
+            { key: "yesterday", label: "Yesterday" },
+            { key: "7d", label: "Last 7 Days" },
+            { key: "30d", label: "This Month" },
+          ].map(p => (
+            <button
+              key={p.key}
+              onClick={() => setDatePreset(p.key as any)}
+              className={`text-xs font-semibold px-2.5 py-1 rounded-md border transition cursor-pointer ${
+                datePreset === p.key
+                  ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                  : "bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-slate-700/50 hover:bg-slate-100"
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
+            <Users className="w-3.5 h-3.5" /> Agent:
+          </span>
+          <select
+            value={selectedCallerId}
+            onChange={(e) => setSelectedCallerId(e.target.value)}
+            className="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold"
+          >
+            <option value="all">All Telecallers</option>
+            {leaderboard.map(agent => (
+              <option key={agent.user_id} value={agent.user_id}>
+                {agent.username} ({agent.job_title || "Caller"})
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* KPI Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Leads Assigned</span>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-slate-900 dark:text-white">{summary.total_leads_assigned}</span>
+            <span className="text-[11px] text-slate-400 font-medium">In Queue</span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Total Calls Logged</span>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{summary.total_calls_logged}</span>
+            <span className="text-[11px] text-indigo-400 font-mono">Dials</span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Interested Leads</span>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{summary.total_interested}</span>
+            <span className="text-[11px] text-emerald-500 font-bold">Hot</span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Team Conversion Rate</span>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-emerald-700 dark:text-emerald-300">{summary.conversion_rate}%</span>
+            <TrendingUp className="w-4 h-4 text-emerald-500" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Callbacks</span>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-purple-600 dark:text-purple-400">{summary.total_callbacks}</span>
+            <span className="text-[11px] text-slate-400 font-medium">Scheduled</span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Pending Remaining</span>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-amber-600 dark:text-amber-400">{summary.total_pending_leads}</span>
+            <span className="text-[11px] text-slate-400 font-medium">To Call</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Telecaller Performance Leaderboard */}
+      <div className="bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-indigo-600" />
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Caller Performance Leaderboard</h2>
+          </div>
+          <span className="text-xs text-slate-400 font-medium">{leaderboard.length} Active Agents</span>
+        </div>
+
+        {leaderboard.length === 0 ? (
+          <div className="p-8 text-center text-xs text-slate-400">
+            No telecallers have been assigned queue leads yet.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
+                <tr>
+                  <th className="py-3 px-4">Telecaller / Agent</th>
+                  <th className="py-3 px-4 text-center">Assigned</th>
+                  <th className="py-3 px-4 text-center">Completed Calls</th>
+                  <th className="py-3 px-4 text-center">Interested (Hot)</th>
+                  <th className="py-3 px-4 text-center">Conversion Rate</th>
+                  <th className="py-3 px-4 text-center">Callbacks</th>
+                  <th className="py-3 px-4 text-center">Pending</th>
+                  <th className="py-3 px-4">Shift Progress</th>
+                  <th className="py-3 px-4 text-right">Last Call</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                {leaderboard.map((agent) => (
+                  <tr key={agent.user_id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                    <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">
+                        {agent.username.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div>{agent.username}</div>
+                        <div className="text-[10px] font-normal text-slate-400">{agent.job_title || "Sales Caller"}</div>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 text-center font-bold text-slate-800 dark:text-slate-200">
+                      {agent.assigned_count}
+                    </td>
+                    <td className="py-3.5 px-4 text-center font-bold text-blue-600 dark:text-blue-400">
+                      {agent.completed_count}
+                    </td>
+                    <td className="py-3.5 px-4 text-center">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                        <Star className="w-3 h-3 fill-emerald-500" />
+                        {agent.interested_count}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-center font-black text-emerald-600 dark:text-emerald-400">
+                      {agent.conversion_rate}%
+                    </td>
+                    <td className="py-3.5 px-4 text-center text-purple-600 dark:text-purple-400 font-bold">
+                      {agent.callback_count}
+                    </td>
+                    <td className="py-3.5 px-4 text-center text-amber-600 dark:text-amber-400 font-bold">
+                      {agent.pending_count}
+                    </td>
+                    <td className="py-3.5 px-4 min-w-[120px]">
+                      <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 mb-1">
+                        <span>{agent.progress_percentage}%</span>
+                        <span>{agent.completed_count}/{agent.assigned_count}</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full"
+                          style={{ width: `${Math.min(100, agent.progress_percentage)}%` }}
+                        />
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 text-right text-[11px] font-mono text-slate-400">
+                      {agent.last_active_at ? formatISTDateTime(agent.last_active_at) : "Never"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Chronological Call Activity Audit Log */}
+      <div className="bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <PhoneCall className="w-4 h-4 text-indigo-600" />
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Call Activity Audit Trail</h2>
+            <span className="text-xs text-slate-400">({totalLogs} total entries)</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Disposition filter */}
+            <select
+              value={logDispositionFilter}
+              onChange={(e) => {
+                setLogDispositionFilter(e.target.value);
+                setLogPage(1);
+              }}
+              className="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-800 dark:text-slate-200"
+            >
+              <option value="all">All Outcomes</option>
+              <option value="interested">Interested Only</option>
+              <option value="contacted">Contacted Only</option>
+              <option value="callback">Callbacks Only</option>
+              <option value="invalid">Invalid Number</option>
+            </select>
+
+            {/* Search */}
+            <div className="relative max-w-xs">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search logs..."
+                value={logSearch}
+                onChange={(e) => {
+                  setLogSearch(e.target.value);
+                  setLogPage(1);
+                }}
+                className="pl-8 pr-3 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        {loading && logs.length === 0 ? (
+          <div className="p-12 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+            <span>Loading call audit logs...</span>
+          </div>
+        ) : logs.length === 0 ? (
+          <div className="p-12 text-center text-xs text-slate-400">
+            No call activity records found matching these criteria.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
+                <tr>
+                  <th className="py-3 px-4">Date & Time</th>
+                  <th className="py-3 px-4">Caller</th>
+                  <th className="py-3 px-4">Business Name & Phone</th>
+                  <th className="py-3 px-4">City</th>
+                  <th className="py-3 px-4">Disposition</th>
+                  <th className="py-3 px-4">Caller Notes</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                {logs.map((log) => {
+                  const formattedPhone = log.lead?.bussiness_number ? format10DigitPhone(log.lead.bussiness_number) : "";
+                  return (
+                    <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                      <td className="py-3 px-4 text-slate-500 font-mono text-[11px] whitespace-nowrap">
+                        {formatISTDateTime(log.called_at)}
+                      </td>
+                      <td className="py-3 px-4 font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                        {log.caller?.username}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="font-bold text-slate-800 dark:text-slate-200">
+                          {log.lead?.bussiness_name || "Unknown Business"}
+                        </div>
+                        <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-mono">
+                          {formattedPhone ? `+${formattedPhone}` : "No number"}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-slate-500">
+                        {log.lead?.scraped_city || "—"}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${
+                            log.disposition === "interested"
+                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                              : log.disposition === "contacted"
+                              ? "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800"
+                              : log.disposition === "callback"
+                              ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                          }`}
+                        >
+                          {log.disposition === "interested" && <Star className="w-2.5 h-2.5 fill-current" />}
+                          {log.disposition}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 max-w-xs truncate" title={log.notes || ""}>
+                        {log.notes || <span className="text-slate-400 italic">No notes</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Audit Log Pagination */}
+        {totalLogPages > 1 && (
+          <div className="p-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs text-slate-500">
+            <span>Showing {logs.length} of {totalLogs} logged calls</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setLogPage(p => Math.max(1, p - 1))}
+                disabled={logPage === 1 || loading}
+                className="p-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="font-bold text-slate-700 dark:text-slate-300">
+                Page {logPage} of {totalLogPages}
+              </span>
+              <button
+                onClick={() => setLogPage(p => Math.min(totalLogPages, p + 1))}
+                disabled={logPage === totalLogPages || loading}
+                className="p-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

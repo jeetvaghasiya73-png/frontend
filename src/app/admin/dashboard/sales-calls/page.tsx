@@ -156,6 +156,10 @@ export default function SalesCallingDashboard() {
               {tab.label}
             </button>
           ))}
+          <a href={`${ADMIN_PATH}/dashboard/sales-calls/queue`} className="text-xs font-bold px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[6px] transition-colors shadow-sm shadow-indigo-600/30 flex items-center gap-1.5">
+            <PhoneCall className="w-3.5 h-3.5" />
+            <span>My Call Desk →</span>
+          </a>
           <a href={`${ADMIN_PATH}/dashboard/sales-calls/interested`} className="text-xs font-semibold px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-[6px] border border-emerald-200/60 dark:border-emerald-800/40 hover:bg-emerald-100 transition-colors">
             Interested Page →
           </a>
