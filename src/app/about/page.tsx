@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect } from "react";
 import Link from "next/link";
-import { ArrowUpRight, ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowUpRight, ArrowRight, TrendingUp, Code2, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Navbar from "@/components/layout/Navbar";
@@ -10,28 +10,61 @@ import FooterSection from "@/components/layout/FooterSection";
 
 gsap.registerPlugin(ScrollTrigger);
 
-// ─── Founders ─────────────────────────────────────────────────────────────────
-const founders = [
+// ─── Leadership & Capabilities ────────────────────────────────────────────────
+const leadershipPillars = [
   {
-    name: "Jagdish Bandhiya",
-    role: "Marketing Head",
-    focus: "Growth strategy, SEO systems, and client acquisition.",
-    linkedin: "https://www.linkedin.com/in/jagdish-bandhiya-56a726333/",
-    initials: "JB",
+    pillar: "01",
+    tag: "Growth & Visibility",
+    title: "Marketing & Growth Strategy",
+    headline: "Engineered Acquisition Systems",
+    description:
+      "We design data-driven organic acquisition systems, programmatic SEO architectures, and conversion-optimized funnels that drive sustained, measurable business expansion.",
+    capabilities: [
+      "Technical & Local SEO Architecture",
+      "Programmatic Keyword Dominance",
+      "Conversion Rate Optimization (CRO)",
+      "High-Intent Pipeline Generation",
+    ],
+    metric: "Search Dominance & Organic Reach",
+    linkText: "Explore Growth Systems",
+    linkHref: "/services/seo",
+    icon: TrendingUp,
   },
   {
-    name: "Meet Vaghasiya",
-    role: "Technical Head",
-    focus: "Architecture, engineering, and product delivery.",
-    linkedin: "https://www.linkedin.com/in/meet-vaghasiya-3674923a5/",
-    initials: "MV",
+    pillar: "02",
+    tag: "Architecture & Scale",
+    title: "Engineering & Technical Architecture",
+    headline: "High-Performance Digital Platforms",
+    description:
+      "We build production-ready Next.js web applications, resilient API infrastructures, and sub-second web platforms engineered for speed, security, and effortless scaling.",
+    capabilities: [
+      "Full-Stack Web App Development",
+      "Sub-Second Core Web Vitals",
+      "Custom APIs & Scalable Backends",
+      "Robust Cloud & Data Workflows",
+    ],
+    metric: "Sub-Second Latency & 99.9% Resiliency",
+    linkText: "Explore Engineering Services",
+    linkHref: "/services",
+    icon: Code2,
   },
   {
-    name: "Mihir Dudhat",
-    role: "Operations & Sales Head",
-    focus: "Client relations, project management, and business development.",
-    linkedin: "https://www.linkedin.com/in/mihir-dudhat/",
-    initials: "MD",
+    pillar: "03",
+    tag: "Execution & Quality",
+    title: "Operations & Delivery Governance",
+    headline: "Flawless Execution & Automation",
+    description:
+      "We ensure structured agile delivery, uncompromising QA standards, intelligent workflow automation, and proactive client partnership for predictable, zero-friction launches.",
+    capabilities: [
+      "Agile Governance & Milestone Tracking",
+      "Intelligent Workflow Automation",
+      "Enterprise QA & Rigorous Testing",
+      "Proactive Lifecycle & SLA Support",
+    ],
+    metric: "100% On-Schedule Project Execution",
+    linkText: "Explore Automation Solutions",
+    linkHref: "/services/automation",
+    icon: ShieldCheck,
   },
 ];
 
@@ -192,7 +225,7 @@ export default function AboutPage() {
         </section>
 
         {/* ═══════════════════════════════════════════════════════════════════
-            FOUNDERS
+            CORE LEADERSHIP & CAPABILITIES
         ═══════════════════════════════════════════════════════════════════ */}
         <section className="border-b border-border-custom bg-surface/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-24">
@@ -202,61 +235,88 @@ export default function AboutPage() {
               <div>
                 <div className="inline-flex items-center gap-2 border border-border-custom bg-surface px-3 py-1 rounded-full mb-4 about-reveal">
                   <span className="text-[10px] uppercase tracking-widest font-mono font-bold text-foreground">
-                    [02] · Our Founders
+                    [02] · Leadership & Capabilities
                   </span>
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground about-reveal">
-                  Three specialists.<br className="hidden sm:block" /> One shared mission.
+                  Three specialized pillars.<br className="hidden sm:block" /> One unified standard.
                 </h2>
               </div>
               <p className="text-sm text-secondary-custom max-w-xs leading-relaxed about-reveal">
-                Each founder owns a distinct domain. Together, we cover marketing, engineering, and operations — the three pillars that determine whether a digital project succeeds or stalls.
+                Our leadership is structured across three core domains — growth marketing, software engineering, and operational governance — ensuring every project delivers tangible business results.
               </p>
             </div>
 
-            {/* Founders grid */}
+            {/* Capabilities grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border-custom border border-border-custom rounded-lg overflow-hidden">
-              {founders.map((f, i) => (
-                <div
-                  key={f.name}
-                  className="bg-surface p-8 sm:p-10 flex flex-col gap-5 about-reveal group"
-                  style={{ animationDelay: `${i * 0.08}s` }}
-                >
-                  {/* Avatar */}
-                  <div className="w-12 h-12 rounded-full border-2 border-border-custom bg-background flex items-center justify-center">
-                    <span className="text-sm font-bold tracking-tight text-foreground font-mono">
-                      {f.initials}
-                    </span>
-                  </div>
-
-                  {/* Name & role */}
-                  <div>
-                    <p className="text-xs uppercase tracking-widest font-mono text-secondary-custom mb-1">
-                      {f.role}
-                    </p>
-                    <h3 className="text-xl font-bold tracking-tight text-foreground">
-                      {f.name}
-                    </h3>
-                  </div>
-
-                  {/* Focus */}
-                  <p className="text-sm text-secondary-custom leading-relaxed flex-1">
-                    {f.focus}
-                  </p>
-
-                  {/* LinkedIn */}
-                  <a
-                    href={f.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`${f.name} on LinkedIn`}
-                    className="inline-flex items-center gap-2 text-xs font-semibold text-foreground border border-border-custom rounded-full px-4 py-2 w-fit hover:bg-foreground hover:text-background transition-all"
+              {leadershipPillars.map((pillar, i) => {
+                const IconComponent = pillar.icon;
+                return (
+                  <div
+                    key={pillar.title}
+                    className="bg-surface p-8 sm:p-10 flex flex-col justify-between gap-6 about-reveal group hover:bg-surface/80 transition-colors"
+                    style={{ animationDelay: `${i * 0.08}s` }}
                   >
-                    LinkedIn
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              ))}
+                    <div>
+                      {/* Top Header Badge & Pillar ID */}
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="w-12 h-12 rounded-lg border border-border-custom bg-background flex items-center justify-center text-foreground group-hover:border-foreground/40 transition-colors">
+                          <IconComponent className="w-5 h-5 text-foreground" />
+                        </div>
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-secondary-custom border border-border-custom px-2.5 py-1 rounded-full bg-background">
+                          Pillar {pillar.pillar}
+                        </span>
+                      </div>
+
+                      {/* Tag & Title */}
+                      <div className="mb-4">
+                        <p className="text-xs uppercase tracking-widest font-mono text-secondary-custom mb-1">
+                          {pillar.tag}
+                        </p>
+                        <h3 className="text-xl font-bold tracking-tight text-foreground mb-1">
+                          {pillar.title}
+                        </h3>
+                        <p className="text-xs font-semibold text-foreground/80 font-mono">
+                          {pillar.headline}
+                        </p>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-sm text-secondary-custom leading-relaxed mb-6">
+                        {pillar.description}
+                      </p>
+
+                      {/* Capabilities List */}
+                      <div className="space-y-2 mb-6 pt-4 border-t border-border-custom/50">
+                        <p className="text-[11px] font-mono uppercase tracking-wider text-secondary-custom font-semibold mb-2">
+                          Core Focus Areas
+                        </p>
+                        {pillar.capabilities.map((cap) => (
+                          <div key={cap} className="flex items-center gap-2 text-xs text-foreground/90">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-foreground/60 shrink-0" />
+                            <span>{cap}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Bottom Metric & Link */}
+                    <div className="pt-4 border-t border-border-custom flex flex-col gap-3">
+                      <div className="flex items-center justify-between text-[11px] font-mono text-secondary-custom">
+                        <span>Standard</span>
+                        <span className="text-foreground font-semibold">{pillar.metric}</span>
+                      </div>
+                      <Link
+                        href={pillar.linkHref}
+                        className="inline-flex items-center justify-between text-xs font-semibold text-foreground border border-border-custom rounded-lg px-4 py-2.5 w-full hover:bg-foreground hover:text-background transition-all group/btn"
+                      >
+                        <span>{pillar.linkText}</span>
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-1" />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
           </div>
