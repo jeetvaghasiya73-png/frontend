@@ -28,7 +28,9 @@ import {
   CalendarDays,
   MessageSquare,
   MousePointerClick,
-  PhoneForwarded
+  PhoneForwarded,
+  Bot,
+  UserCheck
 } from "lucide-react";
 import { format10DigitPhone, formatISTDateTime, formatRelativeTime } from "@/lib/formatters";
 import { ADMIN_PATH } from "@/lib/config";
@@ -83,8 +85,11 @@ interface CallAuditLog {
   notes: string | null;
   callback_at: string | null;
   duration_seconds: number;
+  source?: string;
+  actor_name?: string;
+  is_bot?: boolean;
   caller: {
-    id: number;
+    id: number | null;
     username: string;
     job_title: string;
   };
@@ -144,6 +149,7 @@ export default function CallingReportsDashboard() {
   const [totalLogPages, setTotalLogPages] = useState(1);
   const [logSearch, setLogSearch] = useState("");
   const [logDispositionFilter, setLogDispositionFilter] = useState("all");
+  const [logActorFilter, setLogActorFilter] = useState<"all" | "team" | "whatsapp_bot">("all");
 
   const [interactionLogs, setInteractionLogs] = useState<CallerActionAuditLog[]>([]);
   const [totalInteractions, setTotalInteractions] = useState(0);
@@ -210,6 +216,7 @@ export default function CallingReportsDashboard() {
       if (dateTo) params.append("date_to", dateTo);
       if (selectedCallerId !== "all") params.append("caller_id", selectedCallerId);
       if (logDispositionFilter !== "all") params.append("disposition", logDispositionFilter);
+      if (logActorFilter !== "all") params.append("actor_filter", logActorFilter);
       if (logSearch.trim()) params.append("search", logSearch.trim());
 
       const res = await authFetch(`${API}/api/v1/sales-calls/reports/logs?${params.toString()}`);
@@ -224,7 +231,7 @@ export default function CallingReportsDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [dateFrom, dateTo, selectedCallerId, logDispositionFilter, logSearch]);
+  }, [dateFrom, dateTo, selectedCallerId, logDispositionFilter, logActorFilter, logSearch]);
 
   // Fetch telecaller button interaction logs (Call / WhatsApp clicks audit)
   const fetchInteractions = useCallback(async (pageNumber = 1) => {
@@ -642,11 +649,25 @@ export default function CallingReportsDashboard() {
         <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <PhoneCall className="w-4 h-4 text-indigo-600" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Call Activity Audit Trail</h2>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Call & Status Activity Audit Trail</h2>
             <span className="text-xs text-slate-400">({totalLogs} total entries)</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {/* Actor filter */}
+            <select
+              value={logActorFilter}
+              onChange={(e) => {
+                setLogActorFilter(e.target.value as any);
+                setLogPage(1);
+              }}
+              className="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-800 dark:text-slate-200 font-medium"
+            >
+              <option value="all">All Actors (Team & Bot)</option>
+              <option value="team">👥 Team Callers Only</option>
+              <option value="whatsapp_bot">🤖 WhatsApp Bot Only</option>
+            </select>
+
             {/* Disposition filter */}
             <select
               value={logDispositionFilter}
@@ -657,10 +678,10 @@ export default function CallingReportsDashboard() {
               className="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-800 dark:text-slate-200"
             >
               <option value="all">All Outcomes</option>
-              <option value="interested">Interested Only</option>
-              <option value="contacted">Contacted Only</option>
-              <option value="callback">Callbacks Only</option>
-              <option value="invalid">Invalid Number</option>
+              <option value="interested">⭐ Interested Only</option>
+              <option value="contacted">📞 Contacted Only</option>
+              <option value="callback">🕒 Callbacks Only</option>
+              <option value="invalid">❌ Invalid Number</option>
             </select>
 
             {/* Search */}
@@ -668,7 +689,7 @@ export default function CallingReportsDashboard() {
               <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search business, phone, notes..."
+                placeholder="Search lead, caller, notes..."
                 value={logSearch}
                 onChange={(e) => {
                   setLogSearch(e.target.value);
@@ -683,39 +704,63 @@ export default function CallingReportsDashboard() {
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center text-slate-400">
             <Loader2 className="w-6 h-6 animate-spin text-indigo-500 mb-2" />
-            <span className="text-xs">Loading call logs...</span>
+            <span className="text-xs">Loading audit logs...</span>
           </div>
         ) : logs.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-400">
-            No call activity logs match this criteria.
+            No activity or status change logs match this criteria.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs min-w-[700px]">
+            <table className="w-full text-left text-xs min-w-[850px]">
               <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
                 <tr>
-                  <th className="py-3 px-4">Timestamp</th>
-                  <th className="py-3 px-4">Caller</th>
+                  <th className="py-3 px-4">Time (IST)</th>
+                  <th className="py-3 px-4">Changed By / Actor</th>
                   <th className="py-3 px-4">Business / Lead</th>
                   <th className="py-3 px-4">Outcome</th>
-                  <th className="py-3 px-4">Notes / Takeaway</th>
+                  <th className="py-3 px-4">Source</th>
+                  <th className="py-3 px-4">Notes / Remarks</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {logs.map((log) => {
                   const leadPhone = log.lead?.bussiness_number ? format10DigitPhone(log.lead.bussiness_number) : "";
+                  const isBotActor = log.is_bot || log.source === "whatsapp_bot" || log.caller?.username?.toLowerCase().includes("bot") || log.actor_name?.toLowerCase().includes("bot");
                   return (
                     <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
-                      <td className="py-3 px-4 text-[11px] font-mono text-slate-400 whitespace-nowrap">
-                        {formatISTDateTime(log.called_at)}
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="text-[11px] font-mono font-medium text-slate-900 dark:text-white">
+                          {formatISTDateTime(log.called_at)}
+                        </div>
+                        <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
+                          <span>🇮🇳 IST (UTC+5:30)</span>
+                        </div>
                       </td>
-                      <td className="py-3 px-4 font-bold text-slate-900 dark:text-white">
-                        {log.caller?.username || "Unknown"}
+                      <td className="py-3 px-4">
+                        {isBotActor ? (
+                          <div>
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                              <Bot className="w-3.5 h-3.5 text-emerald-600" /> WhatsApp Bot
+                            </span>
+                            <div className="text-[10px] text-slate-400 mt-0.5">Customer / Inbound</div>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
+                              <UserCheck className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                              <span className="truncate max-w-[140px]">{log.actor_name || log.caller?.username || "Admin"}</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 capitalize">
+                              {log.caller?.job_title || "Sales Caller"}
+                            </div>
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <div className="font-bold text-slate-900 dark:text-white truncate max-w-[200px]" title={log.lead?.bussiness_name}>
-                          {log.lead?.bussiness_name || "Unknown"}
+                          {log.lead?.bussiness_name || "Unknown Business"}
                         </div>
                         <div className="text-[11px] font-mono text-slate-400">
                           {leadPhone ? `+${leadPhone}` : "—"} {log.lead?.scraped_city ? `• ${log.lead.scraped_city}` : ""}
@@ -731,13 +776,28 @@ export default function CallingReportsDashboard() {
                             ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800"
                             : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                         }`}>
-                          {log.disposition}
+                          {log.disposition === "interested" ? "⭐ Interested" : log.disposition === "contacted" ? "📞 Contacted" : log.disposition}
                         </span>
                         {log.callback_at && (
                           <div className="text-[10px] text-purple-600 dark:text-purple-400 mt-0.5 flex items-center gap-1 font-mono">
                             <Clock className="w-2.5 h-2.5" /> {formatISTDateTime(log.callback_at)}
                           </div>
                         )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                          {log.source === "whatsapp_bot"
+                            ? "WhatsApp Bot"
+                            : log.source === "queue_disposition"
+                            ? "Call Queue"
+                            : log.source === "sales_calling_screen"
+                            ? "Calling List"
+                            : log.source === "whatsapp_dashboard"
+                            ? "WhatsApp Tab"
+                            : log.source === "interested_screen"
+                            ? "Hot Leads Tab"
+                            : (log.source || "Sales Call")}
+                        </span>
                       </td>
                       <td className="py-3 px-4 text-slate-600 dark:text-slate-300 text-[11px] max-w-xs truncate" title={log.notes || ""}>
                         {log.notes || "—"}
