@@ -43,6 +43,7 @@ import { authFetch } from "@/lib/authFetch";
 import { API_URL, ADMIN_PATH } from "@/lib/config";
 import { matchesSimilaritySearch, format10DigitPhone } from "@/lib/formatters";
 import AdminPwaManager from "@/components/admin/AdminPwaManager";
+import AdminPwaDownloadPopup from "@/components/admin/AdminPwaDownloadPopup";
 
 interface CrmPageNav {
   name: string;
@@ -1204,8 +1205,9 @@ export default function DashboardLayout({
       className={`h-screen flex flex-col lg:flex-row overflow-hidden relative font-sans antialiased select-none ${dashTheme === 'dark' ? 'dark' : ''}`}
       style={{ background: "var(--dash-bg)", color: "var(--dash-text)" }}
     >
-      {/* ── Isolated PWA Manager (Restricted Exclusively to Admin Console) ── */}
+      {/* ── Isolated PWA Manager & Mobile Download Popup ── */}
       <AdminPwaManager />
+      <AdminPwaDownloadPopup />
 
       {/* ── Floating Live Notification Toast ── */}
       {activeToastNotif && (
