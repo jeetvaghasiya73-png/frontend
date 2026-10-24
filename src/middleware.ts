@@ -5,8 +5,36 @@ const ADMIN_SLUG = process.env.NEXT_PUBLIC_ADMIN_SLUG || "techinfinix-console-77
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = request.headers.get("host") || "";
+  const isSubdomainAdmin = host.startsWith("admin.") || host === "admin.techinfinix.com";
 
-  // 1. Direct /admin probing is strictly cloaked with 404 (Zero Discovery)
+  // ── SUBDOMAIN ROUTING (admin.techinfinix.com) ─────────────────────────────
+  if (isSubdomainAdmin) {
+    // Root visit on admin subdomain -> dashboard or login
+    if (pathname === "/") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/dashboard";
+      return NextResponse.rewrite(url);
+    }
+    // If the path already has /admin, let it proceed internally
+    if (pathname.startsWith("/admin/")) {
+      return NextResponse.next();
+    }
+    // If visiting secret slug on admin subdomain, normalize to clean path
+    if (pathname.startsWith(`/${ADMIN_SLUG}`)) {
+      const cleanPath = pathname.replace(`/${ADMIN_SLUG}`, "/admin") || "/admin/dashboard";
+      const rewriteUrl = new URL(cleanPath, request.url);
+      rewriteUrl.search = request.nextUrl.search;
+      return NextResponse.rewrite(rewriteUrl);
+    }
+    // Clean dashboard routes e.g. admin.techinfinix.com/dashboard/leads -> internal /admin/dashboard/leads
+    const internalUrl = new URL(`/admin${pathname}`, request.url);
+    internalUrl.search = request.nextUrl.search;
+    return NextResponse.rewrite(internalUrl);
+  }
+
+  // ── MAIN DOMAIN ROUTING (techinfinix.com) ─────────────────────────────────
+  // 1. Direct /admin probing on main domain is strictly cloaked with 404
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     const notFoundUrl = new URL("/_not-found", request.url);
     return NextResponse.rewrite(notFoundUrl, { status: 404 });

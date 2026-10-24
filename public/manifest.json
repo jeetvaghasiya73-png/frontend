@@ -1,0 +1,61 @@
+{
+  "name": "Tech Infinix Admin & Telecaller CRM",
+  "short_name": "TI Admin",
+  "description": "Enterprise Telecalling & Lead Operations Console for Tech Infinix",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Calling Desk",
+      "short_name": "Call Desk",
+      "description": "Open your sales call queue",
+      "url": "/dashboard/sales-calls/queue",
+      "icons": [{ "src": "/icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Leads Hub",
+      "short_name": "Leads",
+      "description": "Manage city & industry leads",
+      "url": "/dashboard/leads",
+      "icons": [{ "src": "/icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "WhatsApp Bot",
+      "short_name": "WhatsApp",
+      "description": "Monitor hot leads & bot chats",
+      "url": "/dashboard/automation/whatsapp",
+      "icons": [{ "src": "/icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Sales Reports",
+      "short_name": "Reports",
+      "description": "View conversion analytics",
+      "url": "/dashboard/sales-calls/reports",
+      "icons": [{ "src": "/icon.png", "sizes": "192x192" }]
+    }
+  ]
+}

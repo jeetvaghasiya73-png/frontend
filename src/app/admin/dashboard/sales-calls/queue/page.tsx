@@ -573,70 +573,114 @@ export default function SalesCallingDeskPage() {
         </div>
       </header>
 
-      {/* Admin Telecaller Switcher Bar */}
+      {/* Admin Telecaller Switcher Bar - Production-Ready Redesign */}
       {isSuperAdmin && (
-        <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">
-            <Users className="w-4 h-4 text-indigo-500" />
-            <span>Select Sales Caller Queue:</span>
-          </div>
+        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            {/* Title & All Callers quick toggle */}
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <Users className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block">
+                  Telecaller Desk Queue
+                </span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Select a sales agent to inspect their active calls & leads
+                </span>
+              </div>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 flex-1">
-            <button
-              onClick={() => setSelectedCallerId("all")}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-md border transition cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                selectedCallerId === "all"
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-sm"
-                  : "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <span>All Telecallers</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                Team
-              </span>
-            </button>
-
-            {telecallers.map((t) => (
+            {/* Quick Segmented Switcher & Combobox */}
+            <div className="flex flex-wrap items-center gap-2.5 flex-1 lg:justify-end">
+              {/* All Telecallers Team Button */}
               <button
-                key={t.id}
-                onClick={() => setSelectedCallerId(String(t.id))}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-md border transition cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                  selectedCallerId === String(t.id)
-                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-600/30"
-                    : "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                onClick={() => setSelectedCallerId("all")}
+                className={`text-xs font-bold px-3.5 py-2 rounded-lg border transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+                  selectedCallerId === "all"
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-sm ring-2 ring-slate-900/10 dark:ring-white/20"
+                    : "bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700/80 hover:bg-slate-100 dark:hover:bg-slate-800"
                 }`}
               >
-                <div className="w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-[9px] font-bold flex items-center justify-center shrink-0">
-                  {t.username.charAt(0).toUpperCase()}
-                </div>
-                <span>{t.username}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                  selectedCallerId === String(t.id)
-                    ? "bg-white/20 text-white"
-                    : t.total_pending > 0
-                    ? "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400"
-                    : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                <span>👥 All Telecallers</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                  selectedCallerId === "all"
+                    ? "bg-white/20 dark:bg-slate-900/20 text-white dark:text-slate-900"
+                    : "bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300"
                 }`}>
-                  {t.total_pending} pend / {t.total_assigned}
+                  Team Queue
                 </span>
               </button>
-            ))}
+
+              {/* Dedicated Caller Dropdown Selector */}
+              <div className="relative min-w-[260px] sm:min-w-[320px] max-w-full">
+                <select
+                  value={selectedCallerId}
+                  onChange={(e) => setSelectedCallerId(e.target.value)}
+                  className="w-full text-xs font-semibold px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer appearance-none pr-8"
+                >
+                  <option value="all">-- Select Individual Telecaller --</option>
+                  {telecallers.map((t) => (
+                    <option key={t.id} value={String(t.id)}>
+                      {t.username} • {t.total_pending} pending / {t.total_assigned} assigned ({t.progress_percentage}% completed)
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </div>
+              </div>
+
+              {/* Bulk Dequeue button for selected caller */}
+              {selectedCallerId !== "all" && (() => {
+                const currentCaller = telecallers.find(t => String(t.id) === selectedCallerId);
+                if (!currentCaller || currentCaller.total_assigned === 0) return null;
+                return (
+                  <button
+                    onClick={() => handleBulkDequeue(currentCaller.id, currentCaller.username)}
+                    disabled={bulkDequeuing}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/70 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition cursor-pointer disabled:opacity-50 shrink-0"
+                    title="Release all assigned leads back to the general pool (leads are dequeued, NOT deleted)"
+                  >
+                    {bulkDequeuing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    <span>Bulk Dequeue All ({currentCaller.total_assigned})</span>
+                  </button>
+                );
+              })()}
+            </div>
           </div>
 
-          {/* Bulk Dequeue button for selected caller */}
+          {/* Active Caller Details Bar when specific caller is selected */}
           {selectedCallerId !== "all" && (() => {
-            const currentCaller = telecallers.find(t => String(t.id) === selectedCallerId);
-            if (!currentCaller || currentCaller.total_assigned === 0) return null;
+            const activeCaller = telecallers.find(t => String(t.id) === selectedCallerId);
+            if (!activeCaller) return null;
             return (
-              <button
-                onClick={() => handleBulkDequeue(currentCaller.id, currentCaller.username)}
-                disabled={bulkDequeuing}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/70 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition cursor-pointer disabled:opacity-50 shrink-0"
-                title="Release all assigned leads back to the general pool (leads are dequeued, NOT deleted)"
-              >
-                {bulkDequeuing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                <span>Bulk Dequeue All ({currentCaller.total_assigned})</span>
-              </button>
+              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-[11px] shadow-sm">
+                    {activeCaller.username.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-bold text-slate-800 dark:text-slate-100">
+                    {activeCaller.username}
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {activeCaller.job_title || "Sales Executive"}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3 text-[11px]">
+                  <span className="text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded border border-amber-200/60 dark:border-amber-800/50">
+                    {activeCaller.total_pending} Pending Calls
+                  </span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/50">
+                    {activeCaller.total_interested} Interested Leads
+                  </span>
+                  <span className="text-slate-600 dark:text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                    {activeCaller.progress_percentage}% Done
+                  </span>
+                </div>
+              </div>
             );
           })()}
         </div>
