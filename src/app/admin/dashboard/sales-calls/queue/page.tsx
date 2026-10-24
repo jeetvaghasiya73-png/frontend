@@ -127,6 +127,20 @@ export default function SalesCallingDeskPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
+  // Custom Telecaller Popover Dropdown State
+  const [showCallerDropdown, setShowCallerDropdown] = useState(false);
+  const callerDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (callerDropdownRef.current && !callerDropdownRef.current.contains(e.target as Node)) {
+        setShowCallerDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
   // Generate Queue Modal State
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [batchSize, setBatchSize] = useState(50);
@@ -548,29 +562,29 @@ export default function SalesCallingDeskPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:items-center sm:w-auto">
           {/* Generation Button with pending indicator */}
           <button
             onClick={openGenerateModal}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-[var(--dash-btn-radius)] text-xs font-bold transition cursor-pointer ${
+            className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-[var(--dash-btn-radius)] text-xs font-bold transition cursor-pointer text-center w-full sm:w-auto shadow-xs ${
               isGenerationBlocked
                 ? "border text-amber-500 bg-amber-500/10 border-amber-500/30"
                 : "crm-btn-primary text-white"
             }`}
             title={isGenerationBlocked ? `Complete your ${stats.total_pending} pending leads before generating new leads` : "Claim fresh batch of leads"}
           >
-            {isGenerationBlocked ? <Lock className="w-3.5 h-3.5 text-amber-500" /> : <PlusCircle className="w-4 h-4" />}
-            <span>{isGenerationBlocked ? `Queue Locked (${stats.total_pending} Pending)` : "Generate Call Queue"}</span>
+            {isGenerationBlocked ? <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" /> : <PlusCircle className="w-4 h-4 shrink-0" />}
+            <span className="truncate">{isGenerationBlocked ? `Locked (${stats.total_pending})` : "Generate Queue"}</span>
           </button>
 
           {isSuperAdmin && (
             <a
               href={`${ADMIN_PATH}/dashboard/sales-calls/reports`}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-[var(--dash-btn-radius)] text-xs font-semibold transition border border-[var(--dash-border)] bg-[var(--dash-surface-alt)] hover:text-[var(--dash-text)]"
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-[var(--dash-btn-radius)] text-xs font-semibold transition border border-[var(--dash-border)] bg-[var(--dash-surface-alt)] hover:text-[var(--dash-text)] text-center w-full sm:w-auto"
               style={{ color: "var(--dash-text-muted)" }}
             >
-              <TrendingUp className="w-3.5 h-3.5" style={{ color: "var(--dash-violet)" }} />
-              <span>Executive Reports →</span>
+              <TrendingUp className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-violet)" }} />
+              <span className="truncate">Executive Reports →</span>
             </a>
           )}
         </div>
@@ -595,14 +609,14 @@ export default function SalesCallingDeskPage() {
               </div>
             </div>
 
-            {/* Quick Segmented Switcher & Combobox */}
-            <div className="flex flex-wrap items-center gap-2.5 flex-1 lg:justify-end">
+            {/* Quick Segmented Switcher & Custom Telecaller Dropdown */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto flex-1 lg:justify-end">
               {/* All Telecallers Team Button */}
               <button
-                onClick={() => setSelectedCallerId("all")}
-                className={`text-xs font-bold px-3.5 py-2 rounded-[var(--dash-btn-radius)] border transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+                onClick={() => { setSelectedCallerId("all"); setShowCallerDropdown(false); }}
+                className={`text-xs font-bold px-3.5 py-2.5 rounded-[var(--dash-btn-radius)] border transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 ${
                   selectedCallerId === "all"
-                    ? "bg-[var(--dash-primary)] text-white border-[var(--dash-primary)]"
+                    ? "bg-[var(--dash-primary)] text-white border-[var(--dash-primary)] shadow-xs"
                     : "bg-[var(--dash-surface-alt)] text-[var(--dash-text-muted)] border-[var(--dash-border)] hover:text-[var(--dash-text)]"
                 }`}
               >
@@ -616,26 +630,105 @@ export default function SalesCallingDeskPage() {
                 </span>
               </button>
 
-              {/* Dedicated Caller Dropdown Selector */}
-              <div className="relative min-w-[260px] sm:min-w-[320px] max-w-full">
-                <select
-                  value={selectedCallerId}
-                  onChange={(e) => setSelectedCallerId(e.target.value)}
-                  className="w-full text-xs font-semibold px-3.5 py-2 rounded-[var(--dash-input-radius)] border border-[var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-text)] focus:outline-none focus:border-[var(--dash-primary)] cursor-pointer appearance-none pr-8"
+              {/* Dedicated Custom Telecaller Popover Selector */}
+              <div className="relative flex-1 sm:min-w-[280px] max-w-full" ref={callerDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowCallerDropdown(prev => !prev)}
+                  className="w-full text-left text-xs font-semibold px-3.5 py-2.5 rounded-[var(--dash-input-radius)] border border-[var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-text)] hover:border-[var(--dash-primary)] focus:outline-hidden transition-all flex items-center justify-between gap-2 shadow-xs cursor-pointer"
                 >
-                  <option value="all">-- Select Individual Telecaller --</option>
-                  {telecallers.map((t) => (
-                    <option key={t.id} value={String(t.id)}>
-                      {t.username} • {t.total_pending} pending / {t.total_assigned} assigned ({t.progress_percentage}% completed)
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--dash-text-muted)]">
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </div>
+                  <div className="flex items-center gap-2 truncate">
+                    {selectedCallerId === "all" ? (
+                      <>
+                        <Users className="w-3.5 h-3.5 text-[var(--dash-primary)] shrink-0" />
+                        <span className="truncate">-- Select Individual Telecaller --</span>
+                      </>
+                    ) : (() => {
+                      const active = telecallers.find(t => String(t.id) === selectedCallerId);
+                      if (!active) return <span>Select Telecaller</span>;
+                      return (
+                        <>
+                          <div className="w-5 h-5 rounded-full bg-[var(--dash-primary)] text-white font-bold flex items-center justify-center text-[10px] shrink-0">
+                            {active.username.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="font-bold truncate">{active.username}</span>
+                          <span className="text-[10px] text-amber-500 font-mono font-bold bg-amber-500/10 px-1 rounded border border-amber-500/20 shrink-0">
+                            {active.total_pending} to call
+                          </span>
+                        </>
+                      );
+                    })()}
+                  </div>
+                  <ChevronDown className={`w-3.5 h-3.5 text-[var(--dash-text-muted)] shrink-0 transition-transform duration-200 ${showCallerDropdown ? "rotate-180" : ""}`} />
+                </button>
+
+                {/* Elevated Custom Dropdown Menu */}
+                {showCallerDropdown && (
+                  <div className="absolute right-0 left-0 top-full mt-1.5 crm-card p-1.5 shadow-2xl border border-[var(--dash-border)] z-50 max-h-72 overflow-y-auto space-y-1 rounded-xl animate-fadeIn">
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedCallerId("all"); setShowCallerDropdown(false); }}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between gap-2 transition cursor-pointer ${
+                        selectedCallerId === "all"
+                          ? "bg-[var(--dash-primary)]/10 text-[var(--dash-primary)] font-bold"
+                          : "hover:bg-[var(--dash-surface-alt)] text-[var(--dash-text)]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Users className="w-3.5 h-3.5 text-[var(--dash-primary)]" />
+                        <span>All Telecallers (Team Queue)</span>
+                      </div>
+                      {selectedCallerId === "all" && <Check className="w-3.5 h-3.5 text-[var(--dash-primary)]" />}
+                    </button>
+
+                    <div className="h-px bg-[var(--dash-border)] my-1" />
+
+                    {telecallers.length === 0 ? (
+                      <div className="p-3 text-center text-xs text-[var(--dash-text-muted)]">No telecallers found</div>
+                    ) : (
+                      telecallers.map((t) => {
+                        const isSelected = selectedCallerId === String(t.id);
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => { setSelectedCallerId(String(t.id)); setShowCallerDropdown(false); }}
+                            className={`w-full text-left px-2.5 py-2 rounded-lg text-xs flex items-center justify-between gap-2 transition cursor-pointer ${
+                              isSelected
+                                ? "bg-[var(--dash-primary)]/10 text-[var(--dash-primary)] font-bold border border-[var(--dash-primary)]/30"
+                                : "hover:bg-[var(--dash-surface-alt)] text-[var(--dash-text)]"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-6 h-6 rounded-full bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] text-[var(--dash-text)] font-bold flex items-center justify-center text-[10px] shrink-0">
+                                {t.username.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-semibold text-xs truncate">{t.username}</div>
+                                <div className="text-[10px] text-[var(--dash-text-muted)] truncate">
+                                  {t.job_title || "Sales Agent"}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 font-bold border border-amber-500/20">
+                                {t.total_pending} pending
+                              </span>
+                              <span className="text-[10px] font-mono text-[var(--dash-text-muted)]">
+                                {t.progress_percentage}%
+                              </span>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-[var(--dash-primary)] ml-1" />}
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Bulk Dequeue button for selected caller */}
+              {/* Bulk Dequeue button */}
               {selectedCallerId !== "all" && (() => {
                 const currentCaller = telecallers.find(t => String(t.id) === selectedCallerId);
                 if (!currentCaller || currentCaller.total_assigned === 0) return null;
@@ -643,11 +736,11 @@ export default function SalesCallingDeskPage() {
                   <button
                     onClick={() => handleBulkDequeue(currentCaller.id, currentCaller.username)}
                     disabled={bulkDequeuing}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-[var(--dash-btn-radius)] text-xs font-bold border border-red-500/30 text-red-500 bg-red-500/10 hover:bg-red-500/20 transition cursor-pointer disabled:opacity-50 shrink-0"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-[var(--dash-btn-radius)] text-xs font-bold border border-red-500/30 text-red-500 bg-red-500/10 hover:bg-red-500/20 transition cursor-pointer disabled:opacity-50 shrink-0 w-full sm:w-auto"
                     title="Release all assigned leads back to the general pool (leads are dequeued, NOT deleted)"
                   >
                     {bulkDequeuing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                    <span>Bulk Dequeue All ({currentCaller.total_assigned})</span>
+                    <span>Bulk Dequeue ({currentCaller.total_assigned})</span>
                   </button>
                 );
               })()}
@@ -741,57 +834,71 @@ export default function SalesCallingDeskPage() {
       </div>
 
       {/* Filter Tabs & Search Toolbar */}
-      <div className="crm-card p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {[
-            { key: "pending", label: "Pending (To Call)", count: stats.total_pending },
-            { key: "interested", label: "Interested", count: stats.total_interested },
-            { key: "contacted", label: "Contacted", count: stats.total_contacted },
-            { key: "callback", label: "Callbacks", count: stats.total_callbacks },
-            { key: "all", label: "All in Queue", count: stats.total_assigned },
-          ].map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => {
-                setStatusFilter(tab.key);
+      <div className="crm-card p-3 sm:p-4 space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          {/* Horizontally Scrollable Segmented Status Tabs */}
+          <div className="overflow-x-auto no-scrollbar flex items-center gap-1.5 p-1 bg-[var(--dash-surface-alt)] rounded-[var(--dash-input-radius)] border border-[var(--dash-border)] w-full md:w-auto shrink-0">
+            {[
+              { key: "pending", label: "Pending", count: stats.total_pending },
+              { key: "interested", label: "Interested", count: stats.total_interested },
+              { key: "contacted", label: "Contacted", count: stats.total_contacted },
+              { key: "callback", label: "Callbacks", count: stats.total_callbacks },
+              { key: "all", label: "All in Queue", count: stats.total_assigned },
+            ].map((tab) => {
+              const isActive = statusFilter === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter(tab.key);
+                    setPage(1);
+                  }}
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    isActive
+                      ? "bg-[var(--dash-primary)] text-white shadow-xs font-bold"
+                      : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] hover:bg-[var(--dash-surface)]"
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
+                    isActive
+                      ? "bg-white/20 text-white"
+                      : "bg-[var(--dash-surface)] text-[var(--dash-text)] border border-[var(--dash-border)]"
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Search Box - Clean, responsive & comfortable */}
+          <div className="relative w-full md:w-72 shrink-0">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--dash-text-muted)] pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search phone, name, city, caller..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
                 setPage(1);
               }}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-[var(--dash-btn-radius)] border transition-all cursor-pointer flex items-center gap-1.5 ${
-                statusFilter === tab.key
-                  ? "bg-[var(--dash-primary)] text-white border-[var(--dash-primary)]"
-                  : "bg-[var(--dash-surface-alt)] text-[var(--dash-text-muted)] border-[var(--dash-border)] hover:text-[var(--dash-text)]"
-              }`}
-            >
-              <span>{tab.label}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-[var(--dash-badge-radius)] font-bold ${
-                statusFilter === tab.key
-                  ? "bg-white/20 text-white"
-                  : "bg-[var(--dash-surface)] text-[var(--dash-text)] border border-[var(--dash-border)]"
-              }`}>
-                {tab.count}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <div className="relative max-w-xs w-full">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--dash-text-muted)] pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search phone, name, city, caller..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-[var(--dash-input-radius)] pl-8 pr-7 py-1.5 text-xs text-[var(--dash-text)] placeholder:text-[var(--dash-text-muted)] focus:outline-none focus:border-[var(--dash-primary)]"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] p-0.5 cursor-pointer"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          )}
+              className="crm-input !pl-9 !pr-8 py-2 text-xs w-full"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setPage(1);
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] p-0.5 cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

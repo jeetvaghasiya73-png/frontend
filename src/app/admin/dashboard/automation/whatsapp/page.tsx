@@ -1328,13 +1328,13 @@ export default function WhatsAppOutreachPage() {
       </div>
 
       {/* ── Segmented Navigation Tabs & Worker Controls ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--dash-border)] pb-3">
-        <div className="flex items-center gap-1.5 p-1 rounded-md bg-[var(--dash-card-bg)] border border-[var(--dash-border)] overflow-x-auto scrollbar-none">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[var(--dash-border)] pb-3">
+        <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[var(--dash-card-bg)] border border-[var(--dash-border)] overflow-x-auto no-scrollbar w-full lg:w-auto shrink-0">
           <button
             onClick={() => setActiveTab("chat")}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-md font-semibold text-xs transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === "chat"
-                ? "bg-[var(--dash-primary)] text-white shadow-sm"
+                ? "bg-[var(--dash-primary)] text-white shadow-xs font-bold"
                 : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
             }`}
           >
@@ -1347,9 +1347,9 @@ export default function WhatsAppOutreachPage() {
 
           <button
             onClick={() => { setActiveTab("analytics"); fetchAnalytics(); fetchOverview(); }}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-md font-semibold text-xs transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === "analytics"
-                ? "bg-[var(--dash-primary)] text-white shadow-sm"
+                ? "bg-[var(--dash-primary)] text-white shadow-xs font-bold"
                 : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
             }`}
           >
@@ -1364,9 +1364,9 @@ export default function WhatsAppOutreachPage() {
 
           <button
             onClick={() => setActiveTab("leads")}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-md font-semibold text-xs transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === "leads"
-                ? "bg-[var(--dash-primary)] text-white shadow-sm"
+                ? "bg-[var(--dash-primary)] text-white shadow-xs font-bold"
                 : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
             }`}
           >
@@ -1376,9 +1376,9 @@ export default function WhatsAppOutreachPage() {
 
           <button
             onClick={() => { setActiveTab("logs"); fetchActivityLogs(); }}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-md font-semibold text-xs transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === "logs"
-                ? "bg-[var(--dash-primary)] text-white shadow-sm"
+                ? "bg-[var(--dash-primary)] text-white shadow-xs font-bold"
                 : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
             }`}
           >
@@ -1387,34 +1387,34 @@ export default function WhatsAppOutreachPage() {
           </button>
         </div>
 
-        {/* Worker Control Action Buttons */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Worker Control Action Buttons - Clean side-by-side on mobile */}
+        <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:items-center sm:w-auto shrink-0">
           <button
             onClick={handleGenerateQueue}
             disabled={generatingQueue}
-            className="crm-btn-secondary text-xs flex items-center gap-1.5"
+            className="crm-btn-secondary text-xs flex items-center justify-center gap-1.5 w-full sm:w-auto py-2.5 font-bold"
           >
             {generatingQueue ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ListOrdered className="w-3.5 h-3.5 text-blue-500" />}
-            <span>Generate Queue</span>
+            <span className="truncate">Generate Queue</span>
           </button>
 
           {!queueStatus?.is_running ? (
             <button
               onClick={handleStartBot}
               disabled={startingBot || isLimitReached}
-              className="crm-btn-primary text-xs flex items-center gap-1.5 disabled:opacity-50"
+              className="crm-btn-primary text-xs flex items-center justify-center gap-1.5 disabled:opacity-50 w-full sm:w-auto py-2.5 font-bold shadow-xs"
             >
               {startingBot ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
-              <span>Start Worker</span>
+              <span className="truncate">Start Worker</span>
             </button>
           ) : (
             <button
               onClick={handleStopBot}
               disabled={stoppingBot}
-              className="crm-btn-secondary text-xs flex items-center gap-1.5 text-red-500 border-red-500/30"
+              className="crm-btn-secondary text-xs flex items-center justify-center gap-1.5 text-red-500 border-red-500/30 w-full sm:w-auto py-2.5 font-bold"
             >
               {stoppingBot ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
-              <span>Pause Worker</span>
+              <span className="truncate">Pause Worker</span>
             </button>
           )}
         </div>

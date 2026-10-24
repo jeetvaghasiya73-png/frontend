@@ -252,14 +252,14 @@ export default function InterestedLeadsDashboard() {
           </p>
         </div>
       ) : filteredLeads.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
-          <Search className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" />
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">No Matching Leads</h3>
-          <p className="text-xs mt-1 text-slate-500">No leads matched &ldquo;{searchQuery}&rdquo;. Try another phone number or keyword.</p>
+        <div className="crm-card flex flex-col items-center justify-center py-20 text-[var(--dash-text-muted)]">
+          <Search className="w-8 h-8 text-[var(--dash-text-muted)] opacity-50 mb-2" />
+          <h3 className="text-sm font-bold text-[var(--dash-text)]">No Matching Leads</h3>
+          <p className="text-xs mt-1 text-[var(--dash-text-muted)]">No leads matched &ldquo;{searchQuery}&rdquo;. Try another phone number or keyword.</p>
           <button
             type="button"
             onClick={() => setSearchQuery("")}
-            className="mt-3 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-md border border-emerald-200 dark:border-emerald-800 cursor-pointer"
+            className="mt-3 px-3.5 py-1.5 crm-btn-secondary text-xs font-semibold rounded-md cursor-pointer"
           >
             Clear Search
           </button>
