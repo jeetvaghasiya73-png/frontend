@@ -2,179 +2,101 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Zap, ShieldCheck, Activity, ArrowRight, Sparkles } from "lucide-react";
 
 export default function AdminMobileStarterScreen() {
-  const [mounted, setMounted] = useState(false);
-  const [visible, setVisible] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
   const [fading, setFading] = useState(false);
-  const [progress, setProgress] = useState(15);
-  const [statusIndex, setStatusIndex] = useState(0);
-
-  const statuses = [
-    { label: "Connecting encrypted workspace", icon: ShieldCheck },
-    { label: "Syncing leads & live call desk", icon: Activity },
-    { label: "Pipeline & AI engine ready", icon: Sparkles }
-  ];
+  const [progress, setProgress] = useState(20);
 
   useEffect(() => {
-    setMounted(true);
+    // Only show on mobile viewport (< 768px) and once per browser session
+    if (typeof window === "undefined") return;
 
-    // Only display on mobile screen sizes (width < 768px) and once per session
-    if (typeof window !== "undefined") {
-      const isMobile = window.innerWidth < 768;
-      const alreadySeen = sessionStorage.getItem("leadflow_mobile_starter_shown");
+    const isMobile = window.innerWidth < 768;
+    const alreadySeen = sessionStorage.getItem("leadflow_mobile_starter_shown");
 
-      if (isMobile && !alreadySeen) {
-        setVisible(true);
+    if (isMobile && !alreadySeen) {
+      setShouldRender(true);
 
-        // Progress bar step 1
-        const t1 = setTimeout(() => {
-          setProgress(55);
-          setStatusIndex(1);
-        }, 400);
+      // Fast, silky progress line transition like Uber / Rapido app launch
+      const t1 = setTimeout(() => setProgress(70), 200);
+      const t2 = setTimeout(() => setProgress(100), 650);
 
-        // Progress bar step 2
-        const t2 = setTimeout(() => {
-          setProgress(100);
-          setStatusIndex(2);
-        }, 900);
+      // Silky smooth fade out into dashboard
+      const t3 = setTimeout(() => {
+        setFading(true);
+      }, 950);
 
-        // Auto dismiss with smooth fade
-        const t3 = setTimeout(() => {
-          dismissStarter();
-        }, 1500);
+      // Clean up DOM after fade-out transition completes
+      const t4 = setTimeout(() => {
+        setShouldRender(false);
+        try {
+          sessionStorage.setItem("leadflow_mobile_starter_shown", "true");
+        } catch {}
+      }, 1400);
 
-        return () => {
-          clearTimeout(t1);
-          clearTimeout(t2);
-          clearTimeout(t3);
-        };
-      }
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+        clearTimeout(t4);
+      };
     }
   }, []);
 
-  const dismissStarter = () => {
-    setFading(true);
-    setTimeout(() => {
-      setVisible(false);
-      try {
-        sessionStorage.setItem("leadflow_mobile_starter_shown", "true");
-      } catch {}
-    }, 450);
-  };
-
-  if (!mounted || !visible) return null;
-
-  const CurrentStatusIcon = statuses[statusIndex].icon;
+  if (!shouldRender) return null;
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="LeadFlow Mobile Starter"
-      className={`fixed inset-0 z-[9999] flex flex-col justify-between items-center px-6 py-10 bg-[#0B0D0E] text-white transition-opacity duration-500 select-none ${
-        fading ? "opacity-0 pointer-events-none" : "opacity-100"
+      aria-hidden="true"
+      className={`fixed inset-0 z-[99999] bg-[#111315] flex flex-col items-center justify-center select-none pointer-events-none transition-all duration-500 ease-out ${
+        fading ? "opacity-0 scale-[1.03]" : "opacity-100 scale-100"
       }`}
-      style={{
-        paddingTop: "max(env(safe-area-inset-top, 24px), 28px)",
-        paddingBottom: "max(env(safe-area-inset-bottom, 24px), 28px)"
-      }}
     >
-      {/* Ambient background glow */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-500/15 rounded-full blur-[90px] animate-pulse" />
-        <div className="absolute bottom-1/3 left-1/2 -translate-x-1/2 w-64 h-64 bg-emerald-600/10 rounded-full blur-[80px]" />
-      </div>
+      {/* Subtle ambient central emerald glow */}
+      <div className="absolute w-72 h-72 rounded-full bg-emerald-500/10 blur-[100px] pointer-events-none animate-pulse" />
 
-      {/* Top Header / Branding Pill */}
-      <header className="relative z-10 w-full flex items-center justify-between">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.05] border border-white/10 backdrop-blur-md">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-          <span className="text-[11px] font-semibold tracking-wider text-emerald-400 uppercase">
-            Live OS
-          </span>
-        </div>
-
-        <button
-          onClick={dismissStarter}
-          className="text-xs font-medium text-white/50 hover:text-white transition-colors flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/5 active:scale-95"
-        >
-          Skip <ArrowRight className="w-3 h-3" />
-        </button>
-      </header>
-
-      {/* Center Brand Identity Section */}
-      <div className="relative z-10 flex flex-col items-center text-center max-w-xs my-auto">
-        {/* Glowing Logo Squircle */}
-        <div className="relative mb-6">
-          <div className="absolute -inset-2 rounded-3xl bg-gradient-to-tr from-emerald-500/30 to-emerald-400/10 blur-xl opacity-75 animate-pulse" />
+      {/* Center Brand Identity (Uber / Rapido Minimal Lockup) */}
+      <div className="relative z-10 flex flex-col items-center">
+        {/* Brand Logo Emblem */}
+        <div className="relative mb-5 flex items-center justify-center">
+          {/* Subtle soft pulse ring */}
+          <div className="absolute -inset-2.5 rounded-3xl bg-emerald-500/20 blur-md animate-ping opacity-30" />
           
-          <div className="relative w-24 h-24 rounded-2xl bg-gradient-to-b from-[#1C2024] to-[#121517] p-0.5 shadow-2xl border border-white/10 ring-1 ring-emerald-500/30 flex items-center justify-center">
-            <div className="w-full h-full rounded-[14px] bg-[#111315] flex items-center justify-center relative overflow-hidden">
-              {/* Inner ambient shine */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 via-transparent to-white/10" />
-              
-              {/* Primary Icon */}
-              <Image
-                src="/notification-icon.png"
-                alt="LeadFlow Logo"
-                width={72}
-                height={72}
-                priority
-                className="w-16 h-16 object-contain drop-shadow-[0_4px_12px_rgba(16,185,129,0.35)] relative z-10"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Title & Slogan */}
-        <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-1.5">
-          <span>LeadFlow</span>
-          <span className="text-emerald-500">.</span>
-        </h1>
-        <p className="text-[11px] font-bold tracking-[0.2em] text-emerald-400/90 uppercase mt-1">
-          Enterprise Sales &amp; AI CRM
-        </p>
-        <p className="text-xs text-white/50 mt-2 leading-relaxed">
-          Real-time calling queue, automated follow-ups &amp; deals pipeline.
-        </p>
-
-        {/* Dynamic Stepper Bar */}
-        <div className="w-full mt-8 flex flex-col items-center">
-          {/* Status Label with Icon */}
-          <div className="flex items-center gap-2 text-xs font-medium text-white/80 mb-3 h-6">
-            <CurrentStatusIcon className="w-3.5 h-3.5 text-emerald-400 animate-spin-slow" />
-            <span className="transition-all duration-300">
-              {statuses[statusIndex].label}
-            </span>
-          </div>
-
-          {/* Smooth Progress Track */}
-          <div className="w-56 h-1.5 bg-white/10 rounded-full overflow-hidden p-0.5">
-            <div
-              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-              style={{ width: `${progress}%` }}
+          <div className="relative w-20 h-20 rounded-2xl bg-[#16191D] p-1 shadow-2xl border border-white/10 ring-1 ring-emerald-500/30 flex items-center justify-center overflow-hidden">
+            <Image
+              src="/notification-icon.png"
+              alt="LeadFlow Brand"
+              width={80}
+              height={80}
+              priority
+              className="w-16 h-16 object-contain drop-shadow-[0_4px_16px_rgba(16,185,129,0.35)]"
             />
           </div>
         </div>
+
+        {/* Clean Minimal Typography */}
+        <h1 className="text-xl font-black tracking-tight text-white flex items-center gap-1">
+          <span>LeadFlow</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+        </h1>
+        <p className="text-[10px] font-semibold tracking-[0.25em] text-white/40 uppercase mt-1">
+          Enterprise Sales OS
+        </p>
+
+        {/* Minimal Silk Progress Line (Like Uber / Rapido) */}
+        <div className="w-36 h-[2.5px] bg-white/10 rounded-full mt-7 overflow-hidden p-0 relative">
+          <div
+            className="h-full bg-gradient-to-r from-emerald-500 to-emerald-300 rounded-full transition-all duration-500 ease-out shadow-[0_0_8px_rgba(16,185,129,0.7)]"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
 
-      {/* Footer Meta & Quick Action */}
-      <footer className="relative z-10 w-full flex flex-col items-center gap-3">
-        <button
-          onClick={dismissStarter}
-          className="w-full max-w-xs py-3.5 px-5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold text-sm shadow-[0_4px_20px_rgba(16,185,129,0.35)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-        >
-          <span>Open Dashboard</span>
-          <ArrowRight className="w-4 h-4" />
-        </button>
-
-        <div className="flex items-center gap-2 text-[11px] text-white/40">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500/80" />
-          <span>Encrypted Session • Version 2.4.0</span>
-        </div>
-      </footer>
+      {/* Minimal bottom security watermark */}
+      <div className="absolute bottom-8 text-[10px] font-medium tracking-wider text-white/20 uppercase">
+        Secured • High Performance
+      </div>
     </div>
   );
 }
