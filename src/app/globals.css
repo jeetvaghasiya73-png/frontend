@@ -237,65 +237,70 @@ html.lenis, html.lenis body {
 
 /* ═══════════════════════════════════════════════════════════
    CRM DASHBOARD DESIGN SYSTEM
-   Modern Sales Performance Management Aesthetic
+   Professional Enterprise SaaS Aesthetic (Linear / Stripe style)
+   Strict Black & White identity + Emerald, Amber, Violet accents
    ═══════════════════════════════════════════════════════════ */
 
 :root,
 [data-dash-theme="light"] {
   /* Dashboard surfaces */
-  --dash-bg: #F8FAFC;
+  --dash-bg: #FFFFFF;
   --dash-surface: #FFFFFF;
-  --dash-surface-alt: #F1F5F9;
-  --dash-border: #E2E8F0;
-  --dash-border-subtle: #EDF2F7;
+  --dash-surface-alt: #F6F7F8;
+  --dash-border: #E5E7EB;
+  --dash-border-subtle: #F3F4F6;
   
   /* Dashboard text */
-  --dash-text: #0F172A;
-  --dash-text-secondary: #475569;
-  --dash-text-muted: #64748B;
+  --dash-text: #171717;
+  --dash-text-secondary: #6B7280;
+  --dash-text-muted: #9CA3AF;
   
   /* Dashboard sidebar - Clean Light CRM */
   --dash-sidebar-bg: #FFFFFF;
-  --dash-sidebar-hover: #F1F5F9;
-  --dash-sidebar-active: rgba(99,102,241,0.12);
-  --dash-sidebar-text: #334155;
-  --dash-sidebar-border: #E2E8F0;
+  --dash-sidebar-hover: #F6F7F8;
+  --dash-sidebar-active: rgba(22, 163, 74, 0.08);
+  --dash-sidebar-text: #171717;
+  --dash-sidebar-text-muted: #6B7280;
+  --dash-sidebar-border: #E5E7EB;
   
   /* Dashboard header */
   --dash-header-bg: #FFFFFF;
-  --dash-header-border: #E2E8F0;
+  --dash-header-border: #E5E7EB;
   
-  /* Primary accent */
-  --dash-primary: #6366F1;
-  --dash-primary-hover: #4F46E5;
-  --dash-primary-light: rgba(99,102,241,0.1);
-  --dash-primary-glow: rgba(99,102,241,0.25);
+  /* Primary accent: Emerald green #16A34A (primary actions, success states) */
+  --dash-primary: #16A34A;
+  --dash-primary-hover: #15803D;
+  --dash-primary-light: rgba(22, 163, 74, 0.1);
+  --dash-primary-glow: rgba(22, 163, 74, 0.15);
   
-  /* Status colors */
-  --dash-success: #10B981;
-  --dash-success-light: rgba(16,185,129,0.1);
+  /* Accent colors */
+  --dash-success: #16A34A;
+  --dash-success-light: rgba(22, 163, 74, 0.1);
   --dash-warning: #F59E0B;
-  --dash-warning-light: rgba(245,158,11,0.1);
-  --dash-danger: #EF4444;
-  --dash-danger-light: rgba(239,68,68,0.1);
-  --dash-info: #3B82F6;
-  --dash-info-light: rgba(59,130,246,0.1);
+  --dash-warning-light: rgba(245, 158, 11, 0.1);
+  --dash-violet: #7C3AED;
+  --dash-violet-light: rgba(124, 58, 237, 0.1);
+  --dash-danger: #DC2626;
+  --dash-danger-light: rgba(220, 38, 38, 0.1);
+  --dash-info: #7C3AED;
+  --dash-info-light: rgba(124, 58, 237, 0.1);
   
   /* Chart palette */
-  --dash-chart-1: #6366F1;
-  --dash-chart-2: #8B5CF6;
-  --dash-chart-3: #EC4899;
-  --dash-chart-4: #14B8A6;
-  --dash-chart-5: #F97316;
-  --dash-chart-grid: rgba(0,0,0,0.06);
+  --dash-chart-1: #16A34A;
+  --dash-chart-2: #7C3AED;
+  --dash-chart-3: #F59E0B;
+  --dash-chart-4: #171717;
+  --dash-chart-5: #6B7280;
+  --dash-chart-grid: rgba(0, 0, 0, 0.05);
   
-  /* Card styling */
-  --dash-card-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
-  --dash-card-shadow-hover: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  /* Card styling & radii */
+  --dash-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --dash-card-shadow-hover: 0 2px 6px rgba(0, 0, 0, 0.08);
   --dash-card-radius: 8px;
   --dash-btn-radius: 6px;
   --dash-badge-radius: 4px;
   --dash-input-radius: 6px;
+  --dash-dropdown-radius: 8px;
 
   /* Aliases for compatibility */
   --dash-card-bg: var(--dash-surface);
@@ -308,64 +313,68 @@ html[data-dash-theme="dark"],
 body[data-dash-theme="dark"],
 [data-dash-theme="dark"] {
   /* Dashboard surfaces */
-  --dash-bg: #06080D;
-  --dash-surface: #0D1017;
-  --dash-surface-alt: #111520;
-  --dash-border: #1E2231;
-  --dash-border-subtle: #161A26;
+  --dash-bg: #111315;
+  --dash-surface: #1B1E21;
+  --dash-surface-alt: #16181A;
+  --dash-border: #30343A;
+  --dash-border-subtle: #24272B;
   
   /* Dashboard text */
-  --dash-text: #E8EAF0;
-  --dash-text-secondary: #8B92A5;
-  --dash-text-muted: #5C6378;
+  --dash-text: #F5F5F5;
+  --dash-text-secondary: #A1A1AA;
+  --dash-text-muted: #71717A;
 
   /* Aliases for compatibility */
-  --dash-card-bg: #0D1017;
-  --dash-text-primary: #E8EAF0;
-  --dash-table-header: #111520;
+  --dash-card-bg: #1B1E21;
+  --dash-text-primary: #F5F5F5;
+  --dash-table-header: #16181A;
   
   /* Dashboard sidebar */
-  --dash-sidebar-bg: #06080D;
-  --dash-sidebar-hover: rgba(255,255,255,0.04);
-  --dash-sidebar-active: rgba(99,102,241,0.12);
-  --dash-sidebar-text: #94A3B8;
-  --dash-sidebar-border: #1A1E2E;
+  --dash-sidebar-bg: #111315;
+  --dash-sidebar-hover: #1B1E21;
+  --dash-sidebar-active: rgba(22, 163, 74, 0.12);
+  --dash-sidebar-text: #F5F5F5;
+  --dash-sidebar-text-muted: #A1A1AA;
+  --dash-sidebar-border: #30343A;
   
   /* Dashboard header */
-  --dash-header-bg: #0D1017;
-  --dash-header-border: #1E2231;
+  --dash-header-bg: #111315;
+  --dash-header-border: #30343A;
   
-  /* Primary accent */
-  --dash-primary: #818CF8;
-  --dash-primary-hover: #6366F1;
-  --dash-primary-light: rgba(129,140,248,0.1);
-  --dash-primary-glow: rgba(129,140,248,0.2);
+  /* Primary accent: Emerald green #16A34A */
+  --dash-primary: #16A34A;
+  --dash-primary-hover: #15803D;
+  --dash-primary-light: rgba(22, 163, 74, 0.15);
+  --dash-primary-glow: rgba(22, 163, 74, 0.2);
   
   /* Status colors */
-  --dash-success: #34D399;
-  --dash-success-light: rgba(52,211,153,0.1);
-  --dash-warning: #FBBF24;
-  --dash-warning-light: rgba(251,191,36,0.1);
-  --dash-danger: #F87171;
-  --dash-danger-light: rgba(248,113,113,0.1);
-  --dash-info: #60A5FA;
-  --dash-info-light: rgba(96,165,250,0.1);
+  --dash-success: #16A34A;
+  --dash-success-light: rgba(22, 163, 74, 0.15);
+  --dash-warning: #F59E0B;
+  --dash-warning-light: rgba(245, 158, 11, 0.15);
+  --dash-violet: #7C3AED;
+  --dash-violet-light: rgba(124, 58, 237, 0.15);
+  --dash-danger: #DC2626;
+  --dash-danger-light: rgba(220, 38, 38, 0.15);
+  --dash-info: #7C3AED;
+  --dash-info-light: rgba(124, 58, 237, 0.15);
   
   /* Chart palette */
-  --dash-chart-1: #818CF8;
-  --dash-chart-2: #A78BFA;
-  --dash-chart-3: #F472B6;
-  --dash-chart-4: #2DD4BF;
-  --dash-chart-5: #FB923C;
-  --dash-chart-grid: rgba(255,255,255,0.03);
+  --dash-chart-1: #16A34A;
+  --dash-chart-2: #7C3AED;
+  --dash-chart-3: #F59E0B;
+  --dash-chart-4: #F5F5F5;
+  --dash-chart-5: #A1A1AA;
+  --dash-chart-grid: rgba(255, 255, 255, 0.04);
   
-  /* Card styling */
-  --dash-card-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.12);
-  --dash-card-shadow-hover: 0 4px 16px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.16);
+  /* Card styling & radii */
+  --dash-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --dash-card-shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.3);
   --dash-card-radius: 8px;
   --dash-btn-radius: 6px;
   --dash-badge-radius: 4px;
   --dash-input-radius: 6px;
+  --dash-dropdown-radius: 8px;
 }
 
 /* Reusable CRM Classes */
@@ -595,11 +604,12 @@ body[data-dash-theme="dark"],
 }
 
 /* Status badge variants */
-.badge-success { background: var(--dash-success-light); color: var(--dash-success); }
-.badge-warning { background: var(--dash-warning-light); color: var(--dash-warning); }
-.badge-danger { background: var(--dash-danger-light); color: var(--dash-danger); }
-.badge-info { background: var(--dash-info-light); color: var(--dash-info); }
-.badge-primary { background: var(--dash-primary-light); color: var(--dash-primary); }
+.badge-success { background: var(--dash-success-light); color: var(--dash-success); border: 1px solid rgba(22, 163, 74, 0.25); }
+.badge-warning { background: var(--dash-warning-light); color: var(--dash-warning); border: 1px solid rgba(245, 158, 11, 0.25); }
+.badge-danger { background: var(--dash-danger-light); color: var(--dash-danger); border: 1px solid rgba(220, 38, 38, 0.25); }
+.badge-info { background: var(--dash-info-light); color: var(--dash-info); border: 1px solid rgba(124, 58, 237, 0.25); }
+.badge-violet { background: var(--dash-violet-light); color: var(--dash-violet); border: 1px solid rgba(124, 58, 237, 0.25); }
+.badge-primary { background: var(--dash-primary-light); color: var(--dash-primary); border: 1px solid rgba(22, 163, 74, 0.25); }
 .badge-neutral {
   background: var(--dash-surface-alt);
   color: var(--dash-text-secondary);

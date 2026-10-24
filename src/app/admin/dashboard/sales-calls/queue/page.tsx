@@ -523,7 +523,7 @@ export default function SalesCallingDeskPage() {
       {/* Personalized Caller Header */}
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-lg bg-gradient-to-tr from-indigo-600 via-indigo-500 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 shrink-0">
+          <div className="w-10 h-10 rounded-md flex items-center justify-center text-white shrink-0 font-bold" style={{ background: "var(--dash-primary)" }}>
             <PhoneCall className="w-5 h-5" />
           </div>
           <div>
@@ -552,10 +552,10 @@ export default function SalesCallingDeskPage() {
           {/* Generation Button with pending indicator */}
           <button
             onClick={openGenerateModal}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-bold transition shadow-sm cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-bold transition shadow-xs cursor-pointer ${
               isGenerationBlocked
                 ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 hover:bg-amber-100"
-                : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/30"
+                : "crm-btn-primary text-white"
             }`}
             title={isGenerationBlocked ? `Complete your ${stats.total_pending} pending leads before generating new leads` : "Claim fresh batch of leads"}
           >

@@ -996,7 +996,7 @@ export default function ContactMessagesManager() {
       {/* ── Top Header & Channel Summary Bar ── */}
       <header className="crm-card p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-md bg-indigo-600 text-white flex items-center justify-center shadow-md shrink-0">
+          <div className="w-10 h-10 rounded-md bg-[var(--dash-primary)] text-white flex items-center justify-center shadow-md shrink-0">
             <MessageSquare className="w-5 h-5" />
           </div>
           <div>
@@ -1026,7 +1026,7 @@ export default function ContactMessagesManager() {
             className="crm-btn-secondary text-xs flex items-center gap-1.5"
             title="Refresh inbox"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-indigo-500" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-emerald-500" : ""}`} />
             <span>Sync</span>
           </button>
 
@@ -1047,7 +1047,7 @@ export default function ContactMessagesManager() {
           onClick={() => setChannelTab("all")}
           className={`px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 ${
             channelTab === "all"
-              ? "bg-indigo-600 text-white shadow-sm"
+              ? "bg-[var(--dash-primary)] text-white shadow-sm"
               : "crm-btn-secondary text-[var(--dash-text-muted)]"
           }`}
         >

@@ -90,8 +90,7 @@ export default function SuperAdminDashboard() {
   // Filter States
   const [dateFilter, setDateFilter] = useState("Last 30 days");
   const [statusFilter, setStatusFilter] = useState("All Status");
-  const [disableAnalytics, setDisableAnalytics] = useState(false);
-  const [activeTableTab, setActiveTableTab] = useState<"scraped" | "inbound" | "messages_sent" | "portfolio">("scraped");
+  const [activeTableTab, setActiveTableTab] = useState<"all" | "inbound" | "scraped" | "messages_sent" | "portfolio">("all");
 
   // Lead Detail Right Drawer & Interactive Dialog States
   const [selectedLead, setSelectedLead] = useState<any | null>(null);
@@ -193,11 +192,7 @@ export default function SuperAdminDashboard() {
         const scrapedJson = await scrapedRes.value.json();
         const rawList = scrapedJson.leads || scrapedJson.items || (Array.isArray(scrapedJson) ? scrapedJson : []);
         setTotalScrapedCount(Number(scrapedJson.total ?? rawList.length));
-        setScrapedLeads(rawList.filter((lead: any) => {
-          if (!lead) return false;
-          const p = String(lead.bussiness_number || "").trim().toLowerCase();
-          return p && p !== "n/a" && p !== "na" && p !== "none" && p !== "null" && p !== "nan" && p !== "undefined" && p !== "-" && p !== "--";
-        }));
+        setScrapedLeads(rawList.filter((lead: any) => Boolean(lead && (lead.bussiness_name || lead.bussiness_number || lead.bussiness_email))));
       }
       if (leadsRes.status === "fulfilled" && leadsRes.value.ok) {
         setInquiryLeads(await leadsRes.value.json());
@@ -234,11 +229,7 @@ export default function SuperAdminDashboard() {
         if (json.total !== undefined) {
           setTotalScrapedCount(Number(json.total));
         }
-        setScrapedLeads(rawList.filter((lead: any) => {
-          if (!lead) return false;
-          const p = String(lead.bussiness_number || "").trim().toLowerCase();
-          return p && p !== "n/a" && p !== "na" && p !== "none" && p !== "null" && p !== "nan" && p !== "undefined" && p !== "-" && p !== "--";
-        }));
+        setScrapedLeads(rawList.filter((lead: any) => Boolean(lead && (lead.bussiness_name || lead.bussiness_number || lead.bussiness_email))));
       }
     } catch (err) {
       console.error("Failed to load paginated leads:", err);
@@ -517,7 +508,78 @@ export default function SuperAdminDashboard() {
   const tableDataset = useMemo(() => {
     const q = tableSearch.trim();
 
-    if (activeTableTab === "scraped") {
+    if (activeTableTab === "all") {
+      const inqMapped = filteredData.currentInquiries.map((l, idx) => {
+        const computedScore = 75 + (l.phone ? 15 : 0) + (l.email ? 10 : 0);
+        const assignedName = l.assigned_to || user?.username || "Main Admin";
+        const bizName = l.business_name || l.company || "Direct Inbound";
+        return {
+          raw: l,
+          rawId: l.id,
+          id: l.id || `inbound-${idx}`,
+          title: l.name || bizName,
+          email: l.email || "",
+          company: bizName,
+          industry: l.category || l.services?.join(", ") || "Web Inquiry",
+          location: l.location || "Online",
+          source: "inquiry",
+          phone: l.phone || "",
+          status: l.status ? l.status.charAt(0).toUpperCase() + l.status.slice(1) : "Qualified",
+          score: Math.min(99, computedScore),
+          followupDate: (typeof window !== "undefined" ? localStorage.getItem(`crm_lead_followup_${l.id}`) : null) || null,
+          date: l.created_at || new Date().toISOString(),
+          assignedTo: assignedName,
+          assignedAvatar: assignedName.slice(0, 2).toUpperCase(),
+          avatarColor: "bg-emerald-600",
+          notes: []
+        };
+      });
+
+      const scrMapped = filteredData.currentScraped.map((l, idx) => {
+        const baseScore = l.bussiness_email ? 85 : 60;
+        const ratingBonus = l.rating ? Math.round(parseFloat(l.rating) * 3) : 5;
+        const computedScore = Math.min(99, baseScore + ratingBonus);
+        const savedFollowup = typeof window !== "undefined" ? localStorage.getItem(`crm_lead_followup_${l.id}`) : null;
+        const rawFollowup = l.next_followup_at ? formatISTDate(l.next_followup_at) : null;
+
+        return {
+          raw: l,
+          rawId: l.id,
+          id: l.id || `scraped-${idx}`,
+          title: l.bussiness_name || "Unknown Business",
+          email: l.bussiness_email || "",
+          company: l.bussiness_name || "Company",
+          industry: formatServiceText(l.scraped_service) || "Services",
+          location: l.scraped_city || "India",
+          source: "scraped",
+          phone: l.bussiness_number || "",
+          status: l.email_status ? l.email_status.charAt(0).toUpperCase() + l.email_status.slice(1) : (l.status ? l.status.charAt(0).toUpperCase() + l.status.slice(1) : "Contacted"),
+          score: computedScore,
+          followupDate: savedFollowup || rawFollowup || null,
+          date: l.created_at || new Date().toISOString(),
+          assignedTo: l.assigned_to || user?.username || "Main Admin",
+          assignedAvatar: (l.assigned_to || user?.username || "Main Admin").slice(0, 2).toUpperCase(),
+          avatarColor: "bg-neutral-700",
+          notes: l.custom_notes || []
+        };
+      });
+
+      let combined = [...inqMapped, ...scrMapped];
+      combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      if (q) {
+        combined = combined.filter(l =>
+          matchesSimilaritySearch(q, [
+            l.title,
+            l.phone,
+            l.email,
+            l.company,
+            l.industry,
+            l.location
+          ])
+        );
+      }
+      return combined;
+    } else if (activeTableTab === "scraped") {
       let data = filteredData.currentScraped;
       if (q) {
         data = data.filter(l =>
@@ -698,7 +760,9 @@ export default function SuperAdminDashboard() {
     }
   }, [filteredData, activeTableTab, tableSearch, portfolios, user]);
 
-  const totalLeadsForTab = activeTableTab === "inbound"
+  const totalLeadsForTab = activeTableTab === "all"
+    ? tableDataset.length
+    : activeTableTab === "inbound"
     ? filteredData.currentInquiries.length
     : activeTableTab === "portfolio"
     ? portfolios.length
@@ -1381,7 +1445,11 @@ export default function SuperAdminDashboard() {
       });
 
       if (res.ok) {
+        const created = await res.json().catch(() => null);
         triggerToast(`Lead "${newLeadForm.bussiness_name}" added to database!`);
+        if (created && created.id) {
+          setScrapedLeads(prev => [created, ...prev]);
+        }
         setNewLeadForm({
           bussiness_name: "",
           bussiness_email: "",
@@ -1392,6 +1460,8 @@ export default function SuperAdminDashboard() {
           bussiness_website: "",
         });
         setShowAddLeadModal(false);
+        setActiveTableTab("all");
+        setTablePage(1);
         await fetchInitialData();
       } else {
         const err = await res.json();
@@ -1508,56 +1578,62 @@ export default function SuperAdminDashboard() {
         </div>
       )}
 
-      {/* ── Native Mobile App Executive Greeting & Quick Launchpad ── */}
-      <div className="md:hidden space-y-3 animate-fadeIn">
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-[#0d1424] to-indigo-950/60 border border-slate-800/80 shadow-xl backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-          
-          <div className="flex items-center justify-between relative z-10">
-            <div className="space-y-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">
-                LeadFlow Executive CRM
-              </span>
-              <h2 className="text-base font-extrabold text-white tracking-tight">
-                Welcome back, {user?.username || "Admin"}! 👋
-              </h2>
+      {/* ── Sleek SaaS CRM Header & Action Controls ── */}
+      <header className="crm-card-flat flex flex-col gap-4 p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-9 h-9 flex items-center justify-center text-white shrink-0"
+              style={{
+                background: "var(--dash-primary)",
+                borderRadius: "var(--dash-btn-radius)",
+              }}
+            >
+              <Zap className="w-5 h-5" />
             </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>LIVE</span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight" style={{ color: "var(--dash-text)" }}>
+                  Lead Management
+                </h1>
+                <span className="crm-badge badge-success text-[10px] font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  LIVE
+                </span>
+              </div>
+              <p className="text-xs mt-0.5" style={{ color: "var(--dash-text-secondary)" }}>
+                Pipeline prospects, outreach automation, and deal qualification
+              </p>
             </div>
           </div>
 
-          {/* 4-App Quick Launch Action Grid */}
-          <div className="grid grid-cols-4 gap-2 mt-3.5 pt-3 border-t border-slate-800/80">
+          {/* Quick Launch Tools Bar */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
             <Link
               href={`${ADMIN_PATH}/dashboard/sales-calls/queue`}
-              className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800/50 hover:bg-indigo-600/20 border border-slate-700/50 transition active:scale-95 text-center group"
+              className="crm-btn-secondary !py-1.5 !px-2.5 text-xs font-semibold inline-flex items-center gap-1.5 shrink-0"
+              title="Open Calling Desk"
             >
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-1 group-hover:scale-110 transition">
-                <PhoneCall className="w-4 h-4" />
-              </div>
-              <span className="text-[9px] font-bold text-slate-300">Call Desk</span>
+              <PhoneCall className="w-3.5 h-3.5" style={{ color: "var(--dash-primary)" }} />
+              <span>Call Desk</span>
             </Link>
 
             <Link
               href={`${ADMIN_PATH}/dashboard/sales-calls/interested`}
-              className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800/50 hover:bg-amber-600/20 border border-slate-700/50 transition active:scale-95 text-center group"
+              className="crm-btn-secondary !py-1.5 !px-2.5 text-xs font-semibold inline-flex items-center gap-1.5 shrink-0"
+              title="Hot Priority Leads"
             >
-              <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center mb-1 group-hover:scale-110 transition">
-                <Star className="w-4 h-4" />
-              </div>
-              <span className="text-[9px] font-bold text-slate-300">Hot Deals</span>
+              <Star className="w-3.5 h-3.5" style={{ color: "var(--dash-warning)" }} />
+              <span>Hot Deals</span>
             </Link>
 
             <Link
               href={`${ADMIN_PATH}/dashboard/automation/whatsapp`}
-              className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800/50 hover:bg-emerald-600/20 border border-slate-700/50 transition active:scale-95 text-center group"
+              className="crm-btn-secondary !py-1.5 !px-2.5 text-xs font-semibold inline-flex items-center gap-1.5 shrink-0"
+              title="WhatsApp Outreach"
             >
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-1 group-hover:scale-110 transition">
-                <MessageSquare className="w-4 h-4" />
-              </div>
-              <span className="text-[9px] font-bold text-slate-300">WhatsApp</span>
+              <MessageSquare className="w-3.5 h-3.5" style={{ color: "var(--dash-primary)" }} />
+              <span>WhatsApp</span>
             </Link>
 
             <button
@@ -1576,37 +1652,21 @@ export default function SuperAdminDashboard() {
                   osc.start();
                   osc.stop(ctx.currentTime + 0.4);
                 }
-                triggerToast("🔔 Bell sound tested successfully!");
+                triggerToast("🔔 Bell chime tested successfully!");
               }}
-              className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800/50 hover:bg-purple-600/20 border border-slate-700/50 transition active:scale-95 text-center cursor-pointer group"
+              className="crm-btn-secondary !py-1.5 !px-2.5 text-xs font-semibold inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
+              title="Test Bell Chime"
             >
-              <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center mb-1 group-hover:scale-110 transition">
-                <Zap className="w-4 h-4" />
-              </div>
-              <span className="text-[9px] font-bold text-slate-300">Test Chime</span>
+              <Bell className="w-3.5 h-3.5" style={{ color: "var(--dash-violet)" }} />
+              <span className="hidden sm:inline">Chime</span>
             </button>
           </div>
         </div>
-      </div>
 
-      {/* ── Top Bar Header & Action Controls ── */}
-      <header className="crm-card-flat flex flex-col md:flex-row md:items-center justify-between gap-4 p-5">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 flex items-center justify-center text-white" style={{ background: "linear-gradient(135deg, var(--dash-primary), #818CF8)", borderRadius: "var(--dash-btn-radius)", boxShadow: "0 2px 8px var(--dash-primary-glow)" }}>
-              <Zap className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight" style={{ color: "var(--dash-text)" }}>Lead Management</h1>
-              <p className="text-xs mt-0.5" style={{ color: "var(--dash-text-secondary)" }}>Monitor, qualify, and convert pipeline prospects dynamically</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Controls Deck */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-          {/* Date & Status Filter Dropdowns in one row on mobile */}
-          <div className="grid grid-cols-2 gap-2 w-full sm:w-auto">
+        {/* Filter & Action Toolbar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-3 border-t" style={{ borderColor: "var(--dash-border)" }}>
+          {/* Date & Status Filter Dropdowns */}
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
             <div className="relative min-w-[135px]">
               <select
                 value={dateFilter}
@@ -1614,7 +1674,7 @@ export default function SuperAdminDashboard() {
                   setDateFilter(e.target.value);
                   setShowCustomPicker(e.target.value === "Custom");
                 }}
-                className="crm-input !pl-9 !pr-8 py-2 text-xs font-semibold cursor-pointer appearance-none w-full"
+                className="crm-input !pl-8 !pr-8 py-1.5 text-xs font-semibold cursor-pointer appearance-none w-full"
               >
                 {["All Time", "Today", "Yesterday", "Last 7 days", "Last 30 days", "This month", "Previous month", "Custom"].map(f => (
                   <option key={f} value={f}>{f}</option>
@@ -1624,12 +1684,11 @@ export default function SuperAdminDashboard() {
               <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--dash-text-muted)" }} />
             </div>
 
-            {/* Status Filter Dropdown */}
-            <div className="relative min-w-[120px]">
+            <div className="relative min-w-[125px]">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="crm-input !pl-9 !pr-8 py-2 text-xs font-semibold cursor-pointer appearance-none w-full"
+                className="crm-input !pl-8 !pr-8 py-1.5 text-xs font-semibold cursor-pointer appearance-none w-full"
               >
                 {["All Status", "Interested", "Pending", "Contacted", "Qualified", "Closed"].map(s => (
                   <option key={s} value={s}>{s}</option>
@@ -1640,16 +1699,15 @@ export default function SuperAdminDashboard() {
             </div>
           </div>
 
-          {/* Action Buttons Row: Refresh, Import, Add Lead */}
+          {/* Action Buttons: Refresh, Import, Add Lead */}
           <div className={`grid ${canManageLeads ? "grid-cols-3" : "grid-cols-1"} sm:flex sm:items-center gap-2 w-full sm:w-auto`}>
-            {/* Refresh Action */}
             <button
               onClick={() => {
                 setRefreshing(true);
                 fetchInitialData();
               }}
               disabled={refreshing || loading}
-              className="crm-btn-secondary inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold disabled:opacity-50 whitespace-nowrap cursor-pointer w-full sm:w-auto"
+              className="crm-btn-secondary inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold disabled:opacity-50 whitespace-nowrap cursor-pointer w-full sm:w-auto"
               title="Refresh Real-time Data"
             >
               <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${refreshing || loading ? "animate-spin" : ""}`} style={{ color: refreshing || loading ? "var(--dash-primary)" : "var(--dash-text-muted)" }} />
@@ -1658,22 +1716,20 @@ export default function SuperAdminDashboard() {
 
             {canManageLeads && (
               <>
-                {/* Secondary Action: Import Leads */}
                 <button
                   type="button"
                   onClick={() => setShowImportModal(true)}
-                  className="crm-btn-secondary inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold whitespace-nowrap cursor-pointer w-full sm:w-auto"
+                  className="crm-btn-secondary inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold whitespace-nowrap cursor-pointer w-full sm:w-auto"
                   title="Import Leads Spreadsheet"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-primary)" }} />
                   <span>Import</span>
                 </button>
 
-                {/* Primary Action: Add Lead */}
                 <button
                   type="button"
                   onClick={() => setShowAddLeadModal(true)}
-                  className="crm-btn-primary inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold whitespace-nowrap shadow-sm cursor-pointer w-full sm:w-auto"
+                  className="crm-btn-primary inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-xs font-bold whitespace-nowrap shadow-xs cursor-pointer w-full sm:w-auto"
                   title="Add New Lead Prospect"
                 >
                   <Plus className="w-4 h-4 shrink-0" />
@@ -1758,10 +1814,10 @@ export default function SuperAdminDashboard() {
 
         <div className="grid grid-cols-2 md:grid-cols-6 gap-2.5">
           {[
-            { label: "NEW", count: pipelineFunnel.new.count, pct: pipelineFunnel.new.pct, color: "var(--dash-chart-1)" },
-            { label: "CONTACTED", count: pipelineFunnel.contacted.count, pct: pipelineFunnel.contacted.pct, color: "var(--dash-info)" },
-            { label: "INTERESTED", count: pipelineFunnel.interested.count, pct: pipelineFunnel.interested.pct, color: "var(--dash-chart-2)" },
-            { label: "QUALIFIED", count: pipelineFunnel.qualified.count, pct: pipelineFunnel.qualified.pct, color: "var(--dash-chart-4)" },
+            { label: "NEW", count: pipelineFunnel.new.count, pct: pipelineFunnel.new.pct, color: "var(--dash-violet)" },
+            { label: "CONTACTED", count: pipelineFunnel.contacted.count, pct: pipelineFunnel.contacted.pct, color: "var(--dash-warning)" },
+            { label: "INTERESTED", count: pipelineFunnel.interested.count, pct: pipelineFunnel.interested.pct, color: "var(--dash-primary)" },
+            { label: "QUALIFIED", count: pipelineFunnel.qualified.count, pct: pipelineFunnel.qualified.pct, color: "var(--dash-success)" },
             { label: "CONVERTED", count: pipelineFunnel.converted.count, pct: pipelineFunnel.converted.pct, color: "var(--dash-success)" },
             { label: "LOST", count: pipelineFunnel.lost.count, pct: pipelineFunnel.lost.pct, color: "var(--dash-danger)" },
           ].map((step, idx) => (
@@ -1786,23 +1842,23 @@ export default function SuperAdminDashboard() {
       <section className="crm-card-flat flex flex-col w-full max-w-full overflow-visible relative">
         
         {/* Tier 1: Segmented Tabs Bar */}
-        <div className="px-3.5 sm:px-4 py-2.5 flex items-center justify-between gap-3 max-w-full overflow-x-auto scrollbar-none" style={{ borderBottom: "1px solid var(--dash-border)", background: "rgba(255,255,255,0.02)" }}>
+        <div className="px-3.5 sm:px-4 py-2.5 flex items-center justify-between gap-3 max-w-full overflow-x-auto scrollbar-none" style={{ borderBottom: "1px solid var(--dash-border)" }}>
           <div className="flex flex-nowrap items-center gap-1 p-1 max-w-full overflow-x-auto scrollbar-none shrink-0" style={{ background: "var(--dash-surface-alt)", border: "1px solid var(--dash-border)", borderRadius: "var(--dash-btn-radius)" }}>
             <button
-              onClick={() => { setActiveTableTab("scraped"); setTablePage(1); }}
+              onClick={() => { setActiveTableTab("all"); setTablePage(1); }}
               className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0"
               style={{
                 borderRadius: "var(--dash-badge-radius)",
-                background: activeTableTab === "scraped" ? "var(--dash-surface)" : "transparent",
-                color: activeTableTab === "scraped" ? "var(--dash-text)" : "var(--dash-text-muted)",
-                border: activeTableTab === "scraped" ? "1px solid var(--dash-border)" : "1px solid transparent",
-                boxShadow: activeTableTab === "scraped" ? "var(--dash-card-shadow)" : "none"
+                background: activeTableTab === "all" ? "var(--dash-surface)" : "transparent",
+                color: activeTableTab === "all" ? "var(--dash-text)" : "var(--dash-text-muted)",
+                border: activeTableTab === "all" ? "1px solid var(--dash-border)" : "1px solid transparent",
+                boxShadow: activeTableTab === "all" ? "var(--dash-card-shadow)" : "none"
               }}
             >
-              <Database className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-primary)" }} />
-              <span>All Scraped Leads</span>
+              <LayoutDashboard className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-primary)" }} />
+              <span>All Leads</span>
               <span className="crm-badge badge-primary text-[10px] ml-0.5">
-                {totalScrapedCount || scrapedStats?.total || 1093}
+                {(totalScrapedCount || filteredData.currentScraped.length) + filteredData.currentInquiries.length}
               </span>
             </button>
 
@@ -1821,6 +1877,24 @@ export default function SuperAdminDashboard() {
               <span>Inbound Inquiries</span>
               <span className="crm-badge badge-success text-[10px] ml-0.5">
                 {filteredData.currentInquiries.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTableTab("scraped"); setTablePage(1); }}
+              className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0"
+              style={{
+                borderRadius: "var(--dash-badge-radius)",
+                background: activeTableTab === "scraped" ? "var(--dash-surface)" : "transparent",
+                color: activeTableTab === "scraped" ? "var(--dash-text)" : "var(--dash-text-muted)",
+                border: activeTableTab === "scraped" ? "1px solid var(--dash-border)" : "1px solid transparent",
+                boxShadow: activeTableTab === "scraped" ? "var(--dash-card-shadow)" : "none"
+              }}
+            >
+              <Database className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-warning)" }} />
+              <span>Scraped Pool</span>
+              <span className="crm-badge badge-warning text-[10px] ml-0.5">
+                {totalScrapedCount || scrapedStats?.total || filteredData.currentScraped.length}
               </span>
             </button>
 

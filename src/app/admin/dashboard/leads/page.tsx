@@ -1407,7 +1407,7 @@ export default function LeadsManager() {
       {/* Top Bar Header */}
       <header className="crm-card p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-md bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-500 font-bold">
+          <div className="w-10 h-10 rounded-md flex items-center justify-center font-bold text-white shrink-0" style={{ background: "var(--dash-primary)" }}>
             <Users className="w-5 h-5" />
           </div>
           <div>
@@ -1428,7 +1428,7 @@ export default function LeadsManager() {
               <button
                 type="button"
                 onClick={handleBulkSendWaOutreach}
-                className="crm-btn-primary bg-emerald-600 hover:bg-emerald-500 text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center cursor-pointer"
+                className="crm-btn-primary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center cursor-pointer"
               >
                 <Zap className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">Send WhatsApp ({selectedLeadIds.size})</span>
@@ -1436,9 +1436,9 @@ export default function LeadsManager() {
               <button
                 type="button"
                 onClick={handleClearSelectedChats}
-                className="crm-btn-secondary bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center cursor-pointer font-bold"
+                className="crm-btn-secondary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center cursor-pointer font-bold"
               >
-                <RefreshCw className="w-3.5 h-3.5 shrink-0 text-indigo-500" />
+                <RefreshCw className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-primary)" }} />
                 <span className="truncate">Clear Chats ({selectedLeadIds.size})</span>
               </button>
             </>
@@ -1446,9 +1446,9 @@ export default function LeadsManager() {
           <button
             type="button"
             onClick={handleExportCSV}
-            className="crm-btn-secondary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center"
+            className="crm-btn-secondary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center cursor-pointer"
           >
-            <Download className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <Download className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
             <span className="truncate">Export</span>
           </button>
           {canManageLeads && (
@@ -1456,15 +1456,15 @@ export default function LeadsManager() {
               <button
                 type="button"
                 onClick={() => setShowImportModal(true)}
-                className="crm-btn-secondary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center"
+                className="crm-btn-secondary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center cursor-pointer"
               >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-primary)" }} />
                 <span className="truncate">Import</span>
               </button>
               <button
                 type="button"
                 onClick={() => setShowAddLeadModal(true)}
-                className="crm-btn-primary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center shadow-xs"
+                className="crm-btn-primary text-xs flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2 sm:px-3 text-center shadow-xs cursor-pointer"
               >
                 <Plus className="w-4 h-4 shrink-0" />
                 <span className="truncate">Add Lead</span>
@@ -1480,7 +1480,7 @@ export default function LeadsManager() {
           <span className="text-[11px] sm:text-xs font-semibold text-[var(--dash-text-muted)] uppercase tracking-wider truncate">Total Prospects</span>
           <div className="mt-1 sm:mt-2 flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">{(totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount}</span>
-            <span className="text-[10px] sm:text-xs font-bold text-emerald-500 bg-emerald-500/10 px-1.5 sm:px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">+14.2%</span>
+            <span className="crm-badge badge-success text-[10px] sm:text-xs font-bold shrink-0">+14.2%</span>
           </div>
         </div>
 
@@ -1490,7 +1490,7 @@ export default function LeadsManager() {
             <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">
               {totalScrapedCount || totalLeadsFromAPI}
             </span>
-            <span className="text-[10px] sm:text-xs font-bold text-indigo-500 bg-indigo-500/10 px-1.5 sm:px-2 py-0.5 rounded-md border border-indigo-500/20 shrink-0 truncate">Google Maps</span>
+            <span className="crm-badge badge-warning text-[10px] sm:text-xs font-bold shrink-0 truncate">Google Maps</span>
           </div>
         </div>
 
@@ -1500,7 +1500,7 @@ export default function LeadsManager() {
             <span className="text-xl sm:text-2xl font-bold font-mono text-[var(--dash-text)]">
               {totalInquiriesCount}
             </span>
-            <span className="text-[10px] sm:text-xs font-bold text-purple-500 bg-purple-500/10 px-1.5 sm:px-2 py-0.5 rounded-md border border-purple-500/20 shrink-0 truncate">Web Forms</span>
+            <span className="crm-badge badge-violet text-[10px] sm:text-xs font-bold shrink-0 truncate">Web Forms</span>
           </div>
         </div>
 

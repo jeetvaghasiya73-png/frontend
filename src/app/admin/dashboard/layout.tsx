@@ -1565,13 +1565,13 @@ export default function DashboardLayout({
                 <span className="text-xs font-bold" style={{ color: "var(--dash-text)" }} suppressHydrationWarning>{mounted ? (user?.username || "Admin User") : "Admin User"}</span>
                 <span className="text-[10px] font-semibold" style={{ color: "var(--dash-primary)" }} suppressHydrationWarning>{mounted ? (user?.is_superadmin ? "Super Admin" : "System Admin") : "System Admin"}</span>
               </div>
-              <div className="w-8 h-8 text-white font-bold flex items-center justify-center text-xs" style={{ background: "linear-gradient(135deg, var(--dash-primary), #818CF8)", borderRadius: "var(--dash-btn-radius)" }} suppressHydrationWarning>{mounted ? (user?.username || "Admin").slice(0, 2).toUpperCase() : "AD"}</div>
+              <div className="w-8 h-8 text-white font-bold flex items-center justify-center text-xs" style={{ background: "var(--dash-primary)", borderRadius: "var(--dash-btn-radius)" }} suppressHydrationWarning>{mounted ? (user?.username || "Admin").slice(0, 2).toUpperCase() : "AD"}</div>
             </div>
           </div>
         </header>
 
         {/* Content Area with Mobile Safe Bottom Padding */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 md:p-6 relative max-w-full crm-scrollbar pb-24 md:pb-6">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 md:p-6 relative max-w-full crm-scrollbar pb-28 md:pb-6">
           <div className="relative z-10 w-full max-w-[1400px] mx-auto min-h-full">
             <AdminPushNotificationBanner />
             {children}
