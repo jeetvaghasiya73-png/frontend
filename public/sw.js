@@ -85,8 +85,8 @@ self.addEventListener("fetch", (event) => {
 // ── Web Push Notifications (Background & Offline PWA Delivery) ────────────────
 self.addEventListener("push", (event) => {
   let data = {
-    title: "🔔 LeadFlow Alert",
-    body: "New notification received in LeadFlow CRM.",
+    title: "🔔 Tech Infinix Alert",
+    body: "New notification received in Tech Infinix CRM.",
     icon: "/notification-icon.png",
     badge: "/notification-badge.png",
     data: { url: "/admin/dashboard" }

@@ -6,34 +6,34 @@ import Image from "next/image";
 export default function AdminMobileStarterScreen() {
   const [shouldRender, setShouldRender] = useState(false);
   const [fading, setFading] = useState(false);
-  const [progress, setProgress] = useState(20);
+  const [progress, setProgress] = useState(25);
 
   useEffect(() => {
-    // Only show on mobile viewport (< 768px) and once per browser session
     if (typeof window === "undefined") return;
 
+    // Run on mobile/app viewports (< 768px) on app open once per browser session
     const isMobile = window.innerWidth < 768;
-    const alreadySeen = sessionStorage.getItem("leadflow_mobile_starter_shown");
+    const alreadySeen = sessionStorage.getItem("ti_app_open_animated");
 
     if (isMobile && !alreadySeen) {
       setShouldRender(true);
 
-      // Fast, silky progress line transition like Uber / Rapido app launch
-      const t1 = setTimeout(() => setProgress(70), 200);
+      // Smooth silk loading bar progression (like Uber / Rapido app launch)
+      const t1 = setTimeout(() => setProgress(70), 220);
       const t2 = setTimeout(() => setProgress(100), 650);
 
-      // Silky smooth fade out into dashboard
+      // Begin seamless zoom-dissolve into dashboard
       const t3 = setTimeout(() => {
         setFading(true);
-      }, 950);
+      }, 900);
 
-      // Clean up DOM after fade-out transition completes
+      // Cleanly unmount from DOM after exit transition
       const t4 = setTimeout(() => {
         setShouldRender(false);
         try {
-          sessionStorage.setItem("leadflow_mobile_starter_shown", "true");
+          sessionStorage.setItem("ti_app_open_animated", "true");
         } catch {}
-      }, 1400);
+      }, 1450);
 
       return () => {
         clearTimeout(t1);
@@ -49,53 +49,56 @@ export default function AdminMobileStarterScreen() {
   return (
     <div
       aria-hidden="true"
-      className={`fixed inset-0 z-[99999] bg-[#111315] flex flex-col items-center justify-center select-none pointer-events-none transition-all duration-500 ease-out ${
-        fading ? "opacity-0 scale-[1.03]" : "opacity-100 scale-100"
+      className={`fixed inset-0 z-[99999] bg-[#000000] flex flex-col items-center justify-center select-none pointer-events-none transition-all duration-500 ease-out ${
+        fading ? "opacity-0 scale-[1.05]" : "opacity-100 scale-100"
       }`}
     >
-      {/* Subtle ambient central emerald glow */}
-      <div className="absolute w-72 h-72 rounded-full bg-emerald-500/10 blur-[100px] pointer-events-none animate-pulse" />
+      {/* Subtle ambient backdrop pulse (synced with Tech Infinix orbit theme) */}
+      <div className="absolute w-80 h-80 rounded-full bg-emerald-500/10 blur-[110px] pointer-events-none animate-pulse" />
 
-      {/* Center Brand Identity (Uber / Rapido Minimal Lockup) */}
+      {/* Center Brand Identity (Uber / Rapido / Apple Minimal Style) */}
       <div className="relative z-10 flex flex-col items-center">
-        {/* Brand Logo Emblem */}
-        <div className="relative mb-5 flex items-center justify-center">
-          {/* Subtle soft pulse ring */}
-          <div className="absolute -inset-2.5 rounded-3xl bg-emerald-500/20 blur-md animate-ping opacity-30" />
-          
-          <div className="relative w-20 h-20 rounded-2xl bg-[#16191D] p-1 shadow-2xl border border-white/10 ring-1 ring-emerald-500/30 flex items-center justify-center overflow-hidden">
+        {/* Official Tech Infinix Logo with Soft Orbit Glow */}
+        <div className="relative mb-6 flex items-center justify-center">
+          {/* Subtle luminous halo */}
+          <div className="absolute -inset-3 rounded-3xl bg-emerald-500/15 blur-lg animate-ping opacity-40" />
+
+          {/* Official TI Logo Emblem */}
+          <div className="relative w-24 h-24 rounded-2xl bg-[#000000] p-1.5 shadow-2xl border border-white/10 ring-1 ring-white/5 flex items-center justify-center overflow-hidden">
             <Image
-              src="/notification-icon.png"
-              alt="LeadFlow Brand"
-              width={80}
-              height={80}
+              src="/favicon.png"
+              alt="Tech Infinix Logo"
+              width={96}
+              height={96}
               priority
-              className="w-16 h-16 object-contain drop-shadow-[0_4px_16px_rgba(16,185,129,0.35)]"
+              className="w-20 h-20 object-contain drop-shadow-[0_4px_20px_rgba(16,185,129,0.35)]"
             />
           </div>
         </div>
 
-        {/* Clean Minimal Typography */}
-        <h1 className="text-xl font-black tracking-tight text-white flex items-center gap-1">
-          <span>LeadFlow</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-        </h1>
-        <p className="text-[10px] font-semibold tracking-[0.25em] text-white/40 uppercase mt-1">
-          Enterprise Sales OS
-        </p>
+        {/* Clean, Premium Tech Infinix Typography */}
+        <div className="flex flex-col items-center text-center">
+          <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-1.5">
+            <span>Tech Infinix</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+          </h1>
+          <p className="text-[10px] font-semibold tracking-[0.28em] text-white/50 uppercase mt-1.5">
+            Enterprise Solutions &amp; CRM
+          </p>
+        </div>
 
-        {/* Minimal Silk Progress Line (Like Uber / Rapido) */}
-        <div className="w-36 h-[2.5px] bg-white/10 rounded-full mt-7 overflow-hidden p-0 relative">
+        {/* Ultra-Minimal Silk Progress Line */}
+        <div className="w-40 h-[2.5px] bg-white/10 rounded-full mt-8 overflow-hidden p-0 relative shadow-inner">
           <div
-            className="h-full bg-gradient-to-r from-emerald-500 to-emerald-300 rounded-full transition-all duration-500 ease-out shadow-[0_0_8px_rgba(16,185,129,0.7)]"
+            className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(16,185,129,0.8)]"
             style={{ width: `${progress}%` }}
           />
         </div>
       </div>
 
-      {/* Minimal bottom security watermark */}
-      <div className="absolute bottom-8 text-[10px] font-medium tracking-wider text-white/20 uppercase">
-        Secured • High Performance
+      {/* Sleek bottom watermark */}
+      <div className="absolute bottom-8 text-[10px] font-medium tracking-[0.2em] text-white/25 uppercase">
+        Secured • Enterprise Ready
       </div>
     </div>
   );

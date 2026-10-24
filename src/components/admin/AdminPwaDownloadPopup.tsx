@@ -43,29 +43,13 @@ export default function AdminPwaDownloadPopup() {
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowPopup(true);
+      // Do not auto-show intrusive popup on app open
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
 
-    // For mobile iOS users who don't fire beforeinstallprompt, display popup after 1.5s
-    if (isAppleDevice) {
-      const timer = setTimeout(() => {
-        setShowPopup(true);
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-
-    // Fallback: If on mobile viewport, display after short delay even if event hasn't fired yet
-    const fallbackTimer = setTimeout(() => {
-      if (window.innerWidth <= 768) {
-        setShowPopup(true);
-      }
-    }, 2000);
-
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
-      clearTimeout(fallbackTimer);
     };
   }, []);
 

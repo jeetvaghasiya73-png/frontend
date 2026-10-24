@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuthStore } from "@/lib/authStore";
 import { useTheme } from "next-themes";
 import {
@@ -726,7 +727,7 @@ export default function DashboardLayout({
 
               if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
                 try {
-                  new Notification(data.title || "New LeadFlow Alert 🔔", {
+                  new Notification(data.title || "Tech Infinix Alert 🔔", {
                     body: data.message || "New notification received",
                     icon: "/notification-icon.png",
                     badge: "/notification-badge.png"
@@ -757,7 +758,7 @@ export default function DashboardLayout({
               playNotificationSound();
               if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
                 try {
-                  new Notification(data.title || "New LeadFlow Alert 🔔", {
+                  new Notification(data.title || "Tech Infinix Alert 🔔", {
                     body: data.message || data.bussiness_name || "You received a new hot lead inquiry!",
                     icon: "/notification-icon.png",
                     badge: "/notification-badge.png"
@@ -1298,10 +1299,12 @@ export default function DashboardLayout({
           <button onClick={() => setMobileOpen(!mobileOpen)} className="p-1 cursor-pointer transition opacity-70 hover:opacity-100" style={{ color: "var(--dash-sidebar-text)" }} aria-label="Toggle Navigation">
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
-          <div className="w-8 h-8 flex items-center justify-center text-white font-bold" style={{ background: "var(--dash-primary)", borderRadius: "var(--dash-btn-radius)" }}><Zap className="w-4 h-4" /></div>
+          <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 bg-black flex items-center justify-center border border-white/10 p-0.5 shadow-sm">
+            <Image src="/favicon.png" alt="Tech Infinix" width={28} height={28} className="w-7 h-7 object-contain" />
+          </div>
           <div className="flex flex-col">
-            <span className="font-bold tracking-tight text-sm leading-none" style={{ color: "var(--dash-text)" }}>LeadFlow</span>
-            <span className="text-[9px] uppercase font-semibold tracking-wider" style={{ color: "var(--dash-primary)" }}>Enterprise CRM</span>
+            <span className="font-bold tracking-tight text-sm leading-none" style={{ color: "var(--dash-text)" }}>Tech Infinix</span>
+            <span className="text-[9px] uppercase font-semibold tracking-wider text-emerald-400">Enterprise Console</span>
           </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">

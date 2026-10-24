@@ -1,13 +1,13 @@
 {
-  "name": "LeadFlow Enterprise CRM",
-  "short_name": "LeadFlow",
-  "description": "Enterprise Sales Pipeline, Telecalling & Lead Operations Console",
+  "name": "Tech Infinix",
+  "short_name": "Tech Infinix",
+  "description": "Tech Infinix — Enterprise IT, Solutions & Growth Platform",
   "start_url": "/admin/dashboard",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#111315",
-  "theme_color": "#16A34A",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "categories": ["business", "productivity"],
   "icons": [
     {
