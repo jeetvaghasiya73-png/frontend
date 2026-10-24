@@ -49,9 +49,12 @@ import {
   Check,
   Edit3,
   AlertCircle,
-  ShieldCheck
+  ShieldCheck,
+  PhoneCall
 } from "lucide-react";
+import Link from "next/link";
 import { authFetch, API } from "@/lib/authFetch";
+import { ADMIN_PATH } from "@/lib/config";
 import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTDateTime, formatISTTime, matchesSimilaritySearch } from "@/lib/formatters";
 import {
   ResponsiveContainer,
@@ -1504,6 +1507,87 @@ export default function SuperAdminDashboard() {
           <span className="text-xs font-semibold">{actionSuccessMsg}</span>
         </div>
       )}
+
+      {/* ── Native Mobile App Executive Greeting & Quick Launchpad ── */}
+      <div className="md:hidden space-y-3 animate-fadeIn">
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-[#0d1424] to-indigo-950/60 border border-slate-800/80 shadow-xl backdrop-blur-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+          
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+                LeadFlow Executive CRM
+              </span>
+              <h2 className="text-base font-extrabold text-white tracking-tight">
+                Welcome back, {user?.username || "Admin"}! 👋
+              </h2>
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>LIVE</span>
+            </div>
+          </div>
+
+          {/* 4-App Quick Launch Action Grid */}
+          <div className="grid grid-cols-4 gap-2 mt-3.5 pt-3 border-t border-slate-800/80">
+            <Link
+              href={`${ADMIN_PATH}/dashboard/sales-calls/queue`}
+              className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800/50 hover:bg-indigo-600/20 border border-slate-700/50 transition active:scale-95 text-center group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-1 group-hover:scale-110 transition">
+                <PhoneCall className="w-4 h-4" />
+              </div>
+              <span className="text-[9px] font-bold text-slate-300">Call Desk</span>
+            </Link>
+
+            <Link
+              href={`${ADMIN_PATH}/dashboard/sales-calls/interested`}
+              className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800/50 hover:bg-amber-600/20 border border-slate-700/50 transition active:scale-95 text-center group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center mb-1 group-hover:scale-110 transition">
+                <Star className="w-4 h-4" />
+              </div>
+              <span className="text-[9px] font-bold text-slate-300">Hot Deals</span>
+            </Link>
+
+            <Link
+              href={`${ADMIN_PATH}/dashboard/automation/whatsapp`}
+              className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800/50 hover:bg-emerald-600/20 border border-slate-700/50 transition active:scale-95 text-center group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-1 group-hover:scale-110 transition">
+                <MessageSquare className="w-4 h-4" />
+              </div>
+              <span className="text-[9px] font-bold text-slate-300">WhatsApp</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => {
+                const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+                if (AudioCtx) {
+                  const ctx = new AudioCtx();
+                  const osc = ctx.createOscillator();
+                  const gain = ctx.createGain();
+                  osc.frequency.setValueAtTime(880, ctx.currentTime);
+                  gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                  osc.connect(gain);
+                  gain.connect(ctx.destination);
+                  osc.start();
+                  osc.stop(ctx.currentTime + 0.4);
+                }
+                triggerToast("🔔 Bell sound tested successfully!");
+              }}
+              className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800/50 hover:bg-purple-600/20 border border-slate-700/50 transition active:scale-95 text-center cursor-pointer group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center mb-1 group-hover:scale-110 transition">
+                <Zap className="w-4 h-4" />
+              </div>
+              <span className="text-[9px] font-bold text-slate-300">Test Chime</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* ── Top Bar Header & Action Controls ── */}
       <header className="crm-card-flat flex flex-col md:flex-row md:items-center justify-between gap-4 p-5">

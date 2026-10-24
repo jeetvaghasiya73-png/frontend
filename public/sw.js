@@ -78,3 +78,73 @@ self.addEventListener("fetch", (event) => {
       })
   );
 });
+
+// ── Web Push Notifications (Background & Offline PWA Delivery) ────────────────
+self.addEventListener("push", (event) => {
+  let data = {
+    title: "🔔 LeadFlow Alert",
+    body: "New notification received in LeadFlow CRM.",
+    icon: "/icon.png",
+    badge: "/icon.png",
+    data: { url: "/admin/dashboard" }
+  };
+
+  try {
+    if (event.data) {
+      const parsed = event.data.json();
+      data = { ...data, ...parsed };
+    }
+  } catch (err) {
+    if (event.data) {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon || "/icon.png",
+    badge: data.badge || "/icon.png",
+    vibrate: [200, 100, 200, 100, 200],
+    data: data.data || { url: "/admin/dashboard" },
+    tag: data.tag || "leadflow-notification",
+    renotify: true,
+    requireInteraction: true,
+    actions: [
+      { action: "open", title: "Open App 🚀" },
+      { action: "dismiss", title: "Dismiss" }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// User taps on the push notification banner
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  if (event.action === "dismiss") {
+    return;
+  }
+
+  const destinationUrl = event.notification.data?.url || "/admin/dashboard";
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      // If an existing PWA window is open, focus it and navigate
+      for (const client of windowClients) {
+        if ("focus" in client) {
+          if (client.url.includes("/admin/dashboard")) {
+            client.navigate(destinationUrl);
+            return client.focus();
+          }
+        }
+      }
+      // If no window is open, launch a new window with destination URL
+      if (clients.openWindow) {
+        return clients.openWindow(destinationUrl);
+      }
+    })
+  );
+});

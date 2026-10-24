@@ -44,6 +44,8 @@ import { API_URL, ADMIN_PATH } from "@/lib/config";
 import { matchesSimilaritySearch, format10DigitPhone } from "@/lib/formatters";
 import AdminPwaManager from "@/components/admin/AdminPwaManager";
 import AdminPwaDownloadPopup from "@/components/admin/AdminPwaDownloadPopup";
+import AdminMobileAppBottomBar from "@/components/admin/AdminMobileAppBottomBar";
+import AdminPushNotificationBanner from "@/components/admin/AdminPushNotificationBanner";
 
 interface CrmPageNav {
   name: string;
@@ -130,28 +132,40 @@ const playNotificationSound = () => {
     const ctx = getUnlockedAudioContext();
     if (!ctx) return;
 
-    // Dual-tone high clarity bell chime (E5 659.25Hz -> A5 880Hz)
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = "sine";
-    osc1.frequency.setValueAtTime(659.25, ctx.currentTime);
-    gain1.gain.setValueAtTime(0.18, ctx.currentTime);
-    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
-    osc1.connect(gain1);
-    gain1.connect(ctx.destination);
-    osc1.start();
-    osc1.stop(ctx.currentTime + 0.22);
+    const doPlay = (c: AudioContext) => {
+      try {
+        // Dual-tone high clarity bell chime (E5 659.25Hz -> A5 880Hz)
+        const osc1 = c.createOscillator();
+        const gain1 = c.createGain();
+        osc1.type = "sine";
+        osc1.frequency.setValueAtTime(659.25, c.currentTime);
+        gain1.gain.setValueAtTime(0.3, c.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.28);
+        osc1.connect(gain1);
+        gain1.connect(c.destination);
+        osc1.start();
+        osc1.stop(c.currentTime + 0.28);
 
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.type = "sine";
-    osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.12);
-    gain2.gain.setValueAtTime(0.22, ctx.currentTime + 0.12);
-    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start(ctx.currentTime + 0.12);
-    osc2.stop(ctx.currentTime + 0.5);
+        const osc2 = c.createOscillator();
+        const gain2 = c.createGain();
+        osc2.type = "sine";
+        osc2.frequency.setValueAtTime(880, c.currentTime + 0.12);
+        gain2.gain.setValueAtTime(0.35, c.currentTime + 0.12);
+        gain2.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.65);
+        osc2.connect(gain2);
+        gain2.connect(c.destination);
+        osc2.start(c.currentTime + 0.12);
+        osc2.stop(c.currentTime + 0.65);
+      } catch (err) {
+        console.warn("Chime synth error:", err);
+      }
+    };
+
+    if (ctx.state === "suspended") {
+      ctx.resume().then(() => doPlay(ctx)).catch(() => {});
+    } else {
+      doPlay(ctx);
+    }
   } catch (e) {
     console.warn("Notification sound playback error:", e);
   }
@@ -777,10 +791,30 @@ export default function DashboardLayout({
 
     connect();
 
+    // Periodic background polling fallback (every 15s) so bell and counts update 100% reliably
+    const pollInterval = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        loadCountsAndNotifications(true);
+      }
+    }, 15000);
+
+    const onVisibilityChange = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        loadCountsAndNotifications(true);
+      }
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", onVisibilityChange);
+    }
+
     return () => {
       unmounted = true;
       if (heartbeatTimer) clearInterval(heartbeatTimer);
       if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (pollInterval) clearInterval(pollInterval);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+      }
       if (ws) ws.close();
     };
   }, [loadCountsAndNotifications]);
@@ -1285,9 +1319,13 @@ export default function DashboardLayout({
             {mounted && dashTheme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
           </button>
           <div className="relative" ref={mobileNotifRef}>
-            <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="p-1 transition relative cursor-pointer opacity-70 hover:opacity-100" style={{ color: "var(--dash-sidebar-text)" }} title="Notifications">
+            <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="p-1.5 transition relative cursor-pointer opacity-80 hover:opacity-100 rounded-lg active:scale-95" style={{ color: "var(--dash-sidebar-text)" }} title="Notifications">
               <Bell className="w-5 h-5" />
-              {unreadCount > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: "var(--dash-danger)" }} />}
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center leading-none shadow-md animate-pulse">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </button>
             {renderNotificationDropdown(true)}
           </div>
@@ -1532,11 +1570,21 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 md:p-6 relative max-w-full crm-scrollbar">
-          <div className="relative z-10 w-full max-w-[1400px] mx-auto min-h-full">{children}</div>
+        {/* Content Area with Mobile Safe Bottom Padding */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 md:p-6 relative max-w-full crm-scrollbar pb-24 md:pb-6">
+          <div className="relative z-10 w-full max-w-[1400px] mx-auto min-h-full">
+            <AdminPushNotificationBanner />
+            {children}
+          </div>
         </div>
       </main>
+
+      {/* Native Mobile App Fixed Bottom Tab Bar */}
+      <AdminMobileAppBottomBar
+        onOpenMenu={() => setMobileOpen(true)}
+        leadsBadge={leadsBadge}
+        contactsBadge={contactsBadge}
+      />
     </div>
   );
 }
