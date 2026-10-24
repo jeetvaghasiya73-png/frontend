@@ -1,30 +1,36 @@
 {
-  "name": "Tech Infinix Admin & Telecaller CRM",
-  "short_name": "TI Admin",
-  "description": "Enterprise Telecalling & Lead Operations Console for Tech Infinix",
-  "start_url": "/dashboard",
+  "name": "LeadFlow Enterprise CRM",
+  "short_name": "LeadFlow",
+  "description": "Enterprise Sales Pipeline, Telecalling & Lead Operations Console",
+  "start_url": "/admin/dashboard",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#0f172a",
-  "theme_color": "#4f46e5",
+  "background_color": "#111315",
+  "theme_color": "#16A34A",
   "categories": ["business", "productivity"],
   "icons": [
     {
-      "src": "/icon.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/apple-icon.png",
+      "src": "/icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/favicon.png",
-      "sizes": "64x64",
+      "src": "/notification-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "180x180",
       "type": "image/png"
     }
   ],
@@ -33,29 +39,29 @@
       "name": "Calling Desk",
       "short_name": "Call Desk",
       "description": "Open your sales call queue",
-      "url": "/dashboard/sales-calls/queue",
-      "icons": [{ "src": "/icon.png", "sizes": "192x192" }]
+      "url": "/admin/dashboard/sales-calls/queue",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Leads Hub",
       "short_name": "Leads",
       "description": "Manage city & industry leads",
-      "url": "/dashboard/leads",
-      "icons": [{ "src": "/icon.png", "sizes": "192x192" }]
+      "url": "/admin/dashboard/leads",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "WhatsApp Bot",
+      "name": "WhatsApp Automation",
       "short_name": "WhatsApp",
       "description": "Monitor hot leads & bot chats",
-      "url": "/dashboard/automation/whatsapp",
-      "icons": [{ "src": "/icon.png", "sizes": "192x192" }]
+      "url": "/admin/dashboard/automation/whatsapp",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Sales Reports",
-      "short_name": "Reports",
-      "description": "View conversion analytics",
-      "url": "/dashboard/sales-calls/reports",
-      "icons": [{ "src": "/icon.png", "sizes": "192x192" }]
+      "name": "Sales Pipeline",
+      "short_name": "Pipeline",
+      "description": "View conversion analytics & deals",
+      "url": "/admin/dashboard/pipeline",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

@@ -3,6 +3,9 @@ const CACHE_NAME = "ti-admin-pwa-v" + Date.now();
 const STATIC_ASSETS = [
   "/manifest.json",
   "/icon.png",
+  "/icon-192.png",
+  "/notification-icon.png",
+  "/notification-badge.png",
   "/apple-icon.png",
   "/favicon.png"
 ];
@@ -84,8 +87,8 @@ self.addEventListener("push", (event) => {
   let data = {
     title: "🔔 LeadFlow Alert",
     body: "New notification received in LeadFlow CRM.",
-    icon: "/icon.png",
-    badge: "/icon.png",
+    icon: "/notification-icon.png",
+    badge: "/notification-badge.png",
     data: { url: "/admin/dashboard" }
   };
 
@@ -102,8 +105,8 @@ self.addEventListener("push", (event) => {
 
   const options = {
     body: data.body,
-    icon: data.icon || "/icon.png",
-    badge: data.badge || "/icon.png",
+    icon: data.icon || "/notification-icon.png",
+    badge: data.badge || "/notification-badge.png",
     vibrate: [200, 100, 200, 100, 200],
     data: data.data || { url: "/admin/dashboard" },
     tag: data.tag || "leadflow-notification",

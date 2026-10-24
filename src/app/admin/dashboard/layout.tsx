@@ -46,6 +46,7 @@ import AdminPwaManager from "@/components/admin/AdminPwaManager";
 import AdminPwaDownloadPopup from "@/components/admin/AdminPwaDownloadPopup";
 import AdminMobileAppBottomBar from "@/components/admin/AdminMobileAppBottomBar";
 import AdminPushNotificationBanner from "@/components/admin/AdminPushNotificationBanner";
+import AdminMobileStarterScreen from "@/components/admin/AdminMobileStarterScreen";
 
 interface CrmPageNav {
   name: string;
@@ -727,7 +728,8 @@ export default function DashboardLayout({
                 try {
                   new Notification(data.title || "New LeadFlow Alert 🔔", {
                     body: data.message || "New notification received",
-                    icon: "/favicon.ico"
+                    icon: "/notification-icon.png",
+                    badge: "/notification-badge.png"
                   });
                 } catch (e) {}
               }
@@ -757,7 +759,8 @@ export default function DashboardLayout({
                 try {
                   new Notification(data.title || "New LeadFlow Alert 🔔", {
                     body: data.message || data.bussiness_name || "You received a new hot lead inquiry!",
-                    icon: "/favicon.ico"
+                    icon: "/notification-icon.png",
+                    badge: "/notification-badge.png"
                   });
                 } catch (e) {}
               }
@@ -1588,6 +1591,9 @@ export default function DashboardLayout({
         leadsBadge={leadsBadge}
         contactsBadge={contactsBadge}
       />
+
+      {/* Modern Mobile Starter Screen (Fluid First Launch Experience) */}
+      <AdminMobileStarterScreen />
     </div>
   );
 }
