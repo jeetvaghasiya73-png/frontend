@@ -24,6 +24,6 @@ export const BASE_API_URL = resolveApiUrl();
 export const API_URL = BASE_API_URL;
 export const API_V1_URL = `${BASE_API_URL}/api/v1`;
 
-// Secret Admin Path Configuration
+// Admin Path Configuration - Clean URLs on dedicated admin subdomain
 export const ADMIN_SLUG = process.env.NEXT_PUBLIC_ADMIN_SLUG || "techinfinix-console-77";
-export const ADMIN_PATH = `/${ADMIN_SLUG}`;
+export const ADMIN_PATH = "";

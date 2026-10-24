@@ -10,47 +10,53 @@ export function middleware(request: NextRequest) {
 
   // ── SUBDOMAIN ROUTING (admin.techinfinix.com) ─────────────────────────────
   if (isSubdomainAdmin) {
-    // Root visit on admin subdomain -> dashboard or login
+    // 1. If visiting secret slug on admin subdomain, redirect immediately to clean URL
+    // e.g. admin.techinfinix.com/techinfinix-console-77/dashboard -> admin.techinfinix.com/dashboard
+    if (pathname === `/${ADMIN_SLUG}` || pathname.startsWith(`/${ADMIN_SLUG}/`)) {
+      const cleanPath = pathname.replace(`/${ADMIN_SLUG}`, "") || "/dashboard";
+      const cleanUrl = new URL(cleanPath, request.url);
+      cleanUrl.search = request.nextUrl.search;
+      return NextResponse.redirect(cleanUrl);
+    }
+
+    // 2. Root visit on admin subdomain -> /dashboard
+    if (pathname === "") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
     if (pathname === "/") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/admin/dashboard";
-      return NextResponse.rewrite(url);
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
-    // If the path already has /admin, let it proceed internally
-    if (pathname.startsWith("/admin/")) {
-      return NextResponse.next();
+
+    // 3. Rewrite clean paths to internal /admin routes
+    // e.g. /dashboard -> /admin/dashboard
+    // e.g. /login -> /admin/login
+    if (!pathname.startsWith("/admin/")) {
+      const internalUrl = new URL(`/admin${pathname}`, request.url);
+      internalUrl.search = request.nextUrl.search;
+      return NextResponse.rewrite(internalUrl);
     }
-    // If visiting secret slug on admin subdomain, normalize to clean path
-    if (pathname.startsWith(`/${ADMIN_SLUG}`)) {
-      const cleanPath = pathname.replace(`/${ADMIN_SLUG}`, "/admin") || "/admin/dashboard";
-      const rewriteUrl = new URL(cleanPath, request.url);
-      rewriteUrl.search = request.nextUrl.search;
-      return NextResponse.rewrite(rewriteUrl);
-    }
-    // Clean dashboard routes e.g. admin.techinfinix.com/dashboard/leads -> internal /admin/dashboard/leads
-    const internalUrl = new URL(`/admin${pathname}`, request.url);
-    internalUrl.search = request.nextUrl.search;
-    return NextResponse.rewrite(internalUrl);
+
+    return NextResponse.next();
   }
 
   // ── MAIN DOMAIN ROUTING (techinfinix.com) ─────────────────────────────────
-  // 1. Direct /admin probing on main domain is strictly cloaked with 404
-  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
-    const notFoundUrl = new URL("/_not-found", request.url);
-    return NextResponse.rewrite(notFoundUrl, { status: 404 });
-  }
-
-  // 2. Exact secret slug visit: redirect to dashboard
-  if (pathname === `/${ADMIN_SLUG}`) {
-    return NextResponse.redirect(new URL(`/${ADMIN_SLUG}/dashboard`, request.url));
-  }
-
-  // 3. Secret slug subroutes: transparently rewrite to internal /admin/:path*
-  if (pathname.startsWith(`/${ADMIN_SLUG}/`)) {
-    const internalPath = pathname.replace(`/${ADMIN_SLUG}`, "/admin");
-    const rewriteUrl = new URL(internalPath, request.url);
-    rewriteUrl.search = request.nextUrl.search;
-    return NextResponse.rewrite(rewriteUrl);
+  // Remove all dashboard and admin access from the normal marketing domain.
+  // Any attempt to access /admin, /techinfinix-console-77, or /dashboard redirects to admin.techinfinix.com
+  if (
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname === `/${ADMIN_SLUG}` ||
+    pathname.startsWith(`/${ADMIN_SLUG}/`) ||
+    pathname === "/dashboard" ||
+    pathname.startsWith("/dashboard/")
+  ) {
+    const adminUrl = new URL(request.url);
+    adminUrl.host = "admin.techinfinix.com";
+    adminUrl.port = "";
+    // Clean URL: strip secret slug
+    const cleanPath = pathname.replace(`/${ADMIN_SLUG}`, "").replace(/^\/admin/, "") || "/dashboard";
+    adminUrl.pathname = cleanPath.startsWith("/dashboard") || cleanPath.startsWith("/login") ? cleanPath : `/dashboard${cleanPath}`;
+    return NextResponse.redirect(adminUrl, 301);
   }
 
   return NextResponse.next();
