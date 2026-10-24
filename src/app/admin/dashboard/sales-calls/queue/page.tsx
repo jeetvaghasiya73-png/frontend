@@ -832,9 +832,10 @@ export default function SalesCallingDeskPage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
             {filteredItems.map((item) => {
-              const lead = item.lead;
-              const formattedPhone = lead.bussiness_number ? format10DigitPhone(lead.bussiness_number) : "";
-              const dialerUrl = formatDialerUrl(lead.bussiness_number);
+              if (!item) return null;
+              const lead = item.lead || ({} as any);
+              const formattedPhone = lead?.bussiness_number ? format10DigitPhone(lead.bussiness_number) : "";
+              const dialerUrl = lead?.bussiness_number ? formatDialerUrl(lead.bussiness_number) : "#";
               const isItemProcessing = processingId === item.queue_id;
               const callerBadgeName = item.assigned_to?.username || "Sales Caller";
 
@@ -849,7 +850,7 @@ export default function SalesCallingDeskPage() {
                     <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900/60 rounded-md border border-slate-100 dark:border-slate-800 mb-2.5">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-bold text-[9px] flex items-center justify-center shrink-0">
-                          {callerBadgeName.charAt(0).toUpperCase()}
+                          {(callerBadgeName || "S").charAt(0).toUpperCase()}
                         </div>
                         <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 truncate">
                           {item.status === "pending" ? "Assigned:" : "Contacted by:"}{" "}
@@ -862,7 +863,7 @@ export default function SalesCallingDeskPage() {
                         </span>
                         {isSuperAdmin && (
                           <button
-                            onClick={() => handleRemoveLead(item.queue_id, lead.bussiness_name || "Lead")}
+                            onClick={() => handleRemoveLead(item.queue_id, lead?.bussiness_name || "Lead")}
                             disabled={deletingId === item.queue_id}
                             className="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded transition cursor-pointer"
                             title="Admin: Remove lead from caller queue"
@@ -885,15 +886,15 @@ export default function SalesCallingDeskPage() {
                         <div className="min-w-0 flex-1">
                           <h3
                             className="text-sm font-bold text-slate-900 dark:text-white truncate"
-                            title={lead.bussiness_name || "Unknown Business"}
+                            title={lead?.bussiness_name || "Unknown Business"}
                           >
-                            {lead.bussiness_name || "Unknown Business"}
+                            {lead?.bussiness_name || "Unknown Business"}
                           </h3>
                           <div className="flex items-center gap-2 mt-0.5">
                             {item.is_phone_masked ? (
                               <span className="text-xs font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                                 <ShieldAlert className="w-3 h-3 text-amber-500" />
-                                <span>{lead.bussiness_number || "+91 ••••• •••••"}</span>
+                                <span>{lead?.bussiness_number || "+91 ••••• •••••"}</span>
                                 <span className="text-[9px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1 py-0.2 rounded border border-amber-200 dark:border-amber-800">
                                   Protected
                                 </span>
@@ -903,7 +904,7 @@ export default function SalesCallingDeskPage() {
                                 {formattedPhone ? `+${formattedPhone}` : "No Number"}
                               </span>
                             )}
-                            {lead.scraped_city && (
+                            {lead?.scraped_city && (
                               <span className="text-[10px] text-slate-400 flex items-center gap-0.5 truncate">
                                 <MapPin className="w-2.5 h-2.5" /> {lead.scraped_city}
                               </span>
@@ -930,18 +931,18 @@ export default function SalesCallingDeskPage() {
 
                     {/* Metadata tags */}
                     <div className="flex flex-wrap items-center gap-1.5 my-2">
-                      {lead.category && (
+                      {lead?.category && (
                         <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 rounded border border-slate-100 dark:border-slate-800">
                           {lead.category}
                         </span>
                       )}
-                      {lead.rating && lead.rating !== "0" && (
+                      {lead?.rating && lead.rating !== "0" && (
                         <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/30 rounded border border-amber-100 dark:border-amber-900/40">
                           <Star className="w-2.5 h-2.5 fill-current" /> {lead.rating}
-                          <span className="text-slate-400">({lead.total_review || 0})</span>
+                          <span className="text-slate-400">({lead?.total_review || 0})</span>
                         </span>
                       )}
-                      {lead.bussiness_website && (
+                      {lead?.bussiness_website && (
                         <a
                           href={formatWebsiteUrl(lead.bussiness_website) || "#"}
                           target="_blank"
@@ -953,7 +954,7 @@ export default function SalesCallingDeskPage() {
                       )}
                     </div>
 
-                    {lead.bussiness_address && (
+                    {lead?.bussiness_address && (
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-2.5">
                         {lead.bussiness_address}
                       </p>
