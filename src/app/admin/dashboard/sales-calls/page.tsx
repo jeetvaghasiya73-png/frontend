@@ -129,14 +129,14 @@ export default function SalesCallingDashboard() {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-20">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
+      <header className="crm-card p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-sm shadow-indigo-500/20">
+          <div className="w-10 h-10 rounded-[var(--dash-btn-radius)] flex items-center justify-center text-white" style={{ background: "var(--dash-primary)" }}>
             <PhoneCall className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Sales Calling</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Filter by Contacted, Interested, or Pending call queue</p>
+            <h1 className="text-xl font-bold tracking-tight" style={{ color: "var(--dash-text)" }}>Sales Calling</h1>
+            <p className="text-xs mt-0.5" style={{ color: "var(--dash-text-muted)" }}>Filter by Contacted, Interested, or Pending call queue</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -144,78 +144,75 @@ export default function SalesCallingDashboard() {
             <button
               key={tab.key}
               onClick={() => handleFilterChange(tab.key)}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-[6px] border transition-colors cursor-pointer ${
+              className={`text-xs font-semibold px-3 py-1.5 rounded-[var(--dash-btn-radius)] border transition-colors cursor-pointer ${
                 statusFilter === tab.key
-                  ? tab.color === "indigo" ? "bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/20"
-                  : tab.color === "blue" ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20"
-                  : tab.color === "emerald" ? "bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-500/20"
-                  : "bg-slate-700 text-white border-slate-700 shadow-sm"
-                  : "bg-slate-50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-slate-700/40 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  ? "bg-[var(--dash-primary)] text-white border-[var(--dash-primary)]"
+                  : "bg-[var(--dash-surface-alt)] text-[var(--dash-text-muted)] border-[var(--dash-border)] hover:text-[var(--dash-text)]"
               }`}
             >
               {tab.label}
             </button>
           ))}
-          <a href={`${ADMIN_PATH}/dashboard/sales-calls/queue`} className="text-xs font-bold px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[6px] transition-colors shadow-sm shadow-indigo-600/30 flex items-center gap-1.5">
+          <a href={`${ADMIN_PATH}/dashboard/sales-calls/queue`} className="text-xs font-bold px-3 py-1.5 crm-btn-primary text-white flex items-center gap-1.5">
             <PhoneCall className="w-3.5 h-3.5" />
             <span>My Call Desk →</span>
           </a>
-          <a href={`${ADMIN_PATH}/dashboard/sales-calls/interested`} className="text-xs font-semibold px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-[6px] border border-emerald-200/60 dark:border-emerald-800/40 hover:bg-emerald-100 transition-colors">
+          <a href={`${ADMIN_PATH}/dashboard/sales-calls/interested`} className="text-xs font-semibold px-3 py-1.5 rounded-[var(--dash-btn-radius)] border border-[var(--dash-border)] bg-[var(--dash-surface-alt)] text-[var(--dash-text)] hover:border-[var(--dash-primary)] transition-colors">
             Interested Page →
           </a>
-          <div className="text-xs font-semibold px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 rounded-[6px] border border-indigo-200/60 dark:border-indigo-800/40 flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+          <div className="text-xs font-semibold px-3 py-1.5 rounded-[var(--dash-btn-radius)] border border-[var(--dash-border)] bg-[var(--dash-surface-alt)] text-[var(--dash-text-muted)] flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-[var(--dash-primary)] animate-pulse" />
             {totalLeads} Total
           </div>
         </div>
       </header>
 
       {/* Similarity Search Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
+      <div className="crm-card p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md w-full">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--dash-text-muted)] pointer-events-none" />
           <input
             type="text"
             placeholder="Search by phone (e.g. 91737 39080), name, city, service..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-md pl-9 pr-8 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
+            className="w-full bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-[var(--dash-input-radius)] pl-9 pr-8 py-2 text-xs text-[var(--dash-text)] placeholder:text-[var(--dash-text-muted)] focus:outline-none focus:border-[var(--dash-primary)] transition"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] p-0.5 cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
-        <div className="text-xs text-slate-500 font-medium">
-          Showing <span className="font-bold text-slate-800 dark:text-slate-200">{filteredLeads.length}</span> of {leads.length} leads
+        <div className="text-xs text-[var(--dash-text-muted)] font-medium">
+          Showing <span className="font-bold text-[var(--dash-text)]">{filteredLeads.length}</span> of {leads.length} leads
         </div>
       </div>
 
       {loading && leads.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
-          <Loader2 className="w-6 h-6 animate-spin mb-3 text-indigo-500" />
+        <div className="crm-card flex flex-col items-center justify-center py-20 text-[var(--dash-text-muted)]">
+          <Loader2 className="w-6 h-6 animate-spin mb-3 text-[var(--dash-primary)]" />
           <p className="text-xs font-medium">Loading call queue...</p>
         </div>
       ) : leads.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-slate-400 bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
-          <CheckCircle2 className="w-12 h-12 text-emerald-500 opacity-40 mb-3" />
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">All Caught Up!</h3>
-          <p className="text-xs mt-1 text-slate-500">No uncontacted leads found in your queue.</p>
+        <div className="crm-card flex flex-col items-center justify-center py-24 text-[var(--dash-text-muted)]">
+          <CheckCircle2 className="w-12 h-12 text-[var(--dash-primary)] opacity-40 mb-3" />
+          <h3 className="text-lg font-bold text-[var(--dash-text)]">All Caught Up!</h3>
+          <p className="text-xs mt-1 text-[var(--dash-text-muted)]">No uncontacted leads found in your queue.</p>
         </div>
       ) : filteredLeads.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
-          <Search className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" />
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">No Matching Leads</h3>
-          <p className="text-xs mt-1 text-slate-500">No leads matched &ldquo;{searchQuery}&rdquo;. Try another phone number or keyword.</p>
+        <div className="crm-card flex flex-col items-center justify-center py-20 text-[var(--dash-text-muted)]">
+          <Search className="w-8 h-8 text-[var(--dash-text-muted)] mb-2 opacity-50" />
+          <h3 className="text-sm font-bold text-[var(--dash-text)]">No Matching Leads</h3>
+          <p className="text-xs mt-1 text-[var(--dash-text-muted)]">No leads matched &ldquo;{searchQuery}&rdquo;. Try another phone number or keyword.</p>
           <button
             type="button"
             onClick={() => setSearchQuery("")}
-            className="mt-3 px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-semibold rounded-md border border-indigo-200 dark:border-indigo-800 cursor-pointer"
+            className="mt-3 px-3 py-1 text-xs font-semibold rounded-[var(--dash-btn-radius)] border border-[var(--dash-border)] bg-[var(--dash-surface-alt)] text-[var(--dash-text)] hover:border-[var(--dash-primary)] cursor-pointer"
           >
             Clear Search
           </button>
@@ -224,28 +221,28 @@ export default function SalesCallingDashboard() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredLeads.map((lead) => (
-              <div key={lead.id} className="bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-slate-800/60 rounded-lg p-5 flex flex-col shadow-sm hover:shadow-md hover:border-indigo-500/20 dark:hover:border-indigo-500/30 transition-all group">
+              <div key={lead.id} className="crm-card p-5 flex flex-col transition-all group">
                 
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-start gap-2.5 w-full">
-                    <div className="w-8 h-8 rounded-[6px] bg-indigo-50 dark:bg-indigo-900/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-800/30">
+                    <div className="w-8 h-8 rounded-[var(--dash-btn-radius)] bg-[var(--dash-surface-alt)] text-[var(--dash-primary)] flex items-center justify-center shrink-0 border border-[var(--dash-border)]">
                       <Building className="w-4 h-4" />
                     </div>
                     <div className="w-full pr-1">
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight" title={lead.bussiness_name || "Unknown Business"}>
+                        <h3 className="text-sm font-bold text-[var(--dash-text)] line-clamp-2 leading-tight" title={lead.bussiness_name || "Unknown Business"}>
                           {lead.bussiness_name || "Unknown Business"}
                         </h3>
                         {lead.is_interested || lead.whatsapp_status === "interested" ? (
-                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 rounded-full border border-emerald-200 dark:border-emerald-800/40">
+                          <span className="crm-badge badge-success text-[10px] font-bold shrink-0">
                             Interested
                           </span>
                         ) : lead.whatsapp_status === "contacted" || lead.whatsapp_status === "sent" ? (
-                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 rounded-full border border-blue-200 dark:border-blue-800/40">
+                          <span className="crm-badge badge-violet text-[10px] font-bold shrink-0">
                             Contacted
                           </span>
                         ) : (
-                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 rounded-full border border-slate-200 dark:border-slate-700">
+                          <span className="crm-badge badge-warning text-[10px] font-bold shrink-0">
                             Pending
                           </span>
                         )}

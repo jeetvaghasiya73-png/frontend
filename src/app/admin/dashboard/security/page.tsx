@@ -102,7 +102,7 @@ function Badge({ active }: { active: boolean }) {
 function RoleBadge({ isSuperadmin, isMainAdmin }: { isSuperadmin: boolean; isMainAdmin?: boolean }) {
   if (isMainAdmin) {
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/20">
         ★ Main Admin
       </span>
     );
@@ -111,8 +111,8 @@ function RoleBadge({ isSuperadmin, isMainAdmin }: { isSuperadmin: boolean; isMai
     <span
       className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
         isSuperadmin
-          ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800"
-          : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+          : "bg-zinc-100 dark:bg-white/5 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/10"
       }`}
     >
       {isSuperadmin ? "Super Admin" : "Admin"}
@@ -326,7 +326,7 @@ function AdminUsersTab() {
         {isSuperAdmin && (
           <button
             onClick={() => setShowCreate(true)}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold text-xs flex items-center gap-2 transition shadow-md shadow-indigo-600/30 cursor-pointer"
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm"
           >
             <UserPlus className="w-4 h-4" />
             <span>New Admin User</span>
@@ -335,22 +335,22 @@ function AdminUsersTab() {
       </div>
 
       {error && (
-        <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-md text-xs text-rose-600 dark:text-rose-400 font-mono">
+        <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-600 dark:text-rose-400 font-mono">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-slate-400">
+        <div className="flex items-center justify-center py-16 text-zinc-400">
           <Loader2 className="w-5 h-5 animate-spin mr-2" />
           <span className="text-xs font-mono">Loading users list…</span>
         </div>
       ) : (
-        <div className="bg-white dark:bg-[#0f172a] border border-slate-200/80 dark:border-slate-800 rounded-md overflow-hidden shadow-sm w-full">
+        <div className="crm-card overflow-hidden w-full">
           <div className="w-full overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse min-w-[650px]">
             <thead>
-              <tr className="bg-slate-50/75 dark:bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold">
+              <tr className="bg-zinc-50/75 dark:bg-white/[0.02] border-b border-zinc-200 dark:border-white/10 text-zinc-500 dark:text-zinc-400 font-semibold">
                 <th className="py-3.5 px-5 uppercase tracking-wider text-[10px]">User</th>
                 <th className="py-3.5 px-5 uppercase tracking-wider text-[10px]">Role</th>
                 <th className="py-3.5 px-5 uppercase tracking-wider text-[10px]">Status</th>
@@ -358,15 +358,15 @@ function AdminUsersTab() {
                 <th className="py-3.5 px-5 text-right uppercase tracking-wider text-[10px]">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200/80 dark:divide-slate-800">
+            <tbody className="divide-y divide-zinc-200 dark:divide-white/10">
               {users.map((u) => (
-                <tr key={u.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-900/40 transition">
+                <tr key={u.id} className="hover:bg-zinc-50/80 dark:hover:bg-white/[0.02] transition">
                   <td className="py-3.5 px-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-xs shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold flex items-center justify-center text-xs shadow-sm">
                         {u.username.slice(0, 2).toUpperCase()}
                       </div>
-                      <span className="font-bold text-slate-900 dark:text-white">{u.username}</span>
+                      <span className="font-bold text-zinc-900 dark:text-white">{u.username}</span>
                     </div>
                   </td>
                   <td className="py-3.5 px-5">
@@ -458,9 +458,9 @@ function AdminUsersTab() {
 
       {/* Create Modal */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-md border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-md crm-card shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-3">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Create New Admin User</h3>
               <button onClick={() => setShowCreate(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
@@ -592,24 +592,24 @@ function AdminUsersTab() {
 
       {/* Delete Confirmation Modal */}
       {deleteModalUser && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-md border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">Confirm User Deletion</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Are you sure you want to permanently delete admin account <span className="font-bold text-slate-900 dark:text-white">"{deleteModalUser.username}"</span>? This action cannot be undone.
+        <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-md crm-card shadow-2xl p-6 space-y-4">
+            <h3 className="text-base font-bold text-zinc-900 dark:text-white">Confirm User Deletion</h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Are you sure you want to permanently delete admin account <span className="font-bold text-zinc-900 dark:text-white">"{deleteModalUser.username}"</span>? This action cannot be undone.
             </p>
 
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setDeleteModalUser(null)}
-                className="px-4 py-2 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300"
+                className="px-4 py-2 rounded-lg bg-zinc-100 dark:bg-white/10 text-xs font-semibold text-zinc-700 dark:text-zinc-300"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="px-4 py-2 rounded-md bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-md shadow-rose-600/30"
+                className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-md shadow-rose-600/30"
               >
                 {deleting ? "Deleting..." : "Delete User"}
               </button>
@@ -620,9 +620,9 @@ function AdminUsersTab() {
 
       {/* ─── Edit User Modal ─── */}
       {editModalUser && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-md border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-md crm-card shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-3">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 {editModalUser.id === currentUser?.id ? "Edit Your Profile & Password" : `Edit User: ${editModalUser.username}`}
               </h3>
@@ -824,8 +824,8 @@ export default function SecurityPage() {
       </header>
 
       {!isSuperAdmin && (
-        <div className="flex items-center gap-3 p-3.5 bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/80 rounded-md text-xs text-indigo-800 dark:text-indigo-300">
-          <Shield className="w-4 h-4 shrink-0 text-indigo-600 dark:text-indigo-400" />
+        <div className="flex items-center gap-3 p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-amber-600 dark:text-amber-400">
+          <Shield className="w-4 h-4 shrink-0 text-amber-500" />
           <span>
             <strong>Admin Console Access:</strong> You can edit your profile and change your own password. Only Super Admin can add new admin accounts or change passwords for other users.
           </span>
@@ -836,24 +836,24 @@ export default function SecurityPage() {
 
       {/* Google OAuth Token Refresh Section - Super Admin Only */}
       {isSuperAdmin && (
-        <div className="bg-white dark:bg-[#0f172a] border border-slate-200/80 dark:border-slate-800 rounded-md overflow-hidden shadow-sm w-full p-6">
+        <div className="crm-card w-full p-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300">
+            <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-white/5 flex items-center justify-center text-zinc-700 dark:text-zinc-300">
               <Lock className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Third-Party Integrations &amp; API Security</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Manage OAuth tokens for email and other services</p>
+              <h2 className="text-sm font-bold text-zinc-900 dark:text-white">Third-Party Integrations &amp; API Security</h2>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Manage OAuth tokens for email and other services</p>
             </div>
           </div>
 
-          <div className="border border-slate-200 dark:border-slate-800 rounded-md p-4 bg-slate-50/50 dark:bg-slate-900/20">
+          <div className="border border-zinc-200 dark:border-white/10 rounded-lg p-4 bg-zinc-50/50 dark:bg-white/[0.02]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                   Gmail API OAuth Token
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-lg">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-lg">
                   LeadFlow CRM uses the Gmail API to send outreach emails on behalf of the admin. When the token expires, you must re-authenticate with Google.
                 </p>
               </div>
@@ -907,11 +907,11 @@ function GoogleOAuthRefreshButton() {
       </button>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-md border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4 text-left">
-            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Lock className="w-4 h-4 text-indigo-500" /> Confirm Admin Password
+        <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-md crm-card shadow-2xl p-6 space-y-4 text-left">
+            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-3">
+              <h3 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                <Lock className="w-4 h-4 text-emerald-500" /> Confirm Admin Password
               </h3>
               <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />

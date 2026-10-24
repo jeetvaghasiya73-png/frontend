@@ -428,11 +428,13 @@ export default function LeadsManager() {
         };
       });
 
-      // Strictly exclude any scraped lead whose phone number is missing, empty, or "N/A"
+      // Include all valid scraped leads that have at least a business name, email, or phone number
       const validScrapedData = scrapedData.filter((lead: any) => {
         if (!lead) return false;
-        const p = String(lead.bussiness_number || "").trim().toLowerCase();
-        return p && p !== "n/a" && p !== "na" && p !== "none" && p !== "null" && p !== "nan" && p !== "undefined" && p !== "-" && p !== "--";
+        const name = String(lead.bussiness_name || "").trim();
+        const email = String(lead.bussiness_email || "").trim();
+        const p = String(lead.bussiness_number || "").trim();
+        return Boolean(name || email || p);
       });
 
       const normalizedScraped: NormalizedLead[] = validScrapedData.map((lead: any) => {
@@ -499,6 +501,8 @@ export default function LeadsManager() {
       let pageLeads: NormalizedLead[] = [];
       if (currentFilter === "inquiry") {
         pageLeads = normalizedInquiries;
+      } else if (currentFilter === "scraped") {
+        pageLeads = normalizedScraped;
       } else if (pageNum === 1 && currentFilter === "all") {
         pageLeads = [...normalizedInquiries, ...normalizedScraped];
       } else {
@@ -507,15 +511,11 @@ export default function LeadsManager() {
 
       pageLeads.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      // Deduplicate by phone and email across tables so 1 contact = exactly 1 row
+      // Preserve all distinct lead records by their unique source and raw ID
       const seenKeys = new Set<string>();
-      const seenPhoneMap = new Map<string, NormalizedLead>();
-      const seenEmailMap = new Map<string, NormalizedLead>();
       const uniqueLeads: NormalizedLead[] = [];
 
       for (const lead of pageLeads) {
-        // Fix Test Mode Phone Number Discrepancy:
-        // Extract real phone from WhatsApp Client (+<number>) title
         if (lead.name) {
           const match = lead.name.match(/\(\+?(\d+)\)/);
           if (match && match[1]) {
@@ -526,38 +526,15 @@ export default function LeadsManager() {
         const key = `${lead.source}_${lead.rawId}`;
         if (seenKeys.has(key)) continue;
         seenKeys.add(key);
-
-        const phone10 = (lead.phone || "").replace(/\D/g, "").slice(-10);
-        const emailLower = (lead.email || "").trim().toLowerCase();
-        const hasRealEmail = emailLower && emailLower.includes("@") && !emailLower.includes("techinfinix.com") && !emailLower.includes("example.com");
-
-        const existingByPhone = phone10 && phone10.length >= 10 ? seenPhoneMap.get(phone10) : null;
-        const existingByEmail = hasRealEmail ? seenEmailMap.get(emailLower) : null;
-        const existing = existingByPhone || existingByEmail;
-
-        if (existing) {
-          // If we found an existing match, prefer the graduated "inquiry" lead (which has full 5 details)
-          // or whichever has more complete information
-          const existingScore = (existing.source === "inquiry" ? 200 : 0) + (existing.status.toLowerCase() === "interested" ? 50 : 0) + (existing.email ? 10 : 0);
-          const newScore = (lead.source === "inquiry" ? 200 : 0) + (lead.status.toLowerCase() === "interested" ? 50 : 0) + (lead.email ? 10 : 0);
-          if (newScore > existingScore) {
-            const idx = uniqueLeads.indexOf(existing);
-            if (idx !== -1) uniqueLeads[idx] = lead;
-            if (phone10 && phone10.length >= 10) seenPhoneMap.set(phone10, lead);
-            if (hasRealEmail) seenEmailMap.set(emailLower, lead);
-          }
-          continue;
-        }
-
-        if (phone10 && phone10.length >= 10) seenPhoneMap.set(phone10, lead);
-        if (hasRealEmail) seenEmailMap.set(emailLower, lead);
         uniqueLeads.push(lead);
       }
 
       setAllLeads(uniqueLeads);
-      setTotalScrapedCount(scrapedTotal || 0);
-      setTotalInquiriesCount(inquiryData.length || 0);
-      setTotalLeadsFromAPI(scrapedTotal || uniqueLeads.length);
+      const accurateScraped = Number(scrapedTotal || validScrapedData.length || 0);
+      const accurateInquiries = Number(inquiryData.length || 0);
+      setTotalScrapedCount(accurateScraped);
+      setTotalInquiriesCount(accurateInquiries);
+      setTotalLeadsFromAPI(currentFilter === "inquiry" ? accurateInquiries : (currentFilter === "scraped" ? accurateScraped : uniqueLeads.length));
     } catch (err) {
       console.error("Failed to load leads:", err);
     } finally {
@@ -1292,8 +1269,8 @@ export default function LeadsManager() {
 
     if (sourceFilter !== "all") {
       result = result.filter((l) => {
-        if (sourceFilter === "inquiry") return isOrganicInbound(l);
-        return !isOrganicInbound(l);
+        if (sourceFilter === "inquiry") return l.source === "inquiry" || isOrganicInbound(l);
+        return l.source === "scraped";
       });
     }
 

@@ -168,16 +168,16 @@ export default function InterestedLeadsDashboard() {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-20">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
+      <header className="crm-card p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center text-white shadow-sm shadow-emerald-500/20">
+          <div className="w-10 h-10 rounded-[var(--dash-btn-radius)] flex items-center justify-center text-white" style={{ background: "var(--dash-primary)" }}>
             <Heart className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-xl font-bold tracking-tight" style={{ color: "var(--dash-text)" }}>
               {statusFilter === "interested" ? "Interested Leads" : statusFilter === "contacted" ? "Contacted Leads" : "All Leads"}
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
               Filtered status view for leads contacted via WhatsApp and Sales Calling
             </p>
           </div>
@@ -187,12 +187,10 @@ export default function InterestedLeadsDashboard() {
             <button
               key={tab.key}
               onClick={() => setStatusFilter(tab.key)}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-[6px] border transition-colors cursor-pointer ${
+              className={`text-xs font-semibold px-3 py-1.5 rounded-[var(--dash-btn-radius)] border transition-colors cursor-pointer ${
                 statusFilter === tab.key
-                  ? tab.color === "emerald" ? "bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-500/20"
-                  : tab.color === "blue" ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20"
-                  : "bg-slate-700 text-white border-slate-700 shadow-sm"
-                  : "bg-slate-50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-slate-700/40 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  ? "bg-[var(--dash-primary)] text-white border-[var(--dash-primary)]"
+                  : "bg-[var(--dash-surface-alt)] text-[var(--dash-text-muted)] border-[var(--dash-border)] hover:text-[var(--dash-text)]"
               }`}
             >
               {tab.label}
@@ -200,39 +198,39 @@ export default function InterestedLeadsDashboard() {
           ))}
           <a
             href={`${ADMIN_PATH}/dashboard/sales-calls`}
-            className="text-xs font-semibold px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 rounded-[6px] border border-indigo-200/60 dark:border-indigo-800/40 hover:bg-indigo-100 transition-colors"
+            className="text-xs font-semibold px-3 py-1.5 rounded-[var(--dash-btn-radius)] border border-[var(--dash-border)] bg-[var(--dash-surface-alt)] text-[var(--dash-text)] hover:border-[var(--dash-primary)] transition-colors"
           >
             ← Sales Call Queue
           </a>
-          <div className="text-xs font-semibold px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-[6px] border border-emerald-200/60 dark:border-emerald-800/40 flex items-center gap-1.5">
+          <div className="text-xs font-semibold px-3 py-1.5 rounded-[var(--dash-btn-radius)] border border-[var(--dash-border)] bg-[var(--dash-surface-alt)] text-[var(--dash-text-muted)] flex items-center gap-1.5">
             {leads.length} Total
           </div>
         </div>
       </header>
 
       {/* Similarity Search Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
+      <div className="crm-card p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md w-full">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--dash-text-muted)] pointer-events-none" />
           <input
             type="text"
             placeholder="Search by phone (e.g. 91737 39080), business, city, category..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-md pl-9 pr-8 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
+            className="w-full bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-[var(--dash-input-radius)] pl-9 pr-8 py-2 text-xs text-[var(--dash-text)] placeholder:text-[var(--dash-text-muted)] focus:outline-none focus:border-[var(--dash-primary)] transition"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] p-0.5 cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
-        <div className="text-xs text-slate-500 font-medium">
-          Showing <span className="font-bold text-slate-800 dark:text-slate-200">{filteredLeads.length}</span> of {leads.length} leads
+        <div className="text-xs text-[var(--dash-text-muted)] font-medium">
+          Showing <span className="font-bold text-[var(--dash-text)]">{filteredLeads.length}</span> of {leads.length} leads
         </div>
       </div>
 
@@ -271,35 +269,29 @@ export default function InterestedLeadsDashboard() {
           {filteredLeads.map((lead) => (
             <div
               key={`${lead.is_scraped ? 's' : 'i'}-${lead.id}`}
-              className={`bg-white dark:bg-[#0f172a] border rounded-lg p-5 flex flex-col shadow-sm hover:shadow-md transition-all group relative overflow-hidden ${
-                lead.status === "interested"
-                  ? "border-emerald-200/50 dark:border-emerald-800/40 hover:border-emerald-500/30"
-                  : "border-blue-200/50 dark:border-blue-800/40 hover:border-blue-500/30"
-              }`}
+              className="crm-card p-5 flex flex-col transition-all group relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 p-2">
-                <span className={`text-[9px] font-bold px-2 py-1 rounded-bl-lg ${
-                  lead.status === "interested"
-                    ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400"
-                    : "bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400"
+                <span className={`crm-badge text-[9px] font-bold ${
+                  lead.status === "interested" ? "badge-success" : "badge-violet"
                 }`}>
                   {lead.status === "interested" ? "Interested" : "Contacted"}
                 </span>
               </div>
               <div className="flex justify-between items-start mb-3 mt-1">
                 <div className="flex items-start gap-2.5 w-full">
-                  <div className={`w-8 h-8 rounded-[6px] flex items-center justify-center shrink-0 border ${
+                  <div className={`w-8 h-8 rounded-[var(--dash-btn-radius)] flex items-center justify-center shrink-0 border border-[var(--dash-border)] bg-[var(--dash-surface-alt)] ${
                     lead.status === "interested"
-                      ? "bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/20"
-                      : "bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800/20"
+                      ? "text-[var(--dash-primary)]"
+                      : "text-[var(--dash-violet)]"
                   }`}>
                     <Building className="w-4 h-4" />
                   </div>
                   <div className="w-full pr-1">
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight">
+                    <h3 className="text-sm font-bold text-[var(--dash-text)] line-clamp-2 leading-tight">
                       {lead.business_name || "Unknown Business"}
                     </h3>
-                    <div className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1">
+                    <div className="text-[11px] font-semibold text-[var(--dash-primary)] mt-1">
                       {lead.normalized_phone ? `+${format10DigitPhone(lead.normalized_phone)}` : "No Number"}
                     </div>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-medium">

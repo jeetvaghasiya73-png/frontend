@@ -521,26 +521,26 @@ export default function SalesCallingDeskPage() {
   return (
     <div className="space-y-5 animate-fadeIn pb-24">
       {/* Personalized Caller Header */}
-      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm">
+      <header className="crm-card p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-md flex items-center justify-center text-white shrink-0 font-bold" style={{ background: "var(--dash-primary)" }}>
+          <div className="w-10 h-10 rounded-[var(--dash-btn-radius)] flex items-center justify-center text-white shrink-0 font-bold" style={{ background: "var(--dash-primary)" }}>
             <PhoneCall className="w-5 h-5" />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight" style={{ color: "var(--dash-text)" }}>
                 {currentViewTitle}
               </h1>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+              <span className="crm-badge badge-success text-[10px] font-bold">
                 Live Desk
               </span>
               {stats.total_pending > 0 && !isSuperAdmin && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                <span className="crm-badge badge-warning text-[10px] font-bold flex items-center gap-1">
                   <Clock className="w-3 h-3" /> {stats.total_pending} Pending
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
               {isSuperAdmin
                 ? "Inspect any sales caller's queue, review progress, or audit live calling leads"
                 : "Dedicated queue of uncalled leads assigned exclusively to you"}
@@ -552,43 +552,44 @@ export default function SalesCallingDeskPage() {
           {/* Generation Button with pending indicator */}
           <button
             onClick={openGenerateModal}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-bold transition shadow-xs cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-[var(--dash-btn-radius)] text-xs font-bold transition cursor-pointer ${
               isGenerationBlocked
-                ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 hover:bg-amber-100"
+                ? "border text-amber-500 bg-amber-500/10 border-amber-500/30"
                 : "crm-btn-primary text-white"
             }`}
             title={isGenerationBlocked ? `Complete your ${stats.total_pending} pending leads before generating new leads` : "Claim fresh batch of leads"}
           >
-            {isGenerationBlocked ? <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> : <PlusCircle className="w-4 h-4" />}
+            {isGenerationBlocked ? <Lock className="w-3.5 h-3.5 text-amber-500" /> : <PlusCircle className="w-4 h-4" />}
             <span>{isGenerationBlocked ? `Queue Locked (${stats.total_pending} Pending)` : "Generate Call Queue"}</span>
           </button>
 
           {isSuperAdmin && (
             <a
               href={`${ADMIN_PATH}/dashboard/sales-calls/reports`}
-              className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-md text-xs font-semibold transition"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-[var(--dash-btn-radius)] text-xs font-semibold transition border border-[var(--dash-border)] bg-[var(--dash-surface-alt)] hover:text-[var(--dash-text)]"
+              style={{ color: "var(--dash-text-muted)" }}
             >
-              <TrendingUp className="w-3.5 h-3.5 text-indigo-500" />
+              <TrendingUp className="w-3.5 h-3.5" style={{ color: "var(--dash-violet)" }} />
               <span>Executive Reports →</span>
             </a>
           )}
         </div>
       </header>
 
-      {/* Admin Telecaller Switcher Bar - Production-Ready Redesign */}
+      {/* Admin Telecaller Switcher Bar */}
       {isSuperAdmin && (
-        <div className="bg-white dark:bg-[#0f172a] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all">
+        <div className="crm-card p-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             {/* Title & All Callers quick toggle */}
             <div className="flex items-center gap-3 shrink-0">
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <div className="w-8 h-8 rounded-[var(--dash-btn-radius)] bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] flex items-center justify-center shrink-0" style={{ color: "var(--dash-violet)" }}>
                 <Users className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block">
+                <span className="text-xs font-bold uppercase tracking-wider block" style={{ color: "var(--dash-text)" }}>
                   Telecaller Desk Queue
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                <span className="text-[11px]" style={{ color: "var(--dash-text-muted)" }}>
                   Select a sales agent to inspect their active calls & leads
                 </span>
               </div>
@@ -599,17 +600,17 @@ export default function SalesCallingDeskPage() {
               {/* All Telecallers Team Button */}
               <button
                 onClick={() => setSelectedCallerId("all")}
-                className={`text-xs font-bold px-3.5 py-2 rounded-lg border transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+                className={`text-xs font-bold px-3.5 py-2 rounded-[var(--dash-btn-radius)] border transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
                   selectedCallerId === "all"
-                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-sm ring-2 ring-slate-900/10 dark:ring-white/20"
-                    : "bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700/80 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    ? "bg-[var(--dash-primary)] text-white border-[var(--dash-primary)]"
+                    : "bg-[var(--dash-surface-alt)] text-[var(--dash-text-muted)] border-[var(--dash-border)] hover:text-[var(--dash-text)]"
                 }`}
               >
                 <span>👥 All Telecallers</span>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-[var(--dash-badge-radius)] font-bold ${
                   selectedCallerId === "all"
-                    ? "bg-white/20 dark:bg-slate-900/20 text-white dark:text-slate-900"
-                    : "bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300"
+                    ? "bg-white/20 text-white"
+                    : "bg-[var(--dash-surface)] text-[var(--dash-text)] border border-[var(--dash-border)]"
                 }`}>
                   Team Queue
                 </span>
@@ -620,7 +621,7 @@ export default function SalesCallingDeskPage() {
                 <select
                   value={selectedCallerId}
                   onChange={(e) => setSelectedCallerId(e.target.value)}
-                  className="w-full text-xs font-semibold px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer appearance-none pr-8"
+                  className="w-full text-xs font-semibold px-3.5 py-2 rounded-[var(--dash-input-radius)] border border-[var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-text)] focus:outline-none focus:border-[var(--dash-primary)] cursor-pointer appearance-none pr-8"
                 >
                   <option value="all">-- Select Individual Telecaller --</option>
                   {telecallers.map((t) => (
@@ -629,7 +630,7 @@ export default function SalesCallingDeskPage() {
                     </option>
                   ))}
                 </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--dash-text-muted)]">
                   <ChevronDown className="w-3.5 h-3.5" />
                 </div>
               </div>
@@ -642,7 +643,7 @@ export default function SalesCallingDeskPage() {
                   <button
                     onClick={() => handleBulkDequeue(currentCaller.id, currentCaller.username)}
                     disabled={bulkDequeuing}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/70 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition cursor-pointer disabled:opacity-50 shrink-0"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-[var(--dash-btn-radius)] text-xs font-bold border border-red-500/30 text-red-500 bg-red-500/10 hover:bg-red-500/20 transition cursor-pointer disabled:opacity-50 shrink-0"
                     title="Release all assigned leads back to the general pool (leads are dequeued, NOT deleted)"
                   >
                     {bulkDequeuing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
@@ -658,27 +659,27 @@ export default function SalesCallingDeskPage() {
             const activeCaller = telecallers.find(t => String(t.id) === selectedCallerId);
             if (!activeCaller) return null;
             return (
-              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="mt-3 pt-3 border-t border-[var(--dash-border)] flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-[11px] shadow-sm">
+                  <div className="w-6 h-6 rounded-full bg-[var(--dash-primary)] text-white font-bold flex items-center justify-center text-[11px]">
                     {activeCaller.username.charAt(0).toUpperCase()}
                   </div>
-                  <span className="font-bold text-slate-800 dark:text-slate-100">
+                  <span className="font-bold text-[var(--dash-text)]">
                     {activeCaller.username}
                   </span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <span className="text-[11px] text-[var(--dash-text-muted)]">
                     {activeCaller.job_title || "Sales Executive"}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3 text-[11px]">
-                  <span className="text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded border border-amber-200/60 dark:border-amber-800/50">
+                  <span className="crm-badge badge-warning text-[10px] font-bold">
                     {activeCaller.total_pending} Pending Calls
                   </span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/50">
+                  <span className="crm-badge badge-success text-[10px] font-bold">
                     {activeCaller.total_interested} Interested Leads
                   </span>
-                  <span className="text-slate-600 dark:text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                  <span className="crm-badge badge-neutral text-[10px] font-bold">
                     {activeCaller.progress_percentage}% Done
                   </span>
                 </div>
@@ -690,48 +691,48 @@ export default function SalesCallingDeskPage() {
 
       {/* Real-time KPI Stats Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-        <div className="bg-white dark:bg-[#0f172a] p-3.5 sm:p-4 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Assigned</span>
+        <div className="crm-card p-3.5 sm:p-4 flex flex-col justify-between">
+          <span className="text-[10px] sm:text-[11px] font-bold text-[var(--dash-text-muted)] uppercase tracking-wider">Total Assigned</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">{stats.total_assigned}</span>
-            <span className="text-xs text-indigo-500 font-semibold font-mono">Leads</span>
+            <span className="text-xl sm:text-2xl font-black font-mono text-[var(--dash-text)]">{stats.total_assigned}</span>
+            <span className="text-xs font-semibold font-mono" style={{ color: "var(--dash-violet)" }}>Leads</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-3.5 sm:p-4 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] sm:text-[11px] font-bold text-amber-500 uppercase tracking-wider">Pending (To Call)</span>
+        <div className="crm-card p-3.5 sm:p-4 flex flex-col justify-between">
+          <span className="text-[10px] sm:text-[11px] font-bold text-[var(--dash-amber)] uppercase tracking-wider">Pending (To Call)</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">{stats.total_pending}</span>
-            <span className="text-xs text-slate-400 font-medium">To Dial</span>
+            <span className="text-xl sm:text-2xl font-black font-mono text-[var(--dash-amber)]">{stats.total_pending}</span>
+            <span className="text-xs text-[var(--dash-text-muted)] font-medium">To Dial</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-3.5 sm:p-4 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Interested (Hot)</span>
+        <div className="crm-card p-3.5 sm:p-4 flex flex-col justify-between">
+          <span className="text-[10px] sm:text-[11px] font-bold text-[var(--dash-primary)] uppercase tracking-wider">Interested (Hot)</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">{stats.total_interested}</span>
-            <span className="text-xs text-emerald-500 font-semibold font-mono">Converted</span>
+            <span className="text-xl sm:text-2xl font-black font-mono text-[var(--dash-primary)]">{stats.total_interested}</span>
+            <span className="text-xs text-[var(--dash-primary)] font-semibold font-mono">Converted</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-3.5 sm:p-4 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] sm:text-[11px] font-bold text-blue-600 uppercase tracking-wider">Contacted</span>
+        <div className="crm-card p-3.5 sm:p-4 flex flex-col justify-between">
+          <span className="text-[10px] sm:text-[11px] font-bold text-[var(--dash-violet)] uppercase tracking-wider">Contacted</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400">{stats.total_contacted}</span>
-            <span className="text-xs text-slate-400 font-medium">Done</span>
+            <span className="text-xl sm:text-2xl font-black font-mono" style={{ color: "var(--dash-violet)" }}>{stats.total_contacted}</span>
+            <span className="text-xs text-[var(--dash-text-muted)] font-medium">Done</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-3.5 sm:p-4 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1">
-          <span className="text-[10px] sm:text-[11px] font-bold text-indigo-600 uppercase tracking-wider">Shift Progress</span>
+        <div className="crm-card p-3.5 sm:p-4 flex flex-col justify-between col-span-2 sm:col-span-1">
+          <span className="text-[10px] sm:text-[11px] font-bold text-[var(--dash-primary)] uppercase tracking-wider">Shift Progress</span>
           <div className="mt-2">
-            <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white mb-1">
+            <div className="flex items-center justify-between text-xs font-bold text-[var(--dash-text)] mb-1">
               <span>{stats.progress_percentage}%</span>
-              <span className="text-[10px] text-slate-400">{stats.total_completed}/{stats.total_assigned}</span>
+              <span className="text-[10px] text-[var(--dash-text-muted)]">{stats.total_completed}/{stats.total_assigned}</span>
             </div>
-            <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-[var(--dash-surface-alt)] rounded-full overflow-hidden border border-[var(--dash-border)]">
               <div
-                className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-300"
+                className="h-full bg-[var(--dash-primary)] rounded-full transition-all duration-300"
                 style={{ width: `${Math.min(100, stats.progress_percentage)}%` }}
               />
             </div>
@@ -740,14 +741,14 @@ export default function SalesCallingDeskPage() {
       </div>
 
       {/* Filter Tabs & Search Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm">
+      <div className="crm-card p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
           {[
-            { key: "pending", label: "Pending (To Call)", count: stats.total_pending, color: "amber" },
-            { key: "interested", label: "Interested", count: stats.total_interested, color: "emerald" },
-            { key: "contacted", label: "Contacted", count: stats.total_contacted, color: "blue" },
-            { key: "callback", label: "Callbacks", count: stats.total_callbacks, color: "purple" },
-            { key: "all", label: "All in Queue", count: stats.total_assigned, color: "slate" },
+            { key: "pending", label: "Pending (To Call)", count: stats.total_pending },
+            { key: "interested", label: "Interested", count: stats.total_interested },
+            { key: "contacted", label: "Contacted", count: stats.total_contacted },
+            { key: "callback", label: "Callbacks", count: stats.total_callbacks },
+            { key: "all", label: "All in Queue", count: stats.total_assigned },
           ].map(tab => (
             <button
               key={tab.key}
@@ -755,17 +756,17 @@ export default function SalesCallingDeskPage() {
                 setStatusFilter(tab.key);
                 setPage(1);
               }}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-md border transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`text-xs font-semibold px-3 py-1.5 rounded-[var(--dash-btn-radius)] border transition-all cursor-pointer flex items-center gap-1.5 ${
                 statusFilter === tab.key
-                  ? "bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-600/20"
-                  : "bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  ? "bg-[var(--dash-primary)] text-white border-[var(--dash-primary)]"
+                  : "bg-[var(--dash-surface-alt)] text-[var(--dash-text-muted)] border-[var(--dash-border)] hover:text-[var(--dash-text)]"
               }`}
             >
               <span>{tab.label}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-[var(--dash-badge-radius)] font-bold ${
                 statusFilter === tab.key
                   ? "bg-white/20 text-white"
-                  : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                  : "bg-[var(--dash-surface)] text-[var(--dash-text)] border border-[var(--dash-border)]"
               }`}>
                 {tab.count}
               </span>
@@ -774,19 +775,19 @@ export default function SalesCallingDeskPage() {
         </div>
 
         <div className="relative max-w-xs w-full">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--dash-text-muted)] pointer-events-none" />
           <input
             type="text"
             placeholder="Search phone, name, city, caller..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-md pl-8 pr-7 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="w-full bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-[var(--dash-input-radius)] pl-8 pr-7 py-1.5 text-xs text-[var(--dash-text)] placeholder:text-[var(--dash-text-muted)] focus:outline-none focus:border-[var(--dash-primary)]"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] p-0.5 cursor-pointer"
             >
               <X className="w-3 h-3" />
             </button>
@@ -796,23 +797,23 @@ export default function SalesCallingDeskPage() {
 
       {/* Main Calling Queue Card List */}
       {loading && items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-slate-400 bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm">
-          <Loader2 className="w-7 h-7 animate-spin mb-3 text-indigo-500" />
+        <div className="crm-card flex flex-col items-center justify-center py-20 text-[var(--dash-text-muted)]">
+          <Loader2 className="w-6 h-6 animate-spin mb-3" style={{ color: "var(--dash-primary)" }} />
           <p className="text-xs font-semibold">Loading calling queue...</p>
         </div>
       ) : items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm">
-          <div className="w-14 h-14 rounded-full bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-500 mb-3.5">
-            <CheckCircle2 className="w-7 h-7" />
+        <div className="crm-card flex flex-col items-center justify-center py-16 px-4 text-center">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3 border border-[var(--dash-border)] bg-[var(--dash-surface-alt)]" style={{ color: "var(--dash-primary)" }}>
+            <CheckCircle2 className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">
+          <h3 className="text-base font-bold text-[var(--dash-text)]">
             {isSuperAdmin && selectedCallerId !== "all"
               ? "No Leads in this Filter for this Caller"
               : isSuperAdmin
               ? "No Leads in Current Queue Filter"
               : "Your Call Queue is Clear!"}
           </h3>
-          <p className="text-xs text-slate-500 max-w-sm mt-1 mb-5">
+          <p className="text-xs max-w-sm mt-1 mb-5" style={{ color: "var(--dash-text-muted)" }}>
             {isSuperAdmin
               ? "You can switch to another telecaller from the tabs above or generate a fresh queue batch."
               : "You have completed all pending leads in this filter. Click below to generate an exclusive new batch."}
@@ -820,10 +821,10 @@ export default function SalesCallingDeskPage() {
           <button
             onClick={openGenerateModal}
             disabled={isGenerationBlocked}
-            className={`px-4 py-2 rounded-md text-xs font-bold transition shadow-sm flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2 rounded-[var(--dash-btn-radius)] text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
               isGenerationBlocked
-                ? "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/30"
+                ? "bg-[var(--dash-surface-alt)] text-[var(--dash-text-muted)] border border-[var(--dash-border)] cursor-not-allowed"
+                : "crm-btn-primary text-white"
             }`}
           >
             <PlusCircle className="w-4 h-4" />
@@ -844,34 +845,34 @@ export default function SalesCallingDeskPage() {
               return (
                 <div
                   key={item.queue_id}
-                  className="bg-white dark:bg-[#0f172a] border border-slate-100 dark:border-slate-800/80 rounded-lg p-4 flex flex-col justify-between shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all group"
+                  className="crm-card p-4 flex flex-col justify-between transition-all group"
                 >
                   {/* Top Card Info */}
                   <div>
                     {/* Caller Marker / Badge */}
-                    <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900/60 rounded-md border border-slate-100 dark:border-slate-800 mb-2.5">
+                    <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 bg-[var(--dash-surface-alt)] rounded-[var(--dash-badge-radius)] border border-[var(--dash-border)] mb-2.5">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-bold text-[9px] flex items-center justify-center shrink-0">
+                        <div className="w-5 h-5 rounded-full bg-[var(--dash-primary)] text-white font-bold text-[9px] flex items-center justify-center shrink-0">
                           {(callerBadgeName || "S").charAt(0).toUpperCase()}
                         </div>
-                        <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 truncate">
+                        <span className="text-[11px] font-semibold text-[var(--dash-text-muted)] truncate">
                           {item.status === "pending" ? "Assigned:" : "Contacted by:"}{" "}
-                          <strong className="text-indigo-600 dark:text-indigo-400 font-bold">{callerBadgeName}</strong>
+                          <strong className="text-[var(--dash-text)] font-bold">{callerBadgeName}</strong>
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-[10px] font-medium text-slate-400">
+                        <span className="text-[10px] font-medium text-[var(--dash-text-muted)]">
                           {item.call_attempts > 0 ? `${item.call_attempts} call${item.call_attempts > 1 ? "s" : ""}` : "Not called"}
                         </span>
                         {isSuperAdmin && (
                           <button
                             onClick={() => handleRemoveLead(item.queue_id, lead?.bussiness_name || "Lead")}
                             disabled={deletingId === item.queue_id}
-                            className="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded transition cursor-pointer"
+                            className="p-1 text-[var(--dash-text-muted)] hover:text-red-500 rounded transition cursor-pointer"
                             title="Admin: Remove lead from caller queue"
                           >
                             {deletingId === item.queue_id ? (
-                              <Loader2 className="w-3 h-3 animate-spin text-rose-500" />
+                              <Loader2 className="w-3 h-3 animate-spin text-red-500" />
                             ) : (
                               <Trash2 className="w-3 h-3" />
                             )}
@@ -882,32 +883,32 @@ export default function SalesCallingDeskPage() {
 
                     <div className="flex items-start justify-between gap-2.5 mb-2">
                       <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                        <div className="w-8 h-8 rounded-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-800/50 mt-0.5">
+                        <div className="w-8 h-8 rounded-[var(--dash-btn-radius)] bg-[var(--dash-surface-alt)] text-[var(--dash-primary)] flex items-center justify-center shrink-0 border border-[var(--dash-border)] mt-0.5">
                           <Building className="w-4 h-4" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <h3
-                            className="text-sm font-bold text-slate-900 dark:text-white truncate"
+                            className="text-sm font-bold text-[var(--dash-text)] truncate"
                             title={lead?.bussiness_name || "Unknown Business"}
                           >
                             {lead?.bussiness_name || "Unknown Business"}
                           </h3>
                           <div className="flex items-center gap-2 mt-0.5">
                             {item.is_phone_masked ? (
-                              <span className="text-xs font-bold font-mono text-slate-700 dark:text-slate-300 flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                                <ShieldAlert className="w-3 h-3 text-amber-500" />
+                              <span className="text-xs font-bold font-mono text-[var(--dash-text)] flex items-center gap-1.5 px-2 py-0.5 rounded-[var(--dash-badge-radius)] bg-[var(--dash-surface-alt)] border border-[var(--dash-border)]">
+                                <ShieldAlert className="w-3 h-3 text-[var(--dash-amber)]" />
                                 <span>{lead?.bussiness_number || "+91 ••••• •••••"}</span>
-                                <span className="text-[9px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1 py-0.2 rounded border border-amber-200 dark:border-amber-800">
+                                <span className="text-[9px] font-semibold text-[var(--dash-amber)] bg-amber-500/10 px-1 py-0.2 rounded border border-amber-500/20">
                                   Protected
                                 </span>
                               </span>
                             ) : (
-                              <span className="text-xs font-bold font-mono text-indigo-600 dark:text-indigo-400">
+                              <span className="text-xs font-bold font-mono text-[var(--dash-primary)]">
                                 {formattedPhone ? `+${formattedPhone}` : "No Number"}
                               </span>
                             )}
                             {lead?.scraped_city && (
-                              <span className="text-[10px] text-slate-400 flex items-center gap-0.5 truncate">
+                              <span className="text-[10px] text-[var(--dash-text-muted)] flex items-center gap-0.5 truncate">
                                 <MapPin className="w-2.5 h-2.5" /> {lead.scraped_city}
                               </span>
                             )}
@@ -917,14 +918,14 @@ export default function SalesCallingDeskPage() {
 
                       {/* Status Badge */}
                       <span
-                        className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${
+                        className={`crm-badge text-[10px] font-bold capitalize ${
                           item.status === "interested"
-                            ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                            ? "badge-success"
                             : item.status === "contacted"
-                            ? "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800"
+                            ? "badge-violet"
                             : item.status === "callback"
-                            ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800"
-                            : "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
+                            ? "badge-info"
+                            : "badge-warning"
                         }`}
                       >
                         {item.status}
@@ -1075,19 +1076,19 @@ export default function SalesCallingDeskPage() {
 
       {/* ── Generate Queue Modal ── */}
       {showGenerateModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="crm-card w-full max-w-md p-5 sm:p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-3">
               <div className="flex items-center gap-2">
-                <PlusCircle className="w-5 h-5 text-indigo-600" />
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">Generate Call Queue</h3>
+                <PlusCircle className="w-5 h-5 text-[var(--dash-primary)]" />
+                <h3 className="text-base font-bold text-[var(--dash-text)]">Generate Call Queue</h3>
               </div>
               <button
                 onClick={() => {
                   setShowGenerateModal(false);
                   setGenerateMessage(null);
                 }}
-                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                className="text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] p-1 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1232,16 +1233,16 @@ export default function SalesCallingDeskPage() {
 
       {/* ── Schedule Callback Modal ── */}
       {callbackItem && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="crm-card w-full max-w-md p-5 sm:p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-3">
               <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-purple-600" />
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">Schedule Callback</h3>
+                <Clock className="w-5 h-5 text-[var(--dash-amber)]" />
+                <h3 className="text-base font-bold text-[var(--dash-text)]">Schedule Callback</h3>
               </div>
               <button
                 onClick={() => setCallbackItem(null)}
-                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                className="text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] p-1 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>

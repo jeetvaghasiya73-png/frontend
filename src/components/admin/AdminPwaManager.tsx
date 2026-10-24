@@ -17,11 +17,13 @@ export default function AdminPwaManager() {
 
     // 2. Inject mobile web app capable meta tags
     const metaTags = [
+      { name: "robots", content: "noindex, nofollow, noarchive, nosnippet" },
+      { name: "googlebot", content: "noindex, nofollow, noarchive, nosnippet" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "TI Admin" },
-      { name: "theme-color", content: "#0f172a" },
+      { name: "apple-mobile-web-app-title", content: "LeadFlow CRM" },
+      { name: "theme-color", content: "#111315" },
     ];
 
     metaTags.forEach(({ name, content }) => {

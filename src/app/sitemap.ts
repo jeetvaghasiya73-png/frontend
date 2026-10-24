@@ -111,5 +111,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("Failed to fetch portfolio for sitemap:", err);
   }
 
-  return routes;
+  // Strictly guarantee no admin routes or sensitive consoles ever appear in the public sitemap
+  return routes.filter(
+    (r) => !r.url.includes("/admin") && !r.url.includes("/techinfinix-console-77") && !r.url.includes("/api")
+  );
 }

@@ -1264,7 +1264,7 @@ export default function DashboardLayout({
   return (
     <div
       data-dash-theme={dashTheme}
-      className={`h-screen flex flex-col lg:flex-row overflow-hidden relative font-sans antialiased select-none ${dashTheme === 'dark' ? 'dark' : ''}`}
+      className={`h-screen flex flex-col lg:flex-row overflow-hidden relative font-sans antialiased ${dashTheme === 'dark' ? 'dark' : ''}`}
       style={{ background: "var(--dash-bg)", color: "var(--dash-text)" }}
     >
       {/* ── Isolated PWA Manager & Mobile Download Popup ── */}
@@ -1570,8 +1570,11 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        {/* Content Area with Mobile Safe Bottom Padding */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 md:p-6 relative max-w-full crm-scrollbar pb-28 md:pb-6">
+        {/* Content Area with Mobile Safe Bottom Padding & Fluid Direct Scrolling */}
+        <div
+          className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 md:p-6 relative max-w-full crm-scrollbar pb-28 md:pb-6 overscroll-y-contain touch-pan-y"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           <div className="relative z-10 w-full max-w-[1400px] mx-auto min-h-full">
             <AdminPushNotificationBanner />
             {children}

@@ -61,16 +61,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   useEffect(() => {
-    if (isExcluded) return;
+    // Disable smooth-scroll hijacking on touch devices, mobile emulators, or excluded routes
+    const isTouch = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
+    if (isTouch || isExcluded) return;
 
-    // Check if user prefers reduced motion
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-
-    if (prefersReducedMotion) return;
-
-    // Fast, responsive, ultra-smooth Lenis scroll without sluggish delay
+    // Fast, responsive, ultra-smooth Lenis scroll for standard desktop mice
     const lenis = new Lenis({
       duration: 0.6,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -78,7 +73,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       gestureOrientation: "vertical",
       smoothWheel: true,
       wheelMultiplier: 1.0,
-      touchMultiplier: 1.2,
+      touchMultiplier: 0, // Never hijack native touch or trackpad drag
     });
     lenisRef.current = lenis;
 

@@ -328,21 +328,21 @@ export default function CallingReportsDashboard() {
   return (
     <div className="space-y-6 animate-fadeIn pb-24">
       {/* Executive Header */}
-      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm">
+      <header className="crm-card p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-lg bg-gradient-to-tr from-indigo-600 via-indigo-500 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 shrink-0">
+          <div className="w-11 h-11 rounded-[var(--dash-btn-radius)] flex items-center justify-center text-white shrink-0 font-bold" style={{ background: "var(--dash-primary)" }}>
             <BarChart3 className="w-5 h-5" />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight" style={{ color: "var(--dash-text)" }}>
                 Telecalling Executive Reports
               </h1>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+              <span className="crm-badge badge-violet text-[10px] font-bold">
                 Management Analytics
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
               Live team calling productivity, conversion rates, daily agent breakdowns, and audit trails
             </p>
           </div>
@@ -352,9 +352,9 @@ export default function CallingReportsDashboard() {
           {/* Back to Live Queue Button */}
           <a
             href={`${ADMIN_PATH}/dashboard/sales-calls/queue`}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-md text-xs font-semibold transition"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-[var(--dash-btn-radius)] border border-[var(--dash-border)] bg-[var(--dash-surface-alt)] text-[var(--dash-text)] hover:border-[var(--dash-primary)] text-xs font-semibold transition"
           >
-            <PhoneCall className="w-3.5 h-3.5 text-indigo-500" />
+            <PhoneCall className="w-3.5 h-3.5 text-[var(--dash-primary)]" />
             <span>← Live Calling Desk</span>
           </a>
 
@@ -362,7 +362,7 @@ export default function CallingReportsDashboard() {
           <button
             onClick={handleExportCsv}
             disabled={exporting}
-            className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-bold transition shadow-sm shadow-indigo-600/30 cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 crm-btn-primary text-white text-xs font-bold transition cursor-pointer disabled:opacity-50"
           >
             {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
             <span>Export CSV</span>
@@ -472,23 +472,23 @@ export default function CallingReportsDashboard() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+        <div className="crm-card p-3.5 flex flex-col justify-between">
           <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Pending</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">{summary.total_pending_leads}</span>
-            <span className="text-[10px] text-slate-400 font-medium">To Call</span>
+            <span className="text-xl sm:text-2xl font-black text-amber-500">{summary.total_pending_leads}</span>
+            <span className="text-[10px] text-zinc-400 font-medium">To Call</span>
           </div>
         </div>
       </div>
 
       {/* Telecaller Performance Leaderboard */}
-      <div className="bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+      <div className="crm-card overflow-hidden">
+        <div className="p-4 border-b border-zinc-200 dark:border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-indigo-600" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Caller Performance Leaderboard</h2>
+            <Users className="w-4 h-4 text-emerald-500" />
+            <h2 className="text-sm font-bold text-zinc-900 dark:text-white">Caller Performance Leaderboard</h2>
           </div>
-          <span className="text-xs text-slate-400 font-medium">{leaderboard.length} Active Agents</span>
+          <span className="text-xs text-zinc-400 font-medium">{leaderboard.length} Active Agents</span>
         </div>
 
         {leaderboard.length === 0 ? (
@@ -568,13 +568,13 @@ export default function CallingReportsDashboard() {
       </div>
 
       {/* Daily Call Activity Breakdown (Minimal Details per Caller per Day) */}
-      <div className="bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+      <div className="crm-card overflow-hidden">
+        <div className="p-4 border-b border-zinc-200 dark:border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CalendarDays className="w-4 h-4 text-indigo-600" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Daily Calling Activity Breakdown</h2>
+            <CalendarDays className="w-4 h-4 text-emerald-500" />
+            <h2 className="text-sm font-bold text-zinc-900 dark:text-white">Daily Calling Activity Breakdown</h2>
           </div>
-          <span className="text-xs text-slate-400 font-medium">{dailyBreakdown.length} Daily Records</span>
+          <span className="text-xs text-zinc-400 font-medium">{dailyBreakdown.length} Daily Records</span>
         </div>
 
         {dailyBreakdown.length === 0 ? (
@@ -645,12 +645,12 @@ export default function CallingReportsDashboard() {
       </div>
 
       {/* Chronological Call Activity Audit Log */}
-      <div className="bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="crm-card overflow-hidden">
+        <div className="p-4 border-b border-zinc-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <PhoneCall className="w-4 h-4 text-indigo-600" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Call & Status Activity Audit Trail</h2>
-            <span className="text-xs text-slate-400">({totalLogs} total entries)</span>
+            <PhoneCall className="w-4 h-4 text-emerald-500" />
+            <h2 className="text-sm font-bold text-zinc-900 dark:text-white">Call & Status Activity Audit Trail</h2>
+            <span className="text-xs text-zinc-400">({totalLogs} total entries)</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -847,12 +847,12 @@ export default function CallingReportsDashboard() {
       </div>
 
       {/* Telecaller Click-to-Call & Button Interaction Audit Feed */}
-      <div className="bg-white dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="crm-card overflow-hidden">
+        <div className="p-4 border-b border-zinc-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <MousePointerClick className="w-4 h-4 text-indigo-600" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Caller Button Actions & Click-to-Call Audit</h2>
-            <span className="text-xs text-slate-400">({totalInteractions} button clicks tracked)</span>
+            <MousePointerClick className="w-4 h-4 text-emerald-500" />
+            <h2 className="text-sm font-bold text-zinc-900 dark:text-white">Caller Button Actions & Click-to-Call Audit</h2>
+            <span className="text-xs text-zinc-400">({totalInteractions} button clicks tracked)</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">

@@ -51,7 +51,8 @@ import {
   AlertCircle,
   ShieldCheck,
   PhoneCall,
-  Bell
+  Bell,
+  LayoutDashboard
 } from "lucide-react";
 import Link from "next/link";
 import { authFetch, API } from "@/lib/authFetch";
