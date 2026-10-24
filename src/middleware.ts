@@ -7,6 +7,19 @@ const ADMIN_DOMAIN = (process.env.NEXT_PUBLIC_ADMIN_DOMAIN || "admin.techinfinix
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // ── 0. BYPASS NEXT.JS INTERNALS, API ROUTES & STATIC ASSETS ────────────────
+  // Critical: Never intercept or rewrite RSC data payloads, chunks, or API requests
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/manifest.json" ||
+    pathname === "/sw.js" ||
+    pathname.includes(".")
+  ) {
+    return NextResponse.next();
+  }
+
   // Robust hostname resolution (supports Cloudflare, Vercel edge, and local test hosts)
   const xForwardedHost = request.headers.get("x-forwarded-host") || "";
   const hostHeader = request.headers.get("host") || "";
@@ -21,8 +34,14 @@ export function middleware(request: NextRequest) {
 
   // ── 1. SUBDOMAIN ROUTING (admin.techinfinix.com) ───────────────────────────
   if (isSubdomainAdmin) {
-    // A. If visiting legacy secret slug on admin subdomain, redirect cleanly to /dashboard
-    // e.g. admin.techinfinix.com/techinfinix-console-77/dashboard -> admin.techinfinix.com/dashboard
+    // A. Root or /admin visit on admin subdomain -> redirect directly to /dashboard
+    if (pathname === "" || pathname === "/" || pathname === "/admin" || pathname === "/admin/") {
+      const dashUrl = request.nextUrl.clone();
+      dashUrl.pathname = "/dashboard";
+      return NextResponse.redirect(dashUrl);
+    }
+
+    // B. Legacy secret slug on admin subdomain -> redirect cleanly to /dashboard
     if (pathname === `/${ADMIN_SLUG}` || pathname.startsWith(`/${ADMIN_SLUG}/`)) {
       const cleanPath = pathname.replace(`/${ADMIN_SLUG}`, "") || "/dashboard";
       const cleanUrl = request.nextUrl.clone();
@@ -30,18 +49,11 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(cleanUrl);
     }
 
-    // B. Root visit on admin subdomain -> redirect directly to /dashboard
-    if (pathname === "" || pathname === "/") {
-      const dashUrl = request.nextUrl.clone();
-      dashUrl.pathname = "/dashboard";
-      return NextResponse.redirect(dashUrl);
-    }
-
     // C. Rewrite clean paths to internal /admin app routes preserving Next.js router context
     // e.g. /dashboard -> /admin/dashboard
     // e.g. /dashboard/sales-calls/queue -> /admin/dashboard/sales-calls/queue
     // e.g. /login -> /admin/login
-    if (!pathname.startsWith("/admin/")) {
+    if (!pathname.startsWith("/admin")) {
       const rewriteUrl = request.nextUrl.clone();
       rewriteUrl.pathname = `/admin${pathname}`;
       return NextResponse.rewrite(rewriteUrl);
@@ -73,11 +85,10 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, manifest.json, sw.js (PWA assets)
-     * - public files (images, icons, fonts)
+     * - _next (Next.js internals: static, image, data, RSC chunks)
+     * - api routes
+     * - static files with file extensions
      */
-    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff|woff2)$).*)",
+    "/((?!_next|api|favicon\\.ico|manifest\\.json|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff|woff2|ico|css|js|map)$).*)",
   ],
 };
