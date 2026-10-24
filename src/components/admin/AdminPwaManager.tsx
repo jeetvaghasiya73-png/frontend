@@ -20,7 +20,8 @@ export default function AdminPwaManager() {
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "TI Admin" }
+      { name: "apple-mobile-web-app-title", content: "TI Admin" },
+      { name: "theme-color", content: "#0f172a" },
     ];
 
     metaTags.forEach(({ name, content }) => {
@@ -33,16 +34,69 @@ export default function AdminPwaManager() {
       }
     });
 
-    // 3. Register Service Worker exclusively for the Admin Dashboard
+    // 3. Register Service Worker with Auto-Update Mechanism
     if ("serviceWorker" in navigator) {
+      let refreshing = false;
+
+      // When the service worker updates and takes control, reload so the PWA gets the latest UI instantly
+      const handleControllerChange = () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      };
+
+      navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
+
       navigator.serviceWorker
-        .register("/sw.js", { scope: "/dashboard" })
+        .register("/sw.js", { scope: "/" })
+        .then((registration) => {
+          // Immediately check for updates
+          registration.update().catch(() => {});
+
+          // If a new worker is waiting, activate it immediately
+          if (registration.waiting) {
+            registration.waiting.postMessage({ action: "skipWaiting" });
+          }
+
+          registration.addEventListener("updatefound", () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener("statechange", () => {
+                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                  // New version available! Activate immediately
+                  newWorker.postMessage({ action: "skipWaiting" });
+                }
+              });
+            }
+          });
+
+          // Check for UI updates whenever the user switches back to the PWA app
+          const handleVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+              registration.update().catch(() => {});
+            }
+          };
+
+          document.addEventListener("visibilitychange", handleVisibilityChange);
+
+          // Periodically poll for updates every 60 seconds
+          const intervalId = setInterval(() => {
+            registration.update().catch(() => {});
+          }, 60000);
+
+          return () => {
+            clearInterval(intervalId);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
+          };
+        })
         .catch((err) => {
           console.debug("Admin PWA ServiceWorker notice:", err);
         });
     }
 
-    // Cleanup when unmounting from admin section
+    // Cleanup when unmounting
     return () => {
       const m = document.querySelector('link[rel="manifest"]');
       if (m && m.parentNode) {
