@@ -23,14 +23,17 @@ export default function AdminLoginPage() {
   const [countdown, setCountdown] = useState(0);
   const [mounted, setMounted] = useState(false);
 
+  const [isConcurrentNotice, setIsConcurrentNotice] = useState(false);
+
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  // Handle auto-redirect or forced logout via URL search params
-  useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
+      if (params.get("reason") === "concurrent_session") {
+        setIsConcurrentNotice(true);
+        logout();
+        return;
+      }
       if (params.get("logout") === "true" || params.get("switch") === "true") {
         logout();
         return;
@@ -138,6 +141,19 @@ export default function AdminLoginPage() {
             <p className="text-xs text-slate-400 mt-1">Enterprise Console &amp; Admin Sign In</p>
           </div>
         </div>
+
+        {/* Concurrent Device Logout Alert */}
+        {isConcurrentNotice && (
+          <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs text-amber-200 flex items-start gap-3 animate-fadeIn shadow-lg shadow-amber-950/20">
+            <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <span className="font-bold text-amber-300 block text-sm">Logged Out From Another Device</span>
+              <p className="text-slate-300 text-[11px] leading-relaxed">
+                Your account was signed into from another device or browser. For security, only <span className="text-amber-300 font-semibold">1 active device</span> is permitted at a time.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Lockout Warning Banner */}
         {isLocked && (

@@ -665,6 +665,34 @@ export default function DashboardLayout({
               window.dispatchEvent(new CustomEvent("crm_ws_event", { detail: data }));
             }
 
+            // Real-time Concurrent Session Termination (Single-device login enforcement)
+            if (data.type === "concurrent_session_logout") {
+              const currentUserId = useAuthStore.getState().user?.id;
+              const currentToken = useAuthStore.getState().accessToken;
+              if (currentUserId && Number(data.user_id) === Number(currentUserId)) {
+                let ourSessionId: string | null = null;
+                if (currentToken) {
+                  try {
+                    const payload = JSON.parse(atob(currentToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+                    ourSessionId = payload.session_id || null;
+                  } catch {}
+                }
+                // If our token doesn't match the new session issued on the other device, kick out immediately
+                if (!ourSessionId || ourSessionId !== data.active_session_id) {
+                  unmounted = true;
+                  if (ws) {
+                    try { ws.close(); } catch {}
+                  }
+                  useAuthStore.getState().logout();
+                  if (typeof window !== "undefined") {
+                    window.location.href = `${ADMIN_PATH}/login?reason=concurrent_session`;
+                  }
+                  return;
+                }
+              }
+              return;
+            }
+
             if (data.type === "notification_added") {
               playNotificationSound();
               const newNotif: AppNotification = {

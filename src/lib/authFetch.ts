@@ -45,7 +45,19 @@ async function doRefresh(): Promise<string | null> {
       body: JSON.stringify(refreshToken ? { refresh_token: refreshToken } : {}),
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      try {
+        const errData = await res.json();
+        const detailStr = String(errData?.detail || "").toLowerCase();
+        if (detailStr.includes("another device") || detailStr.includes("concurrent")) {
+          useAuthStore.getState().logout();
+          if (typeof window !== "undefined") {
+            window.location.href = `${ADMIN_PATH}/login?reason=concurrent_session`;
+          }
+        }
+      } catch {}
+      return null;
+    }
 
     const data = await res.json();
     if (data.access_token) {
@@ -139,8 +151,29 @@ export async function authFetch(
       }).catch(() => {});
     }
 
-    // Token expired → try silent refresh + retry
+    // Token expired or invalid → check session concurrency or try silent refresh
     if (response.status === 401) {
+      let isConcurrentSession = false;
+      try {
+        const errJson = await response.clone().json();
+        const detailStr = String(errJson?.detail || "").toLowerCase();
+        if (
+          detailStr.includes("another device") ||
+          detailStr.includes("session has been terminated") ||
+          detailStr.includes("concurrent")
+        ) {
+          isConcurrentSession = true;
+        }
+      } catch {}
+
+      if (isConcurrentSession) {
+        useAuthStore.getState().logout();
+        if (typeof window !== "undefined") {
+          window.location.href = `${ADMIN_PATH}/login?reason=concurrent_session`;
+        }
+        return response;
+      }
+
       const newToken = await silentRefresh();
 
       if (newToken) {
