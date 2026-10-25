@@ -104,7 +104,7 @@ export default function HeroSection() {
   return (
     <section
       ref={containerRef}
-      className="relative flex flex-col items-center overflow-hidden grid-bg pt-16 sm:pt-20"
+      className="relative flex flex-col items-center overflow-hidden grid-bg pt-20 sm:pt-24 md:pt-24"
     >
       {/* Top Diode Status Bar (MadeWithGSAP Style) */}
       <div className="w-full border-b border-border-custom bg-surface/30 backdrop-blur-md py-1.5 px-4 text-center z-20 overflow-hidden hidden sm:block">
