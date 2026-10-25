@@ -39,6 +39,8 @@ import {
   ArrowRight,
   Sparkles,
   BarChart3,
+  Download,
+  Smartphone,
 } from "lucide-react";
 
 import { authFetch } from "@/lib/authFetch";
@@ -990,6 +992,20 @@ export default function DashboardLayout({
             <Shield className="w-4 h-4 text-[var(--dash-text-muted)]" />
             <span>Security & Roles</span>
           </Link>
+          <button
+            type="button"
+            onClick={() => {
+              setUserMenuOpen(false);
+              window.dispatchEvent(new CustomEvent("open-pwa-install"));
+            }}
+            className="w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 transition cursor-pointer text-left"
+          >
+            <div className="flex items-center gap-2.5">
+              <Download className="w-4 h-4 text-indigo-400" />
+              <span>Download App</span>
+            </div>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-wider">Install</span>
+          </button>
         </div>
 
         {/* Sign Out Action */}
@@ -1410,6 +1426,14 @@ export default function DashboardLayout({
           >
             <Search className="w-4.5 h-4.5" />
           </button>
+          {/* Mobile Download App Button */}
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("open-pwa-install"))}
+            className="p-1 transition cursor-pointer text-indigo-400 hover:text-indigo-300 opacity-90 hover:opacity-100"
+            title="Download / Install Tech Infinix App"
+          >
+            <Download className="w-4.5 h-4.5" />
+          </button>
           <button onClick={toggleDashTheme} className="p-1 transition cursor-pointer opacity-70 hover:opacity-100" style={{ color: "var(--dash-sidebar-text)" }} title="Toggle Dashboard Dark/Light Theme">
             {mounted && dashTheme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
           </button>
@@ -1549,6 +1573,25 @@ export default function DashboardLayout({
             ))}
           </nav>
 
+          {/* Download / Install App CTA in Sidebar */}
+          <div className="p-3 pt-0">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("open-pwa-install"))}
+              className={`w-full flex items-center gap-2 p-2 rounded-xl transition cursor-pointer border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 ${effectiveCollapsed ? "justify-center" : "justify-between"}`}
+              title="Download & Install App"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Download className="w-4 h-4 shrink-0 text-indigo-400" />
+                {!effectiveCollapsed && (
+                  <span className="text-xs font-bold text-white truncate">Download App</span>
+                )}
+              </div>
+              {!effectiveCollapsed && (
+                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 uppercase tracking-wider">PWA</span>
+              )}
+            </button>
+          </div>
+
           {/* User Profile Footer */}
           <div className="p-3" style={{ borderTop: "1px solid var(--dash-sidebar-border)" }}>
             <Link
@@ -1647,7 +1690,17 @@ export default function DashboardLayout({
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            {/* Desktop Download App CTA */}
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("open-pwa-install"))}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border border-indigo-500/30 hover:border-indigo-500/60 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300"
+              title="Download & Install Tech Infinix Desktop / Mobile App"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Download App</span>
+            </button>
+
             <button onClick={toggleDashTheme} className="p-2 transition cursor-pointer" style={{ borderRadius: "var(--dash-btn-radius)", color: "var(--dash-text-muted)" }} onMouseEnter={(e) => { e.currentTarget.style.background = "var(--dash-surface-alt)"; e.currentTarget.style.color = "var(--dash-text)"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--dash-text-muted)"; }} title={`Switch to ${dashTheme === 'dark' ? 'Light' : 'Dark'} Mode`}>
               {mounted && dashTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
