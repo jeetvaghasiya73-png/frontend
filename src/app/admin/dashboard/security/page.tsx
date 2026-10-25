@@ -317,16 +317,19 @@ function AdminUsersTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Registered accounts with console access to LeadFlow CRM
           </p>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-white/10">
+            {users.length} {users.length === 1 ? "user" : "users"}
+          </span>
         </div>
         {isSuperAdmin && (
           <button
             onClick={() => setShowCreate(true)}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm"
+            className="w-full sm:w-auto justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-lg font-semibold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm"
           >
             <UserPlus className="w-4 h-4" />
             <span>New Admin User</span>
@@ -346,9 +349,101 @@ function AdminUsersTab() {
           <span className="text-xs font-mono">Loading users list…</span>
         </div>
       ) : (
-        <div className="crm-card overflow-hidden w-full">
-          <div className="w-full overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse min-w-[650px]">
+        <div className="crm-card overflow-hidden w-full max-w-full">
+          {/* ── Mobile Responsive Card View (< md) - Zero Horizontal Scrolling ── */}
+          <div className="block md:hidden w-full divide-y divide-zinc-200 dark:divide-white/10">
+            {users.map((u) => (
+              <div key={`m-${u.id}`} className="p-3.5 sm:p-4 flex flex-col gap-3 transition">
+                {/* Top Row: User Avatar + Name/Email + Active Badge */}
+                <div className="flex items-start justify-between gap-2.5 min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold flex items-center justify-center text-xs shrink-0 shadow-sm">
+                      {u.username.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="font-bold text-xs text-zinc-900 dark:text-white truncate">
+                        {u.username}
+                      </span>
+                      {u.job_title && (
+                        <span className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+                          {u.job_title}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="shrink-0">
+                    <Badge active={u.is_active} />
+                  </div>
+                </div>
+
+                {/* Middle Row: Role Badges and Permissions */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <RoleBadge isSuperadmin={u.is_superadmin} isMainAdmin={u.is_main_admin} />
+                  {u.permissions?.includes("sales_calling") && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                      Sales Caller
+                    </span>
+                  )}
+                  {u.permissions && u.permissions.length > 0 && !u.is_main_admin && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10">
+                      {u.permissions.length} perms
+                    </span>
+                  )}
+                </div>
+
+                {/* Bottom Row: Created Date and Action Buttons */}
+                <div className="flex items-center justify-between pt-2 border-t border-zinc-200/60 dark:border-white/5 text-[11px] gap-2">
+                  <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] shrink-0">
+                    {fmt(u.created_at)}
+                  </span>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Toggle Active Button */}
+                    <button
+                      onClick={() => handleToggleActive(u)}
+                      disabled={!isSuperAdmin || u.is_main_admin || (!currentUser?.is_main_admin && u.is_superadmin) || u.id === currentUser?.id}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition cursor-pointer border ${
+                        u.is_active
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
+                          : "bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-white/10 hover:bg-zinc-200 dark:hover:bg-white/10"
+                      } ${(!isSuperAdmin || u.is_main_admin || (!currentUser?.is_main_admin && u.is_superadmin) || u.id === currentUser?.id) ? "opacity-30 cursor-not-allowed" : ""}`}
+                      title={u.is_active ? "Deactivate User" : "Activate User"}
+                    >
+                      {u.is_active ? <ToggleRight className="w-3.5 h-3.5 text-emerald-500" /> : <ToggleLeft className="w-3.5 h-3.5 text-slate-400" />}
+                      <span>{u.is_active ? "Active" : "Inactive"}</span>
+                    </button>
+
+                    {/* Edit Button */}
+                    <button
+                      onClick={() => openEditModal(u)}
+                      disabled={(!isSuperAdmin && u.id !== currentUser?.id) || (u.is_main_admin && !currentUser?.is_main_admin && u.id !== currentUser?.id)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                      title="Edit User"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                      <span>Edit</span>
+                    </button>
+
+                    {/* Delete Button (Main Admin Only) */}
+                    {currentUser?.is_main_admin && (
+                      <button
+                        onClick={() => setDeleteModalUser(u)}
+                        disabled={u.is_main_admin || u.id === currentUser?.id}
+                        className="p-1.5 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Delete User"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Desktop Tabular View (>= md) ── */}
+          <div className="hidden md:block w-full overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-zinc-50/75 dark:bg-white/[0.02] border-b border-zinc-200 dark:border-white/10 text-zinc-500 dark:text-zinc-400 font-semibold">
                 <th className="py-3.5 px-5 uppercase tracking-wider text-[10px]">User</th>
@@ -458,8 +553,8 @@ function AdminUsersTab() {
 
       {/* Create Modal */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md crm-card shadow-2xl p-6 space-y-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto crm-card shadow-2xl p-5 sm:p-6 space-y-4 my-auto">
             <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-3">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Create New Admin User</h3>
               <button onClick={() => setShowCreate(false)} className="text-slate-400 hover:text-slate-600">
@@ -592,8 +687,8 @@ function AdminUsersTab() {
 
       {/* Delete Confirmation Modal */}
       {deleteModalUser && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md crm-card shadow-2xl p-6 space-y-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto crm-card shadow-2xl p-5 sm:p-6 space-y-4 my-auto">
             <h3 className="text-base font-bold text-zinc-900 dark:text-white">Confirm User Deletion</h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Are you sure you want to permanently delete admin account <span className="font-bold text-zinc-900 dark:text-white">"{deleteModalUser.username}"</span>? This action cannot be undone.
@@ -620,8 +715,8 @@ function AdminUsersTab() {
 
       {/* ─── Edit User Modal ─── */}
       {editModalUser && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md crm-card shadow-2xl p-6 space-y-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto crm-card shadow-2xl p-5 sm:p-6 space-y-4 my-auto">
             <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-3">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 {editModalUser.id === currentUser?.id ? "Edit Your Profile & Password" : `Edit User: ${editModalUser.username}`}
@@ -907,8 +1002,8 @@ function GoogleOAuthRefreshButton() {
       </button>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-md crm-card shadow-2xl p-6 space-y-4 text-left">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto crm-card shadow-2xl p-5 sm:p-6 space-y-4 text-left my-auto">
             <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-3">
               <h3 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                 <Lock className="w-4 h-4 text-emerald-500" /> Confirm Admin Password
