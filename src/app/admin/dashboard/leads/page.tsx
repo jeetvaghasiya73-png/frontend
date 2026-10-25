@@ -38,9 +38,10 @@ import {
   Clock,
   Check,
   Send,
-  ShieldCheck
+  ShieldCheck,
+  AlertCircle
 } from "lucide-react";
-import { authFetch, API } from "@/lib/authFetch";
+import { authFetch, API, clearAuthFetchCache } from "@/lib/authFetch";
 import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTDateTime, matchesSimilaritySearch } from "@/lib/formatters";
 
 type SourceFilter = "all" | "inquiry" | "scraped";
@@ -1251,6 +1252,14 @@ export default function LeadsManager() {
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!importFile) return;
+
+    if (importFile.size === 0) {
+      const lockMsg = "Error: Selected file is 0 bytes. If this file is currently open in Microsoft Excel, Windows locks it. Please save and close Excel, then re-select the file.";
+      setUploadResult(lockMsg);
+      triggerToast("File is 0 bytes (locked by Excel). Please close Excel and re-select.");
+      return;
+    }
+
     setUploading(true);
     setUploadResult(null);
 
@@ -1268,12 +1277,17 @@ export default function LeadsManager() {
         const msg = data.message || `Successfully imported ${data.inserted} leads into database!`;
         setUploadResult(msg);
         triggerToast(msg);
+
+        // Clear cached GET responses
+        clearAuthFetchCache("/api/v1/scraped-leads");
+        setPage(1);
         await fetchLeads();
+
         setTimeout(() => {
           setShowImportModal(false);
           setImportFile(null);
           setUploadResult(null);
-        }, 1500);
+        }, 2200);
       } else {
         let errorDetail = "Failed to process spreadsheet.";
         if (res.status === 413) {
@@ -1288,7 +1302,7 @@ export default function LeadsManager() {
               if (text.includes("413") || text.includes("Too Large")) {
                 errorDetail = "File size exceeds server upload limit (413 Request Entity Too Large). Nginx client_max_body_size needs to be 100M.";
               } else {
-                errorDetail = text.slice(0, 120) || errorDetail;
+                errorDetail = text.slice(0, 160) || errorDetail;
               }
             } catch {
               // fallback
@@ -3598,14 +3612,24 @@ export default function LeadsManager() {
                 <input
                   type="file"
                   accept=".xlsx, .xls, .csv"
-                  onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0] || null;
+                    if (f && f.size === 0) {
+                      setUploadResult("Error: Selected file is 0 bytes. Windows locks open Excel files. Please save and close Microsoft Excel, then re-select this file.");
+                      triggerToast("File is 0 bytes (locked by Excel). Please close Excel and re-select.");
+                      setImportFile(null);
+                      return;
+                    }
+                    setUploadResult(null);
+                    setImportFile(f);
+                  }}
                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 />
                 <FileSpreadsheet className="w-10 h-10 text-indigo-600 dark:text-indigo-400 mx-auto mb-2" />
                 {importFile ? (
                   <div className="space-y-1">
                     <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate max-w-xs mx-auto">{importFile.name}</p>
-                    <p className="text-[10px] text-[var(--dash-text-muted)] font-mono">{(importFile.size / 1024).toFixed(1)} KB — Ready to Inject</p>
+                    <p className="text-[10px] text-[var(--dash-text-muted)] font-mono">{(importFile.size / (1024 * 1024)).toFixed(2)} MB — Ready to Inject</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
@@ -3614,6 +3638,22 @@ export default function LeadsManager() {
                   </div>
                 )}
               </div>
+
+              {/* Windows Excel lock reminder */}
+              <div className="flex items-start gap-2 p-2.5 rounded text-[11px] bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-300">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500 dark:text-amber-400" />
+                <div className="space-y-0.5 text-left">
+                  <p className="font-semibold text-amber-700 dark:text-amber-200">Close file in Microsoft Excel first:</p>
+                  <p className="text-amber-600/90 dark:text-amber-300/90 text-[10.5px]">If this spreadsheet is currently open in <strong>Microsoft Excel</strong>, please <strong>save &amp; close Excel</strong> before selecting it. Windows locks open spreadsheets, causing 0-byte or failed uploads.</p>
+                </div>
+              </div>
+
+              {uploading && (
+                <div className="p-2.5 rounded text-[11px] bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-300 flex items-center gap-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0 text-indigo-500" />
+                  <span>Processing spreadsheet and checking duplicates... this may take 15–30s for large files.</span>
+                </div>
+              )}
 
               {uploadResult && (
                 <div className={`p-3 rounded-md text-xs font-mono border ${
@@ -3629,6 +3669,7 @@ export default function LeadsManager() {
                 <button
                   type="button"
                   onClick={() => setShowImportModal(false)}
+                  disabled={uploading}
                   className="crm-btn-secondary text-xs"
                 >
                   Cancel

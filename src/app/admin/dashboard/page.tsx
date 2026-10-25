@@ -54,7 +54,7 @@ import {
   LayoutDashboard
 } from "lucide-react";
 import Link from "next/link";
-import { authFetch, API } from "@/lib/authFetch";
+import { authFetch, API, clearAuthFetchCache } from "@/lib/authFetch";
 import { ADMIN_PATH } from "@/lib/config";
 import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTDateTime, formatISTTime, matchesSimilaritySearch } from "@/lib/formatters";
 import {
@@ -1389,6 +1389,14 @@ export default function SuperAdminDashboard() {
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!importFile) return;
+
+    if (importFile.size === 0) {
+      const lockMsg = "Error: Selected file is 0 bytes. If this file is currently open in Microsoft Excel, Windows locks it. Please save and close Excel, then re-select the file.";
+      setUploadResult(lockMsg);
+      triggerToast("File is 0 bytes (locked by Excel). Please close Excel and re-select.");
+      return;
+    }
+
     setUploading(true);
     setUploadResult(null);
 
@@ -1406,12 +1414,29 @@ export default function SuperAdminDashboard() {
         const msg = data.message || `Successfully imported ${data.inserted} leads into database!`;
         setUploadResult(msg);
         triggerToast(msg);
-        await fetchInitialData();
+
+        // 1. Invalidate client authFetch in-memory cache
+        clearAuthFetchCache("/api/v1/scraped-leads");
+
+        // 2. Switch to 'scraped' tab and reset to page 1 so user immediately sees newly imported leads
+        setActiveTableTab("scraped");
+        setTablePage(1);
+
+        // 3. Force-reset in-flight lock flags so refresh queries execute immediately
+        isFetchingRef.current = false;
+        isTableFetchingRef.current = false;
+
+        // 4. Concurrently fetch updated stats and page 1 leads
+        await Promise.allSettled([
+          fetchInitialData(),
+          fetchTableLeads(1, tableLimit),
+        ]);
+
         setTimeout(() => {
           setShowImportModal(false);
           setImportFile(null);
           setUploadResult(null);
-        }, 1500);
+        }, 2200);
       } else {
         let errorDetail = "Failed to process spreadsheet.";
         if (res.status === 413) {
@@ -1426,7 +1451,7 @@ export default function SuperAdminDashboard() {
               if (text.includes("413") || text.includes("Too Large")) {
                 errorDetail = "File size exceeds server upload limit (413 Request Entity Too Large). Nginx client_max_body_size needs to be 100M.";
               } else {
-                errorDetail = text.slice(0, 120) || errorDetail;
+                errorDetail = text.slice(0, 160) || errorDetail;
               }
             } catch {
               // fallback
@@ -3504,14 +3529,24 @@ export default function SuperAdminDashboard() {
                 <input
                   type="file"
                   accept=".xlsx, .xls, .csv"
-                  onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0] || null;
+                    if (f && f.size === 0) {
+                      setUploadResult("Error: Selected file is 0 bytes. Windows locks open Excel files. Please save and close Microsoft Excel, then re-select this file.");
+                      triggerToast("File is 0 bytes (locked by Excel). Please close Excel and re-select.");
+                      setImportFile(null);
+                      return;
+                    }
+                    setUploadResult(null);
+                    setImportFile(f);
+                  }}
                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 />
                 <FileSpreadsheet className="w-9 h-9 mx-auto mb-2" style={{ color: "var(--dash-primary)" }} />
                 {importFile ? (
                   <div className="space-y-1">
                     <p className="text-xs font-bold truncate max-w-xs mx-auto" style={{ color: "var(--dash-primary)" }}>{importFile.name}</p>
-                    <p className="text-[10px] font-mono" style={{ color: "var(--dash-text-muted)" }}>{(importFile.size / 1024).toFixed(1)} KB — Ready to Inject</p>
+                    <p className="text-[10px] font-mono" style={{ color: "var(--dash-text-muted)" }}>{(importFile.size / (1024 * 1024)).toFixed(2)} MB — Ready to Inject</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
@@ -3520,6 +3555,22 @@ export default function SuperAdminDashboard() {
                   </div>
                 )}
               </div>
+
+              {/* Windows Excel lock reminder */}
+              <div className="flex items-start gap-2 p-2.5 rounded text-[11px] bg-amber-500/10 border border-amber-500/25 text-amber-300">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                <div className="space-y-0.5 text-left">
+                  <p className="font-semibold text-amber-200">Close file in Microsoft Excel first:</p>
+                  <p className="text-amber-300/90 text-[10.5px]">If this spreadsheet is currently open in <strong>Microsoft Excel</strong>, please <strong>save &amp; close Excel</strong> before selecting it. Windows locks open spreadsheets, causing 0-byte or failed uploads.</p>
+                </div>
+              </div>
+
+              {uploading && (
+                <div className="p-2.5 rounded text-[11px] bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 flex items-center gap-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0 text-indigo-400" />
+                  <span>Processing spreadsheet and checking duplicates... this may take 15–30s for large files.</span>
+                </div>
+              )}
 
               {uploadResult && (
                 <div className={`p-3 rounded-sm text-xs font-mono border ${
@@ -3535,6 +3586,7 @@ export default function SuperAdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowImportModal(false)}
+                  disabled={uploading}
                   className="crm-btn-secondary text-xs"
                 >
                   Cancel
