@@ -992,6 +992,35 @@ export default function DashboardLayout({
             <Shield className="w-4 h-4 text-[var(--dash-text-muted)]" />
             <span>Security & Roles</span>
           </Link>
+
+          {/* Theme Mode Toggle */}
+          <button
+            type="button"
+            onClick={toggleDashTheme}
+            className="w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold text-[var(--dash-text-secondary)] hover:text-[var(--dash-text)] hover:bg-[var(--dash-surface-hover)] transition cursor-pointer text-left"
+            title={`Switch to ${dashTheme === 'dark' ? 'Light' : 'Dark'} Mode`}
+          >
+            <div className="flex items-center gap-2.5">
+              {mounted && dashTheme === "dark" ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Moon className="w-4 h-4 text-indigo-400" />
+              )}
+              <span>Theme</span>
+            </div>
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full capitalize"
+              style={{
+                background: "var(--dash-surface-alt)",
+                color: "var(--dash-text)",
+                border: "1px solid var(--dash-border)"
+              }}
+            >
+              {mounted ? (dashTheme === "dark" ? "Dark Mode" : "Light Mode") : "Dark Mode"}
+            </span>
+          </button>
+
+          {/* Download App CTA */}
           <button
             type="button"
             onClick={() => {
@@ -1426,17 +1455,6 @@ export default function DashboardLayout({
           >
             <Search className="w-4.5 h-4.5" />
           </button>
-          {/* Mobile Download App Button */}
-          <button
-            onClick={() => window.dispatchEvent(new CustomEvent("open-pwa-install"))}
-            className="p-1 transition cursor-pointer text-indigo-400 hover:text-indigo-300 opacity-90 hover:opacity-100"
-            title="Download / Install Tech Infinix App"
-          >
-            <Download className="w-4.5 h-4.5" />
-          </button>
-          <button onClick={toggleDashTheme} className="p-1 transition cursor-pointer opacity-70 hover:opacity-100" style={{ color: "var(--dash-sidebar-text)" }} title="Toggle Dashboard Dark/Light Theme">
-            {mounted && dashTheme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
-          </button>
           <div className="relative" ref={mobileNotifRef}>
             <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="p-1.5 transition relative cursor-pointer opacity-80 hover:opacity-100 rounded-lg active:scale-95" style={{ color: "var(--dash-sidebar-text)" }} title="Notifications">
               <Bell className="w-5 h-5" />
@@ -1691,20 +1709,6 @@ export default function DashboardLayout({
 
           {/* Right Actions */}
           <div className="flex items-center gap-2.5">
-            {/* Desktop Download App CTA */}
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent("open-pwa-install"))}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border border-indigo-500/30 hover:border-indigo-500/60 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300"
-              title="Download & Install Tech Infinix Desktop / Mobile App"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Download App</span>
-            </button>
-
-            <button onClick={toggleDashTheme} className="p-2 transition cursor-pointer" style={{ borderRadius: "var(--dash-btn-radius)", color: "var(--dash-text-muted)" }} onMouseEnter={(e) => { e.currentTarget.style.background = "var(--dash-surface-alt)"; e.currentTarget.style.color = "var(--dash-text)"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--dash-text-muted)"; }} title={`Switch to ${dashTheme === 'dark' ? 'Light' : 'Dark'} Mode`}>
-              {mounted && dashTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-
             {/* Notifications */}
             <div className="relative" ref={notifRef}>
               <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="p-2 transition relative cursor-pointer" style={{ borderRadius: "var(--dash-btn-radius)", background: notificationsOpen ? "var(--dash-primary-light)" : "transparent", color: notificationsOpen ? "var(--dash-primary)" : "var(--dash-text-muted)" }} title="Notifications">
