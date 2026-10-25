@@ -80,6 +80,19 @@ interface NormalizedLead {
   notes?: any[];
   customActivities?: any[];
   raw?: any;
+  reviews?: any;
+  description?: string;
+  opening_hours?: string;
+  popular_topics?: string;
+  maps_url?: string;
+  cover_photo?: string;
+  photos_count?: string;
+  place_id?: string;
+  state?: string;
+  latitude?: string;
+  longitude?: string;
+  neighborhood?: string;
+  street_address?: string;
 }
 
 export default function LeadsManager() {
@@ -118,6 +131,9 @@ export default function LeadsManager() {
   const [statusFilter, setStatusFilter] = useState("all");
   const statusFilterRef = useRef(statusFilter);
   statusFilterRef.current = statusFilter;
+  const [messageSentFilter, setMessageSentFilter] = useState<"all" | "sent">("all");
+  const messageSentFilterRef = useRef<"all" | "sent">(messageSentFilter);
+  messageSentFilterRef.current = messageSentFilter;
   const [searchQuery, setSearchQuery] = useState("");
   const searchQueryRef = useRef(searchQuery);
   searchQueryRef.current = searchQuery;
@@ -135,9 +151,10 @@ export default function LeadsManager() {
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<number>>(new Set());
   const [showDeleteMenu, setShowDeleteMenu] = useState(false);
 
-  // Drawer state
+  // Drawer state & modern segmented tabs
   const [selectedLead, setSelectedLead] = useState<NormalizedLead | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [leadDrawerTab, setLeadDrawerTab] = useState<"overview" | "timeline" | "notes" | "reviews">("overview");
 
   // Follow-up state
   const [showFollowupModal, setShowFollowupModal] = useState(false);
@@ -314,21 +331,23 @@ export default function LeadsManager() {
     }
   };
 
-  const fetchLeads = useCallback(async (pageToFetch?: number, limitToFetch?: number, statusToFetch?: string, searchToFetch?: string) => {
+  const fetchLeads = useCallback(async (pageToFetch?: number, limitToFetch?: number, statusToFetch?: string, searchToFetch?: string, messageSentToFetch?: string) => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
     const pageNum = pageToFetch ?? currentPage;
     const limitNum = limitToFetch ?? pageSize;
     const curStatus = statusToFetch !== undefined ? statusToFetch : statusFilterRef.current;
-    const statusParam = curStatus && curStatus !== "all" ? `&status=${encodeURIComponent(curStatus)}` : "";
+    const statusParam = curStatus && curStatus !== "all" && curStatus !== "message_sent" ? `&status=${encodeURIComponent(curStatus)}` : "";
     const effectiveSearch = (searchToFetch !== undefined ? searchToFetch : searchQueryRef.current).trim();
     const searchParam = effectiveSearch ? `&search=${encodeURIComponent(effectiveSearch)}` : "";
+    const curMsgSent = messageSentToFetch !== undefined ? messageSentToFetch : messageSentFilterRef.current;
+    const msgSentParam = curMsgSent === "sent" || curStatus === "message_sent" ? `&message_sent=true` : "";
     try {
       setLoading(true);
       const shouldFetchInquiries = !inquiriesCacheRef.current || pageNum === 1 || sourceFilterRef.current === "inquiry";
       const [inquiryRes, scrapedRes] = await Promise.allSettled([
         shouldFetchInquiries ? authFetch(`${API}/api/v1/leads/`) : Promise.resolve(null as any),
-        authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${limitNum}${statusParam}${searchParam}`)
+        authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${limitNum}${statusParam}${msgSentParam}${searchParam}`)
       ]);
 
       let inquiryData: any[] = inquiriesCacheRef.current || [];
@@ -365,7 +384,7 @@ export default function LeadsManager() {
       if (!scrapedOk) {
         for (const fallbackLimit of [50, 20]) {
           try {
-            const fallbackRes = await authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${fallbackLimit}${statusParam}${searchParam}`);
+            const fallbackRes = await authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${fallbackLimit}${statusParam}${msgSentParam}${searchParam}`);
             if (fallbackRes.ok) {
               const fbJson = await fallbackRes.json();
               if (Array.isArray(fbJson)) {
@@ -494,6 +513,19 @@ export default function LeadsManager() {
           is_interested: lead.is_interested || false,
           score,
           followupDate: savedFollowup || rawFollowup || null,
+          reviews: lead.reviews,
+          description: lead.description,
+          opening_hours: lead.opening_hours,
+          popular_topics: lead.popular_topics,
+          maps_url: lead.maps_url,
+          cover_photo: lead.cover_photo,
+          photos_count: lead.photos_count,
+          place_id: lead.place_id,
+          state: lead.state,
+          latitude: lead.latitude,
+          longitude: lead.longitude,
+          neighborhood: lead.neighborhood,
+          street_address: lead.street_address,
         };
       });
 
@@ -1055,6 +1087,85 @@ export default function LeadsManager() {
     }
   };
 
+  // 2b. Delete Filtered Leads Only (e.g. only "pending", only "messages sent", or matching search/source)
+  const handleDeleteFiltered = async () => {
+    if (!canDeleteLeads) {
+      triggerToast("Access Denied: Only authorized administrators can delete leads.");
+      return;
+    }
+    const filterDesc = [
+      statusFilter !== "all" ? `Status: ${statusFilter}` : null,
+      messageSentFilter === "sent" ? "Messages Sent" : null,
+      searchQuery.trim() ? `Search: "${searchQuery.trim()}"` : null,
+      sourceFilter !== "all" ? `Source: ${sourceFilter}` : null,
+    ].filter(Boolean).join(", ") || "Filtered view";
+
+    const filteredCount = filteredLeads.length;
+    if (filteredCount === 0) {
+      triggerToast("No leads match the current filter to delete.");
+      return;
+    }
+
+    if (!confirm(`⚠️ DELETE FILTERED LEADS ONLY?\n\nAre you sure you want to delete ONLY the ${filteredCount} lead(s) matching [${filterDesc}]?\n\nOther leads in your database will remain safe and untouched.`)) return;
+
+    try {
+      setLoading(true);
+      const isScrapedTarget = sourceFilter === "all" || sourceFilter === "scraped";
+      const isInquiryTarget = sourceFilter === "all" || sourceFilter === "inquiry";
+
+      const promises: Promise<any>[] = [];
+
+      if (isScrapedTarget) {
+        promises.push(
+          authFetch(`${API}/api/v1/scraped-leads/delete-by-filter`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              status: statusFilter !== "all" ? statusFilter : null,
+              search: searchQuery.trim() || null,
+              message_sent: messageSentFilter === "sent" ? true : null,
+            }),
+          })
+        );
+      }
+
+      if (isInquiryTarget) {
+        promises.push(
+          authFetch(`${API}/api/v1/leads/delete-by-filter`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              status: statusFilter !== "all" ? statusFilter : null,
+              search: searchQuery.trim() || null,
+              message_sent: messageSentFilter === "sent" ? true : null,
+            }),
+          })
+        );
+      }
+
+      const results = await Promise.allSettled(promises);
+      let totalDeleted = 0;
+      for (const res of results) {
+        if (res.status === "fulfilled" && res.value && res.value.ok) {
+          try {
+            const data = await res.value.json();
+            totalDeleted += Number(data.deleted_count || 0);
+          } catch (e) {}
+        }
+      }
+
+      inquiriesCacheRef.current = null;
+      setSelectedLeadIds(new Set());
+      triggerToast(`Successfully deleted ${totalDeleted || filteredCount} filtered lead(s)!`);
+      await fetchLeads(1, pageSize);
+    } catch (err) {
+      console.error("Failed filtered delete:", err);
+      triggerToast("Error deleting filtered leads");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 3. Delete ALL Database Leads
   const handleDeleteAllLeads = async () => {
     if (!canDeleteLeads) {
@@ -1062,10 +1173,11 @@ export default function LeadsManager() {
       return;
     }
     const totalCount = (totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount;
-    if (totalCount === 0) return;
-    if (!confirm(`🚨 CRITICAL ACTION:\nAre you sure you want to PERMANENTLY DELETE ALL ${totalCount} leads from the database?\nThis action cannot be undone!`)) return;
+    if (totalCount === 0 && allLeads.length === 0) return;
+    if (!confirm(`🚨 CRITICAL ACTION:\nAre you sure you want to PERMANENTLY DELETE ALL ${totalCount || allLeads.length} leads from the database?\nThis will clear both the database and cache. This action cannot be undone!`)) return;
 
     try {
+      setLoading(true);
       await Promise.allSettled([
         authFetch(`${API}/api/v1/scraped-leads/bulk`, { method: "DELETE" }),
         authFetch(`${API}/api/v1/leads/bulk`, { method: "DELETE" }),
@@ -1073,11 +1185,17 @@ export default function LeadsManager() {
 
       inquiriesCacheRef.current = null;
       setAllLeads([]);
+      setTotalScrapedCount(0);
+      setTotalInquiriesCount(0);
+      setTotalLeadsFromAPI(0);
       setSelectedLeadIds(new Set());
-      triggerToast("Entire leads database cleared successfully");
-      await fetchLeads();
+      triggerToast("Entire leads database & cache cleared successfully");
+      await fetchLeads(1, pageSize);
     } catch (err) {
       console.error("Failed to delete all leads:", err);
+      triggerToast("Error deleting all leads");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1299,6 +1417,11 @@ export default function LeadsManager() {
       });
     }
 
+    // Independent Messages Sent filter (can be combined with ANY status filter!)
+    if (messageSentFilter === "sent") {
+      result = result.filter((l) => isMessageSent(l));
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.trim();
       result = result.filter(l =>
@@ -1319,7 +1442,7 @@ export default function LeadsManager() {
     }
 
     return result;
-  }, [allLeads, sourceFilter, statusFilter, searchQuery]);
+  }, [allLeads, sourceFilter, statusFilter, messageSentFilter, searchQuery]);
 
   const currentTotal = useMemo(() => {
     if (searchQuery.trim()) {
@@ -1529,25 +1652,25 @@ export default function LeadsManager() {
               Inbound Inquiries ({totalInquiriesCount})
             </button>
 
-            {/* Quick Filter: Messages Sent */}
+            {/* Quick Filter: Messages Sent (Independent Toggle) */}
             <button
               type="button"
               onClick={() => {
-                const nextStatus = statusFilter === "message_sent" ? "all" : "message_sent";
-                setStatusFilter(nextStatus);
+                const nextMsg = messageSentFilter === "sent" ? "all" : "sent";
+                setMessageSentFilter(nextMsg);
                 setCurrentPage(1);
-                fetchLeads(1, pageSize, nextStatus);
+                fetchLeads(1, pageSize, undefined, undefined, nextMsg);
               }}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 border ${
-                statusFilter === "message_sent"
+                messageSentFilter === "sent"
                   ? "bg-emerald-600 border-emerald-500 text-white shadow-xs font-bold"
                   : "bg-white/60 dark:bg-neutral-900/60 border-[var(--dash-border)] text-[var(--dash-text-muted)] hover:text-emerald-500 hover:border-emerald-500/40"
               }`}
-              title="Filter leads who were sent a WhatsApp or email message"
+              title="Filter leads who were sent a WhatsApp or email message (can be combined with other filters)"
             >
               <MessageSquare className="w-3.5 h-3.5 shrink-0" />
               <span>Messages Sent</span>
-              {statusFilter === "message_sent" && (
+              {messageSentFilter === "sent" && (
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               )}
             </button>
@@ -1585,10 +1708,9 @@ export default function LeadsManager() {
                 className="crm-input !pl-8 !pr-8 py-2 text-xs font-semibold cursor-pointer appearance-none w-full"
               >
                 <option value="all">All Status</option>
-                <option value="message_sent">💬 Messages Sent (All)</option>
+                <option value="pending">⏳ Pending (Not Contacted)</option>
                 <option value="whatsapp_sent">📱 WhatsApp Sent</option>
                 <option value="email_sent">✉️ Email Sent</option>
-                <option value="pending">⏳ Pending (Not Contacted)</option>
                 <option value="interested">⭐ Interested</option>
                 <option value="qualified">Qualified</option>
                 <option value="failed">Failed</option>
@@ -1676,6 +1798,27 @@ export default function LeadsManager() {
                         </span>
                       </button>
 
+                      {/* Remove Filtered Leads Only (e.g. only "pending", only "messages sent") */}
+                      {(statusFilter !== "all" || messageSentFilter !== "all" || searchQuery.trim() || sourceFilter !== "all") && (
+                        <button
+                          type="button"
+                          disabled={filteredLeads.length === 0}
+                          onClick={() => {
+                            setShowDeleteMenu(false);
+                            handleDeleteFiltered();
+                          }}
+                          className="w-full text-left px-3.5 py-2.5 font-semibold flex items-center justify-between bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 cursor-pointer border-t border-amber-500/20 transition"
+                        >
+                          <span className="flex items-center gap-2 truncate">
+                            <Filter className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                            <span className="truncate">Delete Filtered Leads Only</span>
+                          </span>
+                          <span className="font-bold font-mono text-[10px] bg-amber-500 text-white px-1.5 py-0.5 rounded shadow-xs shrink-0 ml-2">
+                            {filteredLeads.length}
+                          </span>
+                        </button>
+                      )}
+
                       {/* Remove Current Page */}
                       <button
                         type="button"
@@ -1707,7 +1850,7 @@ export default function LeadsManager() {
                       >
                         <span className="flex items-center gap-2 truncate">
                           <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
-                          <span className="truncate">Delete ALL Leads</span>
+                          <span className="truncate">Delete ALL Leads (Entire DB)</span>
                         </span>
                         <span className="font-bold font-mono text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded shadow-xs shrink-0 ml-2">
                           ALL ({(totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount})
@@ -1747,6 +1890,7 @@ export default function LeadsManager() {
                 <th className="py-3 px-4 uppercase tracking-wider text-[10px]">Lead Name</th>
                 <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Company / City</th>
                 <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Industry / Service</th>
+                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Rating &amp; Reviews</th>
                 <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Source</th>
                 <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Status</th>
                 <th className="py-3 px-3 uppercase tracking-wider text-[10px] text-center">Score</th>
@@ -1827,6 +1971,34 @@ export default function LeadsManager() {
                     </span>
                   </td>
 
+                  {/* Rating & Google Reviews */}
+                  <td className="py-3.5 px-3">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="flex items-center gap-1 text-amber-500 font-bold text-xs">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        {lead.rating || lead.raw?.rating || "4.5"}
+                      </span>
+                      {(lead.total_review || lead.raw?.total_review) && (
+                        <span className="text-[10px] text-[var(--dash-text-muted)]">
+                          ({lead.total_review || lead.raw?.total_review})
+                        </span>
+                      )}
+                      {(lead.reviews || lead.raw?.reviews) && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20" title="Verified Customer Reviews Available">
+                          {(() => {
+                            try {
+                              const rawRev = lead.reviews || lead.raw?.reviews;
+                              const rList = typeof rawRev === "string" ? JSON.parse(rawRev) : rawRev;
+                              return `${Array.isArray(rList) ? rList.length : 1} reviews`;
+                            } catch {
+                              return "reviews";
+                            }
+                          })()}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
                   <td className="py-3.5 px-3">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
                       isOrganicInbound(lead)
@@ -1895,6 +2067,17 @@ export default function LeadsManager() {
 
                   <td className="py-3.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
+                      {(lead.maps_url || lead.raw?.maps_url) && (
+                        <a
+                          href={lead.maps_url || lead.raw?.maps_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 text-blue-500 hover:text-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 transition"
+                          title="Open on Google Maps"
+                        >
+                          <MapPin className="w-4 h-4" />
+                        </a>
+                      )}
                       {canSendWhatsapp && (
                         <button
                           onClick={() => openWaModalForLead(lead)}
@@ -2286,252 +2469,282 @@ export default function LeadsManager() {
         })()}
       </section>
 
-      {/* ── Lead Business Card Drawer ── */}
+      {/* ── Ultra-Modern App-Like Lead Business Card & Intelligence Drawer ── */}
       {mounted && typeof document !== "undefined" && isDrawerOpen && selectedLead && createPortal(
         <div
           onClick={() => setIsDrawerOpen(false)}
           data-dash-theme={typeof document !== "undefined" ? document.documentElement.getAttribute("data-dash-theme") || (document.documentElement.classList.contains("dark") ? "dark" : "light") : "dark"}
-          className="fixed inset-0 z-[9999] overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end animate-fadeIn cursor-pointer"
+          className="fixed inset-0 z-[9999] overflow-hidden bg-black/70 backdrop-blur-sm flex justify-end animate-fadeIn cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-md h-full h-[100dvh] max-h-[100dvh] shadow-2xl flex flex-col justify-between cursor-default relative overflow-hidden"
-            style={{
-              background: "var(--dash-surface)",
-              borderLeft: "1px solid var(--dash-border)",
-              color: "var(--dash-text)"
-            }}
+            className="w-full sm:max-w-xl md:max-w-2xl h-full h-[100dvh] max-h-[100dvh] shadow-2xl flex flex-col justify-between cursor-default relative overflow-hidden bg-[var(--dash-surface)] border-l border-[var(--dash-border)]"
           >
-            {/* Sticky Navigation Header with Safe-Area Top Padding & Prominent Close Button */}
+            {/* Top Bar: Brand, Badges, Quick Pipeline Chip, Close */}
             <div
-              className="flex-none px-3.5 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between z-30 sticky top-0 shadow-xs"
-              style={{
-                background: "var(--dash-surface)",
-                borderBottom: "1px solid var(--dash-border)",
-                paddingTop: "max(env(safe-area-inset-top, 0px), 0.75rem)"
-              }}
+              className="flex-none px-4 sm:px-6 py-3.5 flex items-center justify-between z-30 sticky top-0 border-b border-[var(--dash-border)] bg-[var(--dash-surface)]/95 backdrop-blur-md"
+              style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 0.85rem)" }}
             >
-              <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
+                  type="button"
                   onClick={() => setShowStatusModal(true)}
-                  className="crm-badge badge-warning text-xs font-bold cursor-pointer hover:opacity-80 transition flex items-center gap-1.5"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border border-amber-500/30 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition cursor-pointer shadow-xs"
                   title="Click to update pipeline status"
                 >
-                  <span className="w-2 h-2 rounded-full" style={{ background: "var(--dash-warning)" }} />
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                   <span>{selectedLead.status}</span>
-                  <ChevronDown className="w-3 h-3 opacity-60" />
+                  <ChevronDown className="w-3 h-3 opacity-70" />
                 </button>
-                <span className="crm-badge badge-success text-xs font-bold">
-                  Score: {selectedLead.score}
+
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                  AI Fit: {selectedLead.score}/100
                 </span>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
                   isOrganicInbound(selectedLead)
                     ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
                     : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
                 }`}>
                   {isOrganicInbound(selectedLead) ? "Inbound" : "Outbound"}
                 </span>
-                {selectedLead.status.toLowerCase() === "interested" && (
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                    selectedLead.source === "inquiry"
-                      ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
-                      : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                  }`}>
-                    {selectedLead.source === "inquiry" ? "✓ Details: Done" : "⏳ Details: Pending"}
-                  </span>
-                )}
               </div>
-              
-              {/* Mobile-Friendly High-Contrast Close Button */}
+
+              {/* Close Button */}
               <button
+                type="button"
                 onClick={() => setIsDrawerOpen(false)}
-                className="px-3 sm:px-3.5 py-1.5 min-h-[36px] text-xs font-bold flex items-center gap-1.5 cursor-pointer transition rounded-md shadow-xs active:scale-95"
-                style={{
-                  background: "var(--dash-danger-light)",
-                  color: "var(--dash-danger)",
-                  border: "1px solid var(--dash-danger)"
-                }}
-                aria-label="Close lead details"
-                title="Close popup"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] hover:bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] transition active:scale-95 cursor-pointer"
+                aria-label="Close drawer"
+                title="Close drawer (Esc)"
               >
-                <X className="w-4 h-4 shrink-0" />
-                <span>Close</span>
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Scrollable Popup Content */}
-            <div className="p-3 sm:p-5 space-y-3 sm:space-y-4 flex-1 overflow-y-auto crm-scrollbar">
-              {/* Profile Card Header */}
-              <div
-                className="p-3 sm:p-4 space-y-2.5 sm:space-y-3"
-                style={{
-                  background: "var(--dash-surface-alt)",
-                  border: "1px solid var(--dash-border)",
-                  borderRadius: "var(--dash-card-radius)"
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  {/* Brand Image / Domain Logo Avatar */}
-                  <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden border border-[var(--dash-border)] bg-white shadow-xs shrink-0 flex items-center justify-center">
-                    {(() => {
-                      const domain = selectedLead.website
-                        ? selectedLead.website.replace(/^https?:\/\//i, "").split("/")[0].replace(/^www\./i, "")
-                        : selectedLead.email && !selectedLead.email.includes("gmail") && !selectedLead.email.includes("yahoo") && !selectedLead.email.includes("outlook")
-                        ? selectedLead.email.split("@")[1]
-                        : null;
+            {/* Profile Hero Header */}
+            <div className="flex-none px-4 sm:px-6 pt-4 pb-3 bg-gradient-to-b from-[var(--dash-surface-alt)]/60 to-transparent border-b border-[var(--dash-border)]/60">
+              <div className="flex items-start gap-3.5">
+                {/* Brand Logo / Favicon */}
+                <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-[var(--dash-border)] bg-white shadow-sm shrink-0 flex items-center justify-center">
+                  {(() => {
+                    const domain = selectedLead.website
+                      ? selectedLead.website.replace(/^https?:\/\//i, "").split("/")[0].replace(/^www\./i, "")
+                      : selectedLead.email && !selectedLead.email.includes("gmail") && !selectedLead.email.includes("yahoo") && !selectedLead.email.includes("outlook")
+                      ? selectedLead.email.split("@")[1]
+                      : null;
 
-                      if (domain) {
-                        return (
-                          <img
-                            src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
-                            alt={selectedLead.name}
-                            className="w-full h-full object-contain p-1.5"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLElement).style.display = "none";
-                              const fallback = e.currentTarget.parentElement?.querySelector(".lead-avatar-fallback");
-                              if (fallback) (fallback as HTMLElement).style.display = "flex";
-                            }}
-                          />
-                        );
-                      }
-                      return null;
-                    })()}
-                    <div
-                      className="lead-avatar-fallback w-full h-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-white font-black text-lg flex items-center justify-center"
-                      style={{
-                        display: selectedLead.website || (selectedLead.email && !selectedLead.email.includes("gmail") && !selectedLead.email.includes("yahoo")) ? "none" : "flex"
-                      }}
-                    >
-                      {selectedLead.name.charAt(0).toUpperCase()}
-                    </div>
+                    if (domain) {
+                      return (
+                        <img
+                          src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
+                          alt={selectedLead.name}
+                          className="w-full h-full object-contain p-1.5"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = "none";
+                            const fallback = e.currentTarget.parentElement?.querySelector(".lead-avatar-fallback");
+                            if (fallback) (fallback as HTMLElement).style.display = "flex";
+                          }}
+                        />
+                      );
+                    }
+                    return null;
+                  })()}
+                  <div
+                    className="lead-avatar-fallback w-full h-full bg-gradient-to-br from-indigo-500 via-indigo-600 to-indigo-700 text-white font-black text-lg flex items-center justify-center"
+                    style={{
+                      display: selectedLead.website || (selectedLead.email && !selectedLead.email.includes("gmail") && !selectedLead.email.includes("yahoo")) ? "none" : "flex"
+                    }}
+                  >
+                    {selectedLead.name.charAt(0).toUpperCase()}
                   </div>
+                </div>
 
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm sm:text-base font-bold leading-snug truncate" style={{ color: "var(--dash-text)" }}>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-bold leading-tight truncate text-[var(--dash-text)]">
                       {selectedLead.name}
                     </h3>
-                    <p className="text-[11px] sm:text-xs truncate font-medium" style={{ color: "var(--dash-text-secondary)" }}>
-                      {selectedLead.company || selectedLead.category || selectedLead.city || "Client Prospect"}
-                    </p>
-                    {selectedLead.website && (
+                  </div>
+                  <p className="text-xs text-[var(--dash-text-muted)] truncate font-medium mt-0.5">
+                    {selectedLead.company || selectedLead.category || selectedLead.city || "Commercial Prospect"}
+                  </p>
+
+                  <div className="flex items-center gap-3 mt-1.5 flex-wrap text-xs">
+                    {selectedLead.phone && (
+                      <span className="font-mono text-[var(--dash-text)] font-semibold flex items-center gap-1">
+                        <Phone className="w-3 h-3 text-emerald-500" />
+                        {format10DigitPhone(selectedLead.phone)}
+                      </span>
+                    )}
+                    {selectedLead.email && (
+                      <span className="text-indigo-400 font-medium truncate flex items-center gap-1">
+                        <Mail className="w-3 h-3 text-indigo-400" />
+                        {selectedLead.email}
+                      </span>
+                    )}
+                    {isValidWebsite(selectedLead.website) && (
                       <a
-                        href={selectedLead.website.startsWith("http") ? selectedLead.website : `https://${selectedLead.website}`}
+                        href={formatWebsiteUrl(selectedLead.website)!}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[11px] font-mono text-indigo-500 hover:underline flex items-center gap-1 mt-0.5 truncate"
+                        className="text-indigo-400 hover:underline flex items-center gap-1 font-mono text-[11px]"
                       >
-                        <Globe className="w-3 h-3 shrink-0" />
-                        <span className="truncate">{selectedLead.website.replace(/^https?:\/\//i, '')}</span>
-                        <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                        <Globe className="w-3 h-3" />
+                        <span className="truncate">{selectedLead.website.replace(/^https?:\/\//i, "")}</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
                       </a>
                     )}
                   </div>
                 </div>
-
-                {/* Dynamic Badges */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                  <span className="crm-badge badge-primary text-[10px]">
-                    Source: {isOrganicInbound(selectedLead) ? "Direct Inbound" : "Outbound Scraping"}
-                  </span>
-                  {selectedLead.email && (
-                    <span className="crm-badge badge-success text-[10px]">
-                      Verified Email
-                    </span>
-                  )}
-                  {selectedLead.phone && (
-                    <span className="crm-badge badge-warning text-[10px]">
-                      Phone Contact
-                    </span>
-                  )}
-                  {selectedLead.rating && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                      ★ {selectedLead.rating}
-                    </span>
-                  )}
-                </div>
               </div>
 
-              {/* Action Toolbar Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
-                {/* Action 1: Call */}
+              {/* Tactile Action Pill Toolbar */}
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 sm:gap-2 mt-3.5">
                 <button
                   type="button"
                   onClick={handleCallClick}
-                  className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 sm:px-3 text-xs font-bold shrink-0 transition"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 bg-[var(--dash-surface-alt)] hover:bg-[var(--dash-surface-alt)]/80 border border-[var(--dash-border)] text-[var(--dash-text)] transition cursor-pointer"
                   title="Make direct phone call"
                 >
                   <Phone className="w-3.5 h-3.5 text-indigo-500" />
                   <span>Call</span>
                 </button>
 
-                {/* Action 2: Email */}
-                <button
-                  type="button"
-                  onClick={handleEmailClick}
-                  className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 sm:px-3 text-xs font-bold shrink-0 transition"
-                  title="Send or add email"
-                >
-                  <Mail className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>{selectedLead.email ? "Email" : "Add Email"}</span>
-                </button>
-
-                {/* Action 3: WhatsApp */}
                 <button
                   type="button"
                   onClick={handleWhatsAppClick}
-                  className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 sm:px-3 text-xs font-bold shrink-0 transition"
-                  title="Open direct WhatsApp Web chat"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 bg-[var(--dash-surface-alt)] hover:bg-[var(--dash-surface-alt)]/80 border border-[var(--dash-border)] text-[var(--dash-text)] transition cursor-pointer"
+                  title="Open direct WhatsApp chat"
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
                   <span>WhatsApp</span>
                 </button>
 
-                {/* Action 4: Send WA Proposal */}
+                <button
+                  type="button"
+                  onClick={handleEmailClick}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 bg-[var(--dash-surface-alt)] hover:bg-[var(--dash-surface-alt)]/80 border border-[var(--dash-border)] text-[var(--dash-text)] transition cursor-pointer"
+                  title="Compose outreach email"
+                >
+                  <Mail className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Email</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => openWaModalForLead(selectedLead)}
-                  className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 sm:px-3 text-xs font-bold shrink-0 transition hover:border-emerald-500"
-                  title="Open interactive WhatsApp proposal dialog"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 transition cursor-pointer"
+                  title="Send interactive WhatsApp proposal"
                 >
                   <Zap className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>WA Proposal</span>
+                  <span>Pitch</span>
                 </button>
 
-                {/* Action 5: Add Note */}
                 <button
                   type="button"
-                  onClick={() => setShowNoteInput(!showNoteInput)}
-                  className="crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 sm:px-3 text-xs font-bold shrink-0 transition"
-                  title="Write internal persistent note"
+                  onClick={() => setShowFollowupModal(true)}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer ${
+                    selectedLead.followupDate
+                      ? "bg-amber-500/15 border-amber-500/40 text-amber-500"
+                      : "bg-[var(--dash-surface-alt)] hover:bg-[var(--dash-surface-alt)]/80 border-[var(--dash-border)] text-[var(--dash-text)]"
+                  }`}
+                  title="Schedule or reschedule follow-up reminder"
+                >
+                  <Clock className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{selectedLead.followupDate ? "Edit Task" : "Follow-up"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLeadDrawerTab("notes");
+                    setShowNoteInput(true);
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 bg-[var(--dash-surface-alt)] hover:bg-[var(--dash-surface-alt)]/80 border border-[var(--dash-border)] text-[var(--dash-text)] transition cursor-pointer"
+                  title="Add internal note"
                 >
                   <Plus className="w-3.5 h-3.5 text-amber-500" />
                   <span>Note</span>
                 </button>
-
-                {/* Action 6: Follow-up / Edit Follow-up */}
-                <button
-                  type="button"
-                  onClick={() => setShowFollowupModal(true)}
-                  className={`crm-btn-secondary flex items-center justify-center gap-1.5 py-2 px-2.5 sm:px-3 text-xs font-bold shrink-0 transition ${
-                    selectedLead.followupDate ? "bg-amber-500/10 border-amber-500/40 text-amber-500" : ""
-                  }`}
-                  title={selectedLead.followupDate ? `Follow-up scheduled: ${selectedLead.followupDate}. Click to edit or reschedule.` : "Schedule a follow-up reminder"}
-                >
-                  <Clock className={`w-3.5 h-3.5 ${selectedLead.followupDate ? "text-amber-500" : "text-purple-500"}`} />
-                  <span>{selectedLead.followupDate ? "Edit Follow-up" : "Follow-up"}</span>
-                </button>
               </div>
 
-              {/* Scheduled Follow-up Notification Card */}
+              {/* Segmented App Tabs Navigation */}
+              <div className="flex items-center gap-1 mt-3.5 p-1 rounded-lg bg-[var(--dash-surface-alt)] border border-[var(--dash-border)]">
+                <button
+                  type="button"
+                  onClick={() => setLeadDrawerTab("overview")}
+                  className={`flex-1 py-1.5 px-3 rounded-md text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                    leadDrawerTab === "overview"
+                      ? "bg-[var(--dash-primary)] text-white shadow-xs font-bold"
+                      : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
+                  }`}
+                >
+                  <Building className="w-3.5 h-3.5" />
+                  <span>Overview &amp; Intel</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setLeadDrawerTab("timeline")}
+                  className={`flex-1 py-1.5 px-3 rounded-md text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                    leadDrawerTab === "timeline"
+                      ? "bg-[var(--dash-primary)] text-white shadow-xs font-bold"
+                      : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Activity Timeline</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setLeadDrawerTab("notes")}
+                  className={`flex-1 py-1.5 px-3 rounded-md text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                    leadDrawerTab === "notes"
+                      ? "bg-[var(--dash-primary)] text-white shadow-xs font-bold"
+                      : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
+                  }`}
+                >
+                  <Tag className="w-3.5 h-3.5" />
+                  <span>Notes ({selectedLead.notes?.length || 0})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setLeadDrawerTab("reviews")}
+                  className={`flex-1 py-1.5 px-3 rounded-md text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                    leadDrawerTab === "reviews"
+                      ? "bg-[var(--dash-primary)] text-white shadow-xs font-bold"
+                      : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
+                  }`}
+                >
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span>Reviews {(() => {
+                    try {
+                      const rawRev = selectedLead.reviews || selectedLead.raw?.reviews;
+                      const rList = typeof rawRev === "string" ? JSON.parse(rawRev) : rawRev;
+                      return Array.isArray(rList) && rList.length > 0 ? `(${rList.length})` : "";
+                    } catch {
+                      return "";
+                    }
+                  })()}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Main Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 crm-scrollbar">
+              {/* Follow-up Reminder Banner */}
               {selectedLead.followupDate && (
-                <div className="p-2.5 sm:p-3 rounded-md flex items-center justify-between border border-amber-500/30 bg-amber-500/10 text-xs">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-md bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
-                      <Clock className="w-3.5 h-3.5" />
+                <div className="p-3 rounded-xl flex items-center justify-between border border-amber-500/30 bg-amber-500/10 text-xs shadow-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
+                      <Clock className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <div className="font-bold text-amber-500 text-xs">Follow-up Scheduled</div>
-                      <div className="text-[11px] truncate opacity-90" style={{ color: "var(--dash-text)" }}>
+                      <div className="font-bold text-amber-500 text-xs">Scheduled Follow-up</div>
+                      <div className="text-[11px] font-medium text-[var(--dash-text)] opacity-90 truncate">
                         {selectedLead.followupDate}
                       </div>
                     </div>
@@ -2540,459 +2753,554 @@ export default function LeadsManager() {
                     <button
                       type="button"
                       onClick={() => setShowFollowupModal(true)}
-                      className="px-2 py-1 rounded bg-amber-500 text-white font-bold text-[11px] hover:bg-amber-600 transition cursor-pointer"
+                      className="px-2.5 py-1 rounded-md bg-amber-500 text-white font-bold text-xs hover:bg-amber-600 transition cursor-pointer"
                     >
-                      Edit
+                      Reschedule
                     </button>
                     <button
                       type="button"
                       onClick={handleCancelFollowup}
-                      className="px-2 py-1 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 font-bold text-[11px] hover:bg-rose-500 hover:text-white transition cursor-pointer"
-                      title="Remove scheduled follow-up"
+                      className="px-2 py-1 rounded-md bg-rose-500/10 text-rose-500 border border-rose-500/20 font-bold text-xs hover:bg-rose-500 hover:text-white transition cursor-pointer"
+                      title="Clear follow-up"
                     >
-                      Remove
+                      Clear
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Inline Add Note Input Box (Persisted) */}
-              {showNoteInput && (
-                <div
-                  className="p-3 rounded-md animate-fadeIn space-y-2.5"
-                  style={{
-                    background: "var(--dash-surface-alt)",
-                    border: "1px solid var(--dash-border)"
-                  }}
-                >
-                  <label className="text-[11px] font-bold block" style={{ color: "var(--dash-text-muted)" }}>
-                    Write Internal Team Note (Saved Permanently):
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder="Type an internal note about this prospect..."
-                    value={newNoteText}
-                    onChange={(e) => setNewNoteText(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), handleAddNote())}
-                    className="crm-input w-full text-xs"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowNoteInput(false)}
-                      className="crm-btn-secondary text-xs py-1 px-2.5"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleAddNote}
-                      disabled={!newNoteText.trim()}
-                      className="crm-btn-primary text-xs py-1 px-3"
-                    >
-                      Save Note
-                    </button>
-                  </div>
-                </div>
-              )}
+              {/* TAB 1: OVERVIEW & INTEL */}
+              {leadDrawerTab === "overview" && (
+                <div className="space-y-4 animate-fadeIn">
+                  {/* Campaign Status Card */}
+                  <div className="crm-card p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--dash-text-muted)]">
+                        Outreach Status &amp; Bot AI
+                      </h4>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        (selectedLead.whatsapp_ai_enabled ?? selectedLead.raw?.whatsapp_ai_enabled) !== false
+                          ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                          : "bg-rose-500/10 text-rose-500 border border-rose-500/20"
+                      }`}>
+                        AI Bot: {(selectedLead.whatsapp_ai_enabled ?? selectedLead.raw?.whatsapp_ai_enabled) !== false ? "Active" : "Disabled"}
+                      </span>
+                    </div>
 
-              {/* Contact Details Card */}
-              <div
-                className="p-3 sm:p-4 space-y-2.5 sm:space-y-3"
-                style={{
-                  background: "var(--dash-surface-alt)",
-                  border: "1px solid var(--dash-border)",
-                  borderRadius: "var(--dash-card-radius)"
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <h4 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider" style={{ color: "var(--dash-text-muted)" }}>
-                    Contact Details
-                  </h4>
-                  {!selectedLead.email && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setNewEmailAddress("");
-                        setShowAddEmailModal(true);
-                      }}
-                      className="text-[10px] font-bold text-indigo-500 hover:underline cursor-pointer flex items-center gap-1"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>Add Email</span>
-                    </button>
-                  )}
-                </div>
-
-                <div className="space-y-2.5 text-xs">
-                  <div className="flex items-center gap-2.5 sm:gap-3">
-                    <Mail className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
-                    <span className="font-semibold break-all" style={{ color: selectedLead.email ? "var(--dash-primary)" : "var(--dash-text-muted)" }}>
-                      {selectedLead.email || "No Email Listed"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2.5 sm:gap-3" style={{ color: "var(--dash-text)" }}>
-                    <Phone className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
-                    <span className="font-semibold">{selectedLead.phone ? format10DigitPhone(selectedLead.phone) : "No Phone"}</span>
-                  </div>
-
-                  {/* Scraped Physical Address & Landmark */}
-                  {(selectedLead.address || selectedLead.raw?.bussiness_address) && (
-                    <div className="flex items-start gap-2.5 sm:gap-3 pt-0.5" style={{ color: "var(--dash-text)" }}>
-                      <MapPin className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" />
-                      <div className="min-w-0">
-                        <span className="font-medium text-slate-800 dark:text-slate-200">
-                          {selectedLead.address || selectedLead.raw?.bussiness_address}
+                    <div className="grid grid-cols-2 gap-2.5 text-xs">
+                      <div className="p-3 rounded-lg bg-[var(--dash-surface-alt)] border border-[var(--dash-border)]">
+                        <span className="text-[10px] text-[var(--dash-text-muted)] block font-medium uppercase">WhatsApp Outreach</span>
+                        <span className="font-bold capitalize text-emerald-500 text-sm">
+                          {selectedLead.whatsapp_status || selectedLead.raw?.whatsapp_status || "Pending"}
                         </span>
-                        {(selectedLead.landmark || selectedLead.raw?.landmark) && (
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                            Landmark: <span className="font-semibold text-slate-700 dark:text-slate-300">{selectedLead.landmark || selectedLead.raw?.landmark}</span>
-                          </div>
-                        )}
+                      </div>
+                      <div className="p-3 rounded-lg bg-[var(--dash-surface-alt)] border border-[var(--dash-border)]">
+                        <span className="text-[10px] text-[var(--dash-text-muted)] block font-medium uppercase">Email Outreach</span>
+                        <span className="font-bold capitalize text-indigo-400 text-sm">
+                          {selectedLead.email_status || selectedLead.raw?.email_status || "Pending"}
+                        </span>
                       </div>
                     </div>
-                  )}
-
-                  {/* Building, Area, City & Pincode Chips */}
-                  {((selectedLead.building || selectedLead.raw?.building) ||
-                    (selectedLead.bussiness_area || selectedLead.raw?.bussiness_area) ||
-                    (selectedLead.pincode || selectedLead.raw?.pincode) ||
-                    selectedLead.city) && (
-                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                      {(selectedLead.building || selectedLead.raw?.building) && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                          <Building className="w-3 h-3 text-slate-400" />
-                          {selectedLead.building || selectedLead.raw?.building}
-                        </span>
-                      )}
-                      {(selectedLead.bussiness_area || selectedLead.raw?.bussiness_area) && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                          {selectedLead.bussiness_area || selectedLead.raw?.bussiness_area}
-                        </span>
-                      )}
-                      {selectedLead.city && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
-                          {selectedLead.city}
-                        </span>
-                      )}
-                      {(selectedLead.pincode || selectedLead.raw?.pincode) && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 font-mono">
-                          PIN: {selectedLead.pincode || selectedLead.raw?.pincode}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2.5 sm:gap-3" style={{ color: "var(--dash-text)" }}>
-                    <Globe className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
-                    {isValidWebsite(selectedLead.website) ? (
-                      <a
-                        href={formatWebsiteUrl(selectedLead.website)!}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-indigo-400 hover:underline truncate"
-                      >
-                        {selectedLead.website}
-                      </a>
-                    ) : (
-                      <span className="text-[var(--dash-text-muted)] italic text-xs">No website listed</span>
-                    )}
                   </div>
 
-                  {/* Rating & Total Reviews Count */}
-                  {(selectedLead.rating || selectedLead.raw?.rating) && (
-                    <div className="flex items-center gap-2.5 sm:gap-3 text-amber-500 font-semibold">
-                      <Star className="w-4 h-4 shrink-0 fill-amber-500 text-amber-500" />
-                      <span>
-                        Rating: {selectedLead.rating || selectedLead.raw?.rating} / 5.0
-                        {(selectedLead.total_review || selectedLead.raw?.total_review) && (
-                          <span className="text-slate-400 dark:text-slate-500 font-normal ml-1">
-                            ({selectedLead.total_review || selectedLead.raw?.total_review} reviews)
+                  {/* Complete Location & Geocoding Details */}
+                  <div className="crm-card p-4 space-y-3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--dash-text-muted)]">
+                      Physical Location &amp; Contact Info
+                    </h4>
+
+                    <div className="space-y-2.5 text-xs">
+                      {/* Physical Address */}
+                      {(selectedLead.address || selectedLead.raw?.bussiness_address) && (
+                        <div className="flex items-start gap-2.5">
+                          <MapPin className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <span className="font-medium text-[var(--dash-text)]">
+                              {selectedLead.address || selectedLead.raw?.bussiness_address}
+                            </span>
+                            {(selectedLead.landmark || selectedLead.raw?.landmark) && (
+                              <div className="text-[11px] text-[var(--dash-text-muted)] mt-0.5">
+                                Landmark: <span className="font-semibold text-[var(--dash-text)]">{selectedLead.landmark || selectedLead.raw?.landmark}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Chips: Building, Area, City, Pin */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        {(selectedLead.building || selectedLead.raw?.building) && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-[var(--dash-surface-alt)] text-[var(--dash-text)] border border-[var(--dash-border)]">
+                            <Building className="w-3 h-3 text-slate-400" />
+                            {selectedLead.building || selectedLead.raw?.building}
                           </span>
                         )}
-                      </span>
-                    </div>
-                  )}
+                        {(selectedLead.bussiness_area || selectedLead.raw?.bussiness_area) && (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold bg-[var(--dash-surface-alt)] text-[var(--dash-text)] border border-[var(--dash-border)]">
+                            {selectedLead.bussiness_area || selectedLead.raw?.bussiness_area}
+                          </span>
+                        )}
+                        {selectedLead.city && (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                            {selectedLead.city}
+                          </span>
+                        )}
+                        {(selectedLead.pincode || selectedLead.raw?.pincode) && (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold bg-[var(--dash-surface-alt)] text-[var(--dash-text-muted)] border border-[var(--dash-border)] font-mono">
+                            PIN: {selectedLead.pincode || selectedLead.raw?.pincode}
+                          </span>
+                        )}
+                      </div>
 
-                  {selectedLead.category && (
-                    <div className="flex items-center gap-2.5 sm:gap-3 pt-1">
-                      <Tag className="w-4 h-4 shrink-0" style={{ color: "var(--dash-text-muted)" }} />
-                      <span className="crm-badge badge-primary text-[10px]">
-                        {selectedLead.category}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
+                      {/* Chips: Street, Neighborhood, State, Photos */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                        {(selectedLead.street_address || selectedLead.raw?.street_address) && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--dash-surface-alt)] text-[var(--dash-text-secondary)] border border-[var(--dash-border)]">
+                            {selectedLead.street_address || selectedLead.raw?.street_address}
+                          </span>
+                        )}
+                        {(selectedLead.neighborhood || selectedLead.raw?.neighborhood) && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--dash-surface-alt)] text-[var(--dash-text-secondary)] border border-[var(--dash-border)]">
+                            {selectedLead.neighborhood || selectedLead.raw?.neighborhood}
+                          </span>
+                        )}
+                        {(selectedLead.state || selectedLead.raw?.state) && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                            {selectedLead.state || selectedLead.raw?.state}
+                          </span>
+                        )}
+                        {(selectedLead.photos_count || selectedLead.raw?.photos_count) && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--dash-surface-alt)] text-[var(--dash-text-muted)] border border-[var(--dash-border)]">
+                            📷 {selectedLead.photos_count || selectedLead.raw?.photos_count} Photos
+                          </span>
+                        )}
+                      </div>
 
-              {/* Outreach & Campaign Intelligence Card */}
-              <div
-                className="p-3 sm:p-4 space-y-2.5 sm:space-y-3"
-                style={{
-                  background: "var(--dash-surface-alt)",
-                  border: "1px solid var(--dash-border)",
-                  borderRadius: "var(--dash-card-radius)"
-                }}
-              >
-                <h4 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider" style={{ color: "var(--dash-text-muted)" }}>
-                  Outreach & Campaign Intelligence
-                </h4>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-2.5 rounded-lg bg-white/50 dark:bg-black/20 border border-slate-200/80 dark:border-neutral-800">
-                    <span className="text-[10px] text-slate-400 block font-medium">WhatsApp Outreach</span>
-                    <span className="font-bold capitalize text-emerald-500">
-                      {selectedLead.whatsapp_status || selectedLead.raw?.whatsapp_status || "Pending"}
-                    </span>
+                      {/* Google Rating */}
+                      {(selectedLead.rating || selectedLead.raw?.rating) && (
+                        <div className="flex items-center justify-between pt-1 text-amber-500 font-semibold">
+                          <div className="flex items-center gap-2">
+                            <Star className="w-4 h-4 fill-amber-500" />
+                            <span>
+                              {selectedLead.rating || selectedLead.raw?.rating} / 5.0
+                              {(selectedLead.total_review || selectedLead.raw?.total_review) && (
+                                <span className="text-[var(--dash-text-muted)] font-normal ml-1">
+                                  ({selectedLead.total_review || selectedLead.raw?.total_review} reviews)
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          {(selectedLead.reviews || selectedLead.raw?.reviews) && (
+                            <button
+                              type="button"
+                              onClick={() => setLeadDrawerTab("reviews")}
+                              className="text-[11px] font-bold text-indigo-400 hover:underline cursor-pointer flex items-center gap-1"
+                            >
+                              <span>Read Reviews</span>
+                              <ChevronRight className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Industry Category */}
+                      {selectedLead.category && (
+                        <div className="flex items-center gap-2 pt-1">
+                          <Tag className="w-4 h-4 text-[var(--dash-text-muted)]" />
+                          <span className="crm-badge badge-primary text-xs">
+                            {selectedLead.category}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Description / About Business */}
+                      {(selectedLead.description || selectedLead.raw?.description) && (
+                        <div className="p-2.5 rounded-lg bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] text-xs mt-2">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--dash-text-muted)] mb-1">
+                            About Business
+                          </div>
+                          <p className="text-[var(--dash-text-secondary)] leading-relaxed text-xs">
+                            {selectedLead.description || selectedLead.raw?.description}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Opening Hours */}
+                      {(selectedLead.opening_hours || selectedLead.raw?.opening_hours) && (
+                        <div className="p-2.5 rounded-lg bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] text-xs mt-1.5">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--dash-text-muted)] mb-1">
+                            <Clock className="w-3 h-3 text-indigo-400" />
+                            <span>Opening Hours</span>
+                          </div>
+                          <p className="text-[var(--dash-text)] font-mono text-[11px] leading-relaxed">
+                            {selectedLead.opening_hours || selectedLead.raw?.opening_hours}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Popular Topics */}
+                      {(selectedLead.popular_topics || selectedLead.raw?.popular_topics) && (
+                        <div className="flex items-center gap-1.5 flex-wrap pt-1 text-xs">
+                          <span className="text-[10px] font-bold text-[var(--dash-text-muted)] uppercase">Popular Topics:</span>
+                          <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                            {selectedLead.popular_topics || selectedLead.raw?.popular_topics}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Google Maps Direct CTA Button */}
+                      {(selectedLead.maps_url || selectedLead.raw?.maps_url) && (
+                        <a
+                          href={selectedLead.maps_url || selectedLead.raw?.maps_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-sm transition active:scale-[0.99] mt-2"
+                        >
+                          <MapPin className="w-4 h-4 text-white shrink-0" />
+                          <span>View Official Google Maps Profile</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-white/80 shrink-0 ml-1" />
+                        </a>
+                      )}
+                    </div>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-white/50 dark:bg-black/20 border border-slate-200/80 dark:border-neutral-800">
-                    <span className="text-[10px] text-slate-400 block font-medium">Email Campaign</span>
-                    <span className="font-bold capitalize text-indigo-500">
-                      {selectedLead.email_status || selectedLead.raw?.email_status || "Pending"}
-                    </span>
-                  </div>
+
+                  {/* Inbound Customer Requirements (If Any) */}
+                  {selectedLead.source === "inquiry" && selectedLead.message && (
+                    <div className="crm-card p-4 space-y-2 border-indigo-500/30 bg-indigo-500/5">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">
+                        Client Inquiry Message
+                      </h4>
+                      <p className="text-xs leading-relaxed text-[var(--dash-text)] italic">
+                        "{selectedLead.message}"
+                      </p>
+                      {selectedLead.services && selectedLead.services.length > 0 && (
+                        <div className="text-xs text-[var(--dash-text-muted)] pt-1">
+                          Requested Services: <strong className="text-[var(--dash-text)]">{selectedLead.services.join(", ")}</strong>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
+              )}
 
-                <div className="flex items-center justify-between text-xs px-1">
-                  <span className="text-slate-500 dark:text-neutral-400 font-medium">AI Auto-Reply Bot</span>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                    (selectedLead.whatsapp_ai_enabled ?? selectedLead.raw?.whatsapp_ai_enabled) !== false
-                      ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
-                      : "bg-rose-500/10 text-rose-500 border border-rose-500/20"
-                  }`}>
-                    {(selectedLead.whatsapp_ai_enabled ?? selectedLead.raw?.whatsapp_ai_enabled) !== false ? "Active" : "Disabled"}
-                  </span>
-                </div>
-              </div>
+              {/* TAB 2: ACTIVITY TIMELINE */}
+              {leadDrawerTab === "timeline" && (
+                <div className="crm-card p-4 space-y-3.5 animate-fadeIn">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--dash-text-muted)]">
+                    Audit Trail &amp; Prospect Activity
+                  </h4>
 
-              {/* 100% Dynamic Activity History Timeline */}
-              <div
-                className="p-3 sm:p-4 space-y-2.5 sm:space-y-3"
-                style={{
-                  border: "1px solid var(--dash-border)",
-                  borderRadius: "var(--dash-card-radius)"
-                }}
-              >
-                <h4 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider" style={{ color: "var(--dash-text-muted)" }}>
-                  Activity History
-                </h4>
-                <div
-                  className="relative pl-5 space-y-3.5 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5"
-                  style={{ color: "var(--dash-border)" }}
-                >
-                  {/* 1. Active Follow-up Reminder (Single, deduplicated) */}
-                  {selectedLead.followupDate && (
-                    <div className="relative">
-                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-cyan-500 animate-pulse" />
-                      <div className="text-xs font-bold text-cyan-500">
-                        📅 Active Follow-up Scheduled
-                      </div>
-                      <div className="text-[11px] mt-0.5" style={{ color: "var(--dash-text-secondary)" }}>
-                        Reminder set for: <strong className="text-[var(--dash-text)]">{selectedLead.followupDate}</strong>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 2. Customer Inbound WhatsApp Reply (Real DB Event) */}
-                  {selectedLead.raw?.whatsapp_last_reply && (
-                    <div className="relative">
-                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-amber-500" />
-                      <div className="text-xs font-bold text-amber-500">
-                        💬 Inbound Customer Reply Received
-                      </div>
-                      <div className="text-[11px] mt-0.5 italic p-2 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400">
-                        "{selectedLead.raw.whatsapp_last_reply}"
-                      </div>
-                      {selectedLead.raw?.whatsapp_reply_at && (
-                        <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
-                          {formatISTDateTime(selectedLead.raw.whatsapp_reply_at)}
+                  <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[var(--dash-border)]">
+                    {/* Follow-up reminder */}
+                    {selectedLead.followupDate && (
+                      <div className="relative">
+                        <span className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-cyan-500 ring-4 ring-cyan-500/20 animate-pulse" />
+                        <div className="text-xs font-bold text-cyan-500">
+                          📅 Scheduled Follow-up
                         </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 3. Outbound WhatsApp Proposal Dispatched (Real DB Event) */}
-                  {selectedLead.raw?.whatsapp_status && selectedLead.raw.whatsapp_status !== "pending" && (
-                    <div className="relative">
-                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                      <div className="text-xs font-bold text-emerald-500">
-                        📱 WhatsApp Pitch Dispatched
-                      </div>
-                      <div className="text-[11px] mt-0.5" style={{ color: "var(--dash-text-secondary)" }}>
-                        Interactive proposal card delivered with CTAs. Status: <span className="font-bold uppercase text-emerald-500">{selectedLead.raw.whatsapp_status}</span>
-                      </div>
-                      {selectedLead.raw?.whatsapp_sent_at && (
-                        <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
-                          {formatISTDateTime(selectedLead.raw.whatsapp_sent_at)}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 4. Outbound Cold Outreach Email Dispatched (Real DB Event) */}
-                  {selectedLead.raw?.email_status && selectedLead.raw.email_status !== "pending" && (
-                    <div className="relative">
-                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-blue-500" />
-                      <div className="text-xs font-bold text-blue-500">
-                        ✉️ Outreach Email Dispatched
-                      </div>
-                      <div className="text-[11px] mt-0.5" style={{ color: "var(--dash-text-secondary)" }}>
-                        Growth pitch email dispatched to {selectedLead.email || "prospect"}. Status: <span className="font-bold uppercase text-blue-500">{selectedLead.raw.email_status}</span>
-                      </div>
-                      {selectedLead.raw?.email_sent_at && (
-                        <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
-                          {formatISTDateTime(selectedLead.raw.email_sent_at)}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 5. Deduplicated Custom Activities (Calls, Status changes, Notes) */}
-                  {selectedLead.customActivities && selectedLead.customActivities
-                    .filter((act: any) => act.type !== "followup") // Already handled in card #1 above
-                    .map((act: any, idx: number) => (
-                      <div key={idx} className="relative">
-                        <span
-                          className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full"
-                          style={{
-                            background:
-                              act.type === "call"
-                                ? "var(--dash-primary)"
-                                : act.type === "whatsapp"
-                                ? "var(--dash-success)"
-                                : "var(--dash-warning)"
-                          }}
-                        />
-                        <div className="text-xs font-semibold" style={{ color: "var(--dash-text)" }}>
-                          {act.title}
-                        </div>
-                        <div className="text-[11px] mt-0.5 whitespace-pre-wrap leading-relaxed" style={{ color: "var(--dash-text-secondary)" }}>
-                          {act.desc}
-                        </div>
-                        <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
-                          {act.date}
+                        <div className="text-[11px] text-[var(--dash-text-muted)] mt-0.5">
+                          Reminder set for: <strong className="text-[var(--dash-text)]">{selectedLead.followupDate}</strong>
                         </div>
                       </div>
-                    ))}
+                    )}
 
-                  {/* 6. Internal Notes */}
-                  {selectedLead.notes && selectedLead.notes.map((n: any, idx: number) => (
-                    <div key={idx} className="relative">
-                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full" style={{ background: "var(--dash-warning)" }} />
-                      <div className="text-xs font-semibold" style={{ color: "var(--dash-text)" }}>
-                        Internal Note ({n.author || "Admin"})
-                      </div>
-                      <div className="text-[11px] mt-0.5" style={{ color: "var(--dash-text-secondary)" }}>
-                        {n.text}
-                      </div>
-                      <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
-                        {n.date}
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* 7. Primary Genesis Event (Inbound Inquiry vs. Outbound Google Maps) */}
-                  {selectedLead.source === "inquiry" ? (
-                    <div className="relative">
-                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-indigo-500" />
-                      <div className="text-xs font-bold text-indigo-400">
-                        📥 Website Lead Inquiry Received
-                      </div>
-                      <div className="text-[11px] mt-0.5 space-y-1" style={{ color: "var(--dash-text-secondary)" }}>
-                        {selectedLead.services && selectedLead.services.length > 0 && (
-                          <div>
-                            <strong className="text-[var(--dash-text)]">Requested Services:</strong> {selectedLead.services.join(", ")}
+                    {/* Customer Reply Event */}
+                    {selectedLead.raw?.whatsapp_last_reply && (
+                      <div className="relative">
+                        <span className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-amber-500/20" />
+                        <div className="text-xs font-bold text-amber-500">
+                          💬 Inbound WhatsApp Reply Received
+                        </div>
+                        <div className="text-xs mt-1 italic p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300">
+                          "{selectedLead.raw.whatsapp_last_reply}"
+                        </div>
+                        {selectedLead.raw?.whatsapp_reply_at && (
+                          <div className="text-[10px] text-[var(--dash-text-muted)] mt-1">
+                            {formatISTDateTime(selectedLead.raw.whatsapp_reply_at)}
                           </div>
                         )}
-                        {selectedLead.message && (
-                          <div className="italic p-2 rounded bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] text-xs">
-                            "{selectedLead.message}"
+                      </div>
+                    )}
+
+                    {/* WhatsApp Proposal Dispatched */}
+                    {selectedLead.raw?.whatsapp_status && selectedLead.raw.whatsapp_status !== "pending" && (
+                      <div className="relative">
+                        <span className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
+                        <div className="text-xs font-bold text-emerald-500">
+                          📱 WhatsApp Outreach Dispatched
+                        </div>
+                        <div className="text-xs text-[var(--dash-text-muted)] mt-0.5">
+                          Interactive proposal sent. Status: <span className="font-bold uppercase text-emerald-500">{selectedLead.raw.whatsapp_status}</span>
+                        </div>
+                        {selectedLead.raw?.whatsapp_sent_at && (
+                          <div className="text-[10px] text-[var(--dash-text-muted)] mt-1">
+                            {formatISTDateTime(selectedLead.raw.whatsapp_sent_at)}
                           </div>
                         )}
-                        <div className="text-[10px] text-emerald-500 font-medium">
-                          ✓ Auto-confirmation email dispatched to client
+                      </div>
+                    )}
+
+                    {/* Custom activities */}
+                    {selectedLead.customActivities && selectedLead.customActivities
+                      .filter((act: any) => act.type !== "followup")
+                      .map((act: any, idx: number) => (
+                        <div key={idx} className="relative">
+                          <span className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20" />
+                          <div className="text-xs font-semibold text-[var(--dash-text)]">
+                            {act.title}
+                          </div>
+                          <div className="text-xs text-[var(--dash-text-muted)] mt-0.5 whitespace-pre-wrap leading-relaxed">
+                            {act.desc}
+                          </div>
+                          <div className="text-[10px] text-[var(--dash-text-muted)] mt-1">
+                            {act.date}
+                          </div>
+                        </div>
+                      ))}
+
+                    {/* Genesis Event */}
+                    {selectedLead.source === "inquiry" ? (
+                      <div className="relative">
+                        <span className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                        <div className="text-xs font-bold text-indigo-400">
+                          📥 Website Lead Inquiry Created
+                        </div>
+                        <div className="text-[11px] text-[var(--dash-text-muted)] mt-1">
+                          {formatISTDateTime(selectedLead.created_at)}
                         </div>
                       </div>
-                      <div className="text-[10px] mt-1" style={{ color: "var(--dash-text-muted)" }}>
-                        {formatISTDateTime(selectedLead.created_at)}
+                    ) : (
+                      <div className="relative">
+                        <span className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-blue-500" />
+                        <div className="text-xs font-bold text-blue-400">
+                          🗺️ Scraped from Google Maps
+                        </div>
+                        <div className="text-[11px] text-[var(--dash-text-muted)] mt-0.5">
+                          {selectedLead.company || selectedLead.city || "Local Business Listing"}
+                        </div>
+                        <div className="text-[10px] text-[var(--dash-text-muted)] mt-1">
+                          {formatISTDate(selectedLead.created_at)}
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-blue-500" />
-                      <div className="text-xs font-bold text-blue-400">
-                        🗺️ Google Maps Record Scraped
-                      </div>
-                      <div className="text-[11px] mt-0.5 space-y-0.5" style={{ color: "var(--dash-text-secondary)" }}>
-                        <div><strong className="text-[var(--dash-text)]">Location:</strong> {selectedLead.company || selectedLead.city || "Local Business Database"}</div>
-                        <div><strong className="text-[var(--dash-text)]">Reputation:</strong> ⭐ {selectedLead.rating || "4.5"} ({selectedLead.raw?.total_review || "0"} reviews)</div>
-                        <div><strong className="text-[var(--dash-text)]">Website Audit:</strong> {selectedLead.website ? selectedLead.website : "Missing website link"}</div>
-                        <div><strong className="text-[var(--dash-text)]">AI Score:</strong> Priority score {selectedLead.score}/100</div>
-                      </div>
-                      <div className="text-[10px] mt-1" style={{ color: "var(--dash-text-muted)" }}>
-                        {formatISTDate(selectedLead.created_at)}
-                      </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* TAB 3: INTERNAL NOTES */}
+              {leadDrawerTab === "notes" && (
+                <div className="space-y-3.5 animate-fadeIn">
+                  {/* Add Note Trigger */}
+                  <div className="crm-card p-4 space-y-2.5">
+                    <label className="text-xs font-bold block text-[var(--dash-text-muted)] uppercase tracking-wider">
+                      Add Internal Team Note
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="Type details about your calls, pricing discussions, or client objections..."
+                      value={newNoteText}
+                      onChange={(e) => setNewNoteText(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), handleAddNote())}
+                      className="crm-input w-full text-xs"
+                    />
+                    <div className="flex justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleAddNote}
+                        disabled={!newNoteText.trim()}
+                        className="crm-btn-primary text-xs py-1.5 px-3 font-semibold disabled:opacity-40 cursor-pointer"
+                      >
+                        Save Note Permanently
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Notes List */}
+                  <div className="space-y-2">
+                    {selectedLead.notes && selectedLead.notes.length > 0 ? (
+                      selectedLead.notes.map((n: any, idx: number) => (
+                        <div key={idx} className="crm-card p-3 space-y-1 bg-[var(--dash-surface-alt)]">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="font-bold text-amber-500">Note by {n.author || "Admin"}</span>
+                            <span className="text-[var(--dash-text-muted)] font-mono">{n.date}</span>
+                          </div>
+                          <p className="text-xs text-[var(--dash-text)] whitespace-pre-wrap leading-relaxed">
+                            {n.text}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-6 text-center text-xs text-[var(--dash-text-muted)] border border-dashed border-[var(--dash-border)] rounded-xl">
+                        No team notes yet. Write a note above to record insights on this lead!
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: GOOGLE REVIEWS & REPUTATION */}
+              {leadDrawerTab === "reviews" && (
+                <div className="space-y-4 animate-fadeIn">
+                  <div className="crm-card p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--dash-text-muted)]">
+                          Customer Reviews ({(() => {
+                            try {
+                              const rawRev = selectedLead.reviews || selectedLead.raw?.reviews;
+                              const rList = typeof rawRev === "string" ? JSON.parse(rawRev) : rawRev;
+                              return Array.isArray(rList) ? rList.length : 0;
+                            } catch {
+                              return 0;
+                            }
+                          })()})
+                        </h4>
+                      </div>
+                      {(selectedLead.rating || selectedLead.raw?.rating) && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          ★ {selectedLead.rating || selectedLead.raw?.rating} / 5.0
+                        </span>
+                      )}
+                    </div>
+
+                    {(() => {
+                      let revList: any[] = [];
+                      try {
+                        const rawRev = selectedLead.reviews || selectedLead.raw?.reviews;
+                        if (rawRev) {
+                          revList = typeof rawRev === "string" ? JSON.parse(rawRev) : rawRev;
+                          if (!Array.isArray(revList)) revList = [];
+                        }
+                      } catch {
+                        revList = [];
+                      }
+
+                      if (revList.length === 0) {
+                        return (
+                          <div className="text-center py-10 px-4 space-y-3 text-xs text-[var(--dash-text-muted)] border border-dashed border-[var(--dash-border)] rounded-xl">
+                            <Star className="w-8 h-8 mx-auto text-amber-400/40" />
+                            <div>
+                              <p className="font-semibold text-[var(--dash-text)]">No Customer Reviews Recorded</p>
+                              <p className="text-[11px] mt-0.5">This business listing does not currently have Google customer review quotes in the database.</p>
+                            </div>
+                            {(selectedLead.maps_url || selectedLead.raw?.maps_url) && (
+                              <a
+                                href={selectedLead.maps_url || selectedLead.raw?.maps_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 text-xs font-semibold hover:bg-indigo-500/20 transition"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                                <span>Check Live Reviews on Google Maps</span>
+                              </a>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="space-y-3 pt-1">
+                          {revList.map((rev: any, idx: number) => {
+                            const ratingNum = parseInt(String(rev.rating || "5"), 10) || 5;
+                            return (
+                              <div
+                                key={idx}
+                                className="p-3.5 rounded-xl bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] space-y-2.5 hover:border-amber-500/30 transition shadow-xs"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                                      {(rev.author || "U").charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="text-xs font-bold text-[var(--dash-text)] truncate">
+                                        {rev.author || "Google Reviewer"}
+                                      </div>
+                                      {rev.date && (
+                                        <div className="text-[10px] text-[var(--dash-text-muted)]">
+                                          {rev.date}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-0.5 shrink-0 text-amber-400">
+                                    {Array.from({ length: 5 }).map((_, sIdx) => (
+                                      <Star
+                                        key={sIdx}
+                                        className={`w-3.5 h-3.5 ${
+                                          sIdx < ratingNum
+                                            ? "fill-amber-400 text-amber-400"
+                                            : "text-slate-300 dark:text-neutral-700"
+                                        }`}
+                                      />
+                                    ))}
+                                    <span className="text-[11px] font-bold text-amber-500 ml-1 font-mono">
+                                      {rev.rating || "5.0"}
+                                    </span>
+                                  </div>
+                                </div>
+                                {rev.text && (
+                                  <div className="relative pl-3 border-l-2 border-amber-500/40 text-xs text-[var(--dash-text-secondary)] italic leading-relaxed pt-0.5">
+                                    "{rev.text}"
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Drawer Footer Sticky CTA Bar */}
+            {/* Bottom Footer CTA Bar */}
             <div
-              className="flex-none px-2.5 py-2.5 sm:px-4 sm:py-3.5 flex items-center justify-between gap-1.5 sm:gap-2 z-30 w-full max-w-full overflow-hidden"
-              style={{
-                borderTop: "1px solid var(--dash-border)",
-                background: "var(--dash-surface-alt)",
-                paddingBottom: "max(env(safe-area-inset-bottom, 0px), 0.85rem)"
-              }}
+              className="flex-none px-4 sm:px-6 py-3 flex items-center justify-between gap-2 z-30 border-t border-[var(--dash-border)] bg-[var(--dash-surface)]"
+              style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 0.85rem)" }}
             >
-              {/* Secondary Controls: Close & Delete */}
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="crm-btn-secondary text-xs py-2 px-2.5 sm:px-3 font-bold flex items-center justify-center gap-1 cursor-pointer shrink-0 transition"
-                  title="Close lead drawer"
-                  aria-label="Close lead drawer"
+                  className="px-3 py-2 rounded-lg text-xs font-semibold bg-[var(--dash-surface-alt)] hover:bg-[var(--dash-surface-alt)]/80 border border-[var(--dash-border)] text-[var(--dash-text)] transition cursor-pointer"
                 >
-                  <X className="w-4 h-4 shrink-0" />
-                  <span className="hidden sm:inline">Close</span>
+                  Close
                 </button>
 
                 {canDeleteLeads && (
                   <button
                     type="button"
                     onClick={() => handleDeleteLead(selectedLead)}
-                    className="text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer py-2 px-2 sm:px-2.5 rounded-md border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 transition shrink-0"
-                    title="Delete lead record"
-                    aria-label="Delete lead record"
+                    className="px-2.5 py-2 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 transition cursor-pointer flex items-center gap-1"
+                    title="Delete lead from database"
                   >
-                    <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                    <span className="hidden md:inline">Delete</span>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Delete</span>
                   </button>
                 )}
               </div>
 
-              {/* Primary Actions: Proposal & Update Status (Flexible & Never Overflow) */}
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 justify-end">
+              <div className="flex items-center gap-2">
                 {canSendWhatsapp && (
                   <button
                     type="button"
                     onClick={() => openWaModalForLead(selectedLead)}
-                    className="flex-1 min-w-0 px-2 sm:px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center justify-center gap-1 shrink-0 active:scale-[0.98]"
-                    title="Open WhatsApp Proposal"
+                    className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 active:scale-95"
                   >
-                    <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate">Proposal 🚀</span>
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>WhatsApp Proposal</span>
                   </button>
                 )}
+
                 <button
                   type="button"
                   onClick={() => setShowStatusModal(true)}
-                  className="flex-1 min-w-0 crm-btn-primary text-xs py-2 px-2 sm:px-3 font-bold flex items-center justify-center gap-1 shrink-0 active:scale-[0.98]"
-                  title="Update pipeline status"
+                  className="crm-btn-primary px-3.5 py-2 text-xs font-bold flex items-center gap-1.5 active:scale-95"
                 >
-                  <span className="truncate">Update Status</span>
+                  <span>Update Status</span>
                 </button>
               </div>
             </div>

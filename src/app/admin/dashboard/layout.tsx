@@ -1268,7 +1268,7 @@ export default function DashboardLayout({
   return (
     <div
       data-dash-theme={dashTheme}
-      className={`h-screen flex flex-col lg:flex-row overflow-hidden relative font-sans antialiased ${dashTheme === 'dark' ? 'dark' : ''}`}
+      className={`h-screen h-[100dvh] max-h-screen min-h-0 min-w-0 flex flex-col lg:flex-row overflow-hidden relative font-sans antialiased ${dashTheme === 'dark' ? 'dark' : ''}`}
       style={{ background: "var(--dash-bg)", color: "var(--dash-text)" }}
     >
       {/* ── Isolated PWA Manager & Mobile Download Popup ── */}
@@ -1481,7 +1481,7 @@ export default function DashboardLayout({
       </aside>
 
       {/* ── Main Workspace ── */}
-      <main className="flex-1 flex flex-col overflow-hidden relative z-10" style={{ background: "var(--dash-bg)" }}>
+      <main className="flex-1 min-h-0 min-w-0 flex flex-col h-full overflow-hidden relative z-10" style={{ background: "var(--dash-bg)" }}>
         
         {/* Top Nav Bar */}
         <header className="hidden lg:flex h-14 px-6 items-center justify-between shrink-0 z-20" style={{ background: "var(--dash-header-bg)", borderBottom: "1px solid var(--dash-header-border)" }}>
@@ -1578,7 +1578,9 @@ export default function DashboardLayout({
 
         {/* Content Area with Mobile Safe Bottom Padding & Fluid Direct Scrolling */}
         <div
-          className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 md:p-6 relative max-w-full crm-scrollbar pb-28 md:pb-6 overscroll-y-contain touch-pan-y"
+          id="admin-dashboard-main-scroll"
+          data-lenis-prevent="true"
+          className="flex-1 min-h-0 h-full overflow-y-auto overflow-x-hidden p-3 sm:p-5 md:p-6 relative max-w-full crm-scrollbar pb-28 md:pb-6 scroll-smooth select-text"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           <div className="relative z-10 w-full max-w-[1400px] mx-auto min-h-full">
