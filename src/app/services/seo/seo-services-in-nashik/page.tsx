@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Services in Nashik for Local Success | Tech Infinix",
     description: "Capture valuable customer searches with SEO services in Nashik focused on ranking improvements, regional brand authority, and consistent organic conversions.",
+    images: ["/og-image.png"],
   },
 };
 

@@ -28,12 +28,14 @@ export const metadata: Metadata = {
     url: "https://www.techinfinix.com/services/seo",
     type: "website",
     siteName: "Tech Infinix",
+    images: ["/og-image.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "SEO Services | On-Page, Technical & E-commerce SEO | Tech Infinix",
     description:
       "Explore SEO services from Tech Infinix, including technical, on-page, off-page, e-commerce, and white-label SEO solutions for businesses and agencies.",
+    images: ["/og-image.png"],
   },
 };
 

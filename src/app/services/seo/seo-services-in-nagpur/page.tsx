@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Services in Nagpur for Regional Reach | Tech Infinix",
     description: "Discover how SEO services in Nagpur can expand search visibility across Central India, capture high-intent buyers, and deliver lasting organic lead volume.",
+    images: ["/og-image.png"],
   },
 };
 

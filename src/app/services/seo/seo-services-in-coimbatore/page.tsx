@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Services in Coimbatore for Growth | Tech Infinix",
     description: "Boost your industrial and retail visibility with SEO services in Coimbatore engineered to capture high-intent inquiries and build long-term search dominance.",
+    images: ["/og-image.png"],
   },
 };
 

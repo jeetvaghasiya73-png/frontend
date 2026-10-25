@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Agency in Kochi for Digital Expansion | Tech Infinix",
     description: "Partner with an SEO agency in Kochi to dominate local Kerala search rankings, attract commercial inquiries, and scale qualified online traffic effortlessly.",
+    images: ["/og-image.png"],
   },
 };
 

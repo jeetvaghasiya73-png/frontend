@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Agency in Gurugram for Tech Brands | Tech Infinix",
     description: "Partner with an SEO agency in Gurugram to capture enterprise B2B search intent, rank in the competitive NCR corridor, and accelerate organic pipeline growth.",
+    images: ["/og-image.png"],
   },
 };
 

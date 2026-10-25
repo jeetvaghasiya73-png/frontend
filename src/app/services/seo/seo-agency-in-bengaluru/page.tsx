@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Agency in Bengaluru for Tech Brands | Tech Infinix",
     description: "Work with an SEO agency in Bengaluru to optimize organic search pipelines, attract high-intent software buyers, and expand national reach with Tech Infinix.",
+    images: ["/og-image.png"],
   },
 };
 

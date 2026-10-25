@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: pageData.title,
     description: pageData.metaDescription,
+    images: ["/og-image.png"],
   },
 };
 

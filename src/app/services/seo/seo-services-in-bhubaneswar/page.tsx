@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Services in Bhubaneswar for Growth | Tech Infinix",
     description: "Elevate your digital presence with SEO services in Bhubaneswar designed to capture Eastern India search intent, improve rankings, and generate steady leads.",
+    images: ["/og-image.png"],
   },
 };
 

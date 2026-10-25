@@ -12,6 +12,11 @@ export const metadata: Metadata = {
     description:
       "Explore the technical engineering blog, system architectures, and workflow automation guides from the Tech Infinix engineering team.",
     url: "/blogs",
+    images: ["/og-image.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.png"],
   },
 };
 

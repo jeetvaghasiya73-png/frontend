@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Services in Ludhiana for Businesses | Tech Infinix",
     description: "Expand your market reach with targeted SEO services in Ludhiana engineered to capture industrial buyers, rank for high-intent terms, and scale revenue.",
+    images: ["/og-image.png"],
   },
 };
 

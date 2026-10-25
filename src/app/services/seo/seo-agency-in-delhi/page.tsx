@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Agency in Delhi for Scalable Growth | Tech Infinix",
     description: "Partner with an SEO agency in Delhi to enhance local search ranking, attract high-intent organic visitors, and build long-term authority with Tech Infinix.",
+    images: ["/og-image.png"],
   },
 };
 

@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Services in Vadodara for Enterprises | Tech Infinix",
     description: "Drive regional market growth with strategic SEO services in Vadodara built to capture commercial buyer searches, improve rankings, and generate fresh leads.",
+    images: ["/og-image.png"],
   },
 };
 

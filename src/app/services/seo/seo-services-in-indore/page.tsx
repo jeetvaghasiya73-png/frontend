@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Services in Indore for Market Growth | Tech Infinix",
     description: "Expand your online reach with specialized SEO services in Indore to capture commercial search traffic, elevate brand presence, and generate reliable leads.",
+    images: ["/og-image.png"],
   },
 };
 

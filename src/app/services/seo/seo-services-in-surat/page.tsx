@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Services in Surat for Commercial Growth | Tech Infinix",
     description: "Scale your business visibility with SEO services in Surat focused on capturing regional commercial searches, local market inquiries, and steady organic growth.",
+    images: ["/og-image.png"],
   },
 };
 

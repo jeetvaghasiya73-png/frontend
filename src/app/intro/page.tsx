@@ -12,6 +12,11 @@ export const metadata: Metadata = {
       "A 44-second interactive 3D brand film showcasing the technology behind your business.",
     url: "https://techinfinix.com/intro",
     type: "video.other",
+    images: ["/og-image.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.png"],
   },
 };
 

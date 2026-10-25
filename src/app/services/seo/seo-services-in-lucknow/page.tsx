@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Services in Lucknow for Local Growth | Tech Infinix",
     description: "Enhance your digital search presence with SEO services in Lucknow built to capture high-value customer searches and accelerate inbound organic growth today.",
+    images: ["/og-image.png"],
   },
 };
 

@@ -12,6 +12,11 @@ export const metadata: Metadata = {
     description:
       "Explore Tech Infinix's core services: SEO & Google ranking, web and app scraping with custom scraper APIs, business web development, and day-to-day workflow automation.",
     url: "/services",
+    images: ["/og-image.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.png"],
   },
 };
 

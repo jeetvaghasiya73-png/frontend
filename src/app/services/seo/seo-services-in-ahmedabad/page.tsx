@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Services in Ahmedabad for Business | Tech Infinix",
     description: "Accelerate your market reach with SEO services in Ahmedabad designed to drive targeted buyer inquiries, build domain authority, and scale with Tech Infinix.",
+    images: ["/og-image.png"],
   },
 };
 

@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Services in Jaipur for Business Reach | Tech Infinix",
     description: "Strengthen local and national search visibility with SEO services in Jaipur focused on high-intent buyer acquisition and sustainable organic lead generation.",
+    images: ["/og-image.png"],
   },
 };
 

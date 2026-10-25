@@ -205,6 +205,13 @@ export default function Navbar() {
       badge: "Automation",
       icon: Bot,
     },
+    {
+      name: "LeadFlow WhatsApp CRM",
+      href: "/whatsapp-automation",
+      desc: "Outreach, live messaging & calling desk",
+      badge: "Early Access",
+      icon: MessageCircle,
+    },
   ];
 
   // Company dropdown links

@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Agency in Kolkata for Organic Reach | Tech Infinix",
     description: "Partner with an SEO agency in Kolkata to elevate search visibility, capture local commercial intent, and grow qualified website traffic through Tech Infinix.",
+    images: ["/og-image.png"],
   },
 };
 

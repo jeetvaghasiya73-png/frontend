@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Agency in Mumbai for Organic Growth | Tech Infinix",
     description: "Partner with an SEO agency in Mumbai to grow search visibility, drive qualified local buyer traffic, and scale digital organic revenue with Tech Infinix.",
+    images: ["/og-image.png"],
   },
 };
 

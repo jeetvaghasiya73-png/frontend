@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Services in Chennai for Local Growth | Tech Infinix",
     description: "Choose targeted SEO services in Chennai to capture local search visibility, rank for high-intent business terms, and generate leads through Tech Infinix.",
+    images: ["/og-image.png"],
   },
 };
 

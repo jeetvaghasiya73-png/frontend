@@ -12,6 +12,11 @@ export const metadata: Metadata = {
     description:
       "Review real-world engineering blueprints, enterprise client ROI, and production deployments built by Tech Infinix.",
     url: "/portfolio",
+    images: ["/og-image.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.png"],
   },
 };
 

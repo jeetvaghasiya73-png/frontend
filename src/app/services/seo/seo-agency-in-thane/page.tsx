@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Agency in Thane for Business Growth | Tech Infinix",
     description: "Partner with an SEO agency in Thane to maximize search visibility across the Mumbai Metropolitan Region, attract local clients, and scale online revenue.",
+    images: ["/og-image.png"],
   },
 };
 

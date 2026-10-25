@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Agency in Noida for Digital Traction | Tech Infinix",
     description: "Work with an SEO agency in Noida to capture high-value NCR commercial searches, outrank competitors, and scale inbound qualified leads with Tech Infinix.",
+    images: ["/og-image.png"],
   },
 };
 

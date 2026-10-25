@@ -17,6 +17,10 @@ export const metadata: Metadata = {
     url: `https://www.techinfinix.com/services/automation/${pageSlug}`,
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function BusinessAutomationServicesPage() {

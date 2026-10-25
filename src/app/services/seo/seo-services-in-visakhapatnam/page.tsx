@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Services in Visakhapatnam for Growth | Tech Infinix",
     description: "Strengthen digital search visibility with SEO services in Visakhapatnam built to capture coastal Andhra commercial demand and drive qualified organic leads.",
+    images: ["/og-image.png"],
   },
 };
 

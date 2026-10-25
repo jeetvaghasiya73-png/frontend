@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Agency in Chandigarh for Fast Growth | Tech Infinix",
     description: "Work with an SEO agency in Chandigarh to improve Google rankings, attract qualified regional inquiries, and build sustainable organic traffic pipelines.",
+    images: ["/og-image.png"],
   },
 };
 

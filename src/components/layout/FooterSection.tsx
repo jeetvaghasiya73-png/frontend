@@ -184,7 +184,10 @@ export default function FooterSection() {
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Geo-Grid Rank Trackers</Link>
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Playwright Crawlers</Link>
               <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">n8n Automation Nodes</Link>
-              <Link href="/#services" onClick={(e) => handleHashLink(e, "/#services")} className="hover:text-foreground transition-colors">Evolution API Baileys</Link>
+              <Link href="/whatsapp-automation" className="hover:text-emerald-500 text-emerald-600 dark:text-emerald-400 font-medium transition-colors flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>LeadFlow CRM (Launch)</span>
+              </Link>
             </div>
           </div>
 

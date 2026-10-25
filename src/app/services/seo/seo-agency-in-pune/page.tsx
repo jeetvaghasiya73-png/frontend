@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Agency in Pune for Enterprise Growth | Tech Infinix",
     description: "Collaborate with an SEO agency in Pune to capture regional search demand, improve technical performance, and scale organic brand authority via Tech Infinix.",
+    images: ["/og-image.png"],
   },
 };
 

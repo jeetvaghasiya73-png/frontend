@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SEO Services in Bhopal for Local Brands | Tech Infinix",
     description: "Unlock new customer acquisition channels with SEO services in Bhopal designed to improve regional search rankings and generate qualified inbound enquiries.",
+    images: ["/og-image.png"],
   },
 };
 
