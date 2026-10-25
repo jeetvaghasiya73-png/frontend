@@ -3244,14 +3244,14 @@ export default function SuperAdminDashboard() {
       )}
 
       {/* ── 1. Import Excel / CSV Spreadsheet Modal ── */}
-      {showImportModal && (
+      {mounted && typeof document !== "undefined" && showImportModal && createPortal(
         <div
           onClick={() => setShowImportModal(false)}
-          className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
+          className="fixed inset-0 z-[10001] overflow-y-auto bg-black/80 backdrop-blur-xs flex min-h-full items-center justify-center p-4 animate-fadeIn cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg crm-card p-6 space-y-5 cursor-default relative"
+            className="w-full max-w-lg crm-card p-6 space-y-5 cursor-default relative my-auto shadow-2xl"
             style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}
           >
             <div className="flex items-center justify-between pb-4" style={{ borderBottom: "1px solid var(--dash-border)" }}>
@@ -3334,18 +3334,19 @@ export default function SuperAdminDashboard() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── 2. Add Lead Manual Form Modal ── */}
-      {showAddLeadModal && (
+      {mounted && typeof document !== "undefined" && showAddLeadModal && createPortal(
         <div
           onClick={() => setShowAddLeadModal(false)}
-          className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
+          className="fixed inset-0 z-[10001] overflow-y-auto bg-black/80 backdrop-blur-xs flex min-h-full items-center justify-center p-4 animate-fadeIn cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md crm-card p-6 space-y-4 cursor-default relative"
+            className="w-full max-w-md crm-card p-6 space-y-4 cursor-default relative my-auto shadow-2xl"
             style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}
           >
             <div className="flex items-center justify-between pb-3" style={{ borderBottom: "1px solid var(--dash-border)" }}>
@@ -3465,7 +3466,8 @@ export default function SuperAdminDashboard() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── WhatsApp Outreach Preview & Customize Modal (Portal at z-[10005]) ── */}

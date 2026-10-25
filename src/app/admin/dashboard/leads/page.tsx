@@ -3259,11 +3259,11 @@ export default function LeadsManager() {
       {mounted && typeof document !== "undefined" && showImportModal && createPortal(
         <div
           onClick={() => setShowImportModal(false)}
-          className="fixed inset-0 z-[10001] overflow-y-auto bg-black/80 flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
+          className="fixed inset-0 z-[10001] overflow-y-auto bg-black/80 backdrop-blur-xs flex min-h-full items-center justify-center p-4 animate-fadeIn cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg crm-card p-6 space-y-5 cursor-default relative shadow-2xl"
+            className="w-full max-w-lg crm-card p-6 space-y-5 cursor-default relative my-auto shadow-2xl"
             style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}
           >
             <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-4">
@@ -3353,11 +3353,11 @@ export default function LeadsManager() {
       {mounted && typeof document !== "undefined" && showAddLeadModal && createPortal(
         <div
           onClick={() => setShowAddLeadModal(false)}
-          className="fixed inset-0 z-[10001] overflow-y-auto bg-black/80 flex items-center justify-center p-4 animate-fadeIn cursor-pointer"
+          className="fixed inset-0 z-[10001] overflow-y-auto bg-black/80 backdrop-blur-xs flex min-h-full items-center justify-center p-4 animate-fadeIn cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md crm-card p-6 space-y-4 cursor-default relative shadow-2xl"
+            className="w-full max-w-md crm-card p-6 space-y-4 cursor-default relative my-auto shadow-2xl"
             style={{ background: "var(--dash-surface)", borderColor: "var(--dash-border)" }}
           >
             <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-3">
