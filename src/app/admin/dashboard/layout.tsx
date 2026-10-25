@@ -26,6 +26,7 @@ import {
   Shield,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Zap,
   CheckCheck,
   Trash2,
@@ -222,6 +223,9 @@ export default function DashboardLayout({
 
   const notifRef = useRef<HTMLDivElement>(null);
   const mobileNotifRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const mobileUserMenuRef = useRef<HTMLDivElement>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
@@ -272,10 +276,20 @@ export default function DashboardLayout({
       ) {
         setIsSearchOpen(false);
       }
+      if (
+        userMenuRef.current && !userMenuRef.current.contains(event.target as Node) &&
+        (!mobileUserMenuRef.current || !mobileUserMenuRef.current.contains(event.target as Node))
+      ) {
+        setUserMenuOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    setUserMenuOpen(false);
+  }, [pathname]);
 
   // Global Keyboard Shortcuts (Cmd+K / Ctrl+K & Escape)
   useEffect(() => {
@@ -920,6 +934,81 @@ export default function DashboardLayout({
     return last ? last.charAt(0).toUpperCase() + last.slice(1).replace(/-/g, " ") : "Dashboard";
   };
 
+  const renderUserDropdown = (isMobile = false) => {
+    if (!userMenuOpen) return null;
+    return (
+      <div
+        className={`${
+          isMobile
+            ? "fixed right-3 top-14 w-[calc(100vw-1.5rem)] sm:w-72 max-w-xs"
+            : "absolute right-0 top-full mt-2 w-72"
+        } overflow-hidden animate-scaleIn z-50 select-text`}
+        style={{
+          background: "var(--dash-surface)",
+          border: "1px solid var(--dash-border)",
+          borderRadius: "var(--dash-card-radius)",
+          boxShadow: "0 12px 40px -10px rgba(0, 0, 0, 0.45)"
+        }}
+      >
+        {/* User Identity Header */}
+        <div className="p-3.5 flex items-center gap-3 border-b" style={{ borderColor: "var(--dash-border)", background: "var(--dash-surface-alt)" }}>
+          <div className="relative shrink-0">
+            <span className="w-10 h-10 flex items-center justify-center font-bold text-sm text-white shadow-sm" style={{ background: "var(--dash-primary)", borderRadius: "var(--dash-btn-radius)" }} suppressHydrationWarning>
+              {mounted ? (user?.username || "Admin").slice(0, 2).toUpperCase() : "AD"}
+            </span>
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full" style={{ background: "var(--dash-success)", border: "2px solid var(--dash-surface-alt)" }} />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs font-bold truncate" style={{ color: "var(--dash-text)" }} suppressHydrationWarning>
+              {mounted ? (user?.username || "admin@techinfinix.com") : "Admin User"}
+            </span>
+            <span className="text-[10px] font-mono mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
+              {mounted && user?.is_superadmin ? "Super Admin" : "System Admin"}
+            </span>
+            <span className="inline-flex items-center gap-1.5 mt-1 text-[9px] font-bold text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Active Session
+            </span>
+          </div>
+        </div>
+
+        {/* Quick Links */}
+        <div className="p-1.5 flex flex-col gap-0.5">
+          <Link
+            href={`${ADMIN_PATH}/dashboard/settings`}
+            onClick={() => setUserMenuOpen(false)}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-semibold text-[var(--dash-text-secondary)] hover:text-[var(--dash-text)] hover:bg-[var(--dash-surface-hover)] transition cursor-pointer"
+          >
+            <Settings className="w-4 h-4 text-[var(--dash-text-muted)]" />
+            <span>System Settings</span>
+          </Link>
+          <Link
+            href={`${ADMIN_PATH}/dashboard/security`}
+            onClick={() => setUserMenuOpen(false)}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-semibold text-[var(--dash-text-secondary)] hover:text-[var(--dash-text)] hover:bg-[var(--dash-surface-hover)] transition cursor-pointer"
+          >
+            <Shield className="w-4 h-4 text-[var(--dash-text-muted)]" />
+            <span>Security & Roles</span>
+          </Link>
+        </div>
+
+        {/* Sign Out Action */}
+        <div className="p-1.5 border-t" style={{ borderColor: "var(--dash-border)" }}>
+          <button
+            onClick={() => {
+              setUserMenuOpen(false);
+              handleLogout();
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-bold text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 transition cursor-pointer"
+          >
+            <LogOut className="w-4 h-4 text-rose-500" />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const renderNotificationDropdown = (isMobile = false) => {
     if (!notificationsOpen) return null;
     return (
@@ -1335,9 +1424,17 @@ export default function DashboardLayout({
             </button>
             {renderNotificationDropdown(true)}
           </div>
-          <div className="relative">
-            <span className="w-8 h-8 flex items-center justify-center font-bold text-xs text-white" style={{ background: "var(--dash-primary)", borderRadius: "var(--dash-btn-radius)" }} suppressHydrationWarning>{mounted ? (user?.username || "Admin").slice(0, 2).toUpperCase() : "AD"}</span>
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full" style={{ background: "var(--dash-success)", border: "2px solid var(--dash-sidebar-bg)" }} />
+          <div className="relative" ref={mobileUserMenuRef}>
+            <button
+              type="button"
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="relative p-0.5 rounded-lg active:scale-95 transition cursor-pointer"
+              title="Account Menu"
+            >
+              <span className="w-8 h-8 flex items-center justify-center font-bold text-xs text-white shadow-sm" style={{ background: "var(--dash-primary)", borderRadius: "var(--dash-btn-radius)" }} suppressHydrationWarning>{mounted ? (user?.username || "Admin").slice(0, 2).toUpperCase() : "AD"}</span>
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full" style={{ background: "var(--dash-success)", border: "2px solid var(--dash-sidebar-bg)" }} />
+            </button>
+            {renderUserDropdown(true)}
           </div>
         </div>
       </div>
@@ -1452,9 +1549,14 @@ export default function DashboardLayout({
             ))}
           </nav>
 
-          {/* User Profile & Sign Out */}
-          <div className="p-3 space-y-2" style={{ borderTop: "1px solid var(--dash-sidebar-border)" }}>
-            <div className="flex items-center justify-between p-2.5 transition cursor-pointer" style={{ borderRadius: "var(--dash-btn-radius)", background: "var(--dash-sidebar-hover)", border: "1px solid var(--dash-sidebar-border)" }}>
+          {/* User Profile Footer */}
+          <div className="p-3" style={{ borderTop: "1px solid var(--dash-sidebar-border)" }}>
+            <Link
+              href={`${ADMIN_PATH}/dashboard/settings`}
+              className="flex items-center justify-between p-2.5 transition cursor-pointer hover:bg-[var(--dash-sidebar-hover)]"
+              style={{ borderRadius: "var(--dash-btn-radius)", background: "var(--dash-sidebar-hover)", border: "1px solid var(--dash-sidebar-border)" }}
+              title="Account Settings"
+            >
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="relative shrink-0">
                   <span className="w-8 h-8 flex items-center justify-center font-bold text-xs text-white" style={{ background: "var(--dash-primary)", borderRadius: "var(--dash-btn-radius)" }} suppressHydrationWarning>{mounted ? (user?.username || "Admin").slice(0, 2).toUpperCase() : "AD"}</span>
@@ -1471,11 +1573,7 @@ export default function DashboardLayout({
                   </div>
                 )}
               </div>
-            </div>
-            <button onClick={handleLogout} className="w-full text-xs font-semibold py-2 flex items-center justify-center gap-2 transition cursor-pointer" style={{ borderRadius: "var(--dash-btn-radius)", background: "transparent", border: "1px solid var(--dash-sidebar-border)", color: "var(--dash-sidebar-text)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--dash-danger-light)"; e.currentTarget.style.color = "var(--dash-danger)"; e.currentTarget.style.borderColor = "var(--dash-danger)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--dash-sidebar-text)"; e.currentTarget.style.borderColor = "var(--dash-sidebar-border)"; }}
-            ><LogOut className="w-3.5 h-3.5" />{!effectiveCollapsed && <span className="animate-fadeIn">Sign Out</span>}</button>
+            </Link>
           </div>
         </div>
       </aside>
@@ -1566,12 +1664,25 @@ export default function DashboardLayout({
 
             <div className="h-5 w-[1px]" style={{ background: "var(--dash-border)" }} />
 
-            <div className="flex items-center gap-2.5">
-              <div className="flex flex-col text-right">
-                <span className="text-xs font-bold" style={{ color: "var(--dash-text)" }} suppressHydrationWarning>{mounted ? (user?.username || "Admin User") : "Admin User"}</span>
-                <span className="text-[10px] font-semibold" style={{ color: "var(--dash-primary)" }} suppressHydrationWarning>{mounted ? (user?.is_superadmin ? "Super Admin" : "System Admin") : "System Admin"}</span>
-              </div>
-              <div className="w-8 h-8 text-white font-bold flex items-center justify-center text-xs" style={{ background: "var(--dash-primary)", borderRadius: "var(--dash-btn-radius)" }} suppressHydrationWarning>{mounted ? (user?.username || "Admin").slice(0, 2).toUpperCase() : "AD"}</div>
+            <div className="relative" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2.5 p-1 rounded-lg hover:bg-[var(--dash-surface-alt)] transition cursor-pointer"
+                title="Account Menu"
+              >
+                <div className="flex flex-col text-right hidden sm:flex">
+                  <span className="text-xs font-bold leading-tight" style={{ color: "var(--dash-text)" }} suppressHydrationWarning>{mounted ? (user?.username || "Admin User") : "Admin User"}</span>
+                  <span className="text-[10px] font-semibold" style={{ color: "var(--dash-primary)" }} suppressHydrationWarning>{mounted ? (user?.is_superadmin ? "Super Admin" : "System Admin") : "System Admin"}</span>
+                </div>
+                <div className="relative">
+                  <div className="w-8 h-8 text-white font-bold flex items-center justify-center text-xs shadow-sm" style={{ background: "var(--dash-primary)", borderRadius: "var(--dash-btn-radius)" }} suppressHydrationWarning>{mounted ? (user?.username || "Admin").slice(0, 2).toUpperCase() : "AD"}</div>
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full" style={{ background: "var(--dash-success)", border: "2px solid var(--dash-header-bg)" }} />
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 text-[var(--dash-text-muted)] transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {renderUserDropdown(false)}
             </div>
           </div>
         </header>

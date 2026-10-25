@@ -25,7 +25,6 @@ import {
   Plus,
   ChevronUp,
   RotateCcw,
-  Briefcase,
   MapPin,
   Tag,
   RefreshCw,
@@ -86,13 +85,12 @@ export default function SuperAdminDashboard() {
   const [scrapedStats, setScrapedStats] = useState<any>(null);
   const [inquiryLeads, setInquiryLeads] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
-  const [portfolios, setPortfolios] = useState<any[]>([]);
   const [blogs, setBlogs] = useState<any[]>([]);
 
   // Filter States
   const [dateFilter, setDateFilter] = useState("Last 30 days");
   const [statusFilter, setStatusFilter] = useState("All Status");
-  const [activeTableTab, setActiveTableTab] = useState<"all" | "inbound" | "scraped" | "messages_sent" | "portfolio">("all");
+  const [activeTableTab, setActiveTableTab] = useState<"all" | "inbound" | "scraped" | "messages_sent">("all");
 
   // Lead Detail Right Drawer & Interactive Dialog States
   const [selectedLead, setSelectedLead] = useState<any | null>(null);
@@ -179,11 +177,10 @@ export default function SuperAdminDashboard() {
     isFetchingRef.current = true;
     setLoading(true);
     try {
-      const [statsRes, scrapedRes, leadsRes, portfolioRes, blogsRes, msgRes] = await Promise.allSettled([
+      const [statsRes, scrapedRes, leadsRes, blogsRes, msgRes] = await Promise.allSettled([
         authFetch(`${API}/api/v1/scraped-leads/stats`),
         authFetch(`${API}/api/v1/scraped-leads/?page=1&limit=${tableLimit}`),
         authFetch(`${API}/api/v1/leads/`),
-        authFetch(`${API}/api/v1/portfolio/`),
         authFetch(`${API}/api/v1/blogs/`),
         authFetch(`${API}/api/v1/contacts/`),
       ]);
@@ -199,9 +196,6 @@ export default function SuperAdminDashboard() {
       }
       if (leadsRes.status === "fulfilled" && leadsRes.value.ok) {
         setInquiryLeads(await leadsRes.value.json());
-      }
-      if (portfolioRes.status === "fulfilled" && portfolioRes.value.ok) {
-        setPortfolios(await portfolioRes.value.json());
       }
       if (blogsRes.status === "fulfilled" && blogsRes.value.ok) {
         setBlogs(await blogsRes.value.json());
@@ -725,50 +719,14 @@ export default function SuperAdminDashboard() {
         };
       });
     } else {
-      let data = portfolios;
-      if (q) {
-        data = data.filter(p =>
-          matchesSimilaritySearch(q, [
-            p.title,
-            p.client,
-            p.services_used,
-            p.description
-          ])
-        );
-      }
-      return data.map((p, idx) => {
-        const computedScore = p.featured ? 95 : 82;
-        const assignedName = p.assigned_to || user?.username || "Main Admin";
-        return {
-          raw: p,
-          rawId: p.id,
-          id: p.id || `portfolio-${idx}`,
-          title: p.title || "Untitled Project",
-          email: p.url || "",
-          company: p.client || "Studio Client",
-          industry: p.services_used?.join(", ") || "Showcase",
-          location: "Global",
-          source: "portfolio",
-          phone: p.year?.toString() || "",
-          status: p.featured ? "Featured" : "Published",
-          score: computedScore,
-          followupDate: null as string | null,
-          date: p.created_at || new Date().toISOString(),
-          assignedTo: assignedName,
-          assignedAvatar: assignedName.slice(0, 2).toUpperCase(),
-          avatarColor: "bg-amber-600",
-          notes: []
-        };
-      });
+      return [];
     }
-  }, [filteredData, activeTableTab, tableSearch, portfolios, user]);
+  }, [filteredData, activeTableTab, tableSearch, user]);
 
   const totalLeadsForTab = activeTableTab === "all"
     ? tableDataset.length
     : activeTableTab === "inbound"
     ? filteredData.currentInquiries.length
-    : activeTableTab === "portfolio"
-    ? portfolios.length
     : activeTableTab === "messages_sent"
     ? tableDataset.length
     : (totalScrapedCount || scrapedStats?.total || 1093);
@@ -1966,24 +1924,6 @@ export default function SuperAdminDashboard() {
             >
               <MessageSquare className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
               <span>Messages Sent</span>
-            </button>
-
-            <button
-              onClick={() => { setActiveTableTab("portfolio"); setTablePage(1); }}
-              className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0"
-              style={{
-                borderRadius: "var(--dash-badge-radius)",
-                background: activeTableTab === "portfolio" ? "var(--dash-surface)" : "transparent",
-                color: activeTableTab === "portfolio" ? "var(--dash-text)" : "var(--dash-text-muted)",
-                border: activeTableTab === "portfolio" ? "1px solid var(--dash-border)" : "1px solid transparent",
-                boxShadow: activeTableTab === "portfolio" ? "var(--dash-card-shadow)" : "none"
-              }}
-            >
-              <Briefcase className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--dash-warning)" }} />
-              <span>Studio Showcase</span>
-              <span className="crm-badge badge-warning text-[10px] ml-0.5">
-                {portfolios.length}
-              </span>
             </button>
           </div>
         </div>
