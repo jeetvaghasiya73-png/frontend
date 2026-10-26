@@ -39,7 +39,9 @@ import {
   Check,
   Send,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  Building2
 } from "lucide-react";
 import { authFetch, API, clearAuthFetchCache } from "@/lib/authFetch";
 import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTDateTime, matchesSimilaritySearch } from "@/lib/formatters";
@@ -1945,11 +1947,12 @@ export default function LeadsManager() {
           </div>
 
         {/* Lead Table (Desktop / Tablet) */}
+        {/* Lead Table (Desktop / Tablet) */}
         <div className="hidden md:block w-full overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse min-w-[700px]">
+          <table className="w-full text-left text-xs border-collapse min-w-[760px]">
             <thead>
               <tr className="bg-[var(--dash-surface-alt)] border-b border-[var(--dash-border)] text-[var(--dash-text-muted)] font-semibold">
-                <th className="py-3 px-4 w-8">
+                <th className="py-3.5 px-4 w-9">
                   <input
                     type="checkbox"
                     checked={paginatedLeads.length > 0 && paginatedLeads.every(l => selectedLeadIds.has(l.rawId))}
@@ -1964,31 +1967,32 @@ export default function LeadsManager() {
                         setSelectedLeadIds(newSet);
                       }
                     }}
-                    className="rounded border-[var(--dash-border)] text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    className="rounded border-[var(--dash-border)] accent-[var(--dash-primary)] focus:ring-[var(--dash-primary)] cursor-pointer w-4 h-4"
                   />
                 </th>
-                <th className="py-3 px-4 uppercase tracking-wider text-[10px]">Lead Name</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Company / City</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Industry / Service</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Rating &amp; Reviews</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Source</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Status</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px] text-center">Score</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Date Created</th>
-                <th className="py-3 px-3 text-right">Actions</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Lead / Contact</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Company &amp; City</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Service / Category</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Rating &amp; Reviews</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Lead Type</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Status</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px] text-center">Score</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Date</th>
+                <th className="py-3.5 px-4 text-right uppercase tracking-wider text-[10px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--dash-border)]">
               {paginatedLeads.map((lead) => {
                 const isSelected = selectedLeadIds.has(lead.rawId);
+                const cleanPhone = format10DigitPhone(lead.phone);
                 return (
                   <tr
                     key={lead.id}
                     onClick={() => handleOpenLeadDrawer(lead)}
-                    className={`transition cursor-pointer ${
+                    className={`transition cursor-pointer group ${
                       isSelected
-                        ? "bg-indigo-500/10"
-                        : "hover:bg-slate-500/5"
+                        ? "bg-emerald-500/10"
+                        : "hover:bg-slate-500/5 dark:hover:bg-neutral-800/40"
                     }`}
                   >
                     <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
@@ -2001,192 +2005,234 @@ export default function LeadsManager() {
                           else next.add(lead.rawId);
                           setSelectedLeadIds(next);
                         }}
-                        className="rounded border-[var(--dash-border)] text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        className="rounded border-[var(--dash-border)] accent-[var(--dash-primary)] focus:ring-[var(--dash-primary)] cursor-pointer w-4 h-4"
                       />
                     </td>
-                  <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-md bg-[var(--dash-primary)] text-white font-bold flex items-center justify-center text-xs shadow-sm shrink-0">
-                        {lead.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[var(--dash-text)] hover:text-indigo-600 flex items-center gap-1.5">
-                          {lead.name}
+                    
+                    {/* Lead / Contact Details */}
+                    <td className="py-3.5 px-3">
+                      <div className="flex items-start gap-2.5 min-w-0 max-w-[240px]">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-600/15 border border-emerald-500/30 text-emerald-400 font-bold flex items-center justify-center text-xs shadow-xs shrink-0 mt-0.5">
+                          {lead.name.charAt(0).toUpperCase()}
                         </div>
-                        {lead.email ? (
-                          <div className="text-[var(--dash-text-muted)] text-[11px] truncate max-w-[200px]" title={lead.email}>
-                            {lead.email}
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-xs text-[var(--dash-text)] group-hover:text-emerald-400 transition-colors truncate" title={lead.name}>
+                            {lead.name}
                           </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5 text-[11px]">
-                            <span className="text-[var(--dash-text-muted)] italic">Not provided</span>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenLeadDrawer(lead);
-                              }}
-                              className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline px-1 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 cursor-pointer"
+                          {cleanPhone ? (
+                            <a
+                              href={`tel:${cleanPhone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[11px] font-mono text-[var(--dash-text-secondary)] hover:text-emerald-400 transition truncate max-w-full mt-0.5"
+                              title={`Click to call ${cleanPhone}`}
                             >
-                              + Add Email
-                            </button>
+                              <Phone className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
+                              <span>{cleanPhone}</span>
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-[var(--dash-text-muted)] italic block mt-0.5">No phone</span>
+                          )}
+                          <div className="mt-0.5">
+                            {lead.email ? (
+                              <div className="text-[var(--dash-text-muted)] text-[11px] truncate max-w-[190px]" title={lead.email}>
+                                {lead.email}
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenLeadDrawer(lead);
+                                }}
+                                className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-500 hover:text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 transition cursor-pointer"
+                              >
+                                <Plus className="w-2.5 h-2.5" />
+                                <span>Add Email</span>
+                              </button>
+                            )}
                           </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Company & City */}
+                    <td className="py-3.5 px-3">
+                      <div className="min-w-0 max-w-[180px]">
+                        <div className="font-semibold text-xs text-[var(--dash-text)] truncate" title={lead.company || lead.name}>
+                          {lead.company || lead.name || "—"}
+                        </div>
+                        <div className="flex items-center gap-1 text-[11px] text-[var(--dash-text-muted)] mt-0.5 truncate" title={lead.city || "Gujarat, India"}>
+                          <MapPin className="w-3 h-3 text-emerald-500/70 shrink-0" />
+                          <span className="truncate">{lead.city || "Gujarat, India"}</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Industry / Service */}
+                    <td className="py-3.5 px-3">
+                      <div className="max-w-[200px]">
+                        <span
+                          className="inline-block px-2 py-0.5 rounded-md text-[11px] font-medium bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] text-[var(--dash-text-secondary)] truncate max-w-full"
+                          title={formatServiceText(lead.services.join(" • ") || lead.category)}
+                        >
+                          {formatServiceText(lead.services.join(" • ") || lead.category) || "Digital Services"}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Rating & Reviews */}
+                    <td className="py-3.5 px-3">
+                      <div className="flex flex-col gap-1 items-start">
+                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold text-xs">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                          <span>{lead.rating || lead.raw?.rating || "4.5"}</span>
+                          {(lead.total_review || lead.raw?.total_review) && (
+                            <span className="text-[10px] font-normal text-amber-400/80">
+                              ({lead.total_review || lead.raw?.total_review})
+                            </span>
+                          )}
+                        </div>
+                        {((lead.reviews || lead.raw?.reviews) || (lead.total_review || lead.raw?.total_review)) && (
+                          <span className="text-[10px] text-[var(--dash-text-muted)] font-mono pl-0.5">
+                            {(() => {
+                              try {
+                                const rawRev = lead.reviews || lead.raw?.reviews;
+                                const rList = typeof rawRev === "string" ? JSON.parse(rawRev) : rawRev;
+                                const count = Array.isArray(rList) ? rList.length : Number(lead.total_review || lead.raw?.total_review || 1);
+                                return `${count} reviews`;
+                              } catch {
+                                return "reviews";
+                              }
+                            })()}
+                          </span>
                         )}
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="py-3.5 px-3 font-semibold text-[var(--dash-text)]">
-                    <div className="truncate max-w-[180px]" title={lead.company || lead.city || "—"}>
-                      {lead.company || lead.city || "—"}
-                    </div>
-                  </td>
-
-                  <td className="py-3.5 px-3 text-[var(--dash-text-secondary)]">
-                    <span
-                      className="inline-block max-w-[260px] truncate font-medium"
-                      title={formatServiceText(lead.services.join(" • ") || lead.category)}
-                    >
-                      {formatServiceText(lead.services.join(" • ") || lead.category) || "General Services"}
-                    </span>
-                  </td>
-
-                  {/* Rating & Google Reviews */}
-                  <td className="py-3.5 px-3">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="flex items-center gap-1 text-amber-500 font-bold text-xs">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        {lead.rating || lead.raw?.rating || "4.5"}
-                      </span>
-                      {(lead.total_review || lead.raw?.total_review) && (
-                        <span className="text-[10px] text-[var(--dash-text-muted)]">
-                          ({lead.total_review || lead.raw?.total_review})
+                    {/* Lead Type */}
+                    <td className="py-3.5 px-3">
+                      {lead.is_outsource_agency || lead.lead_type === "agency_outsource" ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                          <Building className="w-3 h-3 text-emerald-400 shrink-0" />
+                          <span>Agency Partner</span>
+                        </span>
+                      ) : isOrganicInbound(lead) ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20 whitespace-nowrap">
+                          <Globe className="w-3 h-3 text-teal-400 shrink-0" />
+                          <span>Inbound Lead</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold bg-slate-500/10 text-slate-300 border border-slate-500/20 whitespace-nowrap">
+                          <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>Local Vendor</span>
                         </span>
                       )}
-                      {(lead.reviews || lead.raw?.reviews) && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20" title="Verified Customer Reviews Available">
-                          {(() => {
-                            try {
-                              const rawRev = lead.reviews || lead.raw?.reviews;
-                              const rList = typeof rawRev === "string" ? JSON.parse(rawRev) : rawRev;
-                              return `${Array.isArray(rList) ? rList.length : 1} reviews`;
-                            } catch {
-                              return "reviews";
-                            }
-                          })()}
-                        </span>
-                      )}
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="py-3.5 px-3">
-                    {lead.is_outsource_agency || lead.lead_type === "agency_outsource" ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                        Agency Partner
-                      </span>
-                    ) : (
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                        isOrganicInbound(lead)
-                          ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
-                          : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                      }`}>
-                        {isOrganicInbound(lead) ? "Inbound" : "Local Business"}
-                      </span>
-                    )}
-                  </td>
-
-                  <td className="py-3.5 px-3">
-                    <div className="flex flex-col gap-1 items-start">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
-                        lead.status.toLowerCase() === "interested"
-                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                          : lead.status.toLowerCase() === "outreach sent" || lead.status.toLowerCase() === "outreach_sent"
-                          ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
-                          : lead.status.toLowerCase() === "reply"
-                          ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                          : lead.status.toLowerCase() === "qualified"
-                          ? "bg-purple-500/10 text-purple-600 border-purple-500/20"
-                          : lead.status.toLowerCase() === "closed"
-                          ? "bg-indigo-500/10 text-indigo-600 border-indigo-500/20"
-                          : lead.status.toLowerCase() === "pending"
-                          ? "bg-slate-500/10 text-slate-500 border-slate-500/20"
-                          : "bg-rose-500/10 text-rose-500 border-rose-500/20"
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          lead.status.toLowerCase() === "interested"
-                            ? "bg-emerald-500"
+                    {/* Status */}
+                    <td className="py-3.5 px-3">
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border whitespace-nowrap ${
+                          lead.status.toLowerCase() === "interested" || lead.status.toLowerCase() === "converted"
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                             : lead.status.toLowerCase() === "outreach sent" || lead.status.toLowerCase() === "outreach_sent"
-                            ? "bg-blue-500"
+                            ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
                             : lead.status.toLowerCase() === "reply"
-                            ? "bg-amber-500"
+                            ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
                             : lead.status.toLowerCase() === "qualified"
-                            ? "bg-purple-500"
+                            ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
                             : lead.status.toLowerCase() === "closed"
-                            ? "bg-indigo-500"
+                            ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
                             : lead.status.toLowerCase() === "pending"
-                            ? "bg-slate-500"
-                            : "bg-rose-500"
-                        }`} />
-                        {lead.status}
-                      </span>
-                      {lead.status.toLowerCase() === "interested" && (
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border ${
-                          lead.source === "inquiry"
-                            ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
-                            : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                            ? "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                            : "bg-rose-500/10 text-rose-400 border-rose-500/20"
                         }`}>
-                          {lead.source === "inquiry" ? "✓ Details: Done" : "⏳ Details: Pending"}
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            lead.status.toLowerCase().includes("sent") || lead.status.toLowerCase() === "interested"
+                              ? "bg-emerald-400 animate-pulse"
+                              : lead.status.toLowerCase() === "reply"
+                              ? "bg-amber-400"
+                              : lead.status.toLowerCase() === "qualified"
+                              ? "bg-purple-400"
+                              : lead.status.toLowerCase() === "closed"
+                              ? "bg-indigo-400"
+                              : lead.status.toLowerCase() === "pending"
+                              ? "bg-slate-400"
+                              : "bg-rose-400"
+                          }`} />
+                          <span>{lead.status.toLowerCase() === "outreach_sent" ? "Outreach Sent" : lead.status}</span>
                         </span>
-                      )}
-                    </div>
-                  </td>
+                      </div>
+                    </td>
 
-                  <td className="py-3.5 px-3 text-center">
-                    <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 font-bold text-[11px] border border-emerald-500/20">
-                      {lead.score}
-                    </span>
-                  </td>
+                    {/* AI Score */}
+                    <td className="py-3.5 px-3 text-center">
+                      <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono font-bold text-[11px] border border-emerald-500/20">
+                        {lead.score || 85}
+                      </span>
+                    </td>
 
-                  <td className="py-3.5 px-3 text-[var(--dash-text-muted)] whitespace-nowrap font-mono text-[11px]">
-                    {formatISTDate(lead.created_at)}
-                  </td>
+                    {/* Date */}
+                    <td className="py-3.5 px-3 text-[var(--dash-text-muted)] whitespace-nowrap font-mono text-[11px]">
+                      {formatISTDate(lead.created_at, { month: "short", day: "numeric" })}
+                    </td>
 
-                  <td className="py-3.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-1">
-                      {(lead.maps_url || lead.raw?.maps_url) && (
-                        <a
-                          href={lead.maps_url || lead.raw?.maps_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 text-blue-500 hover:text-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 transition"
-                          title="Open on Google Maps"
-                        >
-                          <MapPin className="w-4 h-4" />
-                        </a>
-                      )}
-                      {canSendWhatsapp && (
+                    {/* Tactile Actions Toolbar */}
+                    <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1.5">
+                        {cleanPhone && (
+                          <a
+                            href={`tel:${cleanPhone}`}
+                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-[var(--dash-text-muted)] hover:text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
+                            title={`Direct Call: ${cleanPhone}`}
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        {canSendWhatsapp && (
+                          <button
+                            type="button"
+                            onClick={() => openWaModalForLead(lead)}
+                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
+                            title="Send WhatsApp Outreach Proposal"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {(lead.maps_url || lead.raw?.maps_url) && (
+                          <a
+                            href={lead.maps_url || lead.raw?.maps_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-[var(--dash-text-muted)] hover:text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
+                            title="Open on Google Maps"
+                          >
+                            <MapPin className="w-3.5 h-3.5" />
+                          </a>
+                        )}
                         <button
-                          onClick={() => openWaModalForLead(lead)}
-                          className="p-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
-                          title="Send WhatsApp Outreach Proposal"
+                          type="button"
+                          onClick={() => handleOpenLeadDrawer(lead)}
+                          className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-[var(--dash-surface)] text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] border border-[var(--dash-border)] transition cursor-pointer"
+                          title="View Full Lead Details"
                         >
-                          <MessageSquare className="w-4 h-4" />
+                          <Eye className="w-3.5 h-3.5" />
                         </button>
-                      )}
-                      {canDeleteLeads && (
-                        <button
-                          onClick={() => handleDeleteLead(lead)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
-                          title="Delete Lead"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+                        {canDeleteLeads && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteLead(lead)}
+                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-rose-500/15 text-[var(--dash-text-muted)] hover:text-rose-400 border border-[var(--dash-border)] hover:border-rose-500/30 transition cursor-pointer"
+                            title="Delete Lead"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -2467,7 +2513,7 @@ export default function LeadsManager() {
                       onClick={() => handlePageChange(p)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         currentPage === p
-                          ? "bg-indigo-600 text-white font-bold shadow-md shadow-indigo-500/30 cursor-default pointer-events-none"
+                          ? "bg-emerald-600 text-white font-bold shadow-md shadow-emerald-500/30 cursor-default pointer-events-none"
                           : "bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-neutral-800 cursor-pointer"
                       }`}
                     >
@@ -2532,7 +2578,7 @@ export default function LeadsManager() {
                         onClick={() => handlePageChange(p)}
                         className={`text-xs min-w-[32px] h-8 px-1.5 rounded-md font-bold flex items-center justify-center transition ${
                           currentPage === p
-                            ? "bg-indigo-600 text-white shadow-xs cursor-default pointer-events-none"
+                            ? "bg-emerald-600 text-white shadow-xs cursor-default pointer-events-none"
                             : "bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-300 cursor-pointer"
                         }`}
                       >

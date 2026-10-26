@@ -51,7 +51,8 @@ import {
   ShieldCheck,
   PhoneCall,
   Bell,
-  LayoutDashboard
+  LayoutDashboard,
+  Eye
 } from "lucide-react";
 import Link from "next/link";
 import { authFetch, API, clearAuthFetchCache } from "@/lib/authFetch";
@@ -530,6 +531,8 @@ export default function SuperAdminDashboard() {
           assignedTo: assignedName,
           assignedAvatar: assignedName.slice(0, 2).toUpperCase(),
           avatarColor: "bg-emerald-600",
+          lead_type: "inquiry",
+          is_outsource_agency: false,
           notes: []
         };
       });
@@ -565,7 +568,7 @@ export default function SuperAdminDashboard() {
         };
       });
 
-      let combined = [...inqMapped, ...scrMapped];
+      let combined = tablePage === 1 ? [...inqMapped, ...scrMapped] : [...scrMapped];
       combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       if (q) {
         combined = combined.filter(l =>
@@ -666,6 +669,8 @@ export default function SuperAdminDashboard() {
           assignedTo: assignedName,
           assignedAvatar: assignedName.slice(0, 2).toUpperCase(),
           avatarColor: "bg-emerald-600",
+          lead_type: "inquiry",
+          is_outsource_agency: false,
           notes: []
         };
       });
@@ -721,21 +726,23 @@ export default function SuperAdminDashboard() {
           assignedTo: l.assigned_to || user?.username || "Main Admin",
           assignedAvatar: (l.assigned_to || user?.username || "Main Admin").slice(0, 2).toUpperCase(),
           avatarColor: "bg-emerald-600",
+          lead_type: l.lead_type || (l.is_outsource_agency ? "agency_outsource" : "local_vendor"),
+          is_outsource_agency: Boolean(l.is_outsource_agency || l.lead_type === "agency_outsource"),
           notes: l.custom_notes || []
         };
       });
     } else {
       return [];
     }
-  }, [filteredData, activeTableTab, tableSearch, user]);
+  }, [filteredData, activeTableTab, tableSearch, user, tablePage]);
 
   const totalLeadsForTab = activeTableTab === "all"
-    ? tableDataset.length
+    ? ((totalScrapedCount || scrapedStats?.total || filteredData.currentScraped.length) + filteredData.currentInquiries.length)
     : activeTableTab === "inbound"
     ? filteredData.currentInquiries.length
     : activeTableTab === "messages_sent"
     ? tableDataset.length
-    : (totalScrapedCount || scrapedStats?.total || 1093);
+    : (totalScrapedCount || scrapedStats?.total || filteredData.currentScraped.length);
 
   const totalTablePages = Math.max(1, Math.ceil(totalLeadsForTab / tableLimit));
 
@@ -792,6 +799,10 @@ export default function SuperAdminDashboard() {
       // Scraped leads are already server-paginated to tableLimit items
       return tableDataset;
     }
+    if (activeTableTab === "all") {
+      // Combined leads on current page sliced to tableLimit
+      return tableDataset.slice(0, tableLimit);
+    }
     const offset = (tablePage - 1) * tableLimit;
     return tableDataset.slice(offset, offset + tableLimit);
   }, [tableDataset, tablePage, tableLimit, activeTableTab]);
@@ -802,7 +813,7 @@ export default function SuperAdminDashboard() {
       return;
     }
     setTablePage(newPage);
-    if (activeTableTab === "scraped") {
+    if (activeTableTab === "scraped" || activeTableTab === "all") {
       fetchTableLeads(newPage, tableLimit);
     }
   };
@@ -825,6 +836,35 @@ export default function SuperAdminDashboard() {
     if (next.has(id)) next.delete(id);
     else next.add(id);
     setSelectedRows(next);
+  };
+
+  // Quick single row delete
+  const handleDeleteSingleRow = async (item: any) => {
+    if (!item) return;
+    const title = item.title || "this lead";
+    if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+    try {
+      const leadKey = item.rawId || item.id;
+      const endpoint = item.source === "scraped"
+        ? `${API}/api/v1/scraped-leads/${leadKey}`
+        : `${API}/api/v1/leads/${leadKey}`;
+      const res = await authFetch(endpoint, { method: "DELETE" });
+      if (res.ok) {
+        if (item.source === "scraped") {
+          setScrapedLeads(prev => prev.filter(l => l.id !== leadKey));
+          setTotalScrapedCount(prev => Math.max(0, prev - 1));
+        } else {
+          setInquiryLeads(prev => prev.filter(l => l.id !== leadKey));
+        }
+        triggerToast("Lead deleted successfully");
+        if (activeTableTab === "scraped" || activeTableTab === "all") {
+          fetchTableLeads(tablePage, tableLimit);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to delete lead:", err);
+      triggerToast("Failed to delete lead");
+    }
   };
 
   // Helper to record an activity entry in localStorage and update state (deduplicated)
@@ -2113,100 +2153,144 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Desktop / Tablet Lead Table Content */}
+        {/* Desktop / Tablet Lead Table Content */}
         <div className="hidden md:block w-full overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse min-w-[800px]">
+          <table className="w-full text-left text-xs border-collapse min-w-[760px]">
             <thead>
               <tr style={{ background: "var(--dash-surface-alt)", borderBottom: "1px solid var(--dash-border)", color: "var(--dash-text-muted)" }} className="font-semibold">
-                <th className="py-3 px-4 w-8">
+                <th className="py-3.5 px-4 w-9">
                   <input
                     type="checkbox"
                     checked={paginatedTable.length > 0 && selectedRows.size === paginatedTable.length}
                     onChange={handleSelectAll}
-                    className="rounded cursor-pointer"
-                    style={{ accentColor: "var(--dash-primary)" }}
+                    className="rounded border-[var(--dash-border)] accent-[var(--dash-primary)] focus:ring-[var(--dash-primary)] cursor-pointer w-4 h-4"
                   />
                 </th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Lead Name</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Company</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Industry</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Rating &amp; Reviews</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Location</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Source</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Status</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px] text-center">Score</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Last Active</th>
-                <th className="py-3 px-3 uppercase tracking-wider text-[10px]">Assigned To</th>
-                <th className="py-3 px-3 text-right"></th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Lead / Contact</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Company &amp; City</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Service / Category</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Rating &amp; Reviews</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Lead Type</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Status</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px] text-center">Score</th>
+                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Date</th>
+                <th className="py-3.5 px-4 text-right uppercase tracking-wider text-[10px]">Actions</th>
               </tr>
             </thead>
-            <tbody style={{ borderTop: "1px solid var(--dash-border)" }}>
+            <tbody className="divide-y divide-[var(--dash-border)]">
               {paginatedTable.map((item) => {
                 const isSelected = selectedRows.has(item.id);
+                const cleanPhone = format10DigitPhone(item.phone);
                 return (
                   <tr
                     key={item.id}
                     onClick={() => handleOpenLeadDrawer(item)}
-                    className="transition cursor-pointer"
-                    style={{
-                      borderBottom: "1px solid var(--dash-border-subtle)",
-                      background: isSelected ? "var(--dash-primary-light)" : "transparent"
-                    }}
-                    onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--dash-surface-alt)"; }}
-                    onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
+                    className={`transition cursor-pointer group ${
+                      isSelected
+                        ? "bg-emerald-500/10"
+                        : "hover:bg-slate-500/5 dark:hover:bg-neutral-800/40"
+                    }`}
                   >
                     <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => handleToggleRow(item.id)}
-                        className="rounded cursor-pointer"
-                        style={{ accentColor: "var(--dash-primary)" }}
+                        className="rounded border-[var(--dash-border)] accent-[var(--dash-primary)] focus:ring-[var(--dash-primary)] cursor-pointer w-4 h-4"
                       />
                     </td>
+
+                    {/* Lead / Contact Details */}
                     <td className="py-3.5 px-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className={`w-8 h-8 ${item.avatarColor} text-white font-bold flex items-center justify-center text-xs shadow-sm shrink-0`} style={{ borderRadius: "var(--dash-card-radius)" }}>
-                          {item.title?.charAt(0)?.toUpperCase() || "?"}
+                      <div className="flex items-start gap-2.5 min-w-0 max-w-[240px]">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-600/15 border border-emerald-500/30 text-emerald-400 font-bold flex items-center justify-center text-xs shadow-xs shrink-0 mt-0.5">
+                          {item.title?.charAt(0)?.toUpperCase() || "L"}
                         </div>
-                        <div className="min-w-0 max-w-[190px]">
-                          <div className="font-semibold flex items-center gap-1.5 truncate" title={item.title} style={{ color: "var(--dash-text)" }}>
-                            <span className="truncate">{item.title}</span>
-                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--dash-primary)" }} />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-xs text-[var(--dash-text)] group-hover:text-emerald-400 transition-colors truncate" title={item.title}>
+                            {item.title}
                           </div>
-                          <div className="text-[11px] truncate max-w-[180px]" title={item.email || "No Email"} style={{ color: "var(--dash-text-muted)" }}>{item.email || "No Email"}</div>
+                          {cleanPhone ? (
+                            <a
+                              href={`tel:${cleanPhone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[11px] font-mono text-[var(--dash-text-secondary)] hover:text-emerald-400 transition truncate max-w-full mt-0.5"
+                              title={`Click to call ${cleanPhone}`}
+                            >
+                              <Phone className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
+                              <span>{cleanPhone}</span>
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-[var(--dash-text-muted)] italic block mt-0.5">No phone</span>
+                          )}
+                          <div className="mt-0.5">
+                            {item.email ? (
+                              <div className="text-[var(--dash-text-muted)] text-[11px] truncate max-w-[190px]" title={item.email}>
+                                {item.email}
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenLeadDrawer(item);
+                                }}
+                                className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-500 hover:text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 transition cursor-pointer"
+                              >
+                                <Plus className="w-2.5 h-2.5" />
+                                <span>Add Email</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3.5 px-3 font-semibold" style={{ color: "var(--dash-text)" }}>
-                      <div className="truncate max-w-[180px]" title={item.company}>
-                        {item.company}
+
+                    {/* Company & City */}
+                    <td className="py-3.5 px-3">
+                      <div className="min-w-0 max-w-[180px]">
+                        <div className="font-semibold text-xs text-[var(--dash-text)] truncate" title={item.company || item.title}>
+                          {item.company || item.title || "—"}
+                        </div>
+                        <div className="flex items-center gap-1 text-[11px] text-[var(--dash-text-muted)] mt-0.5 truncate" title={item.location || "Gujarat, India"}>
+                          <MapPin className="w-3 h-3 text-emerald-500/70 shrink-0" />
+                          <span className="truncate">{item.location || "Gujarat, India"}</span>
+                        </div>
                       </div>
                     </td>
-                    <td className="py-3.5 px-3" style={{ color: "var(--dash-text-secondary)" }}>
-                      <div className="truncate max-w-[200px]" title={item.industry}>
-                        {item.industry}
+
+                    {/* Industry / Service */}
+                    <td className="py-3.5 px-3">
+                      <div className="max-w-[200px]">
+                        <span
+                          className="inline-block px-2 py-0.5 rounded-md text-[11px] font-medium bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] text-[var(--dash-text-secondary)] truncate max-w-full"
+                          title={item.industry}
+                        >
+                          {item.industry || "Digital Services"}
+                        </span>
                       </div>
                     </td>
 
                     {/* Rating & Reviews */}
                     <td className="py-3.5 px-3">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="flex items-center gap-1 text-amber-500 font-bold text-xs">
-                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                          {(item as any).rating || item.raw?.rating || "4.5"}
-                        </span>
-                        {((item as any).total_review || item.raw?.total_review) && (
-                          <span className="text-[10px]" style={{ color: "var(--dash-text-muted)" }}>
-                            ({(item as any).total_review || item.raw?.total_review})
-                          </span>
-                        )}
-                        {((item as any).reviews || item.raw?.reviews) && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20" title="Google Reviews Available">
+                      <div className="flex flex-col gap-1 items-start">
+                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold text-xs">
+                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
+                          <span>{(item as any).rating || item.raw?.rating || "4.5"}</span>
+                          {((item as any).total_review || item.raw?.total_review) && (
+                            <span className="text-[10px] font-normal text-amber-400/80">
+                              ({(item as any).total_review || item.raw?.total_review})
+                            </span>
+                          )}
+                        </div>
+                        {(((item as any).reviews || item.raw?.reviews) || ((item as any).total_review || item.raw?.total_review)) && (
+                          <span className="text-[10px] text-[var(--dash-text-muted)] font-mono pl-0.5">
                             {(() => {
                               try {
                                 const rawRev = (item as any).reviews || item.raw?.reviews;
                                 const rList = typeof rawRev === "string" ? JSON.parse(rawRev) : rawRev;
-                                return `${Array.isArray(rList) ? rList.length : 1} reviews`;
+                                const count = Array.isArray(rList) ? rList.length : Number((item as any).total_review || item.raw?.total_review || 1);
+                                return `${count} reviews`;
                               } catch {
                                 return "reviews";
                               }
@@ -2216,69 +2300,123 @@ export default function SuperAdminDashboard() {
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-3" style={{ color: "var(--dash-text-secondary)" }}>
-                      <div className="truncate max-w-[160px]" title={item.location}>
-                        {item.location}
+                    {/* Lead Type / Source */}
+                    <td className="py-3.5 px-3">
+                      {item.is_outsource_agency || (item as any).lead_type === "agency_outsource" ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                          <Building2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                          <span>Agency Partner</span>
+                        </span>
+                      ) : item.source === "inquiry" ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20 whitespace-nowrap">
+                          <Globe className="w-3 h-3 text-teal-400 shrink-0" />
+                          <span>Inbound Lead</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold bg-slate-500/10 text-slate-300 border border-slate-500/20 whitespace-nowrap">
+                          <Database className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>Local Vendor</span>
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Status */}
+                    <td className="py-3.5 px-3">
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border whitespace-nowrap ${
+                          item.status?.toLowerCase() === "qualified" || item.status?.toLowerCase() === "converted" || item.status?.toLowerCase() === "interested"
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                            : item.status?.toLowerCase() === "contacted" || item.status?.toLowerCase().includes("sent")
+                            ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                            : item.status?.toLowerCase() === "reply"
+                            ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                            : item.status?.toLowerCase() === "closed"
+                            ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+                            : item.status?.toLowerCase() === "lost"
+                            ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                            : "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            item.status?.toLowerCase() === "contacted" || item.status?.toLowerCase().includes("sent") || item.status?.toLowerCase() === "interested"
+                              ? "bg-emerald-400 animate-pulse"
+                              : item.status?.toLowerCase() === "reply"
+                              ? "bg-amber-400"
+                              : item.status?.toLowerCase() === "qualified"
+                              ? "bg-emerald-400"
+                              : item.status?.toLowerCase() === "closed"
+                              ? "bg-indigo-400"
+                              : item.status?.toLowerCase() === "lost"
+                              ? "bg-rose-400"
+                              : "bg-slate-400"
+                          }`} />
+                          <span>{item.status}</span>
+                        </span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-3">
-                      <span className="crm-badge badge-neutral text-[10px]">
-                        {item.source}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-3">
-                      <span className={`crm-badge text-[11px] ${
-                        item.status?.toLowerCase() === "contacted"
-                          ? "badge-warning"
-                          : item.status?.toLowerCase() === "qualified" || item.status?.toLowerCase() === "featured" || item.status?.toLowerCase() === "converted"
-                          ? "badge-success"
-                          : item.status?.toLowerCase() === "lost"
-                          ? "badge-danger"
-                          : "badge-primary"
-                      }`}>
-                        <span className="w-1.5 h-1.5 rounded-full" style={{
-                          background: item.status?.toLowerCase() === "contacted" ? "var(--dash-warning)" : item.status?.toLowerCase() === "lost" ? "var(--dash-danger)" : "var(--dash-success)"
-                        }} />
-                        {item.status}
-                      </span>
-                    </td>
+
+                    {/* AI Fit Score */}
                     <td className="py-3.5 px-3 text-center">
-                      <span className="crm-badge badge-success text-[11px]">
-                        {item.score}
+                      <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono font-bold text-[11px] border border-emerald-500/20">
+                        {item.score || 85}
                       </span>
                     </td>
-                    <td className="py-3.5 px-3 whitespace-nowrap" style={{ color: "var(--dash-text-muted)" }}>
+
+                    {/* Date */}
+                    <td className="py-3.5 px-3 whitespace-nowrap font-mono text-[11px]" style={{ color: "var(--dash-text-muted)" }}>
                       {formatISTDate(item.date, { month: "short", day: "numeric" })}
                     </td>
-                    <td className="py-3.5 px-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-5 h-5 rounded-full text-[9px] font-bold flex items-center justify-center" style={{ background: "var(--dash-surface-alt)", color: "var(--dash-text)", border: "1px solid var(--dash-border)" }}>
-                          {item.assignedAvatar}
-                        </span>
-                        <span className="font-medium" style={{ color: "var(--dash-text)" }}>{item.assignedTo}</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1">
+
+                    {/* Tactile Actions Toolbar */}
+                    <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1.5">
+                        {cleanPhone && (
+                          <a
+                            href={`tel:${cleanPhone}`}
+                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-[var(--dash-text-muted)] hover:text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
+                            title={`Direct Call: ${cleanPhone}`}
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        {canSendWhatsapp && (
+                          <button
+                            type="button"
+                            onClick={() => openWaModalForLead(item)}
+                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
+                            title="Send WhatsApp Outreach Proposal"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                         {((item as any).maps_url || item.raw?.maps_url) && (
                           <a
                             href={(item as any).maps_url || item.raw?.maps_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1 rounded hover:bg-white/10 transition text-blue-500"
+                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-[var(--dash-text-muted)] hover:text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
                             title="Open on Google Maps"
                           >
-                            <MapPin className="w-4 h-4" />
+                            <MapPin className="w-3.5 h-3.5" />
                           </a>
                         )}
                         <button
+                          type="button"
                           onClick={() => handleOpenLeadDrawer(item)}
-                          className="p-1 cursor-pointer transition opacity-60 hover:opacity-100"
-                          style={{ color: "var(--dash-text-muted)" }}
-                          title="View Details"
+                          className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-[var(--dash-surface)] text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] border border-[var(--dash-border)] transition cursor-pointer"
+                          title="View Full Lead Details"
                         >
-                          <ChevronRight className="w-4 h-4" />
+                          <Eye className="w-3.5 h-3.5" />
                         </button>
+                        {canDeleteLeads && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSingleRow(item)}
+                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-rose-500/15 text-[var(--dash-text-muted)] hover:text-rose-400 border border-[var(--dash-border)] hover:border-rose-500/30 transition cursor-pointer"
+                            title="Delete Lead"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -2462,7 +2600,7 @@ export default function SuperAdminDashboard() {
                     const newLimit = Number(e.target.value);
                     setTableLimit(newLimit);
                     setTablePage(1);
-                    if (activeTableTab === "scraped") {
+                    if (activeTableTab === "scraped" || activeTableTab === "all") {
                       fetchTableLeads(1, newLimit);
                     }
                   }}
@@ -2532,7 +2670,7 @@ export default function SuperAdminDashboard() {
                       const newLimit = Number(e.target.value);
                       setTableLimit(newLimit);
                       setTablePage(1);
-                      if (activeTableTab === "scraped") {
+                      if (activeTableTab === "scraped" || activeTableTab === "all") {
                         fetchTableLeads(1, newLimit);
                       }
                     }}
