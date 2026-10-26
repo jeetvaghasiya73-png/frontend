@@ -735,6 +735,38 @@ export default function LeadsManager() {
     }
   };
 
+  const handleToggleAgencyLeadType = async () => {
+    if (!selectedLead) return;
+    const leadKey = selectedLead.rawId || selectedLead.id;
+    const currentIsAgency = Boolean(selectedLead.is_outsource_agency || selectedLead.lead_type === "agency_outsource");
+    const nextIsAgency = !currentIsAgency;
+    const nextLeadType = nextIsAgency ? "agency_outsource" : "local_vendor";
+
+    try {
+      const res = await authFetch(`${API}/api/v1/scraped-leads/${leadKey}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          is_outsource_agency: nextIsAgency,
+          lead_type: nextLeadType,
+        })
+      });
+
+      if (res.ok) {
+        setSelectedLead((prev: any) => prev ? { ...prev, is_outsource_agency: nextIsAgency, lead_type: nextLeadType } : null);
+        setAllLeads((prev) =>
+          prev.map((l) => (l.rawId === leadKey ? { ...l, is_outsource_agency: nextIsAgency, lead_type: nextLeadType } : l))
+        );
+        triggerToast(nextIsAgency ? "Updated lead to Agency Partner" : "Updated lead to Local Vendor");
+      } else {
+        triggerToast("Failed to switch lead type");
+      }
+    } catch (err) {
+      console.error("Failed to switch lead type:", err);
+      triggerToast("Error updating lead type");
+    }
+  };
+
   // Open Lead Drawer with persistent notes and activity history
   const handleOpenLeadDrawer = (lead: NormalizedLead) => {
     const leadKey = lead.rawId || lead.id;
@@ -2625,17 +2657,25 @@ export default function LeadsManager() {
                 </span>
 
                 {selectedLead.is_outsource_agency || selectedLead.lead_type === "agency_outsource" ? (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
-                    Agency Outsource
-                  </span>
+                  <button
+                    type="button"
+                    onClick={handleToggleAgencyLeadType}
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/30 transition cursor-pointer shrink-0"
+                    title="Click to toggle between Agency Partner and Local Vendor"
+                  >
+                    <Building className="w-3 h-3 text-emerald-400" />
+                    <span>Agency Partner</span>
+                  </button>
                 ) : (
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border shrink-0 ${
-                    isOrganicInbound(selectedLead)
-                      ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
-                      : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                  }`}>
-                    {isOrganicInbound(selectedLead) ? "Inbound" : "Local Business"}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={handleToggleAgencyLeadType}
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-500/10 text-slate-300 hover:bg-slate-500/20 border border-slate-500/20 transition cursor-pointer shrink-0"
+                    title="Click to toggle between Agency Partner and Local Vendor"
+                  >
+                    <Building2 className="w-3 h-3 text-slate-400" />
+                    <span>Local Vendor</span>
+                  </button>
                 )}
               </div>
 
