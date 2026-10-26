@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { authFetch, API, clearAuthFetchCache } from "@/lib/authFetch";
 import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTDateTime, matchesSimilaritySearch } from "@/lib/formatters";
+import { FormattedWhatsAppMessage } from "@/components/admin/FormattedWhatsAppMessage";
 
 type SourceFilter = "all" | "agency" | "scraped" | "inquiry";
 
@@ -2868,9 +2869,31 @@ export default function LeadsManager() {
 
               {/* TAB 1: OVERVIEW & INTEL */}
               {leadDrawerTab === "overview" && (
-                <div className="space-y-4 animate-fadeIn">
+                <div className="space-y-4 animate-fadeIn min-w-0 max-w-full">
+                  {/* Highlighted Inbound WhatsApp Reply Banner (If Received) */}
+                  {selectedLead.raw?.whatsapp_last_reply && (
+                    <div className="min-w-0 max-w-full space-y-1.5">
+                      <div className="flex items-center justify-between px-0.5">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>Latest Customer WhatsApp Reply</span>
+                        </span>
+                        <span className="text-[10px] text-amber-500/80 font-mono">
+                          {selectedLead.raw?.whatsapp_reply_at ? formatISTDateTime(selectedLead.raw.whatsapp_reply_at) : "Active"}
+                        </span>
+                      </div>
+                      <FormattedWhatsAppMessage
+                        message={selectedLead.raw.whatsapp_last_reply}
+                        senderType="inbound"
+                        timestamp={selectedLead.raw?.whatsapp_reply_at}
+                        phoneNumber={selectedLead.phone}
+                        leadTitle={selectedLead.name}
+                      />
+                    </div>
+                  )}
+
                   {/* Campaign Status Card */}
-                  <div className="crm-card p-4 space-y-3">
+                  <div className="crm-card p-4 space-y-3 min-w-0 max-w-full overflow-hidden">
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--dash-text-muted)]">
                         Outreach Status &amp; Bot AI
@@ -3063,15 +3086,15 @@ export default function LeadsManager() {
 
                   {/* Inbound Customer Requirements (If Any) */}
                   {selectedLead.source === "inquiry" && selectedLead.message && (
-                    <div className="crm-card p-4 space-y-2 border-indigo-500/30 bg-indigo-500/5">
+                    <div className="crm-card p-4 space-y-2 border-indigo-500/30 bg-indigo-500/5 min-w-0 max-w-full overflow-hidden">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">
                         Client Inquiry Message
                       </h4>
-                      <p className="text-xs leading-relaxed text-[var(--dash-text)] italic">
+                      <p className="text-xs leading-relaxed text-[var(--dash-text)] italic break-words [overflow-wrap:anywhere]">
                         "{selectedLead.message}"
                       </p>
                       {selectedLead.services && selectedLead.services.length > 0 && (
-                        <div className="text-xs text-[var(--dash-text-muted)] pt-1">
+                        <div className="text-xs text-[var(--dash-text-muted)] pt-1 break-words">
                           Requested Services: <strong className="text-[var(--dash-text)]">{selectedLead.services.join(", ")}</strong>
                         </div>
                       )}
@@ -3082,20 +3105,20 @@ export default function LeadsManager() {
 
               {/* TAB 2: ACTIVITY TIMELINE */}
               {leadDrawerTab === "timeline" && (
-                <div className="crm-card p-4 space-y-3.5 animate-fadeIn">
+                <div className="crm-card p-4 space-y-3.5 animate-fadeIn min-w-0 max-w-full overflow-hidden">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--dash-text-muted)]">
                     Audit Trail &amp; Prospect Activity
                   </h4>
 
-                  <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[var(--dash-border)]">
+                  <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[var(--dash-border)] min-w-0 max-w-full">
                     {/* Follow-up reminder */}
                     {selectedLead.followupDate && (
-                      <div className="relative">
+                      <div className="relative min-w-0 max-w-full">
                         <span className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-cyan-500 ring-4 ring-cyan-500/20 animate-pulse" />
                         <div className="text-xs font-bold text-cyan-500">
                           📅 Scheduled Follow-up
                         </div>
-                        <div className="text-[11px] text-[var(--dash-text-muted)] mt-0.5">
+                        <div className="text-[11px] text-[var(--dash-text-muted)] mt-0.5 break-words">
                           Reminder set for: <strong className="text-[var(--dash-text)]">{selectedLead.followupDate}</strong>
                         </div>
                       </div>
@@ -3103,37 +3126,38 @@ export default function LeadsManager() {
 
                     {/* Customer Reply Event */}
                     {selectedLead.raw?.whatsapp_last_reply && (
-                      <div className="relative">
-                        <span className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-amber-500/20" />
-                        <div className="text-xs font-bold text-amber-500">
-                          💬 Inbound WhatsApp Reply Received
+                      <div className="relative min-w-0 max-w-full">
+                        <span className="absolute -left-6 top-2 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-amber-500/20" />
+                        <div className="min-w-0 max-w-full">
+                          <FormattedWhatsAppMessage
+                            message={selectedLead.raw.whatsapp_last_reply}
+                            senderType="inbound"
+                            timestamp={selectedLead.raw?.whatsapp_reply_at}
+                            phoneNumber={selectedLead.phone}
+                            leadTitle={selectedLead.name}
+                          />
                         </div>
-                        <div className="text-xs mt-1 italic p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300">
-                          "{selectedLead.raw.whatsapp_last_reply}"
-                        </div>
-                        {selectedLead.raw?.whatsapp_reply_at && (
-                          <div className="text-[10px] text-[var(--dash-text-muted)] mt-1">
-                            {formatISTDateTime(selectedLead.raw.whatsapp_reply_at)}
-                          </div>
-                        )}
                       </div>
                     )}
 
                     {/* WhatsApp Proposal Dispatched */}
                     {selectedLead.raw?.whatsapp_status && selectedLead.raw.whatsapp_status !== "pending" && (
-                      <div className="relative">
-                        <span className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
-                        <div className="text-xs font-bold text-emerald-500">
-                          📱 WhatsApp Outreach Dispatched
+                      <div className="relative min-w-0 max-w-full">
+                        <span className="absolute -left-6 top-2 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
+                        <div className="min-w-0 max-w-full">
+                          <FormattedWhatsAppMessage
+                            message={
+                              selectedLead.is_outsource_agency || selectedLead.lead_type === "agency_outsource"
+                                ? `Hi ${selectedLead.name}! We provide reliable white-label backend outsourcing for agencies — Full-Stack Web/App Development, Technical SEO, Day-to-Day Workflow/CRM Automations, and Web Scraping.`
+                                : `Hi ${selectedLead.name}! We noticed your business in ${selectedLead.city || "your area"} and would love to help you scale your local reach and digital conversions with our end-to-end tech solutions.`
+                            }
+                            senderType="outbound"
+                            status={selectedLead.raw.whatsapp_status}
+                            timestamp={selectedLead.raw?.whatsapp_sent_at}
+                            phoneNumber={selectedLead.phone}
+                            leadTitle={selectedLead.name}
+                          />
                         </div>
-                        <div className="text-xs text-[var(--dash-text-muted)] mt-0.5">
-                          Interactive proposal sent. Status: <span className="font-bold uppercase text-emerald-500">{selectedLead.raw.whatsapp_status}</span>
-                        </div>
-                        {selectedLead.raw?.whatsapp_sent_at && (
-                          <div className="text-[10px] text-[var(--dash-text-muted)] mt-1">
-                            {formatISTDateTime(selectedLead.raw.whatsapp_sent_at)}
-                          </div>
-                        )}
                       </div>
                     )}
 

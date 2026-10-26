@@ -57,6 +57,7 @@ import Link from "next/link";
 import { authFetch, API, clearAuthFetchCache } from "@/lib/authFetch";
 import { ADMIN_PATH } from "@/lib/config";
 import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTDateTime, formatISTTime, matchesSimilaritySearch } from "@/lib/formatters";
+import { FormattedWhatsAppMessage } from "@/components/admin/FormattedWhatsAppMessage";
 import {
   ResponsiveContainer,
   BarChart,
@@ -3010,7 +3011,7 @@ export default function SuperAdminDashboard() {
 
               {/* 100% Dynamic Activity History Timeline */}
               <div
-                className="p-3 sm:p-4 space-y-2.5 sm:space-y-3"
+                className="p-3 sm:p-4 space-y-2.5 sm:space-y-3 min-w-0 max-w-full overflow-hidden"
                 style={{
                   border: "1px solid var(--dash-border)",
                   borderRadius: "var(--dash-card-radius)"
@@ -3020,17 +3021,17 @@ export default function SuperAdminDashboard() {
                   Activity History
                 </h4>
                 <div
-                  className="relative pl-5 space-y-3.5 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5"
+                  className="relative pl-5 space-y-3.5 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 min-w-0 max-w-full"
                   style={{ color: "var(--dash-border)" }}
                 >
                   {/* 1. Active Follow-up Reminder (Single, deduplicated) */}
                   {selectedLead.followupDate && (
-                    <div className="relative">
+                    <div className="relative min-w-0 max-w-full">
                       <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-cyan-500 animate-pulse" />
                       <div className="text-xs font-bold text-cyan-500">
                         📅 Active Follow-up Scheduled
                       </div>
-                      <div className="text-[11px] mt-0.5" style={{ color: "var(--dash-text-secondary)" }}>
+                      <div className="text-[11px] mt-0.5 break-words" style={{ color: "var(--dash-text-secondary)" }}>
                         Reminder set for: <strong className="text-[var(--dash-text)]">{selectedLead.followupDate}</strong>
                       </div>
                     </div>
@@ -3038,37 +3039,38 @@ export default function SuperAdminDashboard() {
 
                   {/* 2. Customer Inbound WhatsApp Reply (Real DB Event) */}
                   {selectedLead.raw?.whatsapp_last_reply && (
-                    <div className="relative">
-                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-amber-500" />
-                      <div className="text-xs font-bold text-amber-500">
-                        💬 Inbound Customer Reply Received
+                    <div className="relative min-w-0 max-w-full">
+                      <span className="absolute -left-5 top-2 w-2.5 h-2.5 rounded-full bg-amber-500" />
+                      <div className="min-w-0 max-w-full">
+                        <FormattedWhatsAppMessage
+                          message={selectedLead.raw.whatsapp_last_reply}
+                          senderType="inbound"
+                          timestamp={selectedLead.raw?.whatsapp_reply_at}
+                          phoneNumber={selectedLead.phone}
+                          leadTitle={selectedLead.title || selectedLead.company}
+                        />
                       </div>
-                      <div className="text-[11px] mt-0.5 italic p-2 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400">
-                        "{selectedLead.raw.whatsapp_last_reply}"
-                      </div>
-                      {selectedLead.raw?.whatsapp_reply_at && (
-                        <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
-                          {formatISTDateTime(selectedLead.raw.whatsapp_reply_at)}
-                        </div>
-                      )}
                     </div>
                   )}
 
                   {/* 3. Outbound WhatsApp Proposal Dispatched (Real DB Event) */}
                   {selectedLead.raw?.whatsapp_status && selectedLead.raw.whatsapp_status !== "pending" && (
-                    <div className="relative">
-                      <span className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                      <div className="text-xs font-bold text-emerald-500">
-                        📱 WhatsApp Pitch Dispatched
+                    <div className="relative min-w-0 max-w-full">
+                      <span className="absolute -left-5 top-2 w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                      <div className="min-w-0 max-w-full">
+                        <FormattedWhatsAppMessage
+                          message={
+                            selectedLead.is_outsource_agency || selectedLead.lead_type === "agency_outsource"
+                              ? `Hi ${selectedLead.title || "there"}! We provide reliable white-label backend outsourcing for agencies — Full-Stack Web/App Development, Technical SEO, Day-to-Day Workflow/CRM Automations, and Web Scraping.`
+                              : `Hi ${selectedLead.title || "there"}! We noticed your business in ${selectedLead.location || "your area"} and would love to help you scale your digital presence with our end-to-end tech solutions.`
+                          }
+                          senderType="outbound"
+                          status={selectedLead.raw.whatsapp_status}
+                          timestamp={selectedLead.raw?.whatsapp_sent_at}
+                          phoneNumber={selectedLead.phone}
+                          leadTitle={selectedLead.title || selectedLead.company}
+                        />
                       </div>
-                      <div className="text-[11px] mt-0.5" style={{ color: "var(--dash-text-secondary)" }}>
-                        Interactive proposal card delivered with CTAs. Status: <span className="font-bold uppercase text-emerald-500">{selectedLead.raw.whatsapp_status}</span>
-                      </div>
-                      {selectedLead.raw?.whatsapp_sent_at && (
-                        <div className="text-[10px] mt-0.5" style={{ color: "var(--dash-text-muted)" }}>
-                          {formatISTDateTime(selectedLead.raw.whatsapp_sent_at)}
-                        </div>
-                      )}
                     </div>
                   )}
 

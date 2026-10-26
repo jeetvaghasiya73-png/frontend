@@ -60,6 +60,7 @@ import {
 import { authFetch, API } from "@/lib/authFetch";
 import { useAuthStore } from "@/lib/authStore";
 import { isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTTime, formatISTDateTime } from "@/lib/formatters";
+import { FormattedWhatsAppMessage } from "@/components/admin/FormattedWhatsAppMessage";
 import {
   ResponsiveContainer,
   BarChart,
@@ -3197,6 +3198,22 @@ export default function WhatsAppOutreachPage() {
                 </p>
               </div>
             </div>
+
+            {/* WhatsApp Communication History */}
+            {selectedLeadModal.whatsapp_last_reply && (
+              <div className="space-y-1.5 min-w-0 max-w-full">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Customer WhatsApp Reply</span>
+                </span>
+                <FormattedWhatsAppMessage
+                  message={selectedLeadModal.whatsapp_last_reply}
+                  senderType="inbound"
+                  phoneNumber={selectedLeadModal.bussiness_number}
+                  leadTitle={selectedLeadModal.bussiness_name}
+                />
+              </div>
+            )}
 
             {/* Footer */}
             <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[var(--dash-border)]">
