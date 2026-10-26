@@ -149,6 +149,8 @@ export default function SuperAdminDashboard() {
     scraped_service: "",
     category: "",
     bussiness_website: "",
+    is_outsource_agency: false,
+    lead_type: "local_vendor",
   });
   const [submittingNewLead, setSubmittingNewLead] = useState(false);
 
@@ -1544,6 +1546,8 @@ export default function SuperAdminDashboard() {
           scraped_service: "",
           category: "",
           bussiness_website: "",
+          is_outsource_agency: false,
+          lead_type: "local_vendor",
         });
         setShowAddLeadModal(false);
         setActiveTableTab("all");
@@ -2153,28 +2157,27 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Desktop / Tablet Lead Table Content */}
-        {/* Desktop / Tablet Lead Table Content */}
-        <div className="hidden md:block w-full overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse min-w-[760px]">
+        <div className="hidden md:block w-full overflow-hidden">
+          <table className="w-full text-left text-xs border-collapse table-auto">
             <thead>
               <tr style={{ background: "var(--dash-surface-alt)", borderBottom: "1px solid var(--dash-border)", color: "var(--dash-text-muted)" }} className="font-semibold">
-                <th className="py-3.5 px-4 w-9">
+                <th className="py-2.5 px-3 w-8">
                   <input
                     type="checkbox"
                     checked={paginatedTable.length > 0 && selectedRows.size === paginatedTable.length}
                     onChange={handleSelectAll}
-                    className="rounded border-[var(--dash-border)] accent-[var(--dash-primary)] focus:ring-[var(--dash-primary)] cursor-pointer w-4 h-4"
+                    className="rounded border-[var(--dash-border)] accent-[var(--dash-primary)] focus:ring-[var(--dash-primary)] cursor-pointer w-3.5 h-3.5"
                   />
                 </th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Lead / Contact</th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Company &amp; City</th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Service / Category</th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Rating &amp; Reviews</th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Lead Type</th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Status</th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px] text-center">Score</th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Date</th>
-                <th className="py-3.5 px-4 text-right uppercase tracking-wider text-[10px]">Actions</th>
+                <th className="py-2.5 px-2 uppercase tracking-wider text-[10px]">Lead / Contact</th>
+                <th className="py-2.5 px-2 uppercase tracking-wider text-[10px]">Company &amp; City</th>
+                <th className="py-2.5 px-2 uppercase tracking-wider text-[10px]">Service / Category</th>
+                <th className="py-2.5 px-2 uppercase tracking-wider text-[10px]">Rating</th>
+                <th className="py-2.5 px-2 uppercase tracking-wider text-[10px]">Lead Type</th>
+                <th className="py-2.5 px-2 uppercase tracking-wider text-[10px]">Status</th>
+                <th className="py-2.5 px-1.5 uppercase tracking-wider text-[10px] text-center">Score</th>
+                <th className="py-2.5 px-2 uppercase tracking-wider text-[10px]">Date</th>
+                <th className="py-2.5 px-3 text-right uppercase tracking-wider text-[10px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--dash-border)]">
@@ -2191,19 +2194,19 @@ export default function SuperAdminDashboard() {
                         : "hover:bg-slate-500/5 dark:hover:bg-neutral-800/40"
                     }`}
                   >
-                    <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => handleToggleRow(item.id)}
-                        className="rounded border-[var(--dash-border)] accent-[var(--dash-primary)] focus:ring-[var(--dash-primary)] cursor-pointer w-4 h-4"
+                        className="rounded border-[var(--dash-border)] accent-[var(--dash-primary)] focus:ring-[var(--dash-primary)] cursor-pointer w-3.5 h-3.5"
                       />
                     </td>
 
                     {/* Lead / Contact Details */}
-                    <td className="py-3.5 px-3">
-                      <div className="flex items-start gap-2.5 min-w-0 max-w-[240px]">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-600/15 border border-emerald-500/30 text-emerald-400 font-bold flex items-center justify-center text-xs shadow-xs shrink-0 mt-0.5">
+                    <td className="py-2.5 px-2">
+                      <div className="flex items-start gap-2 min-w-0 max-w-[200px]">
+                        <div className="w-7 h-7 rounded-md bg-emerald-600/15 border border-emerald-500/30 text-emerald-400 font-bold flex items-center justify-center text-[11px] shadow-xs shrink-0 mt-0.5">
                           {item.title?.charAt(0)?.toUpperCase() || "L"}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -2225,7 +2228,7 @@ export default function SuperAdminDashboard() {
                           )}
                           <div className="mt-0.5">
                             {item.email ? (
-                              <div className="text-[var(--dash-text-muted)] text-[11px] truncate max-w-[190px]" title={item.email}>
+                              <div className="text-[var(--dash-text-muted)] text-[11px] truncate max-w-[150px]" title={item.email}>
                                 {item.email}
                               </div>
                             ) : (
@@ -2247,23 +2250,23 @@ export default function SuperAdminDashboard() {
                     </td>
 
                     {/* Company & City */}
-                    <td className="py-3.5 px-3">
-                      <div className="min-w-0 max-w-[180px]">
+                    <td className="py-2.5 px-2">
+                      <div className="min-w-0 max-w-[150px]">
                         <div className="font-semibold text-xs text-[var(--dash-text)] truncate" title={item.company || item.title}>
                           {item.company || item.title || "—"}
                         </div>
                         <div className="flex items-center gap-1 text-[11px] text-[var(--dash-text-muted)] mt-0.5 truncate" title={item.location || "Gujarat, India"}>
-                          <MapPin className="w-3 h-3 text-emerald-500/70 shrink-0" />
+                          <MapPin className="w-2.5 h-2.5 text-emerald-500/70 shrink-0" />
                           <span className="truncate">{item.location || "Gujarat, India"}</span>
                         </div>
                       </div>
                     </td>
 
                     {/* Industry / Service */}
-                    <td className="py-3.5 px-3">
-                      <div className="max-w-[200px]">
+                    <td className="py-2.5 px-2">
+                      <div className="max-w-[160px]">
                         <span
-                          className="inline-block px-2 py-0.5 rounded-md text-[11px] font-medium bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] text-[var(--dash-text-secondary)] truncate max-w-full"
+                          className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] text-[var(--dash-text-secondary)] truncate max-w-full"
                           title={item.industry}
                         >
                           {item.industry || "Digital Services"}
@@ -2272,107 +2275,89 @@ export default function SuperAdminDashboard() {
                     </td>
 
                     {/* Rating & Reviews */}
-                    <td className="py-3.5 px-3">
-                      <div className="flex flex-col gap-1 items-start">
-                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold text-xs">
-                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
-                          <span>{(item as any).rating || item.raw?.rating || "4.5"}</span>
-                          {((item as any).total_review || item.raw?.total_review) && (
-                            <span className="text-[10px] font-normal text-amber-400/80">
-                              ({(item as any).total_review || item.raw?.total_review})
-                            </span>
-                          )}
-                        </div>
-                        {(((item as any).reviews || item.raw?.reviews) || ((item as any).total_review || item.raw?.total_review)) && (
-                          <span className="text-[10px] text-[var(--dash-text-muted)] font-mono pl-0.5">
-                            {(() => {
-                              try {
-                                const rawRev = (item as any).reviews || item.raw?.reviews;
-                                const rList = typeof rawRev === "string" ? JSON.parse(rawRev) : rawRev;
-                                const count = Array.isArray(rList) ? rList.length : Number((item as any).total_review || item.raw?.total_review || 1);
-                                return `${count} reviews`;
-                              } catch {
-                                return "reviews";
-                              }
-                            })()}
+                    <td className="py-2.5 px-2">
+                      <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold text-xs whitespace-nowrap">
+                        <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                        <span>{(item as any).rating || item.raw?.rating || "4.5"}</span>
+                        {((item as any).total_review || item.raw?.total_review) && (
+                          <span className="text-[10px] font-normal text-amber-400/80">
+                            ({(item as any).total_review || item.raw?.total_review})
                           </span>
                         )}
                       </div>
                     </td>
 
                     {/* Lead Type / Source */}
-                    <td className="py-3.5 px-3">
+                    <td className="py-2.5 px-2">
                       {item.is_outsource_agency || (item as any).lead_type === "agency_outsource" ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
                           <Building2 className="w-3 h-3 text-emerald-400 shrink-0" />
-                          <span>Agency Partner</span>
+                          <span>Agency</span>
                         </span>
                       ) : item.source === "inquiry" ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20 whitespace-nowrap">
                           <Globe className="w-3 h-3 text-teal-400 shrink-0" />
-                          <span>Inbound Lead</span>
+                          <span>Inbound</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold bg-slate-500/10 text-slate-300 border border-slate-500/20 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-500/10 text-slate-300 border border-slate-500/20 whitespace-nowrap">
                           <Database className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span>Local Vendor</span>
+                          <span>Vendor</span>
                         </span>
                       )}
                     </td>
 
                     {/* Status */}
-                    <td className="py-3.5 px-3">
-                      <div className="flex flex-col gap-1 items-start">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border whitespace-nowrap ${
-                          item.status?.toLowerCase() === "qualified" || item.status?.toLowerCase() === "converted" || item.status?.toLowerCase() === "interested"
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            : item.status?.toLowerCase() === "contacted" || item.status?.toLowerCase().includes("sent")
-                            ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                    <td className="py-2.5 px-2">
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold border whitespace-nowrap ${
+                        item.status?.toLowerCase() === "qualified" || item.status?.toLowerCase() === "converted" || item.status?.toLowerCase() === "interested"
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          : item.status?.toLowerCase() === "contacted" || item.status?.toLowerCase().includes("sent")
+                          ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                          : item.status?.toLowerCase() === "reply"
+                          ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                          : item.status?.toLowerCase() === "closed"
+                          ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+                          : item.status?.toLowerCase() === "lost"
+                          ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                          : "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          item.status?.toLowerCase() === "contacted" || item.status?.toLowerCase().includes("sent") || item.status?.toLowerCase() === "interested"
+                            ? "bg-emerald-400 animate-pulse"
                             : item.status?.toLowerCase() === "reply"
-                            ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                            ? "bg-amber-400"
+                            : item.status?.toLowerCase() === "qualified"
+                            ? "bg-emerald-400"
                             : item.status?.toLowerCase() === "closed"
-                            ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+                            ? "bg-indigo-400"
                             : item.status?.toLowerCase() === "lost"
-                            ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                            : "bg-slate-500/10 text-slate-400 border-slate-500/20"
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                            item.status?.toLowerCase() === "contacted" || item.status?.toLowerCase().includes("sent") || item.status?.toLowerCase() === "interested"
-                              ? "bg-emerald-400 animate-pulse"
-                              : item.status?.toLowerCase() === "reply"
-                              ? "bg-amber-400"
-                              : item.status?.toLowerCase() === "qualified"
-                              ? "bg-emerald-400"
-                              : item.status?.toLowerCase() === "closed"
-                              ? "bg-indigo-400"
-                              : item.status?.toLowerCase() === "lost"
-                              ? "bg-rose-400"
-                              : "bg-slate-400"
-                          }`} />
-                          <span>{item.status}</span>
-                        </span>
-                      </div>
+                            ? "bg-rose-400"
+                            : "bg-slate-400"
+                        }`} />
+                        <span>{item.status?.toLowerCase().includes("sent") ? "Sent" : item.status}</span>
+                      </span>
                     </td>
 
                     {/* AI Fit Score */}
-                    <td className="py-3.5 px-3 text-center">
-                      <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono font-bold text-[11px] border border-emerald-500/20">
+                    <td className="py-2.5 px-1.5 text-center">
+                      <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold text-[11px] border border-emerald-500/20">
                         {item.score || 85}
                       </span>
                     </td>
 
                     {/* Date */}
-                    <td className="py-3.5 px-3 whitespace-nowrap font-mono text-[11px]" style={{ color: "var(--dash-text-muted)" }}>
+                    <td className="py-2.5 px-2 whitespace-nowrap font-mono text-[11px]" style={{ color: "var(--dash-text-muted)" }}>
                       {formatISTDate(item.date, { month: "short", day: "numeric" })}
                     </td>
 
                     {/* Tactile Actions Toolbar */}
-                    <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-2.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1">
                         {cleanPhone && (
                           <a
                             href={`tel:${cleanPhone}`}
-                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-[var(--dash-text-muted)] hover:text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
+                            className="p-1 rounded-md bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-[var(--dash-text-muted)] hover:text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
                             title={`Direct Call: ${cleanPhone}`}
                           >
                             <Phone className="w-3.5 h-3.5" />
@@ -2382,7 +2367,7 @@ export default function SuperAdminDashboard() {
                           <button
                             type="button"
                             onClick={() => openWaModalForLead(item)}
-                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
+                            className="p-1 rounded-md bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
                             title="Send WhatsApp Outreach Proposal"
                           >
                             <MessageSquare className="w-3.5 h-3.5" />
@@ -2393,7 +2378,7 @@ export default function SuperAdminDashboard() {
                             href={(item as any).maps_url || item.raw?.maps_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-[var(--dash-text-muted)] hover:text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
+                            className="p-1 rounded-md bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-[var(--dash-text-muted)] hover:text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
                             title="Open on Google Maps"
                           >
                             <MapPin className="w-3.5 h-3.5" />
@@ -2402,7 +2387,7 @@ export default function SuperAdminDashboard() {
                         <button
                           type="button"
                           onClick={() => handleOpenLeadDrawer(item)}
-                          className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-[var(--dash-surface)] text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] border border-[var(--dash-border)] transition cursor-pointer"
+                          className="p-1 rounded-md bg-[var(--dash-surface-alt)] hover:bg-[var(--dash-surface)] text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] border border-[var(--dash-border)] transition cursor-pointer"
                           title="View Full Lead Details"
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -2411,7 +2396,7 @@ export default function SuperAdminDashboard() {
                           <button
                             type="button"
                             onClick={() => handleDeleteSingleRow(item)}
-                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-rose-500/15 text-[var(--dash-text-muted)] hover:text-rose-400 border border-[var(--dash-border)] hover:border-rose-500/30 transition cursor-pointer"
+                            className="p-1 rounded-md bg-[var(--dash-surface-alt)] hover:bg-rose-500/15 text-[var(--dash-text-muted)] hover:text-rose-400 border border-[var(--dash-border)] hover:border-rose-500/30 transition cursor-pointer"
                             title="Delete Lead"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -3892,6 +3877,44 @@ export default function SuperAdminDashboard() {
                   onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_website: e.target.value })}
                   className="crm-input w-full"
                 />
+              </div>
+
+              {/* Agency / Outsource Partner Checkbox */}
+              <div className="p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 flex items-center justify-between cursor-pointer hover:bg-emerald-500/10 transition"
+                onClick={() => {
+                  const nextVal = !newLeadForm.is_outsource_agency;
+                  setNewLeadForm({
+                    ...newLeadForm,
+                    is_outsource_agency: nextVal,
+                    lead_type: nextVal ? "agency_outsource" : "local_vendor",
+                  });
+                }}
+              >
+                <div className="flex items-center gap-2.5">
+                  <input
+                    type="checkbox"
+                    id="is_outsource_agency_single_dash"
+                    checked={newLeadForm.is_outsource_agency}
+                    onChange={(e) => {
+                      setNewLeadForm({
+                        ...newLeadForm,
+                        is_outsource_agency: e.target.checked,
+                        lead_type: e.target.checked ? "agency_outsource" : "local_vendor",
+                      });
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-4 h-4 rounded border-emerald-500/50 accent-emerald-500 cursor-pointer"
+                  />
+                  <div>
+                    <label htmlFor="is_outsource_agency_single_dash" className="text-xs font-bold text-emerald-400 block cursor-pointer">
+                      Agency / Outsource Partner Lead
+                    </label>
+                    <p className="text-[11px] text-[var(--dash-text-muted)]">
+                      Check this to route into Agency Outreach template &amp; partner pipelines for testing.
+                    </p>
+                  </div>
+                </div>
+                <Building2 className="w-4 h-4 text-emerald-400 shrink-0" />
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3">

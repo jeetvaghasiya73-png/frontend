@@ -210,6 +210,8 @@ export default function LeadsManager() {
     scraped_service: "",
     category: "",
     bussiness_website: "",
+    lead_type: "local_vendor",
+    is_outsource_agency: false,
   });
   const [submittingNewLead, setSubmittingNewLead] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -1368,6 +1370,8 @@ export default function LeadsManager() {
           scraped_service: "",
           category: "",
           bussiness_website: "",
+          lead_type: "local_vendor",
+          is_outsource_agency: false,
         });
         setShowAddLeadModal(false);
         await fetchLeads();
@@ -1947,12 +1951,11 @@ export default function LeadsManager() {
           </div>
 
         {/* Lead Table (Desktop / Tablet) */}
-        {/* Lead Table (Desktop / Tablet) */}
-        <div className="hidden md:block w-full overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse min-w-[760px]">
+        <div className="hidden md:block w-full overflow-hidden">
+          <table className="w-full text-left text-xs border-collapse table-auto">
             <thead>
               <tr className="bg-[var(--dash-surface-alt)] border-b border-[var(--dash-border)] text-[var(--dash-text-muted)] font-semibold">
-                <th className="py-3.5 px-4 w-9">
+                <th className="py-2.5 px-3 w-8">
                   <input
                     type="checkbox"
                     checked={paginatedLeads.length > 0 && paginatedLeads.every(l => selectedLeadIds.has(l.rawId))}
@@ -1967,18 +1970,18 @@ export default function LeadsManager() {
                         setSelectedLeadIds(newSet);
                       }
                     }}
-                    className="rounded border-[var(--dash-border)] accent-[var(--dash-primary)] focus:ring-[var(--dash-primary)] cursor-pointer w-4 h-4"
+                    className="rounded border-[var(--dash-border)] accent-[var(--dash-primary)] focus:ring-[var(--dash-primary)] cursor-pointer w-3.5 h-3.5"
                   />
                 </th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Lead / Contact</th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Company &amp; City</th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Service / Category</th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Rating &amp; Reviews</th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Lead Type</th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Status</th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px] text-center">Score</th>
-                <th className="py-3.5 px-3 uppercase tracking-wider text-[10px]">Date</th>
-                <th className="py-3.5 px-4 text-right uppercase tracking-wider text-[10px]">Actions</th>
+                <th className="py-2.5 px-2 uppercase tracking-wider text-[10px]">Lead / Contact</th>
+                <th className="py-2.5 px-2 uppercase tracking-wider text-[10px]">Company &amp; City</th>
+                <th className="py-2.5 px-2 uppercase tracking-wider text-[10px]">Service / Category</th>
+                <th className="py-2.5 px-2 uppercase tracking-wider text-[10px]">Rating</th>
+                <th className="py-2.5 px-2 uppercase tracking-wider text-[10px]">Lead Type</th>
+                <th className="py-2.5 px-2 uppercase tracking-wider text-[10px]">Status</th>
+                <th className="py-2.5 px-1.5 uppercase tracking-wider text-[10px] text-center">Score</th>
+                <th className="py-2.5 px-2 uppercase tracking-wider text-[10px]">Date</th>
+                <th className="py-2.5 px-3 text-right uppercase tracking-wider text-[10px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--dash-border)]">
@@ -1995,7 +1998,7 @@ export default function LeadsManager() {
                         : "hover:bg-slate-500/5 dark:hover:bg-neutral-800/40"
                     }`}
                   >
-                    <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -2005,14 +2008,14 @@ export default function LeadsManager() {
                           else next.add(lead.rawId);
                           setSelectedLeadIds(next);
                         }}
-                        className="rounded border-[var(--dash-border)] accent-[var(--dash-primary)] focus:ring-[var(--dash-primary)] cursor-pointer w-4 h-4"
+                        className="rounded border-[var(--dash-border)] accent-[var(--dash-primary)] focus:ring-[var(--dash-primary)] cursor-pointer w-3.5 h-3.5"
                       />
                     </td>
                     
                     {/* Lead / Contact Details */}
-                    <td className="py-3.5 px-3">
-                      <div className="flex items-start gap-2.5 min-w-0 max-w-[240px]">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-600/15 border border-emerald-500/30 text-emerald-400 font-bold flex items-center justify-center text-xs shadow-xs shrink-0 mt-0.5">
+                    <td className="py-2.5 px-2">
+                      <div className="flex items-start gap-2 min-w-0 max-w-[200px]">
+                        <div className="w-7 h-7 rounded-md bg-emerald-600/15 border border-emerald-500/30 text-emerald-400 font-bold flex items-center justify-center text-[11px] shadow-xs shrink-0 mt-0.5">
                           {lead.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -2034,7 +2037,7 @@ export default function LeadsManager() {
                           )}
                           <div className="mt-0.5">
                             {lead.email ? (
-                              <div className="text-[var(--dash-text-muted)] text-[11px] truncate max-w-[190px]" title={lead.email}>
+                              <div className="text-[var(--dash-text-muted)] text-[11px] truncate max-w-[150px]" title={lead.email}>
                                 {lead.email}
                               </div>
                             ) : (
@@ -2056,23 +2059,23 @@ export default function LeadsManager() {
                     </td>
 
                     {/* Company & City */}
-                    <td className="py-3.5 px-3">
-                      <div className="min-w-0 max-w-[180px]">
+                    <td className="py-2.5 px-2">
+                      <div className="min-w-0 max-w-[150px]">
                         <div className="font-semibold text-xs text-[var(--dash-text)] truncate" title={lead.company || lead.name}>
                           {lead.company || lead.name || "—"}
                         </div>
                         <div className="flex items-center gap-1 text-[11px] text-[var(--dash-text-muted)] mt-0.5 truncate" title={lead.city || "Gujarat, India"}>
-                          <MapPin className="w-3 h-3 text-emerald-500/70 shrink-0" />
+                          <MapPin className="w-2.5 h-2.5 text-emerald-500/70 shrink-0" />
                           <span className="truncate">{lead.city || "Gujarat, India"}</span>
                         </div>
                       </div>
                     </td>
 
                     {/* Industry / Service */}
-                    <td className="py-3.5 px-3">
-                      <div className="max-w-[200px]">
+                    <td className="py-2.5 px-2">
+                      <div className="max-w-[160px]">
                         <span
-                          className="inline-block px-2 py-0.5 rounded-md text-[11px] font-medium bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] text-[var(--dash-text-secondary)] truncate max-w-full"
+                          className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] text-[var(--dash-text-secondary)] truncate max-w-full"
                           title={formatServiceText(lead.services.join(" • ") || lead.category)}
                         >
                           {formatServiceText(lead.services.join(" • ") || lead.category) || "Digital Services"}
@@ -2081,109 +2084,91 @@ export default function LeadsManager() {
                     </td>
 
                     {/* Rating & Reviews */}
-                    <td className="py-3.5 px-3">
-                      <div className="flex flex-col gap-1 items-start">
-                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold text-xs">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
-                          <span>{lead.rating || lead.raw?.rating || "4.5"}</span>
-                          {(lead.total_review || lead.raw?.total_review) && (
-                            <span className="text-[10px] font-normal text-amber-400/80">
-                              ({lead.total_review || lead.raw?.total_review})
-                            </span>
-                          )}
-                        </div>
-                        {((lead.reviews || lead.raw?.reviews) || (lead.total_review || lead.raw?.total_review)) && (
-                          <span className="text-[10px] text-[var(--dash-text-muted)] font-mono pl-0.5">
-                            {(() => {
-                              try {
-                                const rawRev = lead.reviews || lead.raw?.reviews;
-                                const rList = typeof rawRev === "string" ? JSON.parse(rawRev) : rawRev;
-                                const count = Array.isArray(rList) ? rList.length : Number(lead.total_review || lead.raw?.total_review || 1);
-                                return `${count} reviews`;
-                              } catch {
-                                return "reviews";
-                              }
-                            })()}
+                    <td className="py-2.5 px-2">
+                      <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold text-xs whitespace-nowrap">
+                        <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                        <span>{lead.rating || lead.raw?.rating || "4.5"}</span>
+                        {(lead.total_review || lead.raw?.total_review) && (
+                          <span className="text-[10px] font-normal text-amber-400/80">
+                            ({lead.total_review || lead.raw?.total_review})
                           </span>
                         )}
                       </div>
                     </td>
 
                     {/* Lead Type */}
-                    <td className="py-3.5 px-3">
+                    <td className="py-2.5 px-2">
                       {lead.is_outsource_agency || lead.lead_type === "agency_outsource" ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
                           <Building className="w-3 h-3 text-emerald-400 shrink-0" />
-                          <span>Agency Partner</span>
+                          <span>Agency</span>
                         </span>
                       ) : isOrganicInbound(lead) ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20 whitespace-nowrap">
                           <Globe className="w-3 h-3 text-teal-400 shrink-0" />
-                          <span>Inbound Lead</span>
+                          <span>Inbound</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold bg-slate-500/10 text-slate-300 border border-slate-500/20 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-500/10 text-slate-300 border border-slate-500/20 whitespace-nowrap">
                           <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span>Local Vendor</span>
+                          <span>Vendor</span>
                         </span>
                       )}
                     </td>
 
                     {/* Status */}
-                    <td className="py-3.5 px-3">
-                      <div className="flex flex-col gap-1 items-start">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border whitespace-nowrap ${
-                          lead.status.toLowerCase() === "interested" || lead.status.toLowerCase() === "converted"
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            : lead.status.toLowerCase() === "outreach sent" || lead.status.toLowerCase() === "outreach_sent"
-                            ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                    <td className="py-2.5 px-2">
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold border whitespace-nowrap ${
+                        lead.status.toLowerCase() === "interested" || lead.status.toLowerCase() === "converted"
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          : lead.status.toLowerCase() === "outreach sent" || lead.status.toLowerCase() === "outreach_sent"
+                          ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                          : lead.status.toLowerCase() === "reply"
+                          ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                          : lead.status.toLowerCase() === "qualified"
+                          ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                          : lead.status.toLowerCase() === "closed"
+                          ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+                          : lead.status.toLowerCase() === "pending"
+                          ? "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                          : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          lead.status.toLowerCase().includes("sent") || lead.status.toLowerCase() === "interested"
+                            ? "bg-emerald-400 animate-pulse"
                             : lead.status.toLowerCase() === "reply"
-                            ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                            ? "bg-amber-400"
                             : lead.status.toLowerCase() === "qualified"
-                            ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                            ? "bg-purple-400"
                             : lead.status.toLowerCase() === "closed"
-                            ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+                            ? "bg-indigo-400"
                             : lead.status.toLowerCase() === "pending"
-                            ? "bg-slate-500/10 text-slate-400 border-slate-500/20"
-                            : "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                            lead.status.toLowerCase().includes("sent") || lead.status.toLowerCase() === "interested"
-                              ? "bg-emerald-400 animate-pulse"
-                              : lead.status.toLowerCase() === "reply"
-                              ? "bg-amber-400"
-                              : lead.status.toLowerCase() === "qualified"
-                              ? "bg-purple-400"
-                              : lead.status.toLowerCase() === "closed"
-                              ? "bg-indigo-400"
-                              : lead.status.toLowerCase() === "pending"
-                              ? "bg-slate-400"
-                              : "bg-rose-400"
-                          }`} />
-                          <span>{lead.status.toLowerCase() === "outreach_sent" ? "Outreach Sent" : lead.status}</span>
-                        </span>
-                      </div>
+                            ? "bg-slate-400"
+                            : "bg-rose-400"
+                        }`} />
+                        <span>{lead.status.toLowerCase() === "outreach_sent" ? "Sent" : lead.status}</span>
+                      </span>
                     </td>
 
                     {/* AI Score */}
-                    <td className="py-3.5 px-3 text-center">
-                      <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono font-bold text-[11px] border border-emerald-500/20">
+                    <td className="py-2.5 px-1.5 text-center">
+                      <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold text-[11px] border border-emerald-500/20">
                         {lead.score || 85}
                       </span>
                     </td>
 
                     {/* Date */}
-                    <td className="py-3.5 px-3 text-[var(--dash-text-muted)] whitespace-nowrap font-mono text-[11px]">
+                    <td className="py-2.5 px-2 text-[var(--dash-text-muted)] whitespace-nowrap font-mono text-[11px]">
                       {formatISTDate(lead.created_at, { month: "short", day: "numeric" })}
                     </td>
 
                     {/* Tactile Actions Toolbar */}
-                    <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-2.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1">
                         {cleanPhone && (
                           <a
                             href={`tel:${cleanPhone}`}
-                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-[var(--dash-text-muted)] hover:text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
+                            className="p-1 rounded-md bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-[var(--dash-text-muted)] hover:text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
                             title={`Direct Call: ${cleanPhone}`}
                           >
                             <Phone className="w-3.5 h-3.5" />
@@ -2193,7 +2178,7 @@ export default function LeadsManager() {
                           <button
                             type="button"
                             onClick={() => openWaModalForLead(lead)}
-                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
+                            className="p-1 rounded-md bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
                             title="Send WhatsApp Outreach Proposal"
                           >
                             <MessageSquare className="w-3.5 h-3.5" />
@@ -2204,7 +2189,7 @@ export default function LeadsManager() {
                             href={lead.maps_url || lead.raw?.maps_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-[var(--dash-text-muted)] hover:text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
+                            className="p-1 rounded-md bg-[var(--dash-surface-alt)] hover:bg-emerald-500/15 text-[var(--dash-text-muted)] hover:text-emerald-400 border border-[var(--dash-border)] hover:border-emerald-500/30 transition cursor-pointer"
                             title="Open on Google Maps"
                           >
                             <MapPin className="w-3.5 h-3.5" />
@@ -2213,7 +2198,7 @@ export default function LeadsManager() {
                         <button
                           type="button"
                           onClick={() => handleOpenLeadDrawer(lead)}
-                          className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-[var(--dash-surface)] text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] border border-[var(--dash-border)] transition cursor-pointer"
+                          className="p-1 rounded-md bg-[var(--dash-surface-alt)] hover:bg-[var(--dash-surface)] text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] border border-[var(--dash-border)] transition cursor-pointer"
                           title="View Full Lead Details"
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -2222,7 +2207,7 @@ export default function LeadsManager() {
                           <button
                             type="button"
                             onClick={() => handleDeleteLead(lead)}
-                            className="p-1.5 rounded-lg bg-[var(--dash-surface-alt)] hover:bg-rose-500/15 text-[var(--dash-text-muted)] hover:text-rose-400 border border-[var(--dash-border)] hover:border-rose-500/30 transition cursor-pointer"
+                            className="p-1 rounded-md bg-[var(--dash-surface-alt)] hover:bg-rose-500/15 text-[var(--dash-text-muted)] hover:text-rose-400 border border-[var(--dash-border)] hover:border-rose-500/30 transition cursor-pointer"
                             title="Delete Lead"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -3981,6 +3966,48 @@ export default function LeadsManager() {
                   onChange={(e) => setNewLeadForm({ ...newLeadForm, bussiness_website: e.target.value })}
                   className="crm-input w-full"
                 />
+              </div>
+
+              {/* Agency / Outsource Partner Checkbox */}
+              <div
+                onClick={() => setNewLeadForm(prev => ({
+                  ...prev,
+                  is_outsource_agency: !prev.is_outsource_agency,
+                  lead_type: !prev.is_outsource_agency ? "agency_outsource" : "local_vendor"
+                }))}
+                className={`p-3 rounded-lg border transition cursor-pointer flex items-start gap-2.5 ${
+                  newLeadForm.is_outsource_agency
+                    ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-700 dark:text-emerald-300"
+                    : "bg-[var(--dash-surface-alt)] border-[var(--dash-border)] hover:border-emerald-500/30"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  id="add-modal-outsource-check"
+                  checked={Boolean(newLeadForm.is_outsource_agency)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    setNewLeadForm(prev => ({
+                      ...prev,
+                      is_outsource_agency: e.target.checked,
+                      lead_type: e.target.checked ? "agency_outsource" : "local_vendor"
+                    }));
+                  }}
+                  className="mt-0.5 rounded border-slate-300 accent-emerald-600 text-emerald-600 focus:ring-emerald-500 cursor-pointer w-4 h-4 shrink-0"
+                />
+                <div className="cursor-pointer text-left select-none min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-xs text-[var(--dash-text)]">
+                      Mark as Agency / Outsource Partner
+                    </span>
+                    <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                      B2B Partner
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[var(--dash-text-muted)] mt-0.5 leading-relaxed">
+                    Automatically sends the dedicated B2B outsource partnership proposal (SEO, Web Dev, Automations &amp; Scraping) instead of local vendor messages.
+                  </p>
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3">
