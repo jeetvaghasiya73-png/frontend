@@ -211,6 +211,8 @@ interface Lead {
   whatsapp_error?: string;
   whatsapp_ai_enabled?: boolean;
   is_interested?: boolean;
+  is_outsource_agency?: boolean;
+  lead_type?: string;
   rating?: string;
   created_at: string;
 }
@@ -228,6 +230,8 @@ interface ConversationItem {
   whatsapp_status: string;
   whatsapp_ai_enabled: boolean;
   is_interested: boolean;
+  is_outsource_agency?: boolean;
+  lead_type?: string;
   last_reply?: string;
   reply_at?: string;
   latest_message: string;
@@ -1471,6 +1475,7 @@ export default function WhatsAppOutreachPage() {
               <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none text-[11px]">
                 {[
                   { id: "all", label: "All Chats" },
+                  { id: "agency", label: "🤝 Agency" },
                   { id: "replied", label: "💬 Replied" },
                   { id: "interested", label: "⭐ Interested" },
                   { id: "combined", label: "🔥 Combined" },
@@ -1515,10 +1520,15 @@ export default function WhatsAppOutreachPage() {
                             {c.bussiness_name ? c.bussiness_name.charAt(0).toUpperCase() : "#"}
                           </div>
                           <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="font-semibold text-xs text-[var(--dash-text)] truncate max-w-[130px]">
                                 {c.bussiness_name || format10DigitPhone(c.phone_number)}
                               </span>
+                              {c.is_outsource_agency && (
+                                <span className="text-[9px] px-1.5 py-0.2 rounded font-bold uppercase tracking-wider bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 shrink-0">
+                                  Agency
+                                </span>
+                              )}
                               {c.is_interested && (
                                 <Star className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
                               )}
@@ -2057,6 +2067,11 @@ export default function WhatsAppOutreachPage() {
 
                     {/* Dynamic Badges */}
                     <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                      {conv.is_outsource_agency && (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 flex items-center gap-1">
+                          🤝 Agency Partner
+                        </span>
+                      )}
                       <span className="crm-badge badge-primary text-[10px]">
                         Source: {conv.latest_direction === "inbound" ? "Direct Inbound" : "Outreach Scraping"}
                       </span>
@@ -2815,6 +2830,7 @@ export default function WhatsAppOutreachPage() {
                 className="crm-input text-xs py-1.5"
               >
                 <option value="all">All Statuses</option>
+                <option value="agency">🤝 Agency Partners (Outsource)</option>
                 <option value="message_sent">💬 Messages Sent (All Contacted)</option>
                 <option value="replied">💬 Replied (Awaiting Interest)</option>
                 <option value="interested">⭐ Interested (High Intent)</option>
@@ -2855,7 +2871,16 @@ export default function WhatsAppOutreachPage() {
                       onClick={() => setSelectedLeadModal(l)}
                       className="hover:bg-slate-500/5 transition-all cursor-pointer"
                     >
-                      <td className="p-3 font-semibold text-[var(--dash-text)]">{l.bussiness_name}</td>
+                      <td className="p-3 font-semibold text-[var(--dash-text)]">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span>{l.bussiness_name}</span>
+                          {l.is_outsource_agency && (
+                            <span className="text-[9px] px-1.5 py-0.2 rounded font-bold uppercase tracking-wider bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30">
+                              Agency
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="p-3 font-mono text-[var(--dash-text-muted)]">{l.bussiness_number}</td>
                       <td className="p-3 text-[var(--dash-text-muted)]">{l.scraped_city} • {l.category || l.scraped_service}</td>
                       <td className="p-3">
@@ -2909,7 +2934,14 @@ export default function WhatsAppOutreachPage() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <div className="font-semibold text-xs text-[var(--dash-text)]">{l.bussiness_name}</div>
+                      <div className="font-semibold text-xs text-[var(--dash-text)] flex items-center gap-1.5 flex-wrap">
+                        <span>{l.bussiness_name}</span>
+                        {l.is_outsource_agency && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded font-bold uppercase tracking-wider bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30">
+                            Agency
+                          </span>
+                        )}
+                      </div>
                       <div className="text-[11px] font-mono text-[var(--dash-text-muted)]">{l.bussiness_number}</div>
                     </div>
                     <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium border capitalize shrink-0 ${

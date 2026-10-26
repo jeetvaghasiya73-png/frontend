@@ -138,6 +138,8 @@ interface UnifiedMessage {
   status: string; // "interested" | "replied" | "pending" | "sent" | "unread"
   isInterested?: boolean;
   aiEnabled?: boolean;
+  isOutsourceAgency?: boolean;
+  leadType?: string;
   raw: any;
 }
 
@@ -157,8 +159,8 @@ export default function ContactMessagesManager() {
   const canDeleteLeads = isSuperAdmin || (user?.permissions?.includes("delete_lead") ?? false);
   const canManageLeads = isSuperAdmin || (user?.permissions?.includes("view_leads") ?? false);
 
-  // Channels Tab: "all" | "whatsapp" | "website" | "email"
-  const [channelTab, setChannelTab] = useState<"all" | "whatsapp" | "website" | "email">("all");
+  // Channels Tab: "all" | "whatsapp" | "website" | "email" | "agency"
+  const [channelTab, setChannelTab] = useState<"all" | "whatsapp" | "website" | "email" | "agency">("all");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -293,6 +295,7 @@ export default function ContactMessagesManager() {
       });
       if (matchingCrm?.email) waEmailSet.add(matchingCrm.email.toLowerCase());
 
+      const isAgency = Boolean(wa.is_outsource_agency || wa.lead_type === "agency_outsource" || matchingCrm?.lead_type === "agency_outsource" || matchingCrm?.is_outsource_agency);
       list.push({
         id: `wa-${wa.lead_id}`,
         channel: "whatsapp",
@@ -302,12 +305,14 @@ export default function ContactMessagesManager() {
         phone: wa.phone_number || wa.clean_phone || matchingCrm?.phone,
         city: wa.scraped_city || matchingCrm?.company || matchingCrm?.city,
         category: wa.category || matchingCrm?.category,
-        subject: wa.category ? `WhatsApp Outreach: ${wa.category}` : "WhatsApp Chat",
+        subject: isAgency ? `Agency Partner: ${wa.category || "White-label"}` : wa.category ? `WhatsApp Outreach: ${wa.category}` : "WhatsApp Chat",
         snippet: wa.latest_message || wa.last_reply || "No messages yet",
         timestamp: wa.latest_timestamp || wa.reply_at || wa.sent_at || (matchingCrm ? matchingCrm.created_at : null) || wa.created_at || new Date().toISOString(),
         status: wa.is_interested ? "interested" : (wa.whatsapp_status || "pending"),
         isInterested: wa.is_interested || matchingCrm?.status?.toLowerCase() === "interested",
         aiEnabled: wa.whatsapp_ai_enabled,
+        isOutsourceAgency: isAgency,
+        leadType: wa.lead_type || matchingCrm?.lead_type || (isAgency ? "agency_outsource" : "local_vendor"),
         raw: { ...wa, email: wa.bussiness_email || wa.email || matchingCrm?.email }
       });
     });
@@ -418,7 +423,9 @@ export default function ContactMessagesManager() {
   const filteredMessages = useMemo(() => {
     return unifiedMessages.filter((msg) => {
       // Channel Tab filter
-      if (channelTab !== "all" && msg.channel !== channelTab) {
+      if (channelTab === "agency") {
+        if (!msg.isOutsourceAgency && msg.leadType !== "agency_outsource") return false;
+      } else if (channelTab !== "all" && msg.channel !== channelTab) {
         return false;
       }
 
@@ -978,8 +985,9 @@ export default function ContactMessagesManager() {
     const wa = unifiedMessages.filter((m) => m.channel === "whatsapp").length;
     const web = unifiedMessages.filter((m) => m.channel === "website").length;
     const em = unifiedMessages.filter((m) => m.channel === "email").length;
+    const agency = unifiedMessages.filter((m) => m.isOutsourceAgency || m.leadType === "agency_outsource").length;
     const interested = unifiedMessages.filter((m) => m.isInterested).length;
-    return { all: unifiedMessages.length, wa, web, em, interested };
+    return { all: unifiedMessages.length, wa, web, em, agency, interested };
   }, [unifiedMessages]);
 
   if (loading) {
@@ -1068,6 +1076,21 @@ export default function ContactMessagesManager() {
           <span>WhatsApp</span>
           <span className="ml-1 px-1.5 py-0.2 rounded text-[10px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-bold">
             {counts.wa}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setChannelTab("agency")}
+          className={`px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-bold rounded-md transition cursor-pointer flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 ${
+            channelTab === "agency"
+              ? "bg-teal-600 text-white shadow-sm"
+              : "crm-btn-secondary text-[var(--dash-text-muted)]"
+          }`}
+        >
+          <Building2 className="w-3.5 h-3.5 text-teal-400" />
+          <span>Agency Partners</span>
+          <span className="ml-1 px-1.5 py-0.2 rounded text-[10px] bg-teal-500/20 text-teal-600 dark:text-teal-300 font-bold">
+            {counts.agency}
           </span>
         </button>
 
@@ -1184,6 +1207,12 @@ export default function ContactMessagesManager() {
                       <span className="font-bold text-xs text-[var(--dash-text-primary)] truncate">
                         {item.senderName}
                       </span>
+
+                      {item.isOutsourceAgency && (
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-bold uppercase tracking-wider bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 shrink-0">
+                          🤝 Agency
+                        </span>
+                      )}
                     </div>
 
                     <span
@@ -1265,6 +1294,11 @@ export default function ContactMessagesManager() {
                       >
                         {selectedMessage.channel.toUpperCase()}
                       </span>
+                      {selectedMessage.isOutsourceAgency && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-teal-500/15 text-teal-600 dark:text-teal-300 border border-teal-500/30 flex items-center gap-1">
+                          <Building2 className="w-3 h-3 text-teal-400" /> Agency Partner
+                        </span>
+                      )}
                       {selectedMessage.isInterested || selectedMessage.status === "interested" ? (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/30 flex items-center gap-1">
                           <Star className="w-3 h-3 fill-amber-500" /> Interested Lead
