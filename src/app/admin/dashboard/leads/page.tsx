@@ -126,6 +126,54 @@ export default function LeadsManager() {
   const [totalLeadsFromAPI, setTotalLeadsFromAPI] = useState<number>(0);
   const [totalScrapedCount, setTotalScrapedCount] = useState<number>(0);
   const [totalInquiriesCount, setTotalInquiriesCount] = useState<number>(0);
+  const [globalStats, setGlobalStats] = useState<{
+    total: number;
+    agency_count: number;
+    vendor_count: number;
+    inquiries_count: number;
+  }>({
+    total: 0,
+    agency_count: 0,
+    vendor_count: 0,
+    inquiries_count: 0,
+  });
+
+  const fetchGlobalStats = useCallback(async () => {
+    try {
+      const [statsRes, inqRes] = await Promise.allSettled([
+        authFetch(`${API}/api/v1/scraped-leads/stats`),
+        authFetch(`${API}/api/v1/leads/`)
+      ]);
+      let inqCount = 0;
+      if (inqRes.status === "fulfilled" && inqRes.value && inqRes.value.ok) {
+        try {
+          const inqJson = await inqRes.value.json();
+          if (Array.isArray(inqJson)) inqCount = inqJson.length;
+        } catch (e) {
+          // ignore
+        }
+      }
+      if (statsRes.status === "fulfilled" && statsRes.value && statsRes.value.ok) {
+        try {
+          const data = await statsRes.value.json();
+          const totalScraped = Number(data.total || 0);
+          const agencies = Number(data.agency_count || 0);
+          const vendors = Number(data.vendor_count ?? Math.max(0, totalScraped - agencies));
+          setGlobalStats({
+            total: totalScraped + inqCount,
+            agency_count: agencies,
+            vendor_count: vendors,
+            inquiries_count: inqCount,
+          });
+        } catch (e) {
+          // ignore
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load global lead stats:", err);
+    }
+  }, []);
+
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const sourceFilterRef = useRef<SourceFilter>(sourceFilter);
   sourceFilterRef.current = sourceFilter;
@@ -352,24 +400,46 @@ export default function LeadsManager() {
     }
   };
 
-  const fetchLeads = useCallback(async (pageToFetch?: number, limitToFetch?: number, statusToFetch?: string, searchToFetch?: string, messageSentToFetch?: string) => {
+  const fetchLeads = useCallback(async (
+    pageToFetch?: number,
+    limitToFetch?: number,
+    statusToFetch?: string,
+    searchToFetch?: string,
+    messageSentToFetch?: string,
+    sourceToFetch?: SourceFilter
+  ) => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
     const pageNum = pageToFetch ?? currentPage;
     const limitNum = limitToFetch ?? pageSize;
     const curStatus = statusToFetch !== undefined ? statusToFetch : statusFilterRef.current;
-    const statusParam = curStatus && curStatus !== "all" && curStatus !== "message_sent" ? `&status=${encodeURIComponent(curStatus)}` : "";
     const effectiveSearch = (searchToFetch !== undefined ? searchToFetch : searchQueryRef.current).trim();
-    const searchParam = effectiveSearch ? `&search=${encodeURIComponent(effectiveSearch)}` : "";
     const curMsgSent = messageSentToFetch !== undefined ? messageSentToFetch : messageSentFilterRef.current;
+    const curSource = sourceToFetch !== undefined ? sourceToFetch : sourceFilterRef.current;
+    sourceFilterRef.current = curSource;
+
+    const statusParam = curStatus && curStatus !== "all" && curStatus !== "message_sent" ? `&status=${encodeURIComponent(curStatus)}` : "";
+    const searchParam = effectiveSearch ? `&search=${encodeURIComponent(effectiveSearch)}` : "";
     const msgSentParam = curMsgSent === "sent" || curStatus === "message_sent" ? `&message_sent=true` : "";
-    const leadTypeParam = sourceFilterRef.current === "agency" ? "&lead_type=agency_outsource" : "";
+    let leadTypeParam = "";
+    if (curSource === "agency") {
+      leadTypeParam = "&lead_type=agency_outsource";
+    } else if (curSource === "scraped") {
+      leadTypeParam = "&lead_type=local_vendor";
+    }
+
     try {
       setLoading(true);
-      const shouldFetchInquiries = (!inquiriesCacheRef.current || pageNum === 1 || sourceFilterRef.current === "inquiry") && sourceFilterRef.current !== "agency";
+      const shouldFetchInquiries = curSource === "inquiry" || (curSource === "all" && pageNum === 1 && !effectiveSearch && !statusParam && !msgSentParam);
       const [inquiryRes, scrapedRes] = await Promise.allSettled([
-        shouldFetchInquiries ? authFetch(`${API}/api/v1/leads/`) : Promise.resolve(null as any),
-        authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${limitNum}${statusParam}${msgSentParam}${searchParam}${leadTypeParam}`)
+        shouldFetchInquiries
+          ? (inquiriesCacheRef.current && curSource !== "inquiry"
+              ? Promise.resolve({ ok: true, json: async () => inquiriesCacheRef.current } as any)
+              : authFetch(`${API}/api/v1/leads/`))
+          : Promise.resolve(null as any),
+        curSource === "inquiry"
+          ? Promise.resolve({ ok: true, json: async () => ({ items: [], leads: [], total: 0 }) } as any)
+          : authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${limitNum}${statusParam}${msgSentParam}${searchParam}${leadTypeParam}`)
       ]);
 
       let inquiryData: any[] = inquiriesCacheRef.current || [];
@@ -553,15 +623,11 @@ export default function LeadsManager() {
         };
       });
 
-      const currentFilter = sourceFilterRef.current;
+      const currentFilter = curSource;
       let pageLeads: NormalizedLead[] = [];
       if (currentFilter === "inquiry") {
         pageLeads = normalizedInquiries;
-      } else if (currentFilter === "agency") {
-        pageLeads = normalizedScraped.filter(l => l.is_outsource_agency || l.lead_type === "agency_outsource");
-      } else if (currentFilter === "scraped") {
-        pageLeads = normalizedScraped.filter(l => !l.is_outsource_agency && l.lead_type !== "agency_outsource");
-      } else if (pageNum === 1 && currentFilter === "all") {
+      } else if (pageNum === 1 && currentFilter === "all" && !effectiveSearch && !statusParam && !msgSentParam) {
         pageLeads = [...normalizedInquiries, ...normalizedScraped];
       } else {
         pageLeads = normalizedScraped;
@@ -592,7 +658,7 @@ export default function LeadsManager() {
       const accurateInquiries = Number(inquiryData.length || 0);
       setTotalScrapedCount(accurateScraped);
       setTotalInquiriesCount(accurateInquiries);
-      setTotalLeadsFromAPI(currentFilter === "inquiry" ? accurateInquiries : (currentFilter === "scraped" ? accurateScraped : uniqueLeads.length));
+      setTotalLeadsFromAPI(currentFilter === "inquiry" ? accurateInquiries : accurateScraped);
     } catch (err) {
       console.error("Failed to load leads:", err);
     } finally {
@@ -601,17 +667,25 @@ export default function LeadsManager() {
     }
   }, []);
 
-  const debouncedFetchLeads = useCallback(() => {
+  const debouncedFetchLeads = useCallback((
+    pageToFetch?: number,
+    limitToFetch?: number,
+    statusToFetch?: string,
+    searchToFetch?: string,
+    messageSentToFetch?: string,
+    sourceToFetch?: SourceFilter
+  ) => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
     debounceTimerRef.current = setTimeout(() => {
-      fetchLeads();
-    }, 350);
+      fetchLeads(pageToFetch, limitToFetch, statusToFetch, searchToFetch, messageSentToFetch, sourceToFetch);
+    }, 300);
   }, [fetchLeads]);
 
   useEffect(() => {
     setMounted(true);
+    fetchGlobalStats();
     let initialSearch = "";
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -645,8 +719,9 @@ export default function LeadsManager() {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.type === "whatsapp_update" || data.type === "lead_updated") {
+          if (data.type === "whatsapp_update" || data.type === "lead_updated" || data.type === "new_lead" || data.type === "lead_deleted") {
             debouncedFetchLeads();
+            fetchGlobalStats();
           }
         } catch (err) {
           // ignore
@@ -661,16 +736,36 @@ export default function LeadsManager() {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       if (ws) ws.close();
     };
-  }, [fetchLeads, debouncedFetchLeads]);
+  }, [fetchLeads, debouncedFetchLeads, fetchGlobalStats, pageSize]);
 
-  useEffect(() => {
-    if (!isMountedRef.current) {
-      isMountedRef.current = true;
-      return;
-    }
+  const handleSourceChange = (newSource: SourceFilter) => {
+    setSourceFilter(newSource);
+    sourceFilterRef.current = newSource;
     setCurrentPage(1);
-    fetchLeads(1, pageSize, statusFilterRef.current);
-  }, [sourceFilter]);
+    fetchLeads(1, pageSize, statusFilterRef.current, searchQueryRef.current, messageSentFilterRef.current, newSource);
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    setStatusFilter(newStatus);
+    statusFilterRef.current = newStatus;
+    setCurrentPage(1);
+    fetchLeads(1, pageSize, newStatus, searchQueryRef.current, messageSentFilterRef.current, sourceFilterRef.current);
+  };
+
+  const handleMessageSentToggle = () => {
+    const nextMsg = messageSentFilter === "sent" ? "all" : "sent";
+    setMessageSentFilter(nextMsg);
+    messageSentFilterRef.current = nextMsg;
+    setCurrentPage(1);
+    fetchLeads(1, pageSize, statusFilterRef.current, searchQueryRef.current, nextMsg, sourceFilterRef.current);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    searchQueryRef.current = val;
+    setCurrentPage(1);
+    debouncedFetchLeads(1, pageSize, statusFilterRef.current, val, messageSentFilterRef.current, sourceFilterRef.current);
+  };
 
   const handleStatusUpdate = async (leadId: number, newStatus: string) => {
     setUpdatingId(leadId);
@@ -758,6 +853,7 @@ export default function LeadsManager() {
           prev.map((l) => (l.rawId === leadKey ? { ...l, is_outsource_agency: nextIsAgency, lead_type: nextLeadType } : l))
         );
         triggerToast(nextIsAgency ? "Updated lead to Agency Partner" : "Updated lead to Local Vendor");
+        fetchGlobalStats();
       } else {
         triggerToast("Failed to switch lead type");
       }
@@ -1249,6 +1345,7 @@ export default function LeadsManager() {
       setSelectedLeadIds(new Set());
       triggerToast("Entire leads database & cache cleared successfully");
       await fetchLeads(1, pageSize);
+      fetchGlobalStats();
     } catch (err) {
       console.error("Failed to delete all leads:", err);
       triggerToast("Error deleting all leads");
@@ -1341,6 +1438,7 @@ export default function LeadsManager() {
         clearAuthFetchCache("/api/v1/scraped-leads");
         setCurrentPage(1);
         await fetchLeads(1, pageSize);
+        fetchGlobalStats();
 
         setTimeout(() => {
           setShowImportModal(false);
@@ -1459,88 +1557,39 @@ export default function LeadsManager() {
   };
 
   const filteredLeads = useMemo(() => {
-    let result = allLeads;
-
-    if (sourceFilter !== "all") {
-      result = result.filter((l) => {
-        if (sourceFilter === "inquiry") return l.source === "inquiry" || isOrganicInbound(l);
-        if (sourceFilter === "agency") return Boolean(l.is_outsource_agency || l.lead_type === "agency_outsource");
-        if (sourceFilter === "scraped") return l.source === "scraped" && !l.is_outsource_agency && l.lead_type !== "agency_outsource";
-        return true;
-      });
+    // If viewing inquiries, apply client-side filtering on the inquiry dataset
+    if (sourceFilter === "inquiry") {
+      let result = allLeads.filter(l => l.source === "inquiry" || isOrganicInbound(l));
+      if (statusFilter !== "all") {
+        const sf = statusFilter.toLowerCase();
+        result = result.filter(l => (l.status || "").toLowerCase() === sf);
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim();
+        result = result.filter(l => matchesSimilaritySearch(q, [l.name, l.phone, l.email, l.company, l.city]));
+      }
+      return result;
     }
 
-    if (statusFilter !== "all") {
-      const sf = statusFilter.toLowerCase();
-      result = result.filter((l) => {
-        const leadStatus = (l.status || "").toLowerCase();
-        const emailStatus = (l.email_status || "").toLowerCase();
-        const waStatus = (l.whatsapp_status || "").toLowerCase();
-
-        if (sf === "message_sent" || sf === "messages_sent" || sf === "sent_all") {
-          return isMessageSent(l);
-        }
-        if (sf === "whatsapp_sent") {
-          return Boolean(l.whatsapp_sent_at || l.raw?.whatsapp_sent_at) ||
-            ["outreach_sent", "sent", "delivered", "read", "reply", "replied", "interested", "contacted"].includes(waStatus);
-        }
-        if (sf === "email_sent") {
-          return Boolean(l.raw?.email_sent_at) ||
-            ["outreach_sent", "sent", "contacted"].includes(emailStatus);
-        }
-        if (sf === "pending") {
-          return leadStatus === "pending";
-        }
-        return leadStatus.replace(" ", "_") === sf || emailStatus.replace(" ", "_") === sf || waStatus.replace(" ", "_") === sf;
-      });
-    }
-
-    // Independent Messages Sent filter (can be combined with ANY status filter!)
-    if (messageSentFilter === "sent") {
-      result = result.filter((l) => isMessageSent(l));
-    }
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim();
-      result = result.filter(l =>
-        matchesSimilaritySearch(q, [
-          l.name,
-          l.phone,
-          l.email,
-          l.company,
-          l.city,
-          l.category,
-          l.scraped_service,
-          l.services,
-          l.address,
-          l.website,
-          l.message
-        ])
-      );
-    }
-
-    return result;
-  }, [allLeads, sourceFilter, statusFilter, messageSentFilter, searchQuery]);
-
-  const totalAgencyCount = useMemo(() => {
-    return allLeads.filter(l => l.is_outsource_agency || l.lead_type === "agency_outsource").length;
-  }, [allLeads]);
+    // For scraped, agency, and all: data is ALREADY accurately filtered and paginated by PostgreSQL on the server!
+    return allLeads;
+  }, [allLeads, sourceFilter, statusFilter, searchQuery]);
 
   const currentTotal = useMemo(() => {
-    if (searchQuery.trim()) {
-      return filteredLeads.length;
-    }
     if (sourceFilter === "inquiry") {
-      return totalInquiriesCount;
+      return totalInquiriesCount || globalStats.inquiries_count || filteredLeads.length;
+    }
+    if (searchQuery.trim()) {
+      return totalLeadsFromAPI || filteredLeads.length;
     }
     if (sourceFilter === "agency") {
-      return totalAgencyCount || filteredLeads.length;
+      return totalLeadsFromAPI || globalStats.agency_count;
     }
     if (sourceFilter === "scraped") {
-      return totalScrapedCount || totalLeadsFromAPI;
+      return totalLeadsFromAPI || globalStats.vendor_count;
     }
-    return (totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount;
-  }, [searchQuery, filteredLeads.length, sourceFilter, totalAgencyCount, totalScrapedCount, totalInquiriesCount, totalLeadsFromAPI]);
+    return totalLeadsFromAPI + (currentPage === 1 ? totalInquiriesCount : 0);
+  }, [searchQuery, totalLeadsFromAPI, sourceFilter, globalStats, totalInquiriesCount, currentPage, filteredLeads.length]);
 
   const totalPages = Math.max(1, Math.ceil(currentTotal / pageSize));
 
@@ -1549,18 +1598,13 @@ export default function LeadsManager() {
       const start = (currentPage - 1) * pageSize;
       return filteredLeads.slice(start, start + pageSize);
     }
-    // For "all" and "scraped", data is ALREADY server-paginated for currentPage!
-    // If page 1 has inquiries merged in, slice to pageSize to maintain 20 items per page
-    if (currentPage === 1 && filteredLeads.length > pageSize) {
-      return filteredLeads.slice(0, pageSize);
-    }
     return filteredLeads;
   }, [filteredLeads, sourceFilter, currentPage, pageSize]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
     setCurrentPage(newPage);
-    fetchLeads(newPage, pageSize, statusFilter);
+    fetchLeads(newPage, pageSize, statusFilterRef.current, searchQueryRef.current, messageSentFilterRef.current, sourceFilterRef.current);
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -1707,25 +1751,17 @@ export default function LeadsManager() {
         <div className="px-3 sm:px-4 py-2.5 border-b border-[var(--dash-border)] flex items-center justify-between gap-3 w-full max-w-full overflow-x-auto scrollbar-none bg-[var(--dash-surface-alt)]/30">
           <div className="flex items-center gap-1.5 p-1 rounded-md bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] shrink-0">
             <button
-              onClick={() => {
-                setSourceFilter("all");
-                setCurrentPage(1);
-                fetchLeads(1, pageSize, statusFilter);
-              }}
+              onClick={() => handleSourceChange("all")}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "all"
                   ? "bg-[var(--dash-primary)] text-white shadow-xs"
                   : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
               }`}
             >
-              All Leads ({(totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount})
+              All Leads ({globalStats.total || ((totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount)})
             </button>
             <button
-              onClick={() => {
-                setSourceFilter("agency");
-                setCurrentPage(1);
-                fetchLeads(1, pageSize, statusFilter);
-              }}
+              onClick={() => handleSourceChange("agency")}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
                 sourceFilter === "agency"
                   ? "bg-emerald-600 text-white shadow-xs font-bold"
@@ -1733,52 +1769,39 @@ export default function LeadsManager() {
               }`}
             >
               <span>Agencies (Outsource)</span>
-              {totalAgencyCount > 0 && (
+              {globalStats.agency_count > 0 && (
                 <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
                   sourceFilter === "agency" ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                 }`}>
-                  {totalAgencyCount}
+                  {globalStats.agency_count}
                 </span>
               )}
             </button>
             <button
-              onClick={() => {
-                setSourceFilter("scraped");
-                setCurrentPage(1);
-                fetchLeads(1, pageSize, statusFilter);
-              }}
+              onClick={() => handleSourceChange("scraped")}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "scraped"
                   ? "bg-[var(--dash-primary)] text-white shadow-xs"
                   : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
               }`}
             >
-              Local Businesses ({Math.max(0, (totalScrapedCount || totalLeadsFromAPI) - totalAgencyCount)})
+              Local Businesses ({globalStats.vendor_count})
             </button>
             <button
-              onClick={() => {
-                setSourceFilter("inquiry");
-                setCurrentPage(1);
-                fetchLeads(1, pageSize, statusFilter);
-              }}
+              onClick={() => handleSourceChange("inquiry")}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "inquiry"
                   ? "bg-[var(--dash-primary)] text-white shadow-xs"
                   : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
               }`}
             >
-              Inbound Inquiries ({totalInquiriesCount})
+              Inbound Inquiries ({globalStats.inquiries_count || totalInquiriesCount})
             </button>
 
             {/* Quick Filter: Messages Sent (Independent Toggle) */}
             <button
               type="button"
-              onClick={() => {
-                const nextMsg = messageSentFilter === "sent" ? "all" : "sent";
-                setMessageSentFilter(nextMsg);
-                setCurrentPage(1);
-                fetchLeads(1, pageSize, undefined, undefined, nextMsg);
-              }}
+              onClick={handleMessageSentToggle}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 border ${
                 messageSentFilter === "sent"
                   ? "bg-emerald-600 border-emerald-500 text-white shadow-xs font-bold"
@@ -1802,12 +1825,9 @@ export default function LeadsManager() {
             <Search className="w-3.5 h-3.5 text-[var(--dash-text-muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search name, email, city..."
+              placeholder="Search name, phone, email, city..."
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="crm-input !pl-9 py-2 text-xs w-full"
             />
           </div>
@@ -1817,12 +1837,7 @@ export default function LeadsManager() {
             <div className="relative flex-1 md:flex-none min-w-[150px] sm:min-w-[170px]">
               <select
                 value={statusFilter}
-                onChange={(e) => {
-                  const newStatus = e.target.value;
-                  setStatusFilter(newStatus);
-                  setCurrentPage(1);
-                  fetchLeads(1, pageSize, newStatus);
-                }}
+                onChange={(e) => handleStatusChange(e.target.value)}
                 className="crm-input !pl-8 !pr-8 py-2 text-xs font-semibold cursor-pointer appearance-none w-full"
               >
                 <option value="all">All Status</option>
@@ -2497,7 +2512,7 @@ export default function LeadsManager() {
                     const newSize = Number(e.target.value);
                     setPageSize(newSize);
                     setCurrentPage(1);
-                    fetchLeads(1, newSize, statusFilter);
+                    fetchLeads(1, newSize, statusFilterRef.current, searchQueryRef.current, messageSentFilterRef.current, sourceFilterRef.current);
                   }}
                   className="px-2 py-1 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-md text-xs font-semibold text-slate-700 dark:text-neutral-200 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                 >
@@ -2563,7 +2578,7 @@ export default function LeadsManager() {
                       const newSize = Number(e.target.value);
                       setPageSize(newSize);
                       setCurrentPage(1);
-                      fetchLeads(1, newSize, statusFilter);
+                      fetchLeads(1, newSize, statusFilterRef.current, searchQueryRef.current, messageSentFilterRef.current, sourceFilterRef.current);
                     }}
                     className="px-1.5 py-0.5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded text-xs font-semibold text-slate-700 dark:text-neutral-200 cursor-pointer"
                   >
