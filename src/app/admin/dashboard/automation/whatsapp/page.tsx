@@ -55,7 +55,8 @@ import {
   Ban,
   Smartphone,
   PieChart as PieIcon,
-  MoreVertical
+  MoreVertical,
+  Building2
 } from "lucide-react";
 import { authFetch, API } from "@/lib/authFetch";
 import { useAuthStore } from "@/lib/authStore";
@@ -79,11 +80,15 @@ import {
 
 interface WhatsAppStats {
   total_prospects: number;
+  total_agencies?: number;
+  total_vendors?: number;
   pending: number;
   sent: number;
   delivered: number;
   replied: number;
   interested: number;
+  agency_interested?: number;
+  vendor_interested?: number;
   failed: number;
   blocked?: number;
   reported?: number;
@@ -962,6 +967,37 @@ export default function WhatsAppOutreachPage() {
     }
   };
 
+  const handleToggleAgency = async (convOrId: ConversationItem | number | string) => {
+    const leadId = typeof convOrId === "object" ? convOrId.lead_id : convOrId;
+    try {
+      const res = await authFetch(`${API}/api/v1/whatsapp/chats/${leadId}/toggle-agency`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const newAgency = data.is_outsource_agency;
+        const newType = data.lead_type;
+        showAlert("success", data.message || `Lead updated to ${newAgency ? "Agency Partner 🤝" : "Local Vendor 🏪"}.`);
+        setConversations(prev =>
+          prev.map(c => c.lead_id === leadId ? { ...c, is_outsource_agency: newAgency, lead_type: newType } : c)
+        );
+        if (selectedConv?.lead_id === leadId) {
+          setSelectedConv(prev => prev ? { ...prev, is_outsource_agency: newAgency, lead_type: newType } : null);
+        }
+        setLeads(prev =>
+          prev.map(l => l.id === Number(leadId) ? { ...l, is_outsource_agency: newAgency, lead_type: newType } : l)
+        );
+        fetchOverview();
+        fetchConversations();
+      } else {
+        showAlert("error", data.detail || "Failed to update agency status.");
+      }
+    } catch (err) {
+      showAlert("error", "Network error updating agency status.");
+    }
+  };
+
   const handleMarkInterested = async (leadId: number | string) => {
     await handleToggleInterest(leadId);
   };
@@ -1313,8 +1349,10 @@ export default function WhatsAppOutreachPage() {
             <Star className="w-4 h-4 text-emerald-500 fill-emerald-500" />
           </div>
           <div className="text-2xl font-bold font-mono mt-2 text-emerald-500">{stats?.interested || 0}</div>
-          <div className="text-[11px] text-emerald-500 font-semibold mt-1">
-            {stats?.conversion_rate !== undefined ? `${stats.conversion_rate}%` : "0.0%"} qualified conversion
+          <div className="text-[11px] font-semibold mt-1 flex items-center gap-1.5 flex-wrap">
+            <span className="text-teal-400 font-bold">🤝 {stats?.agency_interested ?? 0} Agencies</span>
+            <span className="text-[var(--dash-text-muted)]">•</span>
+            <span className="text-indigo-400 font-bold">🏪 {stats?.vendor_interested ?? 0} Vendors</span>
           </div>
         </div>
 
@@ -1475,9 +1513,12 @@ export default function WhatsAppOutreachPage() {
               <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none text-[11px]">
                 {[
                   { id: "all", label: "All Chats" },
-                  { id: "agency", label: "🤝 Agency" },
+                  { id: "agency", label: "🤝 Agencies" },
+                  { id: "vendor", label: "🏪 Vendors" },
+                  { id: "agency_interested", label: "🤝⭐ Agency Interested" },
+                  { id: "vendor_interested", label: "🏪⭐ Vendor Interested" },
+                  { id: "interested", label: "⭐ All Interested" },
                   { id: "replied", label: "💬 Replied" },
-                  { id: "interested", label: "⭐ Interested" },
                   { id: "combined", label: "🔥 Combined" },
                   { id: "ai_active", label: "🤖 AI" },
                   { id: "human_takeover", label: "👤 Human" }
@@ -2065,13 +2106,21 @@ export default function WhatsAppOutreachPage() {
                       </div>
                     </div>
 
-                    {/* Dynamic Badges */}
+                    {/* Dynamic Badges & Classification Switch */}
                     <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                      {conv.is_outsource_agency && (
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 flex items-center gap-1">
-                          🤝 Agency Partner
-                        </span>
-                      )}
+                      <button
+                        onClick={() => handleToggleAgency(conv)}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold border transition flex items-center gap-1 cursor-pointer ${
+                          conv.is_outsource_agency
+                            ? "bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30 hover:bg-teal-500/25"
+                            : "bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/20"
+                        }`}
+                        title="Click to switch between Agency Partner and Local Vendor"
+                      >
+                        <Building2 className="w-3 h-3 text-teal-400" />
+                        <span>{conv.is_outsource_agency ? "🤝 Agency Partner" : "🏪 Local Vendor"}</span>
+                        <span className="text-[9px] opacity-70 underline ml-0.5">⇄ Switch</span>
+                      </button>
                       <span className="crm-badge badge-primary text-[10px]">
                         Source: {conv.latest_direction === "inbound" ? "Direct Inbound" : "Outreach Scraping"}
                       </span>
