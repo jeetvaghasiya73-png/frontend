@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Script from "next/script";
 import { useTheme } from "next-themes";
+import AnnouncementBanner from "@/components/layout/AnnouncementBanner";
 import {
   Sun,
   Moon,
@@ -252,15 +253,18 @@ export default function Navbar() {
         }}
       />
 
-      {/* Desktop & Collapsed Mobile Header */}
-      <header className="fixed top-0 left-0 w-full z-50 py-3.5 px-4 sm:px-6 md:px-12 flex justify-center pointer-events-none transition-all duration-300">
-        <div
-          className={`w-full max-w-5xl flex items-center justify-between px-4 sm:px-6 py-2.5 rounded-full border pointer-events-auto transition-all duration-500 ${
-            scrolled
-              ? "border-border-custom bg-background/85 backdrop-blur-xl shadow-lg shadow-black/5 dark:shadow-black/40"
-              : "border-border-custom/70 bg-surface/60 backdrop-blur-md"
-          }`}
-        >
+      {/* SaaS Announcement Banner & Desktop Header */}
+      <header className="fixed top-0 left-0 w-full z-50 flex flex-col items-center pointer-events-none transition-all duration-300">
+        <AnnouncementBanner />
+
+        <div className="w-full pt-2 sm:pt-2.5 pb-2 px-4 sm:px-6 md:px-12 flex justify-center pointer-events-none">
+          <div
+            className={`w-full max-w-5xl flex items-center justify-between px-4 sm:px-6 py-2.5 rounded-full border pointer-events-auto transition-all duration-500 ${
+              scrolled
+                ? "border-border-custom bg-background/85 backdrop-blur-xl shadow-lg shadow-black/5 dark:shadow-black/40"
+                : "border-border-custom/70 bg-surface/60 backdrop-blur-md"
+            }`}
+          >
           {/* Left: Brand Logo */}
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-border-custom dark:border-white/35 dark:ring-1 dark:ring-white/20 bg-black flex items-center justify-center shadow-xs dark:shadow-[0_0_12px_rgba(255,255,255,0.12)] group-hover:scale-105 transition-all shrink-0">
@@ -509,7 +513,8 @@ export default function Navbar() {
             </button>
           </div>
         </div>
-      </header>
+      </div>
+    </header>
 
       {/* Full-Screen Premium Mobile Navigation Drawer */}
       {mobileMenuOpen && (
