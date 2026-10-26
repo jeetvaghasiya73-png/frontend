@@ -318,13 +318,15 @@ function AdminUsersTab() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Registered accounts with console access to LeadFlow CRM
           </p>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-white/10">
-            {users.length} {users.length === 1 ? "user" : "users"}
-          </span>
+          <div className="flex items-center">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-white/10 shrink-0">
+              {users.length} {users.length === 1 ? "user" : "users"}
+            </span>
+          </div>
         </div>
         {isSuperAdmin && (
           <button
@@ -509,7 +511,7 @@ function AdminUsersTab() {
                         className={`p-1.5 rounded-lg transition cursor-pointer ${
                           (!isSuperAdmin && u.id !== currentUser?.id) || (u.is_main_admin && !currentUser?.is_main_admin && u.id !== currentUser?.id)
                             ? "opacity-30 cursor-not-allowed"
-                            : "hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-500"
+                            : "hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400"
                         }`}
                         title={
                           !isSuperAdmin && u.id !== currentUser?.id
@@ -843,7 +845,7 @@ function AdminUsersTab() {
                             if (e.target.checked) setEditPermissions(prev => [...prev, perm.id]);
                             else setEditPermissions(prev => prev.filter(p => p !== perm.id));
                           }}
-                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                          className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                         />
                         <label htmlFor={`edit-perm-${perm.id}`} className="text-xs text-slate-600 dark:text-slate-400">
                           {perm.label}
@@ -861,7 +863,7 @@ function AdminUsersTab() {
                     id="edit-superadmin"
                     checked={editIsSuperadmin}
                     onChange={(e) => setEditIsSuperadmin(e.target.checked)}
-                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                   />
                   <label htmlFor="edit-superadmin" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Grant Super Admin Rights
@@ -880,7 +882,7 @@ function AdminUsersTab() {
                 <button
                   type="submit"
                   disabled={editing}
-                  className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                  className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-md shadow-emerald-600/30 cursor-pointer disabled:opacity-50 flex items-center gap-2"
                 >
                   {editing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   {editing ? "Saving..." : "Save Changes"}
@@ -908,7 +910,7 @@ export default function SecurityPage() {
     <div className="space-y-6 text-left pb-20 relative animate-fadeIn font-sans antialiased text-slate-800 dark:text-slate-200">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-md border border-slate-200/80 dark:border-slate-800 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-md bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+          <div className="w-10 h-10 rounded-md bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
             <Shield className="w-5 h-5" />
           </div>
           <div>

@@ -136,6 +136,7 @@ export default function SuperAdminDashboard() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<string | null>(null);
+  const [isOutsourceAgencyImport, setIsOutsourceAgencyImport] = useState(false);
 
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
   const [newLeadForm, setNewLeadForm] = useState({
@@ -557,6 +558,8 @@ export default function SuperAdminDashboard() {
           assignedTo: l.assigned_to || user?.username || "Main Admin",
           assignedAvatar: (l.assigned_to || user?.username || "Main Admin").slice(0, 2).toUpperCase(),
           avatarColor: "bg-neutral-700",
+          lead_type: l.lead_type || (l.is_outsource_agency ? "agency_outsource" : "local_vendor"),
+          is_outsource_agency: Boolean(l.is_outsource_agency || l.lead_type === "agency_outsource"),
           notes: l.custom_notes || []
         };
       });
@@ -618,6 +621,8 @@ export default function SuperAdminDashboard() {
           assignedTo: l.assigned_to || user?.username || "Main Admin",
           assignedAvatar: (l.assigned_to || user?.username || "Main Admin").slice(0, 2).toUpperCase(),
           avatarColor: "bg-indigo-600",
+          lead_type: l.lead_type || (l.is_outsource_agency ? "agency_outsource" : "local_vendor"),
+          is_outsource_agency: Boolean(l.is_outsource_agency || l.lead_type === "agency_outsource"),
           notes: l.custom_notes || []
         };
       });
@@ -1300,7 +1305,7 @@ export default function SuperAdminDashboard() {
   // 2b. Delete Filtered Leads (e.g. status/search)
   const handleDeleteFiltered = async () => {
     const activeStatus = statusFilter !== "all" ? statusFilter : null;
-    const activeSearch = searchKeyword.trim() || null;
+    const activeSearch = tableSearch.trim() || null;
     if (!activeStatus && !activeSearch) {
       triggerToast("No status or search filter is currently active.");
       return;
@@ -1402,6 +1407,8 @@ export default function SuperAdminDashboard() {
 
     const formData = new FormData();
     formData.append("file", importFile);
+    formData.append("is_outsource_agency", isOutsourceAgencyImport ? "true" : "false");
+    formData.append("lead_type", isOutsourceAgencyImport ? "agency_outsource" : "local_vendor");
 
     try {
       const res = await authFetch(`${API}/api/v1/scraped-leads/upload`, {
@@ -2058,7 +2065,7 @@ export default function SuperAdminDashboard() {
                     </button>
 
                     {/* Remove Filtered Leads Only (e.g. only matching status/search) */}
-                    {(statusFilter !== "all" || searchKeyword.trim()) && (
+                    {(statusFilter !== "all" || tableSearch.trim()) && (
                       <button
                         type="button"
                         onClick={() => {
@@ -2185,18 +2192,18 @@ export default function SuperAdminDashboard() {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="flex items-center gap-1 text-amber-500 font-bold text-xs">
                           <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                          {item.rating || item.raw?.rating || "4.5"}
+                          {(item as any).rating || item.raw?.rating || "4.5"}
                         </span>
-                        {(item.total_review || item.raw?.total_review) && (
+                        {((item as any).total_review || item.raw?.total_review) && (
                           <span className="text-[10px]" style={{ color: "var(--dash-text-muted)" }}>
-                            ({item.total_review || item.raw?.total_review})
+                            ({(item as any).total_review || item.raw?.total_review})
                           </span>
                         )}
-                        {(item.reviews || item.raw?.reviews) && (
+                        {((item as any).reviews || item.raw?.reviews) && (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20" title="Google Reviews Available">
                             {(() => {
                               try {
-                                const rawRev = item.reviews || item.raw?.reviews;
+                                const rawRev = (item as any).reviews || item.raw?.reviews;
                                 const rList = typeof rawRev === "string" ? JSON.parse(rawRev) : rawRev;
                                 return `${Array.isArray(rList) ? rList.length : 1} reviews`;
                               } catch {
@@ -2252,9 +2259,9 @@ export default function SuperAdminDashboard() {
                     </td>
                     <td className="py-3.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
-                        {(item.maps_url || item.raw?.maps_url) && (
+                        {((item as any).maps_url || item.raw?.maps_url) && (
                           <a
-                            href={item.maps_url || item.raw?.maps_url}
+                            href={(item as any).maps_url || item.raw?.maps_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1 rounded hover:bg-white/10 transition text-blue-500"
@@ -2981,18 +2988,24 @@ export default function SuperAdminDashboard() {
                 })()}
 
                 {/* Google Maps Direct CTA Button */}
-                {(selectedLead.maps_url || selectedLead.raw?.maps_url) && (
-                  <a
-                    href={selectedLead.maps_url || selectedLead.raw?.maps_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-sm transition active:scale-[0.99] mt-2"
-                  >
-                    <MapPin className="w-4 h-4 text-white shrink-0" />
-                    <span>View Official Google Maps Profile</span>
-                    <ExternalLink className="w-3.5 h-3.5 text-white/80 shrink-0 ml-1" />
-                  </a>
-                )}
+                {(() => {
+                  const rawMaps = selectedLead.maps_url || selectedLead.raw?.maps_url;
+                  const query = `${selectedLead.title || selectedLead.company || ""} ${selectedLead.location || ""}`.trim();
+                  const targetUrl = rawMaps || (query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : null);
+                  if (!targetUrl) return null;
+                  return (
+                    <a
+                      href={targetUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm shadow-emerald-600/20 transition active:scale-[0.99] mt-2"
+                    >
+                      <MapPin className="w-4 h-4 text-white shrink-0" />
+                      <span>View Official Google Maps Profile</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-white/80 shrink-0 ml-1" />
+                    </a>
+                  );
+                })()}
               </div>
 
               {/* 100% Dynamic Activity History Timeline */}
@@ -3562,6 +3575,32 @@ export default function SuperAdminDashboard() {
                 <div className="space-y-0.5 text-left">
                   <p className="font-semibold text-amber-200">Close file in Microsoft Excel first:</p>
                   <p className="text-amber-300/90 text-[10.5px]">If this spreadsheet is currently open in <strong>Microsoft Excel</strong>, please <strong>save &amp; close Excel</strong> before selecting it. Windows locks open spreadsheets, causing 0-byte or failed uploads.</p>
+                </div>
+              </div>
+
+              {/* Agency Outsource Checkbox */}
+              <div
+                onClick={() => setIsOutsourceAgencyImport(!isOutsourceAgencyImport)}
+                className={`flex items-start gap-3 p-3 rounded-md border cursor-pointer transition select-none ${
+                  isOutsourceAgencyImport
+                    ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-800 dark:text-emerald-300"
+                    : "bg-[var(--dash-surface-alt)] border-[var(--dash-border)] text-[var(--dash-text-muted)] hover:border-emerald-500/30"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={isOutsourceAgencyImport}
+                  onChange={(e) => setIsOutsourceAgencyImport(e.target.checked)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-0.5 rounded border-slate-600 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer accent-emerald-600"
+                />
+                <div className="space-y-0.5 text-left">
+                  <p className="text-xs font-bold text-[var(--dash-text-primary)] flex items-center gap-1.5">
+                    🏢 Mark as Agency / Outsource Partner Leads
+                  </p>
+                  <p className="text-[11px] leading-relaxed text-[var(--dash-text-muted)]">
+                    Enables white-label B2B outreach pitching outsourcing services (SEO, Full-Stack Dev, Workflows &amp; Automation, Web Scraping) instead of local customer pitches.
+                  </p>
                 </div>
               </div>
 

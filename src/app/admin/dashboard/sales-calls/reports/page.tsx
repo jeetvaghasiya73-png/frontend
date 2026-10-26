@@ -387,8 +387,8 @@ export default function CallingReportsDashboard() {
               onClick={() => setDatePreset(p.key as any)}
               className={`text-xs font-semibold px-2.5 py-1 rounded-md border transition cursor-pointer ${
                 datePreset === p.key
-                  ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                  : "bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                  ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                  : "bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >
               {p.label}
@@ -420,14 +420,14 @@ export default function CallingReportsDashboard() {
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Calls Logged</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">{summary.total_calls_logged}</span>
-            <span className="text-[10px] text-indigo-500 font-semibold font-mono">Dials</span>
+            <span className="text-[10px] text-emerald-500 font-semibold font-mono">Dials</span>
           </div>
         </div>
 
         <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Call Clicks</span>
+          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Call Clicks</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400">{summary.total_call_clicks ?? 0}</span>
+            <span className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">{summary.total_call_clicks ?? 0}</span>
             <span className="text-[10px] text-slate-400 font-medium">Clicks</span>
           </div>
         </div>
@@ -457,18 +457,26 @@ export default function CallingReportsDashboard() {
         </div>
 
         <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Contacted</span>
+          <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider">Contacted</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400">{summary.total_contacted}</span>
+            <span className="text-xl sm:text-2xl font-black text-teal-600 dark:text-teal-400">{summary.total_contacted}</span>
             <span className="text-[10px] text-slate-400 font-medium">Leads</span>
           </div>
         </div>
 
         <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Callbacks</span>
+          <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Callbacks</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-black text-purple-600 dark:text-purple-400">{summary.total_callbacks}</span>
-            <span className="text-[10px] text-slate-400 font-medium">Scheduled</span>
+            <span className="text-xl sm:text-2xl font-black text-amber-500">{summary.total_callbacks}</span>
+            <span className="text-[10px] text-slate-400 font-medium">Active</span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#0f172a] p-3.5 rounded-lg border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Invalid</span>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-xl sm:text-2xl font-black text-rose-500">{summary.total_invalid}</span>
+            <span className="text-[10px] text-slate-400 font-medium">Dead</span>
           </div>
         </div>
 
@@ -496,74 +504,133 @@ export default function CallingReportsDashboard() {
             No telecallers have been assigned queue leads yet.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs min-w-[700px]">
-              <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
-                <tr>
-                  <th className="py-3 px-4">Telecaller / Agent</th>
-                  <th className="py-3 px-4 text-center">Assigned</th>
-                  <th className="py-3 px-4 text-center">Completed Calls</th>
-                  <th className="py-3 px-4 text-center">Interested (Hot)</th>
-                  <th className="py-3 px-4 text-center">Conversion Rate</th>
-                  <th className="py-3 px-4 text-center">Callbacks</th>
-                  <th className="py-3 px-4 text-center">Pending</th>
-                  <th className="py-3 px-4">Shift Progress</th>
-                  <th className="py-3 px-4 text-right">Last Call</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {leaderboard.map((agent) => (
-                  <tr key={agent.user_id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
-                    <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">
+          <>
+            {/* Desktop Table View (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs min-w-[700px]">
+                <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">Telecaller / Agent</th>
+                    <th className="py-3 px-4 text-center">Assigned</th>
+                    <th className="py-3 px-4 text-center">Completed Calls</th>
+                    <th className="py-3 px-4 text-center">Interested (Hot)</th>
+                    <th className="py-3 px-4 text-center">Conversion Rate</th>
+                    <th className="py-3 px-4 text-center">Callbacks</th>
+                    <th className="py-3 px-4 text-center">Pending</th>
+                    <th className="py-3 px-4">Shift Progress</th>
+                    <th className="py-3 px-4 text-right">Last Call</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {leaderboard.map((agent) => (
+                    <tr key={agent.user_id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                      <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-xs shrink-0">
+                          {agent.username.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <div>{agent.username}</div>
+                          <div className="text-[10px] font-normal text-slate-400">{agent.job_title || "Sales Caller"}</div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-center font-bold text-slate-800 dark:text-slate-200">
+                        {agent.assigned_count}
+                      </td>
+                      <td className="py-3.5 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">
+                        {agent.completed_count}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                          <Star className="w-3 h-3 fill-emerald-500" />
+                          {agent.interested_count}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center font-black text-emerald-600 dark:text-emerald-400">
+                        {agent.conversion_rate}%
+                      </td>
+                      <td className="py-3.5 px-4 text-center text-amber-500 font-bold">
+                        {agent.callback_count}
+                      </td>
+                      <td className="py-3.5 px-4 text-center text-slate-500 dark:text-slate-400 font-bold">
+                        {agent.pending_count}
+                      </td>
+                      <td className="py-3.5 px-4 min-w-[120px]">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 mb-1">
+                          <span>{agent.progress_percentage}%</span>
+                          <span>{agent.completed_count}/{agent.assigned_count}</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-emerald-600 to-teal-400 rounded-full"
+                            style={{ width: `${Math.min(100, agent.progress_percentage)}%` }}
+                          />
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-right text-[11px] font-mono text-slate-400">
+                        {agent.last_active_at ? formatISTDateTime(agent.last_active_at) : "Never"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Responsive Cards (< md) */}
+            <div className="block md:hidden divide-y divide-zinc-200 dark:divide-white/10">
+              {leaderboard.map((agent) => (
+                <div key={`m-agent-${agent.user_id}`} className="p-4 flex flex-col gap-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold text-xs flex items-center justify-center shrink-0">
                         {agent.username.slice(0, 2).toUpperCase()}
                       </div>
-                      <div>
-                        <div>{agent.username}</div>
-                        <div className="text-[10px] font-normal text-slate-400">{agent.job_title || "Sales Caller"}</div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-xs text-zinc-900 dark:text-white truncate">{agent.username}</div>
+                        <div className="text-[10px] text-zinc-400 truncate">{agent.job_title || "Sales Caller"}</div>
                       </div>
-                    </td>
-                    <td className="py-3.5 px-4 text-center font-bold text-slate-800 dark:text-slate-200">
-                      {agent.assigned_count}
-                    </td>
-                    <td className="py-3.5 px-4 text-center font-bold text-blue-600 dark:text-blue-400">
-                      {agent.completed_count}
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
-                        <Star className="w-3 h-3 fill-emerald-500" />
-                        {agent.interested_count}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-center font-black text-emerald-600 dark:text-emerald-400">
-                      {agent.conversion_rate}%
-                    </td>
-                    <td className="py-3.5 px-4 text-center text-purple-600 dark:text-purple-400 font-bold">
-                      {agent.callback_count}
-                    </td>
-                    <td className="py-3.5 px-4 text-center text-amber-600 dark:text-amber-400 font-bold">
-                      {agent.pending_count}
-                    </td>
-                    <td className="py-3.5 px-4 min-w-[120px]">
-                      <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 mb-1">
-                        <span>{agent.progress_percentage}%</span>
-                        <span>{agent.completed_count}/{agent.assigned_count}</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full"
-                          style={{ width: `${Math.min(100, agent.progress_percentage)}%` }}
-                        />
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 text-right text-[11px] font-mono text-slate-400">
-                      {agent.last_active_at ? formatISTDateTime(agent.last_active_at) : "Never"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <Star className="w-3 h-3 fill-emerald-500" />
+                      {agent.interested_count} Hot
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 p-2.5 rounded-lg bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/5 text-center">
+                    <div>
+                      <div className="text-[10px] text-zinc-400 font-medium">Assigned</div>
+                      <div className="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-0.5">{agent.assigned_count}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-zinc-400 font-medium">Completed</div>
+                      <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{agent.completed_count}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-zinc-400 font-medium">Conversion</div>
+                      <div className="text-xs font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{agent.conversion_rate}%</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between text-[10px] font-semibold text-zinc-500 mb-1">
+                      <span>Shift Progress: {agent.progress_percentage}%</span>
+                      <span>{agent.completed_count}/{agent.assigned_count} Calls</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-emerald-600 to-teal-400 rounded-full"
+                        style={{ width: `${Math.min(100, agent.progress_percentage)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-0.5">
+                    <span>Callbacks: <strong className="text-amber-500 font-bold">{agent.callback_count}</strong></span>
+                    <span>Last call: <strong className="font-mono text-zinc-300">{agent.last_active_at ? formatISTDateTime(agent.last_active_at) : "Never"}</strong></span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -582,65 +649,114 @@ export default function CallingReportsDashboard() {
             No daily call activity records found for this period.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs min-w-[700px]">
-              <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
-                <tr>
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Sales Caller</th>
-                  <th className="py-3 px-4 text-center">Total Calls Done</th>
-                  <th className="py-3 px-4 text-center">Interested (Hot)</th>
-                  <th className="py-3 px-4 text-center">Contacted</th>
-                  <th className="py-3 px-4 text-center">Callbacks</th>
-                  <th className="py-3 px-4 text-center">Invalid</th>
-                  <th className="py-3 px-4 text-center">Talk Time</th>
-                  <th className="py-3 px-4 text-right">Daily Conversion</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {dailyBreakdown.map((row, idx) => {
-                  const conv = row.calls_count > 0 ? Math.round((row.interested_count / row.calls_count) * 100) : 0;
-                  return (
-                    <tr key={`${row.date}-${row.caller_id}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
-                      <td className="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">
+          <>
+            {/* Desktop Table View (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs min-w-[700px]">
+                <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">Date</th>
+                    <th className="py-3 px-4">Sales Caller</th>
+                    <th className="py-3 px-4 text-center">Total Calls Done</th>
+                    <th className="py-3 px-4 text-center">Interested (Hot)</th>
+                    <th className="py-3 px-4 text-center">Contacted</th>
+                    <th className="py-3 px-4 text-center">Callbacks</th>
+                    <th className="py-3 px-4 text-center">Invalid</th>
+                    <th className="py-3 px-4 text-center">Talk Time</th>
+                    <th className="py-3 px-4 text-right">Daily Conversion</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {dailyBreakdown.map((row, idx) => {
+                    const conv = row.calls_count > 0 ? Math.round((row.interested_count / row.calls_count) * 100) : 0;
+                    return (
+                      <tr key={`${row.date}-${row.caller_id}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                        <td className="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">
+                          {row.date}
+                        </td>
+                        <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-[10px] shrink-0">
+                            {row.caller_name.charAt(0).toUpperCase()}
+                          </div>
+                          <span>{row.caller_name}</span>
+                        </td>
+                        <td className="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">
+                          {row.calls_count}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                            <Star className="w-2.5 h-2.5 fill-emerald-500" />
+                            {row.interested_count}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center font-semibold text-slate-700 dark:text-slate-300">
+                          {row.contacted_count}
+                        </td>
+                        <td className="py-3 px-4 text-center font-semibold text-amber-500">
+                          {row.callback_count}
+                        </td>
+                        <td className="py-3 px-4 text-center text-slate-400">
+                          {row.invalid_count}
+                        </td>
+                        <td className="py-3 px-4 text-center text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                          {row.total_duration_minutes > 0 ? `${row.total_duration_minutes}m` : "—"}
+                        </td>
+                        <td className="py-3 px-4 text-right font-black text-emerald-600 dark:text-emerald-400">
+                          {conv}%
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Responsive Cards (< md) */}
+            <div className="block md:hidden divide-y divide-zinc-200 dark:divide-white/10">
+              {dailyBreakdown.map((row, idx) => {
+                const conv = row.calls_count > 0 ? Math.round((row.interested_count / row.calls_count) * 100) : 0;
+                return (
+                  <div key={`m-daily-${idx}`} className="p-4 flex flex-col gap-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                        <CalendarDays className="w-3.5 h-3.5 text-emerald-500" />
                         {row.date}
-                      </td>
-                      <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-[10px] shrink-0">
-                          {row.caller_name.charAt(0).toUpperCase()}
-                        </div>
-                        <span>{row.caller_name}</span>
-                      </td>
-                      <td className="py-3 px-4 text-center font-bold text-blue-600 dark:text-blue-400">
-                        {row.calls_count}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
-                          <Star className="w-2.5 h-2.5 fill-emerald-500" />
-                          {row.interested_count}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-center font-semibold text-slate-700 dark:text-slate-300">
-                        {row.contacted_count}
-                      </td>
-                      <td className="py-3 px-4 text-center font-semibold text-purple-600 dark:text-purple-400">
-                        {row.callback_count}
-                      </td>
-                      <td className="py-3 px-4 text-center text-slate-400">
-                        {row.invalid_count}
-                      </td>
-                      <td className="py-3 px-4 text-center text-slate-500 dark:text-slate-400 font-mono text-[11px]">
-                        {row.total_duration_minutes > 0 ? `${row.total_duration_minutes}m` : "—"}
-                      </td>
-                      <td className="py-3 px-4 text-right font-black text-emerald-600 dark:text-emerald-400">
-                        {conv}%
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                        {conv}% Conv
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                      <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-[9px] shrink-0">
+                        {row.caller_name.charAt(0).toUpperCase()}
+                      </div>
+                      <span>Caller: <strong className="text-zinc-900 dark:text-white">{row.caller_name}</strong></span>
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-1.5 text-center text-xs">
+                      <div className="p-2 rounded bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/5">
+                        <div className="text-[9px] text-zinc-400 uppercase font-bold">Calls</div>
+                        <div className="font-bold text-zinc-800 dark:text-zinc-200 mt-0.5">{row.calls_count}</div>
+                      </div>
+                      <div className="p-2 rounded bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/5">
+                        <div className="text-[9px] text-zinc-400 uppercase font-bold">Hot</div>
+                        <div className="font-bold text-emerald-500 mt-0.5">{row.interested_count}</div>
+                      </div>
+                      <div className="p-2 rounded bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/5">
+                        <div className="text-[9px] text-zinc-400 uppercase font-bold">Talk Time</div>
+                        <div className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5">{row.total_duration_minutes > 0 ? `${row.total_duration_minutes}m` : "0m"}</div>
+                      </div>
+                      <div className="p-2 rounded bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/5">
+                        <div className="text-[9px] text-zinc-400 uppercase font-bold">Callbacks</div>
+                        <div className="font-bold text-amber-500 mt-0.5">{row.callback_count}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
@@ -703,7 +819,7 @@ export default function CallingReportsDashboard() {
 
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center text-slate-400">
-            <Loader2 className="w-6 h-6 animate-spin text-indigo-500 mb-2" />
+            <Loader2 className="w-6 h-6 animate-spin text-emerald-500 mb-2" />
             <span className="text-xs">Loading audit logs...</span>
           </div>
         ) : logs.length === 0 ? (
@@ -711,115 +827,187 @@ export default function CallingReportsDashboard() {
             No activity or status change logs match this criteria.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs min-w-[850px]">
-              <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
-                <tr>
-                  <th className="py-3 px-4">Time (IST)</th>
-                  <th className="py-3 px-4">Changed By / Actor</th>
-                  <th className="py-3 px-4">Business / Lead</th>
-                  <th className="py-3 px-4">Outcome</th>
-                  <th className="py-3 px-4">Source</th>
-                  <th className="py-3 px-4">Notes / Remarks</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {logs.map((log) => {
-                  const leadPhone = log.lead?.bussiness_number ? format10DigitPhone(log.lead.bussiness_number) : "";
-                  const isBotActor = log.is_bot || log.source === "whatsapp_bot" || log.caller?.username?.toLowerCase().includes("bot") || log.actor_name?.toLowerCase().includes("bot");
-                  return (
-                    <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
-                      <td className="py-3 px-4 whitespace-nowrap">
-                        <div className="text-[11px] font-mono font-medium text-slate-900 dark:text-white">
-                          {formatISTDateTime(log.called_at)}
-                        </div>
-                        <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-                          <span>🇮🇳 IST (UTC+5:30)</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
+          <>
+            {/* Desktop Table View (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs min-w-[850px]">
+                <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">Time (IST)</th>
+                    <th className="py-3 px-4">Changed By / Actor</th>
+                    <th className="py-3 px-4">Business / Lead</th>
+                    <th className="py-3 px-4">Outcome</th>
+                    <th className="py-3 px-4">Source</th>
+                    <th className="py-3 px-4">Notes / Remarks</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {logs.map((log) => {
+                    const leadPhone = log.lead?.bussiness_number ? format10DigitPhone(log.lead.bussiness_number) : "";
+                    const isBotActor = log.is_bot || log.source === "whatsapp_bot" || log.caller?.username?.toLowerCase().includes("bot") || log.actor_name?.toLowerCase().includes("bot");
+                    return (
+                      <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <div className="text-[11px] font-mono font-medium text-slate-900 dark:text-white">
+                            {formatISTDateTime(log.called_at)}
+                          </div>
+                          <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
+                            <span>🇮🇳 IST (UTC+5:30)</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          {isBotActor ? (
+                            <div>
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                <Bot className="w-3.5 h-3.5 text-emerald-600" /> WhatsApp Bot
+                              </span>
+                              <div className="text-[10px] text-slate-400 mt-0.5">Customer / Inbound</div>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
+                                <UserCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                                <span className="truncate max-w-[140px]">{log.actor_name || log.caller?.username || "Admin"}</span>
+                              </div>
+                              <div className="text-[10px] text-slate-400 capitalize">
+                                {log.caller?.job_title || "Sales Caller"}
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-slate-900 dark:text-white truncate max-w-[200px]" title={log.lead?.bussiness_name}>
+                            {log.lead?.bussiness_name || "Unknown Business"}
+                          </div>
+                          <div className="text-[11px] font-mono text-slate-400">
+                            {leadPhone ? `+${leadPhone}` : "—"} {log.lead?.scraped_city ? `• ${log.lead.scraped_city}` : ""}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${
+                            log.disposition === "interested"
+                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                              : log.disposition === "contacted"
+                              ? "bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800"
+                              : log.disposition === "callback"
+                              ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                          }`}>
+                            {log.disposition === "interested" ? "⭐ Interested" : log.disposition === "contacted" ? "📞 Contacted" : log.disposition}
+                          </span>
+                          {log.callback_at && (
+                            <div className="text-[10px] text-amber-500 mt-0.5 flex items-center gap-1 font-mono">
+                              <Clock className="w-2.5 h-2.5" /> {formatISTDateTime(log.callback_at)}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                            {log.source === "whatsapp_bot"
+                              ? "WhatsApp Bot"
+                              : log.source === "queue_disposition"
+                              ? "Call Queue"
+                              : log.source === "sales_calling_screen"
+                              ? "Calling List"
+                              : log.source === "whatsapp_dashboard"
+                              ? "WhatsApp Tab"
+                              : log.source === "interested_screen"
+                              ? "Hot Leads Tab"
+                              : (log.source || "Sales Call")}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-300 text-[11px] max-w-xs truncate" title={log.notes || ""}>
+                          {log.notes || "—"}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {leadPhone && (
+                            <a
+                              href={`https://wa.me/${leadPhone}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-[#25D366] hover:underline"
+                            >
+                              Chat WhatsApp →
+                            </a>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Responsive Cards (< md) */}
+            <div className="block md:hidden divide-y divide-zinc-200 dark:divide-white/10">
+              {logs.map((log) => {
+                const leadPhone = log.lead?.bussiness_number ? format10DigitPhone(log.lead.bussiness_number) : "";
+                const isBotActor = log.is_bot || log.source === "whatsapp_bot" || log.caller?.username?.toLowerCase().includes("bot") || log.actor_name?.toLowerCase().includes("bot");
+                return (
+                  <div key={`m-log-${log.id}`} className="p-4 flex flex-col gap-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-[11px] text-zinc-400">
+                        {formatISTDateTime(log.called_at)}
+                      </span>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                        log.disposition === "interested"
+                          ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                          : log.disposition === "contacted"
+                          ? "bg-teal-500/10 text-teal-400 border-teal-500/20"
+                          : log.disposition === "callback"
+                          ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                          : "bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-white/10"
+                      }`}>
+                        {log.disposition === "interested" ? "⭐ Interested" : log.disposition === "contacted" ? "📞 Contacted" : log.disposition?.toUpperCase() || "LOGGED"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <div className="font-bold text-xs text-zinc-900 dark:text-white truncate">
+                        {log.lead?.bussiness_name || "Unknown Business"}
+                      </div>
+                      <div className="text-[11px] font-mono text-zinc-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                        {leadPhone && <span className="text-emerald-500 font-semibold">{leadPhone}</span>}
+                        {log.lead?.scraped_city && <span>• {log.lead.scraped_city}</span>}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-zinc-200/60 dark:border-white/5">
+                      <div className="flex items-center gap-1.5 text-[11px] text-zinc-400">
                         {isBotActor ? (
-                          <div>
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                              <Bot className="w-3.5 h-3.5 text-emerald-600" /> WhatsApp Bot
-                            </span>
-                            <div className="text-[10px] text-slate-400 mt-0.5">Customer / Inbound</div>
-                          </div>
+                          <span className="inline-flex items-center gap-1 text-emerald-500 font-bold">
+                            <Bot className="w-3 h-3" /> WhatsApp Bot
+                          </span>
                         ) : (
-                          <div>
-                            <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
-                              <UserCheck className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                              <span className="truncate max-w-[140px]">{log.actor_name || log.caller?.username || "Admin"}</span>
-                            </div>
-                            <div className="text-[10px] text-slate-400 capitalize">
-                              {log.caller?.job_title || "Sales Caller"}
-                            </div>
-                          </div>
+                          <span className="inline-flex items-center gap-1 text-zinc-300 font-medium">
+                            <UserCheck className="w-3 h-3 text-emerald-500" /> {log.actor_name || log.caller?.username || "Admin"}
+                          </span>
                         )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="font-bold text-slate-900 dark:text-white truncate max-w-[200px]" title={log.lead?.bussiness_name}>
-                          {log.lead?.bussiness_name || "Unknown Business"}
-                        </div>
-                        <div className="text-[11px] font-mono text-slate-400">
-                          {leadPhone ? `+${leadPhone}` : "—"} {log.lead?.scraped_city ? `• ${log.lead.scraped_city}` : ""}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${
-                          log.disposition === "interested"
-                            ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
-                            : log.disposition === "contacted"
-                            ? "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800"
-                            : log.disposition === "callback"
-                            ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                        }`}>
-                          {log.disposition === "interested" ? "⭐ Interested" : log.disposition === "contacted" ? "📞 Contacted" : log.disposition}
-                        </span>
-                        {log.callback_at && (
-                          <div className="text-[10px] text-purple-600 dark:text-purple-400 mt-0.5 flex items-center gap-1 font-mono">
-                            <Clock className="w-2.5 h-2.5" /> {formatISTDateTime(log.callback_at)}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                          {log.source === "whatsapp_bot"
-                            ? "WhatsApp Bot"
-                            : log.source === "queue_disposition"
-                            ? "Call Queue"
-                            : log.source === "sales_calling_screen"
-                            ? "Calling List"
-                            : log.source === "whatsapp_dashboard"
-                            ? "WhatsApp Tab"
-                            : log.source === "interested_screen"
-                            ? "Hot Leads Tab"
-                            : (log.source || "Sales Call")}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 text-[11px] max-w-xs truncate" title={log.notes || ""}>
-                        {log.notes || "—"}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        {leadPhone && (
-                          <a
-                            href={`https://wa.me/${leadPhone}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-[#25D366] hover:underline"
-                          >
-                            Chat WhatsApp →
-                          </a>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                      {leadPhone && (
+                        <a
+                          href={`https://wa.me/${leadPhone}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[11px] font-bold text-[#25D366] hover:underline flex items-center gap-1"
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          <span>WhatsApp</span>
+                        </a>
+                      )}
+                    </div>
+
+                    {log.notes && (
+                      <div className="text-[11px] text-zinc-400 italic bg-zinc-50 dark:bg-white/[0.02] p-2 rounded border border-zinc-200/50 dark:border-white/5">
+                        "{log.notes}"
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {/* Pagination */}
@@ -874,7 +1062,7 @@ export default function CallingReportsDashboard() {
 
         {interactionLoading ? (
           <div className="p-12 flex flex-col items-center justify-center text-slate-400">
-            <Loader2 className="w-6 h-6 animate-spin text-indigo-500 mb-2" />
+            <Loader2 className="w-6 h-6 animate-spin text-emerald-500 mb-2" />
             <span className="text-xs">Loading button interactions...</span>
           </div>
         ) : interactionLogs.length === 0 ? (
@@ -882,89 +1070,146 @@ export default function CallingReportsDashboard() {
             No button clicks or telecaller interactions recorded yet for this filter.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs min-w-[700px]">
-              <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
-                <tr>
-                  <th className="py-3 px-4">Timestamp</th>
-                  <th className="py-3 px-4">Sales Caller</th>
-                  <th className="py-3 px-4">Action Triggered</th>
-                  <th className="py-3 px-4">Target Business / Lead</th>
-                  <th className="py-3 px-4">Location</th>
-                  <th className="py-3 px-4 text-right">Direct Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {interactionLogs.map((log) => {
-                  const leadPhone = log.lead?.bussiness_number ? format10DigitPhone(log.lead.bussiness_number) : "";
-                  const isCallAction = log.action_type === "call_clicked";
-                  return (
-                    <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
-                      <td className="py-3 px-4 text-[11px] font-mono text-slate-400 whitespace-nowrap">
-                        {formatISTDateTime(log.created_at)}
-                      </td>
-                      <td className="py-3 px-4 font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-[10px] shrink-0">
-                          {(log.caller?.username || "C").charAt(0).toUpperCase()}
-                        </div>
-                        <span>{log.caller?.username || "Unknown Caller"}</span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                            isCallAction
-                              ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
-                              : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                          }`}
-                        >
-                          {isCallAction ? (
-                            <>
-                              <Phone className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
-                              <span>"Call Now" Pressed</span>
-                            </>
-                          ) : (
-                            <>
-                              <MessageSquare className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                              <span>"WhatsApp" Pressed</span>
-                            </>
-                          )}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="font-bold text-slate-900 dark:text-white truncate max-w-[220px]" title={log.lead?.bussiness_name}>
-                          {log.lead?.bussiness_name || "Unknown Business"}
-                        </div>
-                        <div className="text-[11px] font-mono text-slate-400">
-                          {leadPhone ? `+${leadPhone}` : "—"}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 text-[11px]">
-                        {log.lead?.scraped_city ? (
-                          <span className="inline-flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-slate-400" /> {log.lead.scraped_city}
-                          </span>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        {leadPhone && (
-                          <a
-                            href={`https://wa.me/${leadPhone}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-[#25D366] hover:underline"
+          <>
+            {/* Desktop Table View (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs min-w-[700px]">
+                <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">Timestamp</th>
+                    <th className="py-3 px-4">Sales Caller</th>
+                    <th className="py-3 px-4">Action Triggered</th>
+                    <th className="py-3 px-4">Target Business / Lead</th>
+                    <th className="py-3 px-4">Location</th>
+                    <th className="py-3 px-4 text-right">Direct Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {interactionLogs.map((log) => {
+                    const leadPhone = log.lead?.bussiness_number ? format10DigitPhone(log.lead.bussiness_number) : "";
+                    const isCallAction = log.action_type === "call_clicked";
+                    return (
+                      <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                        <td className="py-3 px-4 text-[11px] font-mono text-slate-400 whitespace-nowrap">
+                          {formatISTDateTime(log.created_at)}
+                        </td>
+                        <td className="py-3 px-4 font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-[10px] shrink-0">
+                            {(log.caller?.username || "C").charAt(0).toUpperCase()}
+                          </div>
+                          <span>{log.caller?.username || "Unknown Caller"}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                              isCallAction
+                                ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                                : "bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800"
+                            }`}
                           >
-                            WhatsApp →
-                          </a>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                            {isCallAction ? (
+                              <>
+                                <Phone className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                                <span>"Call Now" Pressed</span>
+                              </>
+                            ) : (
+                              <>
+                                <MessageSquare className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                                <span>"WhatsApp" Pressed</span>
+                              </>
+                            )}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-slate-900 dark:text-white truncate max-w-[220px]" title={log.lead?.bussiness_name}>
+                            {log.lead?.bussiness_name || "Unknown Business"}
+                          </div>
+                          <div className="text-[11px] font-mono text-slate-400">
+                            {leadPhone ? `+${leadPhone}` : "—"}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-300 text-[11px]">
+                          {log.lead?.scraped_city ? (
+                            <span className="inline-flex items-center gap-1">
+                              <MapPin className="w-3 h-3 text-slate-400" /> {log.lead.scraped_city}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {leadPhone && (
+                            <a
+                              href={`https://wa.me/${leadPhone}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-[#25D366] hover:underline"
+                            >
+                              WhatsApp →
+                            </a>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Responsive Cards (< md) */}
+            <div className="block md:hidden divide-y divide-zinc-200 dark:divide-white/10">
+              {interactionLogs.map((log) => {
+                const leadPhone = log.lead?.bussiness_number ? format10DigitPhone(log.lead.bussiness_number) : "";
+                const isCallAction = log.action_type === "call_clicked";
+                return (
+                  <div key={`m-act-${log.id}`} className="p-4 flex flex-col gap-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-[11px] text-zinc-400">
+                        {formatISTDateTime(log.created_at)}
+                      </span>
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                          isCallAction
+                            ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                            : "bg-teal-500/10 text-teal-400 border-teal-500/20"
+                        }`}
+                      >
+                        {isCallAction ? <Phone className="w-3 h-3" /> : <MessageSquare className="w-3 h-3" />}
+                        <span>{isCallAction ? "Call Pressed" : "WhatsApp Pressed"}</span>
+                      </span>
+                    </div>
+
+                    <div>
+                      <div className="font-bold text-xs text-zinc-900 dark:text-white truncate">
+                        {log.lead?.bussiness_name || "Prospect Lead"}
+                      </div>
+                      <div className="text-[11px] font-mono text-emerald-500 font-semibold mt-0.5 flex items-center gap-1.5 flex-wrap">
+                        {leadPhone && <span>+{leadPhone}</span>}
+                        {log.lead?.scraped_city && <span className="text-zinc-400 font-normal">• {log.lead.scraped_city}</span>}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-zinc-200/60 dark:border-white/5">
+                      <span className="text-[11px] text-zinc-400 font-medium">
+                        Caller: <strong className="text-zinc-200">{log.caller?.username || "Telecaller"}</strong>
+                      </span>
+                      {leadPhone && (
+                        <a
+                          href={isCallAction ? `tel:${leadPhone}` : `https://wa.me/${leadPhone}`}
+                          target={isCallAction ? undefined : "_blank"}
+                          rel={isCallAction ? undefined : "noreferrer"}
+                          className="text-[11px] font-bold text-emerald-500 hover:underline flex items-center gap-1"
+                        >
+                          {isCallAction ? <PhoneForwarded className="w-3 h-3" /> : <MessageSquare className="w-3 h-3" />}
+                          <span>{isCallAction ? "Dial" : "Chat"}</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {/* Interaction Pagination */}

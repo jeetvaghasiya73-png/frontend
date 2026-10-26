@@ -44,7 +44,7 @@ import {
 import { authFetch, API, clearAuthFetchCache } from "@/lib/authFetch";
 import { formatServiceText, isValidWebsite, formatWebsiteUrl, format10DigitPhone, formatDialerUrl, formatISTDate, formatISTDateTime, matchesSimilaritySearch } from "@/lib/formatters";
 
-type SourceFilter = "all" | "inquiry" | "scraped";
+type SourceFilter = "all" | "agency" | "scraped" | "inquiry";
 
 interface NormalizedLead {
   id: number;
@@ -94,6 +94,8 @@ interface NormalizedLead {
   longitude?: string;
   neighborhood?: string;
   street_address?: string;
+  lead_type?: string;
+  is_outsource_agency?: boolean;
 }
 
 export default function LeadsManager() {
@@ -182,8 +184,19 @@ export default function LeadsManager() {
   // Modal states for Import & Add Lead
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
+  const [isOutsourceAgencyImport, setIsOutsourceAgencyImport] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<string | null>(null);
+
+  const getGoogleMapsUrl = (l: NormalizedLead | null) => {
+    if (!l) return "";
+    const rawUrl = l.maps_url || l.raw?.maps_url;
+    if (rawUrl && typeof rawUrl === "string" && rawUrl.startsWith("http")) {
+      return rawUrl;
+    }
+    const query = [l.name, l.address || l.city || l.company || ""].filter(Boolean).join(" ");
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+  };
 
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
   const [newLeadForm, setNewLeadForm] = useState({
@@ -212,6 +225,16 @@ export default function LeadsManager() {
     setTimeout(() => setToastMsg(null), 4000);
   };
 
+  const getFallbackWaMessage = (lead: NormalizedLead) => {
+    if (lead.is_outsource_agency || lead.lead_type === "agency_outsource") {
+      return `Hi *${lead.name}* team 👋\n\nWe love the digital work your agency delivers! 🚀\n\nAt *Tech Infinix*, we serve as a dedicated backend white-label outsourcing partner for agencies:\n• Advanced SEO & SERP Optimization 📈\n• Full-Stack Custom Web & App Development 💻\n• Daily Workflow & CRM Automations ⚡\n• High-Scale Web & Mobile App Scraping 🌐\n\nIf you ever need extra reliable developer or technical bandwidth to scale client projects profitably, let's connect! 🤝`;
+    }
+    if (lead.source === "inquiry") {
+      return "Thank you so much for believing in us! 🙏 Our team will connect with you very soon. We're excited to work together!";
+    }
+    return `Hi *${lead.name}* team 👋\n\nWe noticed your business listing under *${lead.services.join(" ") || lead.category || "Business"}* in *${lead.city || lead.company || "your area"}*.\n\nAt *Tech Infinix*, we specialize in Google Maps SEO rankings 📈 & Web Scraping 🌐.\n\nTo get custom growth ideas for your business, click *'Interested'* below or contact our team! 🚀`;
+  };
+
   const openWaModalForLead = async (lead: NormalizedLead) => {
     if (!canSendWhatsapp) {
       triggerToast("Access Denied: You do not have permission to send WhatsApp outreach.");
@@ -232,19 +255,11 @@ export default function LeadsManager() {
           setWaCustomPhone(data.recipient_phone);
         }
       } else {
-        setWaCustomMessage(
-          lead.source === "inquiry"
-            ? "Thank you so much for believing in us! 🙏 Our team will connect with you very soon. We're excited to work together!"
-            : `Hi *${lead.name}* team 👋\n\nWe noticed your business listing under *${lead.services.join(" ") || lead.category || "Business"}* in *${lead.city || lead.company || "your area"}*.\n\nAt *Tech Infinix*, we specialize in Google Maps SEO rankings 📈 & Web Scraping 🌐.\n\nTo get custom growth ideas for your business, click *'Interested'* below or contact our team! 🚀`
-        );
+        setWaCustomMessage(getFallbackWaMessage(lead));
       }
     } catch (err) {
       console.error("Failed to fetch WA preview:", err);
-      setWaCustomMessage(
-        lead.source === "inquiry"
-          ? "Thank you so much for believing in us! 🙏 Our team will connect with you very soon. We're excited to work together!"
-          : `Hi *${lead.name}* team 👋\n\nWe noticed your business listing under *${lead.services.join(" ") || lead.category || "Business"}* in *${lead.city || lead.company || "your area"}*.\n\nAt *Tech Infinix*, we specialize in Google Maps SEO rankings 📈 & Web Scraping 🌐.\n\nTo get custom growth ideas for your business, click *'Interested'* below or contact our team! 🚀`
-      );
+      setWaCustomMessage(getFallbackWaMessage(lead));
     } finally {
       setLoadingWaPreview(false);
     }
@@ -343,12 +358,13 @@ export default function LeadsManager() {
     const searchParam = effectiveSearch ? `&search=${encodeURIComponent(effectiveSearch)}` : "";
     const curMsgSent = messageSentToFetch !== undefined ? messageSentToFetch : messageSentFilterRef.current;
     const msgSentParam = curMsgSent === "sent" || curStatus === "message_sent" ? `&message_sent=true` : "";
+    const leadTypeParam = sourceFilterRef.current === "agency" ? "&lead_type=agency_outsource" : "";
     try {
       setLoading(true);
-      const shouldFetchInquiries = !inquiriesCacheRef.current || pageNum === 1 || sourceFilterRef.current === "inquiry";
+      const shouldFetchInquiries = (!inquiriesCacheRef.current || pageNum === 1 || sourceFilterRef.current === "inquiry") && sourceFilterRef.current !== "agency";
       const [inquiryRes, scrapedRes] = await Promise.allSettled([
         shouldFetchInquiries ? authFetch(`${API}/api/v1/leads/`) : Promise.resolve(null as any),
-        authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${limitNum}${statusParam}${msgSentParam}${searchParam}`)
+        authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${limitNum}${statusParam}${msgSentParam}${searchParam}${leadTypeParam}`)
       ]);
 
       let inquiryData: any[] = inquiriesCacheRef.current || [];
@@ -385,7 +401,7 @@ export default function LeadsManager() {
       if (!scrapedOk) {
         for (const fallbackLimit of [50, 20]) {
           try {
-            const fallbackRes = await authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${fallbackLimit}${statusParam}${msgSentParam}${searchParam}`);
+            const fallbackRes = await authFetch(`${API}/api/v1/scraped-leads/?page=${pageNum}&limit=${fallbackLimit}${statusParam}${msgSentParam}${searchParam}${leadTypeParam}`);
             if (fallbackRes.ok) {
               const fbJson = await fallbackRes.json();
               if (Array.isArray(fbJson)) {
@@ -527,6 +543,8 @@ export default function LeadsManager() {
           longitude: lead.longitude,
           neighborhood: lead.neighborhood,
           street_address: lead.street_address,
+          lead_type: lead.lead_type || (lead.is_outsource_agency ? "agency_outsource" : "local_vendor"),
+          is_outsource_agency: Boolean(lead.is_outsource_agency || lead.lead_type === "agency_outsource"),
         };
       });
 
@@ -534,8 +552,10 @@ export default function LeadsManager() {
       let pageLeads: NormalizedLead[] = [];
       if (currentFilter === "inquiry") {
         pageLeads = normalizedInquiries;
+      } else if (currentFilter === "agency") {
+        pageLeads = normalizedScraped.filter(l => l.is_outsource_agency || l.lead_type === "agency_outsource");
       } else if (currentFilter === "scraped") {
-        pageLeads = normalizedScraped;
+        pageLeads = normalizedScraped.filter(l => !l.is_outsource_agency && l.lead_type !== "agency_outsource");
       } else if (pageNum === 1 && currentFilter === "all") {
         pageLeads = [...normalizedInquiries, ...normalizedScraped];
       } else {
@@ -1265,6 +1285,8 @@ export default function LeadsManager() {
 
     const formData = new FormData();
     formData.append("file", importFile);
+    formData.append("lead_type", isOutsourceAgencyImport ? "agency_outsource" : "local_vendor");
+    formData.append("is_outsource_agency", String(isOutsourceAgencyImport));
 
     try {
       const res = await authFetch(`${API}/api/v1/scraped-leads/upload`, {
@@ -1280,12 +1302,13 @@ export default function LeadsManager() {
 
         // Clear cached GET responses
         clearAuthFetchCache("/api/v1/scraped-leads");
-        setPage(1);
-        await fetchLeads();
+        setCurrentPage(1);
+        await fetchLeads(1, pageSize);
 
         setTimeout(() => {
           setShowImportModal(false);
           setImportFile(null);
+          setIsOutsourceAgencyImport(false);
           setUploadResult(null);
         }, 2200);
       } else {
@@ -1402,7 +1425,9 @@ export default function LeadsManager() {
     if (sourceFilter !== "all") {
       result = result.filter((l) => {
         if (sourceFilter === "inquiry") return l.source === "inquiry" || isOrganicInbound(l);
-        return l.source === "scraped";
+        if (sourceFilter === "agency") return Boolean(l.is_outsource_agency || l.lead_type === "agency_outsource");
+        if (sourceFilter === "scraped") return l.source === "scraped" && !l.is_outsource_agency && l.lead_type !== "agency_outsource";
+        return true;
       });
     }
 
@@ -1458,6 +1483,10 @@ export default function LeadsManager() {
     return result;
   }, [allLeads, sourceFilter, statusFilter, messageSentFilter, searchQuery]);
 
+  const totalAgencyCount = useMemo(() => {
+    return allLeads.filter(l => l.is_outsource_agency || l.lead_type === "agency_outsource").length;
+  }, [allLeads]);
+
   const currentTotal = useMemo(() => {
     if (searchQuery.trim()) {
       return filteredLeads.length;
@@ -1465,11 +1494,14 @@ export default function LeadsManager() {
     if (sourceFilter === "inquiry") {
       return totalInquiriesCount;
     }
+    if (sourceFilter === "agency") {
+      return totalAgencyCount || filteredLeads.length;
+    }
     if (sourceFilter === "scraped") {
       return totalScrapedCount || totalLeadsFromAPI;
     }
     return (totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount;
-  }, [searchQuery, filteredLeads.length, sourceFilter, totalScrapedCount, totalInquiriesCount, totalLeadsFromAPI]);
+  }, [searchQuery, filteredLeads.length, sourceFilter, totalAgencyCount, totalScrapedCount, totalInquiriesCount, totalLeadsFromAPI]);
 
   const totalPages = Math.max(1, Math.ceil(currentTotal / pageSize));
 
@@ -1636,7 +1668,11 @@ export default function LeadsManager() {
         <div className="px-3 sm:px-4 py-2.5 border-b border-[var(--dash-border)] flex items-center justify-between gap-3 w-full max-w-full overflow-x-auto scrollbar-none bg-[var(--dash-surface-alt)]/30">
           <div className="flex items-center gap-1.5 p-1 rounded-md bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] shrink-0">
             <button
-              onClick={() => setSourceFilter("all")}
+              onClick={() => {
+                setSourceFilter("all");
+                setCurrentPage(1);
+                fetchLeads(1, pageSize, statusFilter);
+              }}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "all"
                   ? "bg-[var(--dash-primary)] text-white shadow-xs"
@@ -1646,17 +1682,46 @@ export default function LeadsManager() {
               All Leads ({(totalScrapedCount || totalLeadsFromAPI) + totalInquiriesCount})
             </button>
             <button
-              onClick={() => setSourceFilter("scraped")}
+              onClick={() => {
+                setSourceFilter("agency");
+                setCurrentPage(1);
+                fetchLeads(1, pageSize, statusFilter);
+              }}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                sourceFilter === "agency"
+                  ? "bg-emerald-600 text-white shadow-xs font-bold"
+                  : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
+              }`}
+            >
+              <span>Agencies (Outsource)</span>
+              {totalAgencyCount > 0 && (
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
+                  sourceFilter === "agency" ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                }`}>
+                  {totalAgencyCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => {
+                setSourceFilter("scraped");
+                setCurrentPage(1);
+                fetchLeads(1, pageSize, statusFilter);
+              }}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "scraped"
                   ? "bg-[var(--dash-primary)] text-white shadow-xs"
                   : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
               }`}
             >
-              Outbound Scraped ({totalScrapedCount || totalLeadsFromAPI})
+              Local Businesses ({Math.max(0, (totalScrapedCount || totalLeadsFromAPI) - totalAgencyCount)})
             </button>
             <button
-              onClick={() => setSourceFilter("inquiry")}
+              onClick={() => {
+                setSourceFilter("inquiry");
+                setCurrentPage(1);
+                fetchLeads(1, pageSize, statusFilter);
+              }}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer whitespace-nowrap shrink-0 ${
                 sourceFilter === "inquiry"
                   ? "bg-[var(--dash-primary)] text-white shadow-xs"
@@ -2014,13 +2079,19 @@ export default function LeadsManager() {
                   </td>
 
                   <td className="py-3.5 px-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                      isOrganicInbound(lead)
-                        ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
-                        : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                    }`}>
-                      {isOrganicInbound(lead) ? "Inbound" : "Outbound"}
-                    </span>
+                    {lead.is_outsource_agency || lead.lead_type === "agency_outsource" ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                        Agency Partner
+                      </span>
+                    ) : (
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                        isOrganicInbound(lead)
+                          ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                          : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                      }`}>
+                        {isOrganicInbound(lead) ? "Inbound" : "Local Business"}
+                      </span>
+                    )}
                   </td>
 
                   <td className="py-3.5 px-3">
@@ -2201,13 +2272,19 @@ export default function LeadsManager() {
                   <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 font-bold text-[10px] border border-emerald-500/20">
                     Score: {lead.score}
                   </span>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                    isOrganicInbound(lead)
-                      ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
-                      : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                  }`}>
-                    {isOrganicInbound(lead) ? "Inbound" : "Outbound"}
-                  </span>
+                  {lead.is_outsource_agency || lead.lead_type === "agency_outsource" ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                      Agency Partner
+                    </span>
+                  ) : (
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                      isOrganicInbound(lead)
+                        ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                        : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                    }`}>
+                      {isOrganicInbound(lead) ? "Inbound" : "Local Business"}
+                    </span>
+                  )}
                 </div>
 
                 {/* Contact Meta Details */}
@@ -2496,14 +2573,14 @@ export default function LeadsManager() {
           >
             {/* Top Bar: Brand, Badges, Quick Pipeline Chip, Close */}
             <div
-              className="flex-none px-4 sm:px-6 py-3.5 flex items-center justify-between z-30 sticky top-0 border-b border-[var(--dash-border)] bg-[var(--dash-surface)]/95 backdrop-blur-md"
-              style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 0.85rem)" }}
+              className="flex-none px-3.5 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 z-30 sticky top-0 border-b border-[var(--dash-border)] bg-[var(--dash-surface)]/95 backdrop-blur-md"
+              style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 0.75rem)" }}
             >
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                 <button
                   type="button"
                   onClick={() => setShowStatusModal(true)}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border border-amber-500/30 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition cursor-pointer shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border border-amber-500/30 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition cursor-pointer shadow-xs shrink-0"
                   title="Click to update pipeline status"
                 >
                   <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
@@ -2511,24 +2588,30 @@ export default function LeadsManager() {
                   <ChevronDown className="w-3 h-3 opacity-70" />
                 </button>
 
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
                   AI Fit: {selectedLead.score}/100
                 </span>
 
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
-                  isOrganicInbound(selectedLead)
-                    ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
-                    : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                }`}>
-                  {isOrganicInbound(selectedLead) ? "Inbound" : "Outbound"}
-                </span>
+                {selectedLead.is_outsource_agency || selectedLead.lead_type === "agency_outsource" ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
+                    Agency Outsource
+                  </span>
+                ) : (
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border shrink-0 ${
+                    isOrganicInbound(selectedLead)
+                      ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                      : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                  }`}>
+                    {isOrganicInbound(selectedLead) ? "Inbound" : "Local Business"}
+                  </span>
+                )}
               </div>
 
               {/* Close Button */}
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(false)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] hover:bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] transition active:scale-95 cursor-pointer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--dash-text-muted)] hover:text-[var(--dash-text)] hover:bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] transition active:scale-95 cursor-pointer shrink-0 ml-auto"
                 aria-label="Close drawer"
                 title="Close drawer (Esc)"
               >
@@ -2605,7 +2688,7 @@ export default function LeadsManager() {
                         className="text-indigo-400 hover:underline flex items-center gap-1 font-mono text-[11px]"
                       >
                         <Globe className="w-3 h-3" />
-                        <span className="truncate">{selectedLead.website.replace(/^https?:\/\//i, "")}</span>
+                        <span className="truncate">{(selectedLead.website || "").replace(/^https?:\/\//i, "")}</span>
                         <ExternalLink className="w-2.5 h-2.5" />
                       </a>
                     )}
@@ -2684,11 +2767,11 @@ export default function LeadsManager() {
               </div>
 
               {/* Segmented App Tabs Navigation */}
-              <div className="flex items-center gap-1 mt-3.5 p-1 rounded-lg bg-[var(--dash-surface-alt)] border border-[var(--dash-border)]">
+              <div className="flex items-center gap-1 mt-3.5 p-1 rounded-lg bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] overflow-x-auto scrollbar-none flex-nowrap w-full">
                 <button
                   type="button"
                   onClick={() => setLeadDrawerTab("overview")}
-                  className={`flex-1 py-1.5 px-3 rounded-md text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 min-w-[125px] py-1.5 px-3 rounded-md text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 ${
                     leadDrawerTab === "overview"
                       ? "bg-[var(--dash-primary)] text-white shadow-xs font-bold"
                       : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
@@ -2701,7 +2784,7 @@ export default function LeadsManager() {
                 <button
                   type="button"
                   onClick={() => setLeadDrawerTab("timeline")}
-                  className={`flex-1 py-1.5 px-3 rounded-md text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 min-w-[125px] py-1.5 px-3 rounded-md text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 ${
                     leadDrawerTab === "timeline"
                       ? "bg-[var(--dash-primary)] text-white shadow-xs font-bold"
                       : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
@@ -2714,7 +2797,7 @@ export default function LeadsManager() {
                 <button
                   type="button"
                   onClick={() => setLeadDrawerTab("notes")}
-                  className={`flex-1 py-1.5 px-3 rounded-md text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 min-w-[90px] py-1.5 px-3 rounded-md text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 ${
                     leadDrawerTab === "notes"
                       ? "bg-[var(--dash-primary)] text-white shadow-xs font-bold"
                       : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
@@ -2727,7 +2810,7 @@ export default function LeadsManager() {
                 <button
                   type="button"
                   onClick={() => setLeadDrawerTab("reviews")}
-                  className={`flex-1 py-1.5 px-3 rounded-md text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 min-w-[95px] py-1.5 px-3 rounded-md text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 ${
                     leadDrawerTab === "reviews"
                       ? "bg-[var(--dash-primary)] text-white shadow-xs font-bold"
                       : "text-[var(--dash-text-muted)] hover:text-[var(--dash-text)]"
@@ -2963,15 +3046,15 @@ export default function LeadsManager() {
                       )}
 
                       {/* Google Maps Direct CTA Button */}
-                      {(selectedLead.maps_url || selectedLead.raw?.maps_url) && (
+                      {getGoogleMapsUrl(selectedLead) && (
                         <a
-                          href={selectedLead.maps_url || selectedLead.raw?.maps_url}
+                          href={getGoogleMapsUrl(selectedLead)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-sm transition active:scale-[0.99] mt-2"
+                          className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs shadow-sm transition mt-2 cursor-pointer"
                         >
                           <MapPin className="w-4 h-4 text-white shrink-0" />
-                          <span>View Official Google Maps Profile</span>
+                          <span>View on Google Maps</span>
                           <ExternalLink className="w-3.5 h-3.5 text-white/80 shrink-0 ml-1" />
                         </a>
                       )}
@@ -3198,12 +3281,12 @@ export default function LeadsManager() {
                               <p className="font-semibold text-[var(--dash-text)]">No Customer Reviews Recorded</p>
                               <p className="text-[11px] mt-0.5">This business listing does not currently have Google customer review quotes in the database.</p>
                             </div>
-                            {(selectedLead.maps_url || selectedLead.raw?.maps_url) && (
+                            {getGoogleMapsUrl(selectedLead) && (
                               <a
-                                href={selectedLead.maps_url || selectedLead.raw?.maps_url}
+                                href={getGoogleMapsUrl(selectedLead)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 text-xs font-semibold hover:bg-indigo-500/20 transition"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition cursor-pointer"
                               >
                                 <ExternalLink className="w-3.5 h-3.5" />
                                 <span>Check Live Reviews on Google Maps</span>
@@ -3272,14 +3355,14 @@ export default function LeadsManager() {
 
             {/* Bottom Footer CTA Bar */}
             <div
-              className="flex-none px-4 sm:px-6 py-3 flex items-center justify-between gap-2 z-30 border-t border-[var(--dash-border)] bg-[var(--dash-surface)]"
+              className="flex-none px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-1.5 sm:gap-2 z-30 border-t border-[var(--dash-border)] bg-[var(--dash-surface)]"
               style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 0.85rem)" }}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="px-3 py-2 rounded-lg text-xs font-semibold bg-[var(--dash-surface-alt)] hover:bg-[var(--dash-surface-alt)]/80 border border-[var(--dash-border)] text-[var(--dash-text)] transition cursor-pointer"
+                  className="px-2.5 sm:px-3 py-2 rounded-lg text-xs font-semibold bg-[var(--dash-surface-alt)] hover:bg-[var(--dash-surface-alt)]/80 border border-[var(--dash-border)] text-[var(--dash-text)] transition cursor-pointer"
                 >
                   Close
                 </button>
@@ -3288,7 +3371,7 @@ export default function LeadsManager() {
                   <button
                     type="button"
                     onClick={() => handleDeleteLead(selectedLead)}
-                    className="px-2.5 py-2 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 transition cursor-pointer flex items-center gap-1"
+                    className="p-2 sm:px-2.5 sm:py-2 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 transition cursor-pointer flex items-center gap-1"
                     title="Delete lead from database"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -3297,24 +3380,26 @@ export default function LeadsManager() {
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
                 {canSendWhatsapp && (
                   <button
                     type="button"
                     onClick={() => openWaModalForLead(selectedLead)}
-                    className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 active:scale-95"
+                    className="px-2.5 sm:px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1 active:scale-95 shrink-0"
                   >
-                    <Zap className="w-3.5 h-3.5" />
-                    <span>WhatsApp Proposal</span>
+                    <Zap className="w-3.5 h-3.5 shrink-0" />
+                    <span className="hidden sm:inline">WhatsApp Proposal</span>
+                    <span className="sm:hidden">Pitch</span>
                   </button>
                 )}
 
                 <button
                   type="button"
                   onClick={() => setShowStatusModal(true)}
-                  className="crm-btn-primary px-3.5 py-2 text-xs font-bold flex items-center gap-1.5 active:scale-95"
+                  className="crm-btn-primary px-2.5 sm:px-3.5 py-2 text-xs font-bold flex items-center gap-1 active:scale-95 shrink-0"
                 >
-                  <span>Update Status</span>
+                  <span className="hidden sm:inline">Update Status</span>
+                  <span className="sm:hidden">Status</span>
                 </button>
               </div>
             </div>
@@ -3590,7 +3675,7 @@ export default function LeadsManager() {
           >
             <div className="flex items-center justify-between border-b border-[var(--dash-border)] pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-md bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
                   <FileSpreadsheet className="w-5 h-5" />
                 </div>
                 <div>
@@ -3608,7 +3693,7 @@ export default function LeadsManager() {
 
             <form onSubmit={handleFileUpload} className="space-y-4">
               {/* File Dropzone */}
-              <div className="border-2 border-dashed border-[var(--dash-border)] rounded-md p-6 text-center hover:border-indigo-500 transition cursor-pointer bg-[var(--dash-table-header)] relative">
+              <div className="border-2 border-dashed border-[var(--dash-border)] rounded-md p-6 text-center hover:border-emerald-500 transition cursor-pointer bg-[var(--dash-table-header)] relative">
                 <input
                   type="file"
                   accept=".xlsx, .xls, .csv"
@@ -3625,10 +3710,10 @@ export default function LeadsManager() {
                   }}
                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 />
-                <FileSpreadsheet className="w-10 h-10 text-indigo-600 dark:text-indigo-400 mx-auto mb-2" />
+                <FileSpreadsheet className="w-10 h-10 text-emerald-600 dark:text-emerald-400 mx-auto mb-2" />
                 {importFile ? (
                   <div className="space-y-1">
-                    <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate max-w-xs mx-auto">{importFile.name}</p>
+                    <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 truncate max-w-xs mx-auto">{importFile.name}</p>
                     <p className="text-[10px] text-[var(--dash-text-muted)] font-mono">{(importFile.size / (1024 * 1024)).toFixed(2)} MB — Ready to Inject</p>
                   </div>
                 ) : (
@@ -3637,6 +3722,37 @@ export default function LeadsManager() {
                     <p className="text-[10px] text-[var(--dash-text-muted)]">Auto-resolves Name, Email, Phone, City, Website &amp; Category columns</p>
                   </div>
                 )}
+              </div>
+
+              {/* Agency / Outsource Partner Toggle Checkbox */}
+              <div 
+                onClick={() => setIsOutsourceAgencyImport(!isOutsourceAgencyImport)}
+                className={`p-3 rounded-lg border transition cursor-pointer flex items-start gap-3 ${
+                  isOutsourceAgencyImport
+                    ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-700 dark:text-emerald-300"
+                    : "bg-[var(--dash-surface-alt)] border-[var(--dash-border)] hover:border-emerald-500/30"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  id="outsource-agency-check"
+                  checked={isOutsourceAgencyImport}
+                  onChange={(e) => setIsOutsourceAgencyImport(e.target.checked)}
+                  className="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer w-4 h-4"
+                />
+                <label htmlFor="outsource-agency-check" className="cursor-pointer text-left select-none">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-xs text-[var(--dash-text)]">
+                      Mark as Agency / Outsource Leads
+                    </span>
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                      B2B Partner
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[var(--dash-text-muted)] mt-0.5">
+                    Automatically sends dedicated agency outsourcing proposals (SEO, Web &amp; App Dev, Workflows, Web Scraping) instead of local vendor messages.
+                  </p>
+                </label>
               </div>
 
               {/* Windows Excel lock reminder */}
@@ -3649,8 +3765,8 @@ export default function LeadsManager() {
               </div>
 
               {uploading && (
-                <div className="p-2.5 rounded text-[11px] bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-300 flex items-center gap-2">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0 text-indigo-500" />
+                <div className="p-2.5 rounded text-[11px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-300 flex items-center gap-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0 text-emerald-500" />
                   <span>Processing spreadsheet and checking duplicates... this may take 15–30s for large files.</span>
                 </div>
               )}

@@ -87,6 +87,7 @@ function LeadScraperUploadContent() {
   const canManageLeads = isSuperAdmin || (user?.permissions?.includes("view_leads") ?? false);
 
   const [file, setFile] = useState<File | null>(null);
+  const [isOutsourceAgency, setIsOutsourceAgency] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Preparing workbook...");
@@ -155,6 +156,8 @@ function LeadScraperUploadContent() {
     
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("is_outsource_agency", isOutsourceAgency ? "true" : "false");
+    formData.append("lead_type", isOutsourceAgency ? "agency_outsource" : "local_vendor");
 
     let progressTimer: NodeJS.Timeout | null = null;
 
@@ -334,19 +337,45 @@ function LeadScraperUploadContent() {
           </div>
         )}
 
+        {/* Agency Outsource Checkbox */}
+        <div
+          onClick={() => setIsOutsourceAgency(!isOutsourceAgency)}
+          className={`w-full max-w-xl mt-4 flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition select-none ${
+            isOutsourceAgency
+              ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-800 dark:text-emerald-300"
+              : "bg-gray-50/70 dark:bg-white/[0.02] border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:border-emerald-500/30"
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={isOutsourceAgency}
+            onChange={(e) => setIsOutsourceAgency(e.target.checked)}
+            onClick={(e) => e.stopPropagation()}
+            className="mt-0.5 rounded border-slate-600 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer accent-emerald-600"
+          />
+          <div className="space-y-0.5 text-left">
+            <p className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+              🏢 Mark as Agency / Outsource Partner Leads
+            </p>
+            <p className="text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
+              Tags imported leads for white-label B2B outsourcing outreach (SEO, Full-Stack Dev, Workflows &amp; Automation, Web Scraping) rather than direct consumer services.
+            </p>
+          </div>
+        </div>
+
         {/* Submit Button */}
         {!uploading && !resultData && (
           canManageLeads ? (
             <button
               onClick={handleUpload}
               disabled={!file}
-              className="mt-6 w-full max-w-xl bg-accent-custom hover:bg-blue-600 text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider cursor-pointer transition-all duration-300 shadow-md shadow-blue-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+              className="mt-4 w-full max-w-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider cursor-pointer transition-all duration-300 shadow-md shadow-emerald-600/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
             >
               <UploadCloud className="w-4 h-4" />
               Upload &amp; Import Scraped Leads
             </button>
           ) : (
-            <div className="mt-6 p-4 rounded-xl bg-gray-500/10 border border-gray-500/20 text-gray-400 text-xs font-mono text-center w-full max-w-xl">
+            <div className="mt-4 p-4 rounded-xl bg-gray-500/10 border border-gray-500/20 text-gray-400 text-xs font-mono text-center w-full max-w-xl">
               Read-only Mode: Uploading new leads requires Leads Management permission.
             </div>
           )
@@ -412,7 +441,7 @@ function LeadScraperUploadContent() {
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
               <button
                 onClick={() => router.push(`${ADMIN_PATH}/dashboard`)}
-                className="w-full bg-accent-custom hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all shadow-sm"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all shadow-sm shadow-emerald-600/20"
               >
                 Go to Dashboard
                 <ArrowRight className="w-4 h-4" />

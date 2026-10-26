@@ -2673,7 +2673,8 @@ export default function WhatsAppOutreachPage() {
               </button>
             </div>
 
-            <div className="overflow-x-auto rounded-md border border-[var(--dash-border)]">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto rounded-md border border-[var(--dash-border)]">
               <table className="w-full text-left text-xs text-[var(--dash-text)]">
                 <thead className="bg-[var(--dash-bg)] text-[var(--dash-text-muted)] uppercase text-[10px] font-semibold border-b border-[var(--dash-border)]">
                   <tr>
@@ -2735,6 +2736,54 @@ export default function WhatsAppOutreachPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile Responsive Cards (< md) */}
+            <div className="block md:hidden divide-y divide-[var(--dash-border)] rounded-md border border-[var(--dash-border)] bg-[var(--dash-card-bg)]">
+              {spamAndBlocksList.length === 0 ? (
+                <div className="p-8 text-center text-[var(--dash-text-muted)] text-xs">
+                  <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-80" />
+                  <span className="font-semibold text-[var(--dash-text)] block">Clean Sender Reputation</span>
+                  <span>Zero spam flags, blocks, or unsubscribe requests recorded!</span>
+                </div>
+              ) : (
+                spamAndBlocksList.map((item) => (
+                  <div key={item.lead_id} className="p-4 space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-semibold text-xs text-[var(--dash-text)]">{item.bussiness_name}</div>
+                        <div className="text-[11px] font-mono text-[var(--dash-text-muted)]">{item.phone_number}</div>
+                      </div>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase border shrink-0 ${
+                        item.whatsapp_status === "reported"
+                          ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                          : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                      }`}>
+                        <Ban className="w-2.5 h-2.5" />
+                        <span>{item.whatsapp_status}</span>
+                      </span>
+                    </div>
+
+                    <div className="text-[11px] text-[var(--dash-text-muted)] flex items-center justify-between">
+                      <span>{item.scraped_city || "—"} &bull; {item.category || "General"}</span>
+                      <span className="font-mono text-[10px]">{item.reply_at ? formatISTDateTime(item.reply_at) : "Recently"}</span>
+                    </div>
+
+                    <div className="p-2.5 rounded bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] text-xs text-[var(--dash-text-muted)] italic">
+                      "{item.last_reply || "STOP / Unsubscribe requested"}"
+                    </div>
+
+                    <div className="pt-1 flex justify-end">
+                      <button
+                        onClick={() => showAlert("success", `Opt-out confirmed for ${item.phone_number}. Number permanently blacklisted from campaigns.`)}
+                        className="crm-btn-secondary text-[10px] py-1 px-2.5 text-rose-500 border-rose-500/30"
+                      >
+                        Blacklist Confirmed
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -2778,8 +2827,8 @@ export default function WhatsAppOutreachPage() {
             </div>
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto rounded-md border border-[var(--dash-border)]">
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto rounded-md border border-[var(--dash-border)]">
             <table className="w-full text-left text-xs text-[var(--dash-text)]">
               <thead className="bg-[var(--dash-bg)] text-[var(--dash-text-muted)] uppercase text-[10px] font-semibold border-b border-[var(--dash-border)]">
                 <tr>
@@ -2842,6 +2891,65 @@ export default function WhatsAppOutreachPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Responsive Cards (< md) */}
+          <div className="block md:hidden divide-y divide-[var(--dash-border)] rounded-md border border-[var(--dash-border)] bg-[var(--dash-card-bg)]">
+            {leads.length === 0 ? (
+              <div className="p-8 text-center text-[var(--dash-text-muted)] text-xs">
+                No prospects found matching your search.
+              </div>
+            ) : (
+              leads.map((l) => (
+                <div
+                  key={l.id}
+                  onClick={() => setSelectedLeadModal(l)}
+                  className="p-4 space-y-2.5 cursor-pointer hover:bg-slate-500/5 transition-all"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="font-semibold text-xs text-[var(--dash-text)]">{l.bussiness_name}</div>
+                      <div className="text-[11px] font-mono text-[var(--dash-text-muted)]">{l.bussiness_number}</div>
+                    </div>
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium border capitalize shrink-0 ${
+                      statusColors[l.whatsapp_status || "pending"]
+                    }`}>
+                      {statusIcons[l.whatsapp_status || "pending"]}
+                      <span>{l.whatsapp_status || "pending"}</span>
+                    </span>
+                  </div>
+
+                  <div className="text-[11px] text-[var(--dash-text-muted)]">
+                    {l.scraped_city} &bull; {l.category || l.scraped_service}
+                  </div>
+
+                  {l.whatsapp_last_reply && (
+                    <div className="p-2 rounded bg-[var(--dash-surface-alt)] border border-[var(--dash-border)] text-[11px] text-[var(--dash-text-muted)] italic truncate">
+                      "{l.whatsapp_last_reply}"
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-end gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => setSelectedLeadModal(l)}
+                      className="crm-btn-secondary text-[11px] py-1 px-2.5"
+                    >
+                      View Details
+                    </button>
+                    <button
+                      onClick={() => handleToggleInterest(l.id)}
+                      className={`text-[11px] py-1 px-2.5 rounded-md font-semibold transition cursor-pointer ${
+                        l.is_interested
+                          ? "bg-amber-500/15 border border-amber-500/30 text-amber-500 hover:bg-amber-500/25"
+                          : "crm-btn-primary"
+                      }`}
+                    >
+                      {l.is_interested ? "⭐ Interested" : "Interested?"}
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
