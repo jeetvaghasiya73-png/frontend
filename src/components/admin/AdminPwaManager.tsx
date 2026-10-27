@@ -87,6 +87,13 @@ export default function AdminPwaManager() {
             registration.update().catch(() => {});
           }, 60000);
 
+          // Ensure WebPush subscription is actively synced with backend if notification permission was granted
+          if ("Notification" in window && Notification.permission === "granted") {
+            import("@/lib/pushNotifications").then(({ subscribeToPushNotifications }) => {
+              subscribeToPushNotifications().catch(() => {});
+            });
+          }
+
           return () => {
             clearInterval(intervalId);
             document.removeEventListener("visibilitychange", handleVisibilityChange);

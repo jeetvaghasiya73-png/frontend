@@ -2880,10 +2880,13 @@ export default function WhatsAppOutreachPage() {
               >
                 <option value="all">All Statuses</option>
                 <option value="agency">🤝 Agency Partners (Outsource)</option>
-                <option value="message_sent">💬 Messages Sent (All Contacted)</option>
+                <option value="vendor">🏪 Local Vendors</option>
+                <option value="agency_interested">🤝⭐ Agency Interested</option>
+                <option value="vendor_interested">🏪⭐ Vendor Interested</option>
+                <option value="interested">⭐ Interested (All High Intent)</option>
                 <option value="replied">💬 Replied (Awaiting Interest)</option>
-                <option value="interested">⭐ Interested (High Intent)</option>
                 <option value="combined">🔥 Combined (Replied + Interested)</option>
+                <option value="message_sent">💬 Messages Sent (All Contacted)</option>
                 <option value="pending">Pending</option>
                 <option value="sent">Sent</option>
                 <option value="failed">Failed</option>

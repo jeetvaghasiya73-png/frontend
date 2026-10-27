@@ -630,7 +630,17 @@ export default function DashboardLayout({
       getUnlockedAudioContext();
       if (typeof window !== "undefined" && "Notification" in window) {
         if (Notification.permission === "default") {
-          Notification.requestPermission().catch(() => {});
+          Notification.requestPermission().then((perm) => {
+            if (perm === "granted") {
+              import("@/lib/pushNotifications").then(({ subscribeToPushNotifications }) => {
+                subscribeToPushNotifications().catch(() => {});
+              });
+            }
+          }).catch(() => {});
+        } else if (Notification.permission === "granted") {
+          import("@/lib/pushNotifications").then(({ subscribeToPushNotifications }) => {
+            subscribeToPushNotifications().catch(() => {});
+          });
         }
       }
     };
