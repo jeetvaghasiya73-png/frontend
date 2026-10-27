@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/authStore";
 import { API_URL, ADMIN_PATH } from "@/lib/config";
@@ -133,11 +134,21 @@ export default function AdminLoginPage() {
         
         {/* Brand Header */}
         <div className="text-center space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white mx-auto shadow-lg shadow-indigo-600/30">
-            <Zap className="w-6 h-6" />
+          <div className="w-14 h-14 rounded-2xl bg-black border border-emerald-500/30 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20 p-2">
+            <Image
+              src="/favicon.png"
+              alt="Tech Infinix Logo"
+              width={40}
+              height={40}
+              priority
+              className="w-10 h-10 object-contain drop-shadow-[0_2px_10px_rgba(16,185,129,0.5)]"
+            />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-white tracking-tight">LeadFlow CRM</h1>
+            <h1 className="text-2xl font-black text-white tracking-tight flex items-center justify-center gap-1.5">
+              <span>Tech Infinix</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+            </h1>
             <p className="text-xs text-slate-400 mt-1">Enterprise Console &amp; Admin Sign In</p>
           </div>
         </div>

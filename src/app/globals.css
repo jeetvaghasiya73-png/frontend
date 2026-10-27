@@ -1047,3 +1047,29 @@ body[data-dash-theme="dark"],
   gap: 1rem;
   margin: 1.75rem 0;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Desktop PWA & Window Controls Overlay (WCO) Native App Engine
+   Provides native desktop window behavior (drag regions,
+   titlebar button clearance, and modern app titlebar look)
+   ───────────────────────────────────────────────────────────── */
+.desktop-titlebar-drag {
+  -webkit-app-region: drag;
+  app-region: drag;
+  user-select: none;
+}
+
+.desktop-titlebar-nodrag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+/* When Window Controls Overlay is active on Desktop Chrome / Edge */
+@media (display-mode: window-controls-overlay) {
+  .pwa-wco-header {
+    padding-top: env(titlebar-area-y, 0px) !important;
+    padding-left: max(1rem, env(titlebar-area-x, 0px)) !important;
+    padding-right: max(1.5rem, calc(100vw - env(titlebar-area-width, 100vw) + 1rem)) !important;
+  }
+}
+

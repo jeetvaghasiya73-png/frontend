@@ -22,8 +22,8 @@ export default function AdminPwaManager() {
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "LeadFlow CRM" },
-      { name: "theme-color", content: "#111315" },
+      { name: "apple-mobile-web-app-title", content: "Tech Infinix" },
+      { name: "theme-color", content: "#000000" },
     ];
 
     metaTags.forEach(({ name, content }) => {
@@ -31,9 +31,9 @@ export default function AdminPwaManager() {
       if (!meta) {
         meta = document.createElement("meta");
         meta.setAttribute("name", name);
-        meta.setAttribute("content", content);
         document.head.appendChild(meta);
       }
+      meta.setAttribute("content", content);
     });
 
     // 3. Register Service Worker with Auto-Update Mechanism

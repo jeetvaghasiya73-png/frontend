@@ -208,6 +208,7 @@ export default function DashboardLayout({
   const [leadsBadge, setLeadsBadge] = useState<string>("...");
   const [contactsBadge, setContactsBadge] = useState<string>("...");
   const [dashTheme, setDashTheme] = useState<"dark" | "light">("dark");
+  const [isWco, setIsWco] = useState(false);
 
   // Notifications State
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -247,6 +248,15 @@ export default function DashboardLayout({
       document.documentElement.classList.toggle("dark", initialTheme === "dark");
       document.documentElement.setAttribute("data-dash-theme", initialTheme);
       document.body.setAttribute("data-dash-theme", initialTheme);
+
+      // Window Controls Overlay (WCO) Detection for Native Desktop App Experience
+      if ("windowControlsOverlay" in navigator && (navigator as any).windowControlsOverlay) {
+        const wco = (navigator as any).windowControlsOverlay;
+        setIsWco(Boolean(wco.visible));
+        const handleWcoChange = () => setIsWco(Boolean(wco.visible));
+        wco.addEventListener("geometrychange", handleWcoChange);
+        return () => wco.removeEventListener("geometrychange", handleWcoChange);
+      }
     }
     if (!isAuthenticated && typeof window !== "undefined") {
       router.push(`${ADMIN_PATH}/login`);
@@ -946,6 +956,13 @@ export default function DashboardLayout({
     return last ? last.charAt(0).toUpperCase() + last.slice(1).replace(/-/g, " ") : "Dashboard";
   };
 
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const pageTitle = getPageTitle();
+      document.title = `${pageTitle} • Tech Infinix`;
+    }
+  }, [pathname]);
+
   const renderUserDropdown = (isMobile = false) => {
     if (!userMenuOpen) return null;
     return (
@@ -1553,23 +1570,40 @@ export default function DashboardLayout({
         <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden no-scrollbar">
           
           {/* Brand */}
-          <div className="h-14 flex items-center justify-between px-4 shrink-0" style={{ borderBottom: "1px solid var(--dash-sidebar-border)" }}>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 flex items-center justify-center text-white shrink-0" style={{ background: "linear-gradient(135deg, var(--dash-primary), #818CF8)", borderRadius: "var(--dash-btn-radius)", boxShadow: "0 2px 8px var(--dash-primary-glow)" }}>
-                <Zap className="w-4 h-4" />
+          <div className="h-14 flex items-center justify-between px-4 shrink-0 desktop-titlebar-drag" style={{ borderBottom: "1px solid var(--dash-sidebar-border)" }}>
+            <div className="flex items-center gap-2.5 desktop-titlebar-nodrag">
+              <div className="relative w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-black/60 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.25)] shrink-0">
+                <Image
+                  src="/favicon.png"
+                  alt="Tech Infinix Logo"
+                  width={24}
+                  height={24}
+                  priority
+                  className="w-5 h-5 object-contain"
+                />
               </div>
               {!effectiveCollapsed && (
                 <div className="flex flex-col animate-fadeIn">
-                  <span className="text-sm font-bold tracking-tight leading-tight" style={{ color: "var(--dash-text)" }}>
-                    LeadFlow
+                  <span className="text-sm font-black tracking-tight leading-tight text-white flex items-center gap-1">
+                    <span>Tech Infinix</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
                   </span>
-                  <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: "var(--dash-primary)" }}>
+                  <span className="text-[9px] uppercase font-bold tracking-wider text-emerald-400/90">
                     Enterprise CRM
                   </span>
                 </div>
               )}
             </div>
-            {!mobileOpen && <button onClick={() => { const v = !isCollapsed; setIsCollapsed(v); localStorage.setItem("sidebar-collapsed", String(v)); }} className="hidden lg:flex p-1 transition-colors cursor-pointer opacity-50 hover:opacity-100" style={{ color: "var(--dash-sidebar-text)" }} title={effectiveCollapsed ? "Expand" : "Collapse"}>{effectiveCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}</button>}
+            {!mobileOpen && (
+              <button
+                onClick={() => { const v = !isCollapsed; setIsCollapsed(v); localStorage.setItem("sidebar-collapsed", String(v)); }}
+                className="hidden lg:flex p-1 transition-colors cursor-pointer opacity-50 hover:opacity-100 desktop-titlebar-nodrag"
+                style={{ color: "var(--dash-sidebar-text)" }}
+                title={effectiveCollapsed ? "Expand" : "Collapse"}
+              >
+                {effectiveCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              </button>
+            )}
           </div>
 
           {/* Nav Links */}
@@ -1652,15 +1686,30 @@ export default function DashboardLayout({
       {/* ── Main Workspace ── */}
       <main className="flex-1 min-h-0 min-w-0 flex flex-col h-full overflow-hidden relative z-10" style={{ background: "var(--dash-bg)" }}>
         
-        {/* Top Nav Bar */}
-        <header className="hidden lg:flex h-14 px-6 items-center justify-between shrink-0 z-20" style={{ background: "var(--dash-header-bg)", borderBottom: "1px solid var(--dash-header-border)" }}>
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1.5 text-xs" style={{ color: "var(--dash-text-muted)" }}>
-            <span>CRM</span><ChevronRight className="w-3 h-3" /><span className="font-semibold" style={{ color: "var(--dash-text)" }}>{getPageTitle()}</span>
+        {/* Top Nav Bar — Native Desktop App Titlebar with Window Controls Overlay (WCO) Support */}
+        <header
+          className="hidden lg:flex h-14 px-6 items-center justify-between shrink-0 z-20 desktop-titlebar-drag pwa-wco-header select-none transition-all duration-150"
+          style={{
+            background: "var(--dash-header-bg)",
+            borderBottom: "1px solid var(--dash-header-border)",
+            paddingRight: isWco ? "max(145px, calc(100vw - env(titlebar-area-width, 100vw) + 1.25rem))" : undefined
+          }}
+        >
+          {/* Breadcrumb & Native App Brand Emblem */}
+          <div className="flex items-center gap-3 text-xs desktop-titlebar-nodrag">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-emerald-400 font-bold text-[10px] tracking-wide uppercase shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Tech Infinix</span>
+            </div>
+            <div className="flex items-center gap-1.5" style={{ color: "var(--dash-text-muted)" }}>
+              <span>CRM</span>
+              <ChevronRight className="w-3 h-3" />
+              <span className="font-semibold" style={{ color: "var(--dash-text)" }}>{getPageTitle()}</span>
+            </div>
           </div>
 
           {/* Global Search Omnibar */}
-          <div className="flex-1 max-w-md mx-6 relative" ref={searchContainerRef}>
+          <div className="flex-1 max-w-md mx-6 relative desktop-titlebar-nodrag" ref={searchContainerRef}>
             <div className="relative w-full">
               {isSearching ? (
                 <Loader2 className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 animate-spin text-indigo-500" />
@@ -1718,7 +1767,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 desktop-titlebar-nodrag">
             {/* Notifications */}
             <div className="relative" ref={notifRef}>
               <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="p-2 transition relative cursor-pointer" style={{ borderRadius: "var(--dash-btn-radius)", background: notificationsOpen ? "var(--dash-primary-light)" : "transparent", color: notificationsOpen ? "var(--dash-primary)" : "var(--dash-text-muted)" }} title="Notifications">

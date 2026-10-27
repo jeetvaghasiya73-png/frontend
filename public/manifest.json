@@ -1,26 +1,46 @@
 {
+  "id": "tech-infinix-admin-crm",
   "name": "Tech Infinix",
   "short_name": "Tech Infinix",
-  "description": "Tech Infinix — Enterprise IT, Solutions & Growth Platform",
+  "description": "Tech Infinix — Enterprise IT Solutions, CRM & Outreach Platform",
   "start_url": "/admin/dashboard",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
   "background_color": "#000000",
   "theme_color": "#000000",
-  "categories": ["business", "productivity"],
+  "categories": [
+    "business",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icon.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/notification-icon.png",

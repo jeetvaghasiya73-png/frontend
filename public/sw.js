@@ -4,6 +4,8 @@ const STATIC_ASSETS = [
   "/manifest.json",
   "/icon.png",
   "/icon-192.png",
+  "/icon-maskable-192.png",
+  "/icon-maskable-512.png",
   "/notification-icon.png",
   "/notification-badge.png",
   "/apple-icon.png",
