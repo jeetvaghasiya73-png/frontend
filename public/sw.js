@@ -1,5 +1,5 @@
 // Tech Infinix Admin PWA Auto-Updating Service Worker
-const CACHE_NAME = "ti-admin-pwa-v" + Date.now();
+const CACHE_NAME = "ti-admin-pwa-v1.0.5";
 const STATIC_ASSETS = [
   "/manifest.json",
   "/icon.png",
@@ -75,11 +75,29 @@ self.addEventListener("fetch", (event) => {
         }
         return networkResponse;
       })
-      .catch(() => {
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) return cachedResponse;
-          return caches.match("/manifest.json");
-        });
+      .catch(async () => {
+        const cachedResponse = await caches.match(event.request);
+        if (cachedResponse) return cachedResponse;
+
+        // If it is an HTML page navigation, do NOT return JSON. Return an offline message
+        if (event.request.mode === "navigate") {
+          return new Response(
+            `<!DOCTYPE html>
+            <html lang="en" style="background:#000000;color:#ffffff;height:100%;">
+            <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Connecting...</title></head>
+            <body style="margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;font-family:sans-serif;text-align:center;padding:20px;">
+              <div style="width:40px;height:40px;border:3px solid #10b981;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px;"></div>
+              <p style="font-size:16px;font-weight:600;margin:0 0 8px 0;">Connecting to Tech Infinix...</p>
+              <p style="font-size:13px;color:#888;margin:0 0 16px 0;">Please check your internet connection.</p>
+              <button onclick="location.reload()" style="background:#10b981;color:#000;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;">Retry</button>
+              <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+            </body>
+            </html>`,
+            { headers: { "Content-Type": "text/html" } }
+          );
+        }
+
+        return new Response("Network error", { status: 503, statusText: "Offline" });
       })
   );
 });

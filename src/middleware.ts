@@ -62,6 +62,31 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // ── 1.5. LOCAL / LAN DEVELOPMENT SUPPORT (e.g. testing mobile at 192.168.x.x:3000) ──
+  const isLocalOrLan = (
+    rawHost === "localhost" ||
+    rawHost === "127.0.0.1" ||
+    rawHost.startsWith("192.168.") ||
+    rawHost.startsWith("10.") ||
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(rawHost)
+  );
+
+  if (isLocalOrLan) {
+    if (pathname.startsWith("/admin")) {
+      return NextResponse.next();
+    }
+    if (pathname === "/login") {
+      const rewriteUrl = request.nextUrl.clone();
+      rewriteUrl.pathname = "/admin/login";
+      return NextResponse.rewrite(rewriteUrl);
+    }
+    if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
+      const rewriteUrl = request.nextUrl.clone();
+      rewriteUrl.pathname = `/admin${pathname}`;
+      return NextResponse.rewrite(rewriteUrl);
+    }
+  }
+
   // ── 2. NORMAL DOMAIN ROUTING (techinfinix.com) ─────────────────────────────
   // STRICT SECURITY: Remove all admin and dashboard access from the normal marketing domain.
   // Any attempt to access /admin, /techinfinix-console-77, or /dashboard returns 404 Not Found.

@@ -259,7 +259,10 @@ export default function DashboardLayout({
       }
     }
     if (!isAuthenticated && typeof window !== "undefined") {
-      router.push(`${ADMIN_PATH}/login`);
+      const targetLogin = window.location.pathname.startsWith("/admin")
+        ? "/admin/login"
+        : `${ADMIN_PATH || ""}/login`;
+      router.replace(targetLogin);
     }
   }, [isAuthenticated, router]);
 
@@ -859,7 +862,20 @@ export default function DashboardLayout({
     };
   }, [loadCountsAndNotifications]);
 
-  if (typeof window !== "undefined" && !isAuthenticated) return null;
+  if (typeof window !== "undefined" && !isAuthenticated) {
+    return (
+      <div className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#000000] text-white select-none">
+        <div className="relative w-16 h-16 mb-4 flex items-center justify-center">
+          <div className="absolute -inset-2 rounded-2xl bg-emerald-500/20 blur-md animate-pulse" />
+          <div className="relative w-12 h-12 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center shadow-lg">
+            <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
+          </div>
+        </div>
+        <p className="text-sm font-semibold tracking-wide text-neutral-200">Tech Infinix Console</p>
+        <p className="text-xs text-neutral-400 mt-1">Connecting to login portal...</p>
+      </div>
+    );
+  }
 
   const handleLogout = async () => {
     try { await fetch(`${API_URL}/api/v1/auth/logout`, { method: "POST", credentials: "include" }); } catch (e) { console.error("Failed to call logout endpoint:", e); }
@@ -1432,8 +1448,7 @@ export default function DashboardLayout({
       className={`h-screen h-[100dvh] max-h-screen min-h-0 min-w-0 flex flex-col lg:flex-row overflow-hidden relative font-sans antialiased ${dashTheme === 'dark' ? 'dark' : ''}`}
       style={{ background: "var(--dash-bg)", color: "var(--dash-text)" }}
     >
-      {/* ── Isolated PWA Manager & Mobile Download Popup ── */}
-      <AdminPwaManager />
+      {/* ── Isolated PWA Mobile Download Popup (Manager lives at admin root) ── */}
       <AdminPwaDownloadPopup />
 
       {/* ── Floating Live Notification Toast ── */}

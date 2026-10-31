@@ -39,10 +39,12 @@ export default function AdminPwaManager() {
     // 3. Register Service Worker with Auto-Update Mechanism
     if ("serviceWorker" in navigator) {
       let refreshing = false;
+      const hadPreviousController = Boolean(navigator.serviceWorker.controller);
 
       // When the service worker updates and takes control, reload so the PWA gets the latest UI instantly
+      // Only reload if this is an update to an existing controller, not first-time activation
       const handleControllerChange = () => {
-        if (!refreshing) {
+        if (!refreshing && hadPreviousController) {
           refreshing = true;
           window.location.reload();
         }

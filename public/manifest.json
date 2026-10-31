@@ -7,8 +7,8 @@
   "scope": "/",
   "display": "standalone",
   "display_override": [
-    "window-controls-overlay",
     "standalone",
+    "window-controls-overlay",
     "minimal-ui"
   ],
   "background_color": "#000000",

@@ -35,10 +35,17 @@ export const metadata: Metadata = {
   },
 };
 
+import AdminPwaManager from "@/components/admin/AdminPwaManager";
+
 export default function AdminRootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <>
+      <AdminPwaManager />
+      {children}
+    </>
+  );
 }
