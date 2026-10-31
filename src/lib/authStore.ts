@@ -69,10 +69,16 @@ export const useAuthStore = create<AuthState>((set) => {
       if (typeof window === "undefined") return;
       const token = localStorage.getItem("techinfinix_access_token");
       const refresh = localStorage.getItem("techinfinix_refresh_token");
+      const isAuth = !!token;
+      if (isAuth) {
+        document.cookie = "techinfinix_auth=1; path=/; max-age=604800; SameSite=Lax";
+      } else {
+        document.cookie = "techinfinix_auth=; path=/; max-age=0; SameSite=Lax";
+      }
       set({
         accessToken: token,
         refreshToken: refresh,
-        isAuthenticated: !!token,
+        isAuthenticated: isAuth,
         isHydrated: true,
         user: token ? buildUser(token) : null,
       });
@@ -82,11 +88,13 @@ export const useAuthStore = create<AuthState>((set) => {
       if (typeof window !== "undefined") {
         localStorage.setItem("techinfinix_access_token", accessToken);
         localStorage.setItem("techinfinix_refresh_token", refreshToken);
+        document.cookie = "techinfinix_auth=1; path=/; max-age=604800; SameSite=Lax";
       }
       set({
         accessToken,
         refreshToken,
         isAuthenticated: true,
+        isHydrated: true,
         user: buildUser(accessToken),
       });
     },
@@ -97,8 +105,9 @@ export const useAuthStore = create<AuthState>((set) => {
         localStorage.removeItem("techinfinix_refresh_token");
         localStorage.removeItem("nexora_access_token");
         localStorage.removeItem("nexora_refresh_token");
+        document.cookie = "techinfinix_auth=; path=/; max-age=0; SameSite=Lax";
       }
-      set({ accessToken: null, refreshToken: null, isAuthenticated: false, user: null });
+      set({ accessToken: null, refreshToken: null, isAuthenticated: false, isHydrated: true, user: null });
     },
   };
 });

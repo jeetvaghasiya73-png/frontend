@@ -32,24 +32,40 @@ export function middleware(request: NextRequest) {
     rawHost === "admin.localhost"
   );
 
+  const isAuth = request.cookies.get("techinfinix_auth")?.value === "1";
+
   // ── 1. SUBDOMAIN ROUTING (admin.techinfinix.com) ───────────────────────────
   if (isSubdomainAdmin) {
-    // A. Root or /admin visit on admin subdomain -> redirect directly to /dashboard
+    // A. Root or /admin visit on admin subdomain -> direct instant redirect
     if (pathname === "" || pathname === "/" || pathname === "/admin" || pathname === "/admin/") {
-      const dashUrl = request.nextUrl.clone();
-      dashUrl.pathname = "/dashboard";
-      return NextResponse.redirect(dashUrl);
+      const targetUrl = request.nextUrl.clone();
+      targetUrl.pathname = isAuth ? "/dashboard" : "/login";
+      return NextResponse.redirect(targetUrl);
     }
 
-    // B. Legacy secret slug on admin subdomain -> redirect cleanly to /dashboard
+    // B. Legacy secret slug on admin subdomain -> redirect cleanly
     if (pathname === `/${ADMIN_SLUG}` || pathname.startsWith(`/${ADMIN_SLUG}/`)) {
-      const cleanPath = pathname.replace(`/${ADMIN_SLUG}`, "") || "/dashboard";
+      const cleanPath = pathname.replace(`/${ADMIN_SLUG}`, "") || (isAuth ? "/dashboard" : "/login");
       const cleanUrl = request.nextUrl.clone();
       cleanUrl.pathname = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
       return NextResponse.redirect(cleanUrl);
     }
 
-    // C. Rewrite clean paths to internal /admin app routes preserving Next.js router context
+    // C. Server-side route guard: If NOT authenticated and requesting dashboard -> INSTANT redirect to /login
+    if (!isAuth && (pathname === "/dashboard" || pathname.startsWith("/dashboard/"))) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // D. If already authenticated and visiting /login -> INSTANT redirect to /dashboard
+    if (isAuth && pathname === "/login") {
+      const dashUrl = request.nextUrl.clone();
+      dashUrl.pathname = "/dashboard";
+      return NextResponse.redirect(dashUrl);
+    }
+
+    // E. Rewrite clean paths to internal /admin app routes preserving Next.js router context
     // e.g. /dashboard -> /admin/dashboard
     // e.g. /dashboard/sales-calls/queue -> /admin/dashboard/sales-calls/queue
     // e.g. /login -> /admin/login
@@ -72,6 +88,26 @@ export function middleware(request: NextRequest) {
   );
 
   if (isLocalOrLan) {
+    const isAccessingDashboard = (
+      pathname === "/dashboard" ||
+      pathname.startsWith("/dashboard/") ||
+      pathname === "/admin/dashboard" ||
+      pathname.startsWith("/admin/dashboard/")
+    );
+    const isAccessingLogin = (pathname === "/login" || pathname === "/admin/login");
+
+    if (!isAuth && isAccessingDashboard) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/admin/login";
+      return NextResponse.redirect(loginUrl);
+    }
+
+    if (isAuth && isAccessingLogin) {
+      const dashUrl = request.nextUrl.clone();
+      dashUrl.pathname = "/admin/dashboard";
+      return NextResponse.redirect(dashUrl);
+    }
+
     if (pathname.startsWith("/admin")) {
       return NextResponse.next();
     }

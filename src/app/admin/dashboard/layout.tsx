@@ -868,26 +868,10 @@ export default function DashboardLayout({
   }, [loadCountsAndNotifications]);
 
   if (typeof window !== "undefined" && !isAuthenticated) {
-    const isSubdomain = typeof window !== "undefined" && (window.location.hostname.startsWith("admin.") || window.location.hostname === "admin.localhost");
+    const isSubdomain = window.location.hostname.startsWith("admin.") || window.location.hostname === "admin.localhost";
     const targetLogin = isSubdomain ? "/login" : "/admin/login";
-    return (
-      <div className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#000000] text-white select-none">
-        <div className="relative w-16 h-16 mb-4 flex items-center justify-center">
-          <div className="absolute -inset-2 rounded-2xl bg-emerald-500/20 blur-md animate-pulse" />
-          <div className="relative w-12 h-12 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center shadow-lg">
-            <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
-          </div>
-        </div>
-        <p className="text-sm font-semibold tracking-wide text-neutral-200">Tech Infinix Console</p>
-        <p className="text-xs text-neutral-400 mt-1">Connecting to login portal...</p>
-        <a
-          href={targetLogin}
-          className="mt-4 px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold hover:bg-emerald-500/20 transition cursor-pointer"
-        >
-          Click to Open Login →
-        </a>
-      </div>
-    );
+    window.location.replace(targetLogin);
+    return null;
   }
 
   const handleLogout = async () => {
