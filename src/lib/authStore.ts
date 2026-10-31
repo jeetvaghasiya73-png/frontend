@@ -15,9 +15,11 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  isHydrated: boolean;
   user: AuthUser | null;
   login: (accessToken: string, refreshToken: string) => void;
   logout: () => void;
+  syncAuth: () => void;
 }
 
 /** Decode a JWT payload without verifying the signature (client-side only). */
@@ -60,7 +62,21 @@ export const useAuthStore = create<AuthState>((set) => {
     accessToken: initialToken,
     refreshToken: initialRefresh,
     isAuthenticated: !!initialToken,
+    isHydrated: typeof window !== "undefined",
     user: initialToken ? buildUser(initialToken) : null,
+
+    syncAuth: () => {
+      if (typeof window === "undefined") return;
+      const token = localStorage.getItem("techinfinix_access_token");
+      const refresh = localStorage.getItem("techinfinix_refresh_token");
+      set({
+        accessToken: token,
+        refreshToken: refresh,
+        isAuthenticated: !!token,
+        isHydrated: true,
+        user: token ? buildUser(token) : null,
+      });
+    },
 
     login: (accessToken: string, refreshToken: string) => {
       if (typeof window !== "undefined") {

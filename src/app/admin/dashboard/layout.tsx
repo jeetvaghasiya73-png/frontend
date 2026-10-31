@@ -238,6 +238,7 @@ export default function DashboardLayout({
   useEffect(() => {
     setMounted(true);
     if (typeof window !== "undefined") {
+      useAuthStore.getState().syncAuth();
       const saved = localStorage.getItem("sidebar-collapsed");
       if (saved === "true") {
         setIsCollapsed(true);
@@ -259,10 +260,9 @@ export default function DashboardLayout({
       }
     }
     if (!isAuthenticated && typeof window !== "undefined") {
-      const targetLogin = window.location.pathname.startsWith("/admin")
-        ? "/admin/login"
-        : `${ADMIN_PATH || ""}/login`;
-      router.replace(targetLogin);
+      const isSubdomain = window.location.hostname.startsWith("admin.") || window.location.hostname === "admin.localhost";
+      const targetLogin = isSubdomain ? "/login" : "/admin/login";
+      window.location.replace(targetLogin);
     }
   }, [isAuthenticated, router]);
 
@@ -868,6 +868,8 @@ export default function DashboardLayout({
   }, [loadCountsAndNotifications]);
 
   if (typeof window !== "undefined" && !isAuthenticated) {
+    const isSubdomain = typeof window !== "undefined" && (window.location.hostname.startsWith("admin.") || window.location.hostname === "admin.localhost");
+    const targetLogin = isSubdomain ? "/login" : "/admin/login";
     return (
       <div className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#000000] text-white select-none">
         <div className="relative w-16 h-16 mb-4 flex items-center justify-center">
@@ -878,6 +880,12 @@ export default function DashboardLayout({
         </div>
         <p className="text-sm font-semibold tracking-wide text-neutral-200">Tech Infinix Console</p>
         <p className="text-xs text-neutral-400 mt-1">Connecting to login portal...</p>
+        <a
+          href={targetLogin}
+          className="mt-4 px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold hover:bg-emerald-500/20 transition cursor-pointer"
+        >
+          Click to Open Login →
+        </a>
       </div>
     );
   }
@@ -885,7 +893,9 @@ export default function DashboardLayout({
   const handleLogout = async () => {
     try { await fetch(`${API_URL}/api/v1/auth/logout`, { method: "POST", credentials: "include" }); } catch (e) { console.error("Failed to call logout endpoint:", e); }
     logout();
-    router.push(`${ADMIN_PATH}/login`);
+    const isSubdomain = typeof window !== "undefined" && (window.location.hostname.startsWith("admin.") || window.location.hostname === "admin.localhost");
+    const targetLogin = isSubdomain ? "/login" : "/admin/login";
+    window.location.replace(targetLogin);
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;

@@ -41,10 +41,9 @@ export default function AdminLoginPage() {
       }
     }
     if (isAuthenticated) {
-      const target = window.location.pathname.startsWith("/admin")
-        ? "/admin/dashboard"
-        : `${ADMIN_PATH || ""}/dashboard`;
-      router.replace(target);
+      const isSubdomain = typeof window !== "undefined" && (window.location.hostname.startsWith("admin.") || window.location.hostname === "admin.localhost");
+      const target = isSubdomain ? "/dashboard" : "/admin/dashboard";
+      window.location.replace(target);
     }
   }, [isAuthenticated, router, logout]);
 
@@ -117,10 +116,9 @@ export default function AdminLoginPage() {
 
       const data = await response.json();
       login(data.access_token, data.refresh_token);
-      const target = window.location.pathname.startsWith("/admin")
-        ? "/admin/dashboard"
-        : `${ADMIN_PATH || ""}/dashboard`;
-      router.replace(target);
+      const isSubdomain = typeof window !== "undefined" && (window.location.hostname.startsWith("admin.") || window.location.hostname === "admin.localhost");
+      const target = isSubdomain ? "/dashboard" : "/admin/dashboard";
+      window.location.replace(target);
     } catch (err: any) {
       setError(err.message || "Unable to complete login request.");
     } finally {
