@@ -34,8 +34,22 @@ export function clearAuthFetchCache(pattern?: string): void {
   }
 }
 
+function getSafeLoginUrl(reason?: string): string {
+  if (typeof window === "undefined") return "/admin/login";
+  const base = window.location.pathname.startsWith("/admin")
+    ? "/admin/login"
+    : `${ADMIN_PATH || ""}/login`;
+  return reason ? `${base}?reason=${reason}` : base;
+}
+
 async function doRefresh(): Promise<string | null> {
   const { refreshToken } = useAuthStore.getState();
+
+  // If no refresh token in store and no refresh cookie, abort immediately
+  const hasCookie = typeof document !== "undefined" && document.cookie.includes("refresh_token");
+  if (!refreshToken && !hasCookie) {
+    return null;
+  }
 
   try {
     const res = await fetch(`${API}/api/v1/auth/refresh`, {
@@ -51,8 +65,8 @@ async function doRefresh(): Promise<string | null> {
         const detailStr = String(errData?.detail || "").toLowerCase();
         if (detailStr.includes("another device") || detailStr.includes("concurrent")) {
           useAuthStore.getState().logout();
-          if (typeof window !== "undefined") {
-            window.location.href = `${ADMIN_PATH}/login?reason=concurrent_session`;
+          if (typeof window !== "undefined" && !window.location.pathname.endsWith("/login")) {
+            window.location.href = getSafeLoginUrl("concurrent_session");
           }
         }
       } catch {}
@@ -168,8 +182,8 @@ export async function authFetch(
 
       if (isConcurrentSession) {
         useAuthStore.getState().logout();
-        if (typeof window !== "undefined") {
-          window.location.href = `${ADMIN_PATH}/login?reason=concurrent_session`;
+        if (typeof window !== "undefined" && !window.location.pathname.endsWith("/login")) {
+          window.location.href = getSafeLoginUrl("concurrent_session");
         }
         return response;
       }
@@ -203,8 +217,8 @@ export async function authFetch(
 
       // Refresh failed → force logout
       useAuthStore.getState().logout();
-      if (typeof window !== "undefined") {
-        window.location.href = `${ADMIN_PATH}/login`;
+      if (typeof window !== "undefined" && !window.location.pathname.endsWith("/login")) {
+        window.location.href = getSafeLoginUrl();
       }
     }
     return response;

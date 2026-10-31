@@ -46,8 +46,14 @@ export async function getPushSubscriptionState(): Promise<{
   }
 }
 
+import { useAuthStore } from "./authStore";
+
 export async function subscribeToPushNotifications(): Promise<boolean> {
   if (!isPushNotificationSupported()) return false;
+
+  // Never attempt push subscription or backend sync if unauthenticated
+  const { isAuthenticated, accessToken } = useAuthStore.getState();
+  if (!isAuthenticated || !accessToken) return false;
 
   try {
     const perm = await Notification.requestPermission();

@@ -41,7 +41,10 @@ export default function AdminLoginPage() {
       }
     }
     if (isAuthenticated) {
-      router.push(`${ADMIN_PATH}/dashboard`);
+      const target = window.location.pathname.startsWith("/admin")
+        ? "/admin/dashboard"
+        : `${ADMIN_PATH || ""}/dashboard`;
+      router.replace(target);
     }
   }, [isAuthenticated, router, logout]);
 
@@ -114,7 +117,10 @@ export default function AdminLoginPage() {
 
       const data = await response.json();
       login(data.access_token, data.refresh_token);
-      router.push(`${ADMIN_PATH}/dashboard`);
+      const target = window.location.pathname.startsWith("/admin")
+        ? "/admin/dashboard"
+        : `${ADMIN_PATH || ""}/dashboard`;
+      router.replace(target);
     } catch (err: any) {
       setError(err.message || "Unable to complete login request.");
     } finally {

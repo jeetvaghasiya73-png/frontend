@@ -740,7 +740,10 @@ export default function DashboardLayout({
                   }
                   useAuthStore.getState().logout();
                   if (typeof window !== "undefined") {
-                    window.location.href = `${ADMIN_PATH}/login?reason=concurrent_session`;
+                    const target = window.location.pathname.startsWith("/admin")
+                      ? "/admin/login?reason=concurrent_session"
+                      : `${ADMIN_PATH || ""}/login?reason=concurrent_session`;
+                    window.location.href = target;
                   }
                   return;
                 }
@@ -834,12 +837,14 @@ export default function DashboardLayout({
 
     connect();
 
-    // Periodic background polling fallback (every 15s) so bell and counts update 100% reliably
+    // Periodic background polling fallback (every 60s) ONLY if WebSocket is closed
     const pollInterval = setInterval(() => {
       if (typeof document !== "undefined" && document.visibilityState === "visible") {
-        loadCountsAndNotifications(true);
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          loadCountsAndNotifications(true);
+        }
       }
-    }, 15000);
+    }, 60000);
 
     const onVisibilityChange = () => {
       if (typeof document !== "undefined" && document.visibilityState === "visible") {
